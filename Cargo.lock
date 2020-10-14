@@ -1298,9 +1298,23 @@ checksum = "71a6567e6fd35589fea0c63b94b4cf2e55573e413901bdbe60ab15cf0e25e5df"
 dependencies = [
  "crunchy",
  "fixed-hash",
+ "impl-codec",
  "impl-rlp",
  "impl-serde",
  "tiny-keccak",
+]
+
+[[package]]
+name = "ethereum"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da7fef4d2da1de3a4f4f85408379644276db9b46c4af7b0fe38a3debec5cb7cd"
+dependencies = [
+ "ethereum-types",
+ "parity-scale-codec",
+ "rlp",
+ "rlp-derive",
+ "sha3",
 ]
 
 [[package]]
@@ -1311,6 +1325,7 @@ checksum = "473aecff686bd8e7b9db0165cbbb53562376b39bf35b427f0c60446a9e1634b0"
 dependencies = [
  "ethbloom",
  "fixed-hash",
+ "impl-codec",
  "impl-rlp",
  "impl-serde",
  "primitive-types",
@@ -1677,6 +1692,30 @@ version = "2.0.0"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
+]
+
+[[package]]
+name = "frontier-consensus-primitives"
+version = "0.1.0"
+dependencies = [
+ "parity-scale-codec",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "frontier-rpc-primitives"
+version = "0.1.0"
+dependencies = [
+ "ethereum",
+ "ethereum-types",
+ "pallet-evm",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -3670,7 +3709,6 @@ dependencies = [
  "pallet-authority-discovery",
  "pallet-balances",
  "pallet-contracts",
- "pallet-evm",
  "pallet-grandpa",
  "pallet-im-online",
  "pallet-indices",
@@ -3783,7 +3821,6 @@ dependencies = [
  "pallet-contracts-rpc-runtime-api",
  "pallet-democracy",
  "pallet-elections-phragmen",
- "pallet-evm",
  "pallet-finality-tracker",
  "pallet-grandpa",
  "pallet-identity",
@@ -4374,6 +4411,32 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "substrate-test-utils",
+]
+
+[[package]]
+name = "pallet-ethereum"
+version = "0.1.0"
+dependencies = [
+ "ethereum",
+ "ethereum-types",
+ "evm",
+ "frame-support",
+ "frame-system",
+ "frontier-consensus-primitives",
+ "frontier-rpc-primitives",
+ "libsecp256k1",
+ "pallet-balances",
+ "pallet-evm",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "rlp",
+ "rustc-hex",
+ "serde",
+ "sha3",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -5961,6 +6024,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a7d3f9bed94764eac15b8f14af59fac420c236adaff743b7bcc88e265cb4345"
 dependencies = [
  "rustc-hex",
+]
+
+[[package]]
+name = "rlp-derive"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e33d7b2abe0c340d8797fe2907d3f20d3b5ea5908683618bfe80df7f621f672a"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

@@ -1,0 +1,35 @@
+[package]
+name = "frontier-rpc"
+version = "0.1.0"
+authors = ["Parity Technologies <admin@parity.io>"]
+edition = "2018"
+description = "Ethereum RPC (web3) compatibility layer for Substrate."
+license = "GPL-3.0"
+
+[dependencies]
+jsonrpc-core = "15.0.0"
+jsonrpc-derive = "14.0.3"
+jsonrpc-core-client = "14.0.3"
+jsonrpc-pubsub = "15.0.0"
+log = "0.4.8"
+ethereum-types = "0.9.0"
+frontier-consensus = { path = "../consensus" }
+frontier-rpc-core = { path = "core" }
+frontier-rpc-primitives = { path = "primitives" }
+sp-io = { version = "2.0.0", path = "../../primitives/io" }
+sp-runtime = { version = "2.0.0", path = "../../primitives/runtime" }
+sp-api = { version = "2.0.0", path = "../../primitives/api" }
+sp-consensus = { version = "2.0.0", path = "../../primitives/consensus/common" }
+sp-transaction-pool = { version = "2.0.0", path = "../../primitives/transaction-pool" }
+sp-storage = { version = "2.0.0", path = "../../primitives/storage" } 
+sp-blockchain = { version = "2.0.0", path = "../../primitives/blockchain" } 
+sc-service = { version = "2.0.0", path = "../../client/service" }
+sc-client-api = { version = "2.0.0", path = "../../client/api" }
+sc-rpc = { version = "2.0.0", path = "../../client/rpc" }
+sc-network = { version = "2.0.0", path = "../../client/network" }
+ethereum = { version = "0.3", features = ["codec"] }
+codec = { package = "parity-scale-codec", version = "1.0.0" }
+rlp = "0.4"
+pallet-ethereum = "0.1"
+futures = { version = "0.3.1", features = ["compat"] }
+sha3 = "0.8"
