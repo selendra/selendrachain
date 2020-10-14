@@ -254,7 +254,8 @@ impl InstanceFilter<Call> for ProxyType {
 			ProxyType::Governance => matches!(
 				c,
 				Call::Democracy(..)
-					| Call::Council(..) | Call::Society(..)
+					| Call::Council(..)
+					// | Call::Society(..)
 					| Call::TechnicalCommittee(..)
 					| Call::Elections(..)
 					| Call::Treasury(..)
@@ -864,34 +865,34 @@ impl pallet_recovery::Trait for Runtime {
 	type RecoveryDeposit = RecoveryDeposit;
 }
 
-parameter_types! {
-	pub const CandidateDeposit: Balance = 10 * DOLLARS;
-	pub const WrongSideDeduction: Balance = 2 * DOLLARS;
-	pub const MaxStrikes: u32 = 10;
-	pub const RotationPeriod: BlockNumber = 80 * HOURS;
-	pub const PeriodSpend: Balance = 500 * DOLLARS;
-	pub const MaxLockDuration: BlockNumber = 36 * 30 * DAYS;
-	pub const ChallengePeriod: BlockNumber = 7 * DAYS;
-	pub const SocietyModuleId: ModuleId = ModuleId(*b"py/socie");
-}
+// parameter_types! {
+// 	pub const CandidateDeposit: Balance = 10 * DOLLARS;
+// 	pub const WrongSideDeduction: Balance = 2 * DOLLARS;
+// 	pub const MaxStrikes: u32 = 10;
+// 	pub const RotationPeriod: BlockNumber = 80 * HOURS;
+// 	pub const PeriodSpend: Balance = 500 * DOLLARS;
+// 	pub const MaxLockDuration: BlockNumber = 36 * 30 * DAYS;
+// 	pub const ChallengePeriod: BlockNumber = 7 * DAYS;
+// 	pub const SocietyModuleId: ModuleId = ModuleId(*b"py/socie");
+// }
 
-impl pallet_society::Trait for Runtime {
-	type Event = Event;
-	type ModuleId = SocietyModuleId;
-	type Currency = Balances;
-	type Randomness = RandomnessCollectiveFlip;
-	type CandidateDeposit = CandidateDeposit;
-	type WrongSideDeduction = WrongSideDeduction;
-	type MaxStrikes = MaxStrikes;
-	type PeriodSpend = PeriodSpend;
-	type MembershipChanged = ();
-	type RotationPeriod = RotationPeriod;
-	type MaxLockDuration = MaxLockDuration;
-	type FounderSetOrigin =
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
-	type SuspensionJudgementOrigin = pallet_society::EnsureFounder<Runtime>;
-	type ChallengePeriod = ChallengePeriod;
-}
+// impl pallet_society::Trait for Runtime {
+// 	type Event = Event;
+// 	type ModuleId = SocietyModuleId;
+// 	type Currency = Balances;
+// 	type Randomness = RandomnessCollectiveFlip;
+// 	type CandidateDeposit = CandidateDeposit;
+// 	type WrongSideDeduction = WrongSideDeduction;
+// 	type MaxStrikes = MaxStrikes;
+// 	type PeriodSpend = PeriodSpend;
+// 	type MembershipChanged = ();
+// 	type RotationPeriod = RotationPeriod;
+// 	type MaxLockDuration = MaxLockDuration;
+// 	type FounderSetOrigin =
+// 		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+// 	type SuspensionJudgementOrigin = pallet_society::EnsureFounder<Runtime>;
+// 	type ChallengePeriod = ChallengePeriod;
+// }
 
 parameter_types! {
 	pub const MinVestedTransfer: Balance = 100 * DOLLARS;
@@ -937,7 +938,7 @@ construct_runtime!(
 		Historical: pallet_session_historical::{Module},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
 		Identity: pallet_identity::{Module, Call, Storage, Event<T>},
-		Society: pallet_society::{Module, Call, Storage, Event<T>, Config<T>},
+		// Society: pallet_society::{Module, Call, Storage, Event<T>, Config<T>},
 		Recovery: pallet_recovery::{Module, Call, Storage, Event<T>},
 		Vesting: pallet_vesting::{Module, Call, Storage, Event<T>, Config<T>},
 		Scheduler: pallet_scheduler::{Module, Call, Storage, Event<T>},
