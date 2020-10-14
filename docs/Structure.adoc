@@ -1,5 +1,5 @@
 = Structure
-:Author: Substrate developers
+:Author: Indracore developers
 :Revision: 0.3.0
 :toc:
 :sectnums:
@@ -7,7 +7,7 @@
 
 == Overview
 
-Substrate is split into multiple levels with increasing opinion and decreasing flexibility:
+Indracore is split into multiple levels with increasing opinion and decreasing flexibility:
 
 * primitives
 * client
