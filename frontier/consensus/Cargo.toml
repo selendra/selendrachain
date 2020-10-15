@@ -20,7 +20,7 @@ frontier-consensus-primitives = { version = "0.1.0", path = "primitives" }
 sp-consensus = { version = "0.8.0", path = "../../primitives/consensus/common" }
 log = "0.4.8"
 futures = { version = "0.3.1", features = ["compat"] }
-sp-timestamp = { version = "2.0.0", path = "../../frame/timestamp" }
+sp-timestamp = { version = "2.0.0", path = "../../primitives/timestamp" }
 derive_more = "0.99.2"
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", path = ""}
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", path = "../../utils/prometheus"}
 ethereum = { version = "0.3", features = ["codec"] }

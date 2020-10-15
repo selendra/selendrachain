@@ -36,3 +36,5 @@ sp-runtime = { version = "2.0.0", path = "../../primitives/runtime" }
 sp-transaction-pool = { version = "2.0.0", path = "../../primitives/transaction-pool" }
 substrate-frame-rpc-system = { version = "2.0.0", path = "../../utils/frame/rpc/system" }
 
+ethereum = { version = "0.1.0", package = "pallet-ethereum", path = "../../frame/ethereum" }
+frontier-rpc = { path = "../../frontier/rpc" }
