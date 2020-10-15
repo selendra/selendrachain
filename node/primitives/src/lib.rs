@@ -25,6 +25,8 @@ use sp_runtime::{
 	generic, traits::{Verify, BlakeTwo256, IdentifyAccount}, OpaqueExtrinsic, MultiSignature
 };
 
+pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+
 /// An index to a block.
 pub type BlockNumber = u32;
 

@@ -22,25 +22,12 @@ use grandpa_primitives::AuthorityId as GrandpaId;
 use node_indracore_runtime::constants::currency::*;
 use node_indracore_runtime::Block;
 use node_indracore_runtime::{
-	wasm_binary_unwrap,
-	AuthorityDiscoveryConfig,
-	BabeConfig,
-	BalancesConfig,
-	ContractsConfig,
-	CouncilConfig,
-	DemocracyConfig,
-	ElectionsConfig,
-	GrandpaConfig,
-	ImOnlineConfig,
-	IndicesConfig,
-	SessionConfig,
-	SessionKeys,
-	StakerStatus,
-	StakingConfig,
-	SudoConfig,
+	wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig,
+	BalancesConfig, ContractsConfig, CouncilConfig, DemocracyConfig,
+	ElectionsConfig, GrandpaConfig, ImOnlineConfig, IndicesConfig,
+	SessionConfig, SessionKeys, StakerStatus, StakingConfig, SudoConfig,
+	SystemConfig, TechnicalCommitteeConfig, EVMConfig, EthereumConfig,
 	//SocietyConfig,
-	SystemConfig,
-	TechnicalCommitteeConfig,
 };
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_chain_spec::ChainSpecExtension;
@@ -50,11 +37,13 @@ use serde::{Deserialize, Serialize};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
 // take out crypto::UncheckedInto from {}
-use sp_core::{sr25519, Pair, Public};
+use sp_core::{sr25519, Pair, Public, H160, U256};
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
 	Perbill,
 };
+use std::collections::BTreeMap;
+use std::str::FromStr;
 
 pub use node_indracore_runtime::GenesisConfig;
 pub use node_primitives::{AccountId, Balance, Signature};
@@ -186,6 +175,18 @@ pub fn testnet_genesis(
 	let endowment: Balance = 2u128.pow(32) * 10u128.pow(18);
 	const STASH: Balance = 100 * DOLLARS;
 
+	let gerald_evm_account_id = H160::from_str("6be02d1d3665660d22ff9624b7be0551ee1ac91b").unwrap();
+	let mut evm_accounts = BTreeMap::new();
+	evm_accounts.insert(
+		gerald_evm_account_id,
+		evm::GenesisAccount {
+			nonce: 0.into(),
+			balance: U256::from(123456_123_000_000_000_000_000u128),
+			storage: BTreeMap::new(),
+			code: vec![],
+		},
+	);
+
 	GenesisConfig {
 		frame_system: Some(SystemConfig {
 			code: wasm_binary_unwrap().to_vec(),
@@ -258,6 +259,11 @@ pub fn testnet_genesis(
 		}),
 		pallet_membership_Instance1: Some(Default::default()),
 		pallet_treasury: Some(Default::default()),
+		pallet_vesting: Some(Default::default()),
+		pallet_evm: Some(EVMConfig {
+			accounts: evm_accounts,
+		}),
+		pallet_ethereum: Some(EthereumConfig {}),
 		// pallet_society: Some(SocietyConfig {
 		// 	members: endowed_accounts
 		// 		.iter()
@@ -267,7 +273,6 @@ pub fn testnet_genesis(
 		// 	pot: 0,
 		// 	max_members: 999,
 		// }),
-		pallet_vesting: Some(Default::default()),
 	}
 }
 

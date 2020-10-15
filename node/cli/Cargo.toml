@@ -44,6 +44,7 @@ structopt = { version = "0.3.8", optional = true }
 tracing = "0.1.19"
 parking_lot = "0.10.0"
 
+evm = { version = "2.0.0", package = "pallet-evm", default-features = false, path = "../../frame/evm" }
 # primitives
 sp-authority-discovery = { version = "2.0.0",  path = "../../primitives/authority-discovery" }
 sp-consensus-babe = { version = "0.8.0", path = "../../primitives/consensus/babe" }

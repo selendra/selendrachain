@@ -12,6 +12,8 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 jsonrpc-core = "15.0.0"
+jsonrpc-pubsub = "14.0.3"
+
 node-primitives = { version = "2.0.0", path = "../primitives" }
 node-indracore-runtime = { version = "2.0.0", path = "../runtime" }
 pallet-contracts-rpc = { version = "0.8.0", path = "../../frame/contracts/rpc/" }
@@ -33,3 +35,4 @@ sp-consensus-babe = { version = "0.8.0", path = "../../primitives/consensus/babe
 sp-runtime = { version = "2.0.0", path = "../../primitives/runtime" }
 sp-transaction-pool = { version = "2.0.0", path = "../../primitives/transaction-pool" }
 substrate-frame-rpc-system = { version = "2.0.0", path = "../../utils/frame/rpc/system" }
+
