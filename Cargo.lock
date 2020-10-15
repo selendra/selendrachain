@@ -4038,6 +4038,8 @@ name = "node-rpc"
 version = "2.0.0"
 dependencies = [
  "frontier-rpc",
+ "frontier-rpc-primitives",
+ "futures 0.3.5",
  "jsonrpc-core 15.0.0",
  "jsonrpc-pubsub 14.2.0",
  "node-indracore-runtime",
@@ -4049,6 +4051,7 @@ dependencies = [
  "sc-consensus-babe",
  "sc-consensus-babe-rpc",
  "sc-consensus-epochs",
+ "sc-consensus-manual-seal",
  "sc-finality-grandpa",
  "sc-finality-grandpa-rpc",
  "sc-keystore",

@@ -13,6 +13,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 jsonrpc-core = "15.0.0"
 jsonrpc-pubsub = "14.0.3"
+futures = "0.3.1"
 
 node-primitives = { version = "2.0.0", path = "../primitives" }
 node-indracore-runtime = { version = "2.0.0", path = "../runtime" }
@@ -32,9 +33,11 @@ sp-block-builder = { version = "2.0.0", path = "../../primitives/block-builder" 
 sp-blockchain = { version = "2.0.0", path = "../../primitives/blockchain" }
 sp-consensus = { version = "0.8.0", path = "../../primitives/consensus/common" }
 sp-consensus-babe = { version = "0.8.0", path = "../../primitives/consensus/babe" }
+sc-consensus-manual-seal = { version = "0.8.0", path = "../../client/consensus/manual-seal" }
 sp-runtime = { version = "2.0.0", path = "../../primitives/runtime" }
 sp-transaction-pool = { version = "2.0.0", path = "../../primitives/transaction-pool" }
 substrate-frame-rpc-system = { version = "2.0.0", path = "../../utils/frame/rpc/system" }
 
 ethereum = { version = "0.1.0", package = "pallet-ethereum", path = "../../frame/ethereum" }
 frontier-rpc = { path = "../../frontier/rpc" }
+frontier-rpc-primitives = { path = "../../frontier/rpc/primitives" }

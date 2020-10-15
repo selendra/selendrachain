@@ -124,12 +124,18 @@ pub fn new_partial(config: &Configuration) -> Result<sc_service::PartialComponen
 		let select_chain = select_chain.clone();
 		let keystore = keystore.clone();
 
+		let role = config.role.clone();
+		let (command_sink, _commands_stream) = futures::channel::mpsc::channel(1000);
+		let is_authority = role.is_authority();
+
 		let rpc_extensions_builder = move |deny_unsafe, subscription_executor| {
 			let deps = node_rpc::FullDeps {
 				client: client.clone(),
 				pool: pool.clone(),
 				select_chain: select_chain.clone(),
 				deny_unsafe,
+				is_authority,
+				command_sink: Some(command_sink.clone()),
 				babe: node_rpc::BabeDeps {
 					babe_config: babe_config.clone(),
 					shared_epoch_changes: shared_epoch_changes.clone(),
