@@ -103,8 +103,6 @@ pub struct FullDeps<C, P, SC, B> {
 	pub grandpa: GrandpaDeps<B>,
 	/// The Node authority flag
 	pub is_authority: bool,
-	/// Manual seal command sink
-	pub command_sink: Option<futures::channel::mpsc::Sender<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>>,
 }
 
 /// A IO handler that uses all Full RPC extensions.
@@ -133,7 +131,6 @@ pub fn create_full<C, P, SC, B>(
 	use pallet_contracts_rpc::{Contracts, ContractsApi};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use frontier_rpc::{EthApi, EthApiServer, NetApi, NetApiServer};
-	use sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApi};
 
 	let mut io = jsonrpc_core::IoHandler::default();
 	let FullDeps {
@@ -144,7 +141,6 @@ pub fn create_full<C, P, SC, B>(
 		babe,
 		grandpa,
 		is_authority,
-		command_sink,
 	} = deps;
 
 	let BabeDeps {
@@ -209,18 +205,6 @@ pub fn create_full<C, P, SC, B>(
 			client.clone(),
 		))
 	);
-
-	match command_sink {
-		Some(command_sink) => {
-			io.extend_with(
-				// We provide the rpc handler with the sending end of the channel to allow the rpc
-				// send EngineCommands to the background block authorship task.
-				ManualSealApi::to_delegate(ManualSeal::new(command_sink)),
-			);
-		}
-		_ => {}
-	}
-
 	io
 }
 

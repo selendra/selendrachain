@@ -165,8 +165,6 @@ pub fn new_full_base(
 		let shared_epoch_changes = babe_link.epoch_changes().clone();
 		let is_authority = role.is_authority();
 
-		let (command_sink, _commands_stream) = futures::channel::mpsc::channel(1000);
-
 		Box::new(move |deny_unsafe, subscription_executor| {
 			let deps = node_rpc::FullDeps {
 				client: client.clone(),
@@ -174,7 +172,6 @@ pub fn new_full_base(
 				select_chain: select_chain.clone(),
 				deny_unsafe,
 				is_authority,
-				command_sink: Some(command_sink.clone()),
 				babe: node_rpc::BabeDeps {
 					babe_config: babe_config.clone(),
 					shared_epoch_changes: shared_epoch_changes.clone(),
