@@ -36,6 +36,7 @@ use futures::prelude::*;
 use sc_client_api::{ExecutorProvider, RemoteBackend};
 use sp_core::traits::BareCryptoStorePtr;
 use node_executor::Executor;
+use frontier_consensus::FrontierBlockImport;
 
 type FullClient = sc_service::TFullClient<Block, RuntimeApi, Executor>;
 type FullBackend = sc_service::TFullBackend<Block>;
@@ -49,7 +50,13 @@ pub fn new_partial(config: &Configuration) -> Result<sc_service::PartialComponen
 	sp_consensus::DefaultImportQueue<Block, FullClient>,
 	sc_transaction_pool::FullPool<Block, FullClient>,
 	(
-		sc_consensus_babe::BabeBlockImport<Block, FullClient, FullGrandpaBlockImport>,
+		sc_consensus_babe::BabeBlockImport<Block, FullClient,
+			FrontierBlockImport<
+				Block,
+				FullGrandpaBlockImport,
+				FullClient
+			>,
+		>,
 		grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
 		sc_consensus_babe::BabeLink<Block>,
 	)
@@ -72,9 +79,15 @@ pub fn new_partial(config: &Configuration) -> Result<sc_service::PartialComponen
 	)?;
 	let justification_import = grandpa_block_import.clone();
 
+	let frontier_block_import = FrontierBlockImport::new(
+		justification_import.clone(),
+		client.clone(),
+		true
+	);
+
 	let (block_import, babe_link) = sc_consensus_babe::block_import(
 		sc_consensus_babe::Config::get_or_compute(&*client)?,
-		grandpa_block_import,
+		frontier_block_import,
 		client.clone(),
 	)?;
 
@@ -113,7 +126,13 @@ pub struct NewFullBase {
 pub fn new_full_base(
 	config: Configuration,
 	with_startup_data: impl FnOnce(
-		&sc_consensus_babe::BabeBlockImport<Block, FullClient, FullGrandpaBlockImport>,
+		&sc_consensus_babe::BabeBlockImport<Block, FullClient,
+			FrontierBlockImport<
+				Block,
+				FullGrandpaBlockImport,
+				FullClient
+			>,
+		>,
 		&sc_consensus_babe::BabeLink<Block>,
 	)
 ) -> Result<NewFullBase, ServiceError> {

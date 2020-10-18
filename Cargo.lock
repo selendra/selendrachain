@@ -3828,6 +3828,7 @@ dependencies = [
  "frame-benchmarking-cli",
  "frame-support",
  "frame-system",
+ "frontier-consensus",
  "futures 0.3.5",
  "hex-literal",
  "log",
