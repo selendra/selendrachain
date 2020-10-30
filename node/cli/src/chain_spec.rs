@@ -213,7 +213,7 @@ pub fn testnet_genesis(
 				.collect::<Vec<_>>(),
 		}),
 		pallet_staking: Some(StakingConfig {
-			validator_count: initial_authorities.len() as u32 * 2,
+			validator_count: initial_authorities.len() as u32 * 10,
 			minimum_validator_count: initial_authorities.len() as u32,
 			stakers: initial_authorities
 				.iter()
