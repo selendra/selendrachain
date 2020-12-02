@@ -1,12 +1,12 @@
-= Substrate
-:Author: Substrate developers
+= Indracore
+:Author: Indracore developers
 :Revision: 0.2.0
 :toc:
 :sectnums:
 
 == Intro in one sentence
 
-Substrate is a next-generation framework for blockchain innovation.
+Indracore is a next-generation framework for blockchain innovation based on Substrate.
 
 == Description
 

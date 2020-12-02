@@ -25,4 +25,5 @@ rls*.log
 IndraSpec.json
 indracore.json
 sel-key.key
+startnode.sh
 indracore.json.backup

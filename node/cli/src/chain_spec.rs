@@ -22,10 +22,25 @@ use grandpa_primitives::AuthorityId as GrandpaId;
 use node_indracore_runtime::constants::currency::*;
 use node_indracore_runtime::Block;
 use node_indracore_runtime::{
-	wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig, BalancesConfig, ContractsConfig,
-	CouncilConfig, DemocracyConfig, ElectionsConfig, GrandpaConfig, ImOnlineConfig, IndicesConfig,
-	SessionConfig, SessionKeys, SocietyConfig, StakerStatus, StakingConfig, SudoConfig,
-	SystemConfig, TechnicalCommitteeConfig,
+	wasm_binary_unwrap,
+	AuthorityDiscoveryConfig,
+	BabeConfig,
+	BalancesConfig,
+	ContractsConfig,
+	CouncilConfig,
+	DemocracyConfig,
+	ElectionsConfig,
+	GrandpaConfig,
+	ImOnlineConfig,
+	IndicesConfig,
+	SessionConfig,
+	SessionKeys,
+	StakerStatus,
+	StakingConfig,
+	SudoConfig,
+	//SocietyConfig,
+	SystemConfig,
+	TechnicalCommitteeConfig,
 };
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_chain_spec::ChainSpecExtension;
@@ -198,7 +213,7 @@ pub fn testnet_genesis(
 				.collect::<Vec<_>>(),
 		}),
 		pallet_staking: Some(StakingConfig {
-			validator_count: initial_authorities.len() as u32 * 2,
+			validator_count: initial_authorities.len() as u32 * 10,
 			minimum_validator_count: initial_authorities.len() as u32,
 			stakers: initial_authorities
 				.iter()
@@ -243,15 +258,15 @@ pub fn testnet_genesis(
 		}),
 		pallet_membership_Instance1: Some(Default::default()),
 		pallet_treasury: Some(Default::default()),
-		pallet_society: Some(SocietyConfig {
-			members: endowed_accounts
-				.iter()
-				.take((num_endowed_accounts + 1) / 2)
-				.cloned()
-				.collect(),
-			pot: 0,
-			max_members: 999,
-		}),
+		// pallet_society: Some(SocietyConfig {
+		// 	members: endowed_accounts
+		// 		.iter()
+		// 		.take((num_endowed_accounts + 1) / 2)
+		// 		.cloned()
+		// 		.collect(),
+		// 	pot: 0,
+		// 	max_members: 999,
+		// }),
 		pallet_vesting: Some(Default::default()),
 	}
 }

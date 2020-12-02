@@ -1,10 +1,10 @@
 # Security Policy
 
-Parity Technologies is committed to resolving security vulnerabilities in our software quickly and carefully. We take the necessary steps to minimize risk, provide timely information, and deliver vulnerability fixes and mitigations required to address security issues.
+Selendra is committed to resolving security vulnerabilities in our software quickly and carefully. We take the necessary steps to minimize risk, provide timely information, and deliver vulnerability fixes and mitigations required to address security issues.
 
 ## Reporting a Vulnerability
 
-Security vulnerabilities in Parity software should be reported by email to security@parity.io. If you think your report might be eligible for the Parity Bug Bounty Program, your email should be send to bugbounty@parity.io.
+Security vulnerabilities in Selendra software should be reported by email to iam@selendra.org. If you think your report might be eligible for the Selendra Bug Bounty Program, your email should also send to iam@selendra.org.
 
 Your report should include the following:
 
@@ -28,7 +28,7 @@ Thank you for taking the time to responsibly disclose any vulnerabilities you fi
 Responsible investigation and reporting includes, but isn't limited to, the following:
 
 - Don't violate the privacy of other users, destroy data, etc.
-- Don’t defraud or harm Parity Technologies Ltd or its users during your research; you should make a good faith effort to not interrupt or degrade our services.
+- Don’t defraud or harm Selendra or its users during your research; you should make a good faith effort to not interrupt or degrade our services.
 - Don't target our physical security measures, or attempt to use social engineering, spam, distributed denial of service (DDOS) attacks, etc.
 - Initially report the bug only to us and not to anyone else.
 - Give us a reasonable amount of time to fix the bug before disclosing it to anyone else, and give us adequate written warning before disclosing it to anyone else.
@@ -36,7 +36,7 @@ Responsible investigation and reporting includes, but isn't limited to, the foll
 
 ## Bug Bounty Program
 
-Our Bug Bounty Program allows us to recognize and reward members of the Parity community for helping us find and address significant bugs, in accordance with the terms of the Parity Bug Bounty Program. A detailed description on eligibility, rewards, legal information and terms & conditions for contributors can be found on [our website](https://paritytech.io/bug-bounty.html).
+Our Bug Bounty Program allows us to recognize and reward members of the Selendra community for helping us find and address significant bugs, in accordance with the terms of the Selendra Bug Bounty Program. A detailed description on eligibility, rewards, legal information and terms & conditions for contributors can be found on [our website](https://selendra.com/bug-bounty).
 
 
 
