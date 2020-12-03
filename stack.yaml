@@ -1,7 +1,7 @@
 version: "3.1"
 services:
   indracore:
-    image: phusion/baseimage
+    image: indracore
     container_name: "indracore-node"
     restart: always
     ports:
@@ -11,5 +11,5 @@ services:
     volumes:
       - ./:/home/indracore
     working_dir: /home/indracore
-    command: >
-    sh -c "cargo build --release && ./target/release/indracore --rpc-cors "*" --pruning archive"
+    # command: sh -c "./home/indracore/target/release/indracore --rpc-cors "*" --pruning archive"
+    command: sh -c "./target/release/indracore"
