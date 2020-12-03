@@ -1,7 +1,7 @@
 # Selendra Node &middot; [![GitHub license](https://img.shields.io/badge/license-GPL3%2FApache2-blue)](LICENSE-APACHE2) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
 
 <p align="center">
-  <img src="/docs/media/selendra.png">
+  <img src="https://github.com/selendra/indracore/raw/main/docs/media/selendra.png">
 </p>
 
 
