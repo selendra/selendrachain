@@ -1,7 +1,7 @@
 version: "3.1"
 services:
   indracore:
-    image: indracore
+    image: selendra/indracore
     container_name: "indracore-node"
     restart: always
     ports:
