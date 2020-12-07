@@ -849,22 +849,22 @@ impl pallet_identity::Trait for Runtime {
 	type WeightInfo = weights::pallet_identity::WeightInfo;
 }
 
-parameter_types! {
-	pub const ConfigDepositBase: Balance = 5 * DOLLARS;
-	pub const FriendDepositFactor: Balance = 50 * CENTS;
-	pub const MaxFriends: u16 = 9;
-	pub const RecoveryDeposit: Balance = 5 * DOLLARS;
-}
+// parameter_types! {
+// 	pub const ConfigDepositBase: Balance = 5 * DOLLARS;
+// 	pub const FriendDepositFactor: Balance = 50 * CENTS;
+// 	pub const MaxFriends: u16 = 9;
+// 	pub const RecoveryDeposit: Balance = 5 * DOLLARS;
+// }
 
-impl pallet_recovery::Trait for Runtime {
-	type Event = Event;
-	type Call = Call;
-	type Currency = Balances;
-	type ConfigDepositBase = ConfigDepositBase;
-	type FriendDepositFactor = FriendDepositFactor;
-	type MaxFriends = MaxFriends;
-	type RecoveryDeposit = RecoveryDeposit;
-}
+// impl pallet_recovery::Trait for Runtime {
+// 	type Event = Event;
+// 	type Call = Call;
+// 	type Currency = Balances;
+// 	type ConfigDepositBase = ConfigDepositBase;
+// 	type FriendDepositFactor = FriendDepositFactor;
+// 	type MaxFriends = MaxFriends;
+// 	type RecoveryDeposit = RecoveryDeposit;
+// }
 
 // parameter_types! {
 // 	pub const CandidateDeposit: Balance = 10 * DOLLARS;
@@ -940,7 +940,7 @@ construct_runtime!(
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
 		Identity: pallet_identity::{Module, Call, Storage, Event<T>},
 		// Society: pallet_society::{Module, Call, Storage, Event<T>, Config<T>},
-		Recovery: pallet_recovery::{Module, Call, Storage, Event<T>},
+		// Recovery: pallet_recovery::{Module, Call, Storage, Event<T>},
 		Vesting: pallet_vesting::{Module, Call, Storage, Event<T>, Config<T>},
 		Scheduler: pallet_scheduler::{Module, Call, Storage, Event<T>},
 		Proxy: pallet_proxy::{Module, Call, Storage, Event<T>},
