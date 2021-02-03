@@ -2,6 +2,7 @@
 members = [
 	"core-primitives",
     "runtime/common",
+    "runtime/indracore"
 ]
 
 # make sure dev builds with backtrace do
