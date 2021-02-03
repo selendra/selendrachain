@@ -24,3 +24,4 @@ pub mod pallet_identity;
 pub mod pallet_im_online;
 pub mod pallet_indices;
 pub mod pallet_multisig;
+pub mod pallet_proxy;
