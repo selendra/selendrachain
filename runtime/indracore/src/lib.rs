@@ -22,3 +22,4 @@
 #![recursion_limit = "256"]
 
 pub mod weights;
+pub mod constants;
