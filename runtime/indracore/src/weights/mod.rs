@@ -22,3 +22,4 @@ pub mod pallet_democracy;
 pub mod pallet_elections_phragmen;
 pub mod pallet_identity;
 pub mod pallet_im_online;
+pub mod pallet_indices;
