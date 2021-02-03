@@ -1,6 +1,6 @@
 [workspace]
 members = [
-	"core-primitive"
+	"core-primitives",
 ]
 
 # make sure dev builds with backtrace do
