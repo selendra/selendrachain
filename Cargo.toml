@@ -3,7 +3,7 @@ members = [
 	"core-primitives",
     "runtime/common",
     "runtime/indracore",
-    "node/rpc"
+    "rpc"
 ]
 
 # make sure dev builds with backtrace do

@@ -31,4 +31,4 @@ sc-sync-state-rpc = { git = "https://github.com/selendra/substrate", branch = "v
 substrate-frame-rpc-system = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
 pallet-transaction-payment-rpc = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
 
-indracore-primitives = { package = "indracore-core-primitives", path = "../../core-primitives" }
+indracore-primitives = { package = "indracore-core-primitives", path = "../core-primitives" }
