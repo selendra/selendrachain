@@ -33,6 +33,7 @@ use sp_runtime::RuntimeString;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::OpaqueMetadata;
 use sp_core::u32_trait::{_1, _2, _3, _4, _5};
+use sp_std::collections::btree_map::BTreeMap;
 use sp_std::prelude::*;
 use sp_staking::SessionIndex;
 use sp_version::RuntimeVersion;
@@ -66,13 +67,15 @@ use pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo;
 use pallet_session::historical as session_historical;
 
 use primitives::v1::{
-    AccountId, AccountIndex, Balance, BlockNumber,
-    Moment, Nonce, Signature, Hash,
+	AccountId, AccountIndex, Balance, BlockNumber, CandidateEvent, CommittedCandidateReceipt,
+	CoreState, GroupRotationInfo, Hash, Id, Moment, Nonce, OccupiedCoreAssumption,
+	PersistedValidationData, Signature, ValidationCode, ValidationData, ValidatorId, ValidatorIndex,
+	InboundDownwardMessage, InboundHrmpMessage, SessionInfo,
 };
 use runtime_common::{
-	SlowAdjustingFeeUpdate, CurrencyToVote,
-	impls::DealWithFees,
-	BlockHashCount, RocksDbWeight, BlockWeights, BlockLength, OffchainSolutionWeightLimit
+	SlowAdjustingFeeUpdate, CurrencyToVote, impls::DealWithFees,
+	BlockHashCount, RocksDbWeight, BlockWeights, BlockLength, OffchainSolutionWeightLimit,
+	ParachainSessionKeyPlaceholder,
 };
 
 /// Constant values used within the runtime.
@@ -271,6 +274,7 @@ impl_opaque_keys! {
 		pub grandpa: Grandpa,
 		pub babe: Babe,
 		pub im_online: ImOnline,
+		pub parachain_validator: ParachainSessionKeyPlaceholder<Runtime>,
 		pub authority_discovery: AuthorityDiscovery,
 	}
 }
@@ -1026,7 +1030,7 @@ sp_api::impl_runtime_apis! {
 			// probability of a slot being empty), is done in accordance to the
 			// slot duration and expected target block time, for safely
 			// resisting network delays of maximum two seconds.
-			// <https://research.web3.foundation/en/latest/polkadot/BABE/Babe/#6-practical-results>
+			// <https://w3f-research.readthedocs.io/en/latest/polkadot/block-production/Babe.html>
 			sp_consensus_babe::BabeGenesisConfiguration {
 				slot_duration: Babe::slot_duration(),
 				epoch_length: EpochDuration::get(),
@@ -1096,6 +1100,71 @@ sp_api::impl_runtime_apis! {
 		fn query_info(uxt: <Block as BlockT>::Extrinsic, len: u32) -> RuntimeDispatchInfo<Balance> {
 			TransactionPayment::query_info(uxt, len)
 		}
+	}
+
+	impl primitives::v1::ParachainHost<Block, Hash, BlockNumber> for Runtime {
+		fn validators() -> Vec<ValidatorId> {
+			Vec::new()
+		}
+
+		fn validator_groups() -> (Vec<Vec<ValidatorIndex>>, GroupRotationInfo<BlockNumber>) {
+			(Vec::new(), GroupRotationInfo { session_start_block: 0, group_rotation_frequency: 0, now: 0 })
+		}
+
+		fn availability_cores() -> Vec<CoreState<BlockNumber>> {
+			Vec::new()
+		}
+
+		fn full_validation_data(_: Id, _: OccupiedCoreAssumption)
+			-> Option<ValidationData<BlockNumber>> {
+			None
+		}
+
+		fn persisted_validation_data(_: Id, _: OccupiedCoreAssumption)
+			-> Option<PersistedValidationData<BlockNumber>> {
+			None
+		}
+
+		fn check_validation_outputs(_: Id, _: primitives::v1::CandidateCommitments) -> bool {
+			false
+		}
+
+		fn session_index_for_child() -> SessionIndex {
+			0
+		}
+
+		fn session_info(_: SessionIndex) -> Option<SessionInfo> {
+			None
+		}
+
+		fn validation_code(_: Id, _: OccupiedCoreAssumption) -> Option<ValidationCode> {
+			None
+		}
+
+		fn historical_validation_code(_: Id, _: BlockNumber) -> Option<ValidationCode> {
+			None
+		}
+
+		fn candidate_pending_availability(_: Id) -> Option<CommittedCandidateReceipt<Hash>> {
+			None
+		}
+
+		fn candidate_events() -> Vec<CandidateEvent<Hash>> {
+			Vec::new()
+		}
+
+		fn dmq_contents(
+			_recipient: Id,
+		) -> Vec<InboundDownwardMessage<BlockNumber>> {
+			Vec::new()
+		}
+
+		fn inbound_hrmp_channels_contents(
+			_recipient: Id
+		) -> BTreeMap<Id, Vec<InboundHrmpMessage<BlockNumber>>> {
+			BTreeMap::new()
+		}
+
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
