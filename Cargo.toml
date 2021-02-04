@@ -13,6 +13,7 @@ members = [
     "node/subsystem",
     "node/subsystem-util",
     "node/network/protocol",
+    "node/collation-generation",
     "runtime/common",
     "runtime/parachains",
     "runtime/indracore",

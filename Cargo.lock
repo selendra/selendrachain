@@ -1698,6 +1698,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "indracore-node-collation-generation"
+version = "0.1.0"
+dependencies = [
+ "futures 0.3.12",
+ "indracore-erasure-coding",
+ "indracore-node-primitives",
+ "indracore-node-subsystem",
+ "indracore-node-subsystem-util",
+ "indracore-primitives",
+ "sp-core",
+ "thiserror",
+ "tracing",
+ "tracing-futures",
+]
+
+[[package]]
 name = "indracore-node-network-protocol"
 version = "0.1.0"
 dependencies = [
