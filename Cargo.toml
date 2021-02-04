@@ -3,6 +3,7 @@ members = [
 	"core-primitives",
     "parachain",
     "primitives",
+    "xcm",
     "runtime/common",
     "runtime/indracore",
     "rpc"
