@@ -1,0 +1,23 @@
+
+[package]
+name = "indracore-availability-distribution"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+futures = "0.3.8"
+tracing = "0.1.22"
+thiserror = "1.0.22"
+tracing-futures = "0.2.4"
+parity-scale-codec = { version = "1.3.5", features = ["std"]  }
+
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", features = ["std"]  }
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
+
+indracore-primitives = { path = "../../../primitives" }
+indracore-erasure-coding = { path = "../../../erasure-coding" }
+indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
+indracore-node-network-protocol = { path = "../../network/protocol" }
+indracore-node-subsystem-util = { path = "../../subsystem-util" }
+

@@ -1676,6 +1676,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "indracore-availability-distribution"
+version = "0.1.0"
+dependencies = [
+ "futures 0.3.12",
+ "indracore-erasure-coding",
+ "indracore-node-network-protocol",
+ "indracore-node-subsystem",
+ "indracore-node-subsystem-util",
+ "indracore-primitives",
+ "parity-scale-codec 1.3.6",
+ "sp-core",
+ "sp-keystore",
+ "thiserror",
+ "tracing",
+ "tracing-futures",
+]
+
+[[package]]
 name = "indracore-core-primitives"
 version = "0.1.0"
 dependencies = [
