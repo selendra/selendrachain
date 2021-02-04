@@ -1837,6 +1837,7 @@ dependencies = [
  "indracore-primitives",
  "pallet-authorship",
  "pallet-balances",
+ "pallet-session",
  "pallet-staking",
  "pallet-timestamp",
  "pallet-transaction-payment",

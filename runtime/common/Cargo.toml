@@ -23,6 +23,7 @@ pallet-treasury = { git = "https://github.com/selendra/substrate", branch = "v2.
 pallet-staking = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
 pallet-authorship = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
 pallet-balances = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+pallet-session = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
 
 primitives = { package = "indracore-primitives", path = "../../primitives", default-features = false }
 
@@ -43,6 +44,7 @@ std = [
 	"pallet-timestamp/std",
 	"pallet-treasury/std",
 	"pallet-transaction-payment/std",
+	"pallet-session/std",
     "primitives/std",
 ]
 runtime-benchmarks = [

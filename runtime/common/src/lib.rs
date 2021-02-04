@@ -20,7 +20,7 @@
 
 pub mod impls;
 
-use primitives::v1::BlockNumber;
+use primitives::v1::{BlockNumber, ValidatorId};
 use sp_runtime::{Perquintill, Perbill, FixedPointNumber};
 use frame_system::limits;
 use frame_support::{
@@ -117,3 +117,32 @@ pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
 /// This must only be used as long as the balance type is u128.
 pub type CurrencyToVote = frame_support::traits::U128CurrencyToVote;
 static_assertions::assert_eq_size!(primitives::v1::Balance, u128);
+
+/// A placeholder since there is currently no provided session key handler for parachain validator
+/// keys.
+pub struct ParachainSessionKeyPlaceholder<T>(sp_std::marker::PhantomData<T>);
+impl<T> sp_runtime::BoundToRuntimeAppPublic for ParachainSessionKeyPlaceholder<T> {
+	type Public = ValidatorId;
+}
+
+impl<T: pallet_session::Config>
+	pallet_session::OneSessionHandler<T::AccountId> for ParachainSessionKeyPlaceholder<T>
+{
+	type Key = ValidatorId;
+
+	fn on_genesis_session<'a, I: 'a>(_validators: I) where
+		I: Iterator<Item = (&'a T::AccountId, ValidatorId)>,
+		T::AccountId: 'a
+	{
+
+	}
+
+	fn on_new_session<'a, I: 'a>(_changed: bool, _v: I, _q: I) where
+		I: Iterator<Item = (&'a T::AccountId, ValidatorId)>,
+		T::AccountId: 'a
+	{
+
+	}
+
+	fn on_disabled(_: usize) { }
+}
