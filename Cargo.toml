@@ -11,6 +11,7 @@ members = [
     "xcm/xcm-builder",
     "node/primitives",
     "node/subsystem",
+    "node/subsystem-util",
     "node/network/protocol",
     "runtime/common",
     "runtime/parachains",
