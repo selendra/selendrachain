@@ -1698,6 +1698,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "indracore-node-primitives"
+version = "0.1.0"
+dependencies = [
+ "futures 0.3.12",
+ "indracore-primitives",
+ "indracore-statement-table",
+ "parity-scale-codec 1.3.6",
+ "sp-core",
+]
+
+[[package]]
 name = "indracore-parachain"
 version = "0.1.0"
 dependencies = [
