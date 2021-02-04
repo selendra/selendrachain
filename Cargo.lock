@@ -1694,6 +1694,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "indracore-collator-protocol"
+version = "0.1.0"
+dependencies = [
+ "futures 0.3.12",
+ "indracore-node-network-protocol",
+ "indracore-node-subsystem",
+ "indracore-node-subsystem-util",
+ "indracore-primitives",
+ "thiserror",
+ "tracing",
+ "tracing-futures",
+]
+
+[[package]]
 name = "indracore-core-primitives"
 version = "0.1.0"
 dependencies = [
