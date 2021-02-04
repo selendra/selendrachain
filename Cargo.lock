@@ -1719,6 +1719,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "indracore-node-subsystem"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "derive_more",
+ "futures 0.3.12",
+ "futures-timer 3.0.2",
+ "indracore-node-network-protocol",
+ "indracore-node-primitives",
+ "indracore-primitives",
+ "indracore-statement-table",
+ "parity-scale-codec 1.3.6",
+ "parking_lot 0.11.1",
+ "pin-project 1.0.4",
+ "sc-network",
+ "smallvec 1.6.1",
+ "sp-core",
+ "substrate-prometheus-endpoint",
+ "thiserror",
+ "tracing",
+ "tracing-futures",
+]
+
+[[package]]
 name = "indracore-parachain"
 version = "0.1.0"
 dependencies = [
