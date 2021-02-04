@@ -1698,6 +1698,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "indracore-node-network-protocol"
+version = "0.1.0"
+dependencies = [
+ "indracore-node-primitives",
+ "indracore-primitives",
+ "parity-scale-codec 1.3.6",
+ "sc-network",
+]
+
+[[package]]
 name = "indracore-node-primitives"
 version = "0.1.0"
 dependencies = [

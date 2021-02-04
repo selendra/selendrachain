@@ -1,0 +1,13 @@
+[package]
+name = "indracore-node-network-protocol"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+description = "Primitives types for the Node-side"
+edition = "2018"
+
+
+[dependencies]
+indracore-primitives = { path = "../../../primitives" }
+indracore-node-primitives = { path = "../../primitives" }
+parity-scale-codec = { version = "1.3.5", default-features = false, features = ["derive"] }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }

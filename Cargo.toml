@@ -10,6 +10,7 @@ members = [
     "xcm/xcm-executor",
     "xcm/xcm-builder",
     "node/primitives",
+    "node/network/protocol",
     "runtime/common",
     "runtime/parachains",
     "runtime/indracore",
