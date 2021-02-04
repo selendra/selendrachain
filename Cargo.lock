@@ -1716,6 +1716,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "indracore-network-bridge"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "futures 0.3.12",
+ "indracore-node-network-protocol",
+ "indracore-node-subsystem",
+ "indracore-primitives",
+ "parity-scale-codec 1.3.6",
+ "sc-authority-discovery",
+ "sc-network",
+ "tracing",
+ "tracing-futures",
+]
+
+[[package]]
 name = "indracore-node-collation-generation"
 version = "0.1.0"
 dependencies = [
@@ -4273,6 +4289,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "sc-authority-discovery"
+version = "0.8.0"
+source = "git+https://github.com/selendra/substrate?branch=v2.0.1#004c0dd6d8f6f1e749107644612aaeae1da59baf"
+dependencies = [
+ "async-trait",
+ "derive_more",
+ "either",
+ "futures 0.3.12",
+ "futures-timer 3.0.2",
+ "libp2p",
+ "log",
+ "parity-scale-codec 1.3.6",
+ "prost",
+ "prost-build",
+ "rand 0.7.3",
+ "sc-client-api",
+ "sc-network",
+ "serde_json",
+ "sp-api",
+ "sp-authority-discovery",
+ "sp-blockchain",
+ "sp-core",
+ "sp-keystore",
+ "sp-runtime",
+ "substrate-prometheus-endpoint",
+]
+
+[[package]]
 name = "sc-block-builder"
 version = "0.8.0"
 source = "git+https://github.com/selendra/substrate?branch=v2.0.1#004c0dd6d8f6f1e749107644612aaeae1da59baf"
@@ -6259,7 +6303,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.7.3",
+ "rand 0.3.23",
  "static_assertions",
 ]
 

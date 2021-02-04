@@ -15,6 +15,7 @@ members = [
     "node/collation-generation",
     "node/network/protocol",
     "node/network/availability-distribution",
+    "node/network/bridge",
     "runtime/common",
     "runtime/parachains",
     "runtime/indracore",
