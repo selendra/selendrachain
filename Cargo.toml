@@ -4,6 +4,7 @@ members = [
     "parachain",
     "primitives",
     "xcm",
+    "xcm/xcm-executor",
     "runtime/common",
     "runtime/indracore",
     "rpc"
