@@ -1,0 +1,76 @@
+[package]
+name = "indracore-runtime-parachains"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+bitvec = { version = "0.17.4", default-features = false, features = ["alloc"] }
+parity-scale-codec = { version = "1.3.5", default-features = false, features = ["derive"] }
+log = "0.4.11"
+rustc-hex = { version = "2.1.0", default-features = false }
+serde = { version = "1.0.118", features = [ "derive" ], optional = true }
+derive_more = "0.99.11"
+rand = { version = "0.7.3", default-features = false }
+rand_chacha = { version = "0.2.2", default-features = false }
+
+sp-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+sp-inherents = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+sp-std = { package = "sp-std", git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+sp-io = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+sp-runtime = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+sp-session = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+sp-staking = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", optional = true }
+
+frame-benchmarking = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false, optional = true }
+frame-system = {git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+frame-support = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+pallet-session = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+pallet-authority-discovery = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+pallet-authorship = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+pallet-balances = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+pallet-staking = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+pallet-timestamp = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+pallet-vesting = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+pallet-offences = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+
+xcm = { package = "xcm", path = "../../xcm", default-features = false }
+primitives = { package = "indracore-primitives", path = "../../primitives", default-features = false }
+libsecp256k1 = { version = "0.3.5", default-features = false, optional = true }
+
+[features]
+default = ["std"]
+no_std = []
+std = [
+	"bitvec/std",
+	"parity-scale-codec/std",
+	"rustc-hex/std",
+	"serde",
+	"sp-inherents/std",
+	"sp-core/std",
+	"sp-api/std",
+	"sp-keystore",
+	"sp-std/std",
+	"sp-io/std",
+    "sp-runtime/std",
+	"sp-session/std",
+	"sp-staking/std",
+	"frame-support/std",
+    "frame-system/std",
+	"pallet-authorship/std",
+	"pallet-balances/std",
+	"pallet-session/std",
+	"pallet-staking/std",
+	"pallet-timestamp/std",
+	"pallet-vesting/std",
+	"xcm/std",
+    "primitives/std",
+]
+runtime-benchmarks = [
+	"libsecp256k1/hmac",
+	"frame-benchmarking",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+]

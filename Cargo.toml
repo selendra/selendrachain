@@ -3,12 +3,14 @@ members = [
 	"core-primitives",
     "parachain",
     "primitives",
+    "rpc",
     "xcm",
     "xcm/xcm-executor",
     "xcm/xcm-builder",
     "runtime/common",
+    "runtime/parachains",
     "runtime/indracore",
-    "rpc"
+    
 ]
 
 # make sure dev builds with backtrace do
