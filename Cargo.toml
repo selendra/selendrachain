@@ -7,6 +7,7 @@ members = [
     "xcm",
     "xcm/xcm-executor",
     "xcm/xcm-builder",
+    "erasure-coding",
     "runtime/common",
     "runtime/parachains",
     "runtime/indracore",

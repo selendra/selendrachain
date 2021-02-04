@@ -1686,6 +1686,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "indracore-erasure-coding"
+version = "0.1.0"
+dependencies = [
+ "indracore-primitives",
+ "parity-scale-codec 1.3.6",
+ "reed-solomon-erasure",
+ "sp-core",
+ "sp-trie",
+ "thiserror",
+]
+
+[[package]]
 name = "indracore-parachain"
 version = "0.1.0"
 dependencies = [
@@ -3978,6 +3990,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "05ec8ca9416c5ea37062b502703cd7fcb207736bc294f6e0cf367ac6fc234570"
 dependencies = [
  "bitflags",
+]
+
+[[package]]
+name = "reed-solomon-erasure"
+version = "4.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a415a013dd7c5d4221382329a5a3482566da675737494935cbbbcdec04662f9d"
+dependencies = [
+ "smallvec 1.6.1",
 ]
 
 [[package]]

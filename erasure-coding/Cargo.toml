@@ -1,0 +1,13 @@
+[package]
+name = "indracore-erasure-coding"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+reed_solomon = { package = "reed-solomon-erasure", version = "4.0.2" }
+thiserror = "1.0.22"
+parity-scale-codec = { version = "1.3.5", default-features = false, features = ["derive"] }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
+sp-trie = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
+primitives = { package = "indracore-primitives", path = "../primitives" }
