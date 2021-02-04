@@ -5,6 +5,7 @@ members = [
     "primitives",
     "xcm",
     "xcm/xcm-executor",
+    "xcm/xcm-builder",
     "runtime/common",
     "runtime/indracore",
     "rpc"
