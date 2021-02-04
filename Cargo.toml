@@ -1,6 +1,7 @@
 [workspace]
 members = [
 	"core-primitives",
+    "parachain",
     "runtime/common",
     "runtime/indracore",
     "rpc"

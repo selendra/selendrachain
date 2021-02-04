@@ -44,6 +44,9 @@ pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
 /// The type for looking up accounts. We don't expect more than 4 billion of them.
 pub type AccountIndex = u32;
 
+/// Identifier for a chain. 32-bit should be plenty.
+pub type ChainId = u32;
+
 /// A hash of some data used by the relay chain.
 pub type Hash = sp_core::H256;
 
@@ -83,3 +86,50 @@ pub type BlockId = generic::BlockId<Block>;
 
 /// Opaque, encoded, unchecked extrinsic.
 pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+
+/// The information that goes alongside a transfer_into_parachain operation. Entirely opaque, it
+/// will generally be used for identifying the reason for the transfer. Typically it will hold the
+/// destination account to which the transfer should be credited. If still more information is
+/// needed, then this should be a hash with the pre-image presented via an off-chain mechanism on
+/// the parachain.
+pub type Remark = [u8; 32];
+
+/// A message sent from the relay-chain down to a parachain.
+///
+/// The size of the message is limited by the `config.max_downward_message_size` parameter.
+pub type DownwardMessage = sp_std::vec::Vec<u8>;
+
+/// A wrapped version of `DownwardMessage`. The difference is that it has attached the block number when
+/// the message was sent.
+#[derive(Encode, Decode, Clone, sp_runtime::RuntimeDebug, PartialEq)]
+pub struct InboundDownwardMessage<BlockNumber = crate::BlockNumber> {
+	/// The block number at which this messages was put into the downward message queue.
+	pub sent_at: BlockNumber,
+	/// The actual downward message to processes.
+	pub msg: DownwardMessage,
+}
+
+/// An HRMP message seen from the perspective of a recipient.
+#[derive(Encode, Decode, Clone, sp_runtime::RuntimeDebug, PartialEq)]
+pub struct InboundHrmpMessage<BlockNumber = crate::BlockNumber> {
+	/// The block number at which this message was sent.
+	/// Specifically, it is the block number at which the candidate that sends this message was
+	/// enacted.
+	pub sent_at: BlockNumber,
+	/// The message payload.
+	pub data: sp_std::vec::Vec<u8>,
+}
+
+/// An HRMP message seen from the perspective of a sender.
+#[derive(Encode, Decode, Clone, sp_runtime::RuntimeDebug, PartialEq, Eq, Hash)]
+pub struct OutboundHrmpMessage<Id> {
+	/// The para that will get this message in its downward message queue.
+	pub recipient: Id,
+	/// The message payload.
+	pub data: sp_std::vec::Vec<u8>,
+}
+
+/// V1 primitives.
+pub mod v1 {
+	pub use super::*;
+}
