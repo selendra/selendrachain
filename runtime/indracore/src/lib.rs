@@ -65,7 +65,7 @@ use pallet_transaction_payment::CurrencyAdapter;
 use pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo;
 use pallet_session::historical as session_historical;
 
-use primitives::{
+use primitives::v1::{
     AccountId, AccountIndex, Balance, BlockNumber,
     Moment, Nonce, Signature, Hash,
 };
@@ -847,7 +847,7 @@ impl frame_support::traits::OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
-		NodeBlock = primitives::Block,
+		NodeBlock = primitives::v1::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		// Basic stuff; balances is uncallable initially.

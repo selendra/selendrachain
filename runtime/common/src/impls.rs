@@ -24,8 +24,8 @@ pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for ToAuthor<R>
 where
 	R: pallet_balances::Config + pallet_authorship::Config,
-	<R as frame_system::Config>::AccountId: From<primitives::AccountId>,
-	<R as frame_system::Config>::AccountId: Into<primitives::AccountId>,
+	<R as frame_system::Config>::AccountId: From<primitives::v1::AccountId>,
+	<R as frame_system::Config>::AccountId: Into<primitives::v1::AccountId>,
 	<R as frame_system::Config>::Event: From<pallet_balances::RawEvent<
 		<R as frame_system::Config>::AccountId,
 		<R as pallet_balances::Config>::Balance,
@@ -45,8 +45,8 @@ impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
 where
 	R: pallet_balances::Config + pallet_treasury::Config + pallet_authorship::Config,
 	pallet_treasury::Module<R>: OnUnbalanced<NegativeImbalance<R>>,
-	<R as frame_system::Config>::AccountId: From<primitives::AccountId>,
-	<R as frame_system::Config>::AccountId: Into<primitives::AccountId>,
+	<R as frame_system::Config>::AccountId: From<primitives::v1::AccountId>,
+	<R as frame_system::Config>::AccountId: Into<primitives::v1::AccountId>,
 	<R as frame_system::Config>::Event: From<pallet_balances::RawEvent<
 		<R as frame_system::Config>::AccountId,
 		<R as pallet_balances::Config>::Balance,

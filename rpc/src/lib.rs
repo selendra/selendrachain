@@ -20,7 +20,7 @@
 
 use std::sync::Arc;
 
-use indracore_primitives::{Block, BlockNumber, AccountId, Nonce, Balance, Hash};
+use indracore_primitives::v1::{Block, BlockNumber, AccountId, Nonce, Balance, Hash};
 use sp_api::ProvideRuntimeApi;
 use sp_transaction_pool::TransactionPool;
 use sp_block_builder::BlockBuilder;

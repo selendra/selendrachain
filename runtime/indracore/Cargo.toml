@@ -68,7 +68,7 @@ pallet-offences-benchmarking = { git = "https://github.com/selendra/substrate", 
 pallet-session-benchmarking = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false, optional = true }
 
 runtime-common = { package = "indracore-runtime-common", path = "../common", default-features = false }
-primitives = { package = "indracore-core-primitives", path = "../../core-primitives", default-features = false }
+primitives = { package = "indracore-primitives", path = "../../primitives", default-features = false }
 
 [build-dependencies]
 substrate-wasm-builder = "3.0.0"
