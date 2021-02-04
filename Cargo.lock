@@ -1901,6 +1901,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "indracore-statement-table"
+version = "0.1.0"
+dependencies = [
+ "indracore-primitives",
+ "parity-scale-codec 1.3.6",
+ "sp-core",
+]
+
+[[package]]
 name = "instant"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"

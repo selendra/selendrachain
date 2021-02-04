@@ -1,0 +1,10 @@
+[package]
+name = "indracore-statement-table"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+parity-scale-codec = { version = "1.3.5", default-features = false, features = ["derive"] }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
+primitives = { package = "indracore-primitives", path = "../primitives" }
