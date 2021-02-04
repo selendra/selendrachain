@@ -21,10 +21,10 @@ sp-arithmetic = { git = "https://github.com/selendra/substrate", branch = "v2.0.
 sp-authority-discovery = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
 sp-runtime = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
 sp-trie = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
-
 frame-system = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
 
 indracore-core-primitives = { path = "../core-primitives", default-features = false }
+indracore-parachain = { path = "../parachain", default-features = false }
 
 [features]
 default = ["std"]
