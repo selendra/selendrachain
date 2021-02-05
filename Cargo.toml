@@ -9,6 +9,7 @@ members = [
     "xcm",
     "xcm/xcm-executor",
     "xcm/xcm-builder",
+    "node/service",
     "node/primitives",
     "node/subsystem",
     "node/overseer",
