@@ -16,11 +16,11 @@ members = [
     "node/network/protocol",
     "node/network/availability-distribution",
     "node/network/collator-protocol",
+    "node/network/pov-distribution",
     "node/network/bridge",
     "runtime/common",
     "runtime/parachains",
     "runtime/indracore",
-    
 ]
 
 # make sure dev builds with backtrace do
