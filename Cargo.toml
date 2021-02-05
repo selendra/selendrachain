@@ -22,6 +22,7 @@ members = [
     "node/network/pov-distribution",
     "node/network/bridge",
     "node/core/av-store",
+    "node/core/backing",
     "runtime/common",
     "runtime/parachains",
     "runtime/indracore",

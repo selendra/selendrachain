@@ -1,0 +1,19 @@
+[package]
+name = "indracore-node-core-backing"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+futures = "0.3.8"
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
+indracore-primitives = { path = "../../../primitives" }
+indracore-node-primitives = { path = "../../primitives" }
+indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
+indracore-node-subsystem-util = { path = "../../subsystem-util" }
+erasure-coding = { package = "indracore-erasure-coding", path = "../../../erasure-coding" }
+statement-table = { package = "indracore-statement-table", path = "../../../statement-table" }
+bitvec = { version = "0.17.4", default-features = false, features = ["alloc"] }
+tracing = "0.1.22"
+tracing-futures = "0.2.4"
+thiserror = "1.0.22"

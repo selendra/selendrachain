@@ -2175,6 +2175,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "indracore-node-core-backing"
+version = "0.1.0"
+dependencies = [
+ "bitvec 0.17.4",
+ "futures 0.3.12",
+ "indracore-erasure-coding",
+ "indracore-node-primitives",
+ "indracore-node-subsystem",
+ "indracore-node-subsystem-util",
+ "indracore-primitives",
+ "indracore-statement-table",
+ "sp-keystore",
+ "thiserror",
+ "tracing",
+ "tracing-futures",
+]
+
+[[package]]
 name = "indracore-node-network-protocol"
 version = "0.1.0"
 dependencies = [
