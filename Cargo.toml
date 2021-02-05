@@ -28,6 +28,7 @@ members = [
     "node/core/candidate-validation",
     "node/core/chain-api",
     "node/core/proposer",
+    "node/core/runtime-api",
     "runtime/common",
     "runtime/parachains",
     "runtime/indracore",
