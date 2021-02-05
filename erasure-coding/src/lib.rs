@@ -24,12 +24,15 @@
 //! f is the maximum number of faulty validators in the system.
 //! The data is coded so any f+1 chunks can be used to reconstruct the full data.
 
-use parity_scale_codec::{Encode, Decode};
-use reed_solomon::galois_16::{self, ReedSolomon};
-use primitives::v0::{self, Hash as H256, BlakeTwo256, HashT};
+use parity_scale_codec::{Decode, Encode};
+use primitives::v0::{self, BlakeTwo256, Hash as H256, HashT};
 use primitives::v1;
+use reed_solomon::galois_16::{self, ReedSolomon};
 use sp_core::Blake2Hasher;
-use sp_trie::{EMPTY_PREFIX, MemoryDB, Trie, TrieMut, trie_types::{TrieDBMut, TrieDB}};
+use sp_trie::{
+    trie_types::{TrieDB, TrieDBMut},
+    MemoryDB, Trie, TrieMut, EMPTY_PREFIX,
+};
 use thiserror::Error;
 
 use self::wrapped_shard::WrappedShard;
@@ -42,134 +45,141 @@ const MAX_VALIDATORS: usize = <galois_16::Field as reed_solomon::Field>::ORDER;
 /// Errors in erasure coding.
 #[derive(Debug, Clone, PartialEq, Error)]
 pub enum Error {
-	/// Returned when there are too many validators.
-	#[error("There are too many validators")]
-	TooManyValidators,
-	/// Cannot encode something for zero or one validator
-	#[error("Expected at least 2 validators")]
-	NotEnoughValidators,
-	/// Cannot reconstruct: wrong number of validators.
-	#[error("Validator count mismatches between encoding and decoding")]
-	WrongValidatorCount,
-	/// Not enough chunks present.
-	#[error("Not enough chunks to reconstruct message")]
-	NotEnoughChunks,
-	/// Too many chunks present.
-	#[error("Too many chunks present")]
-	TooManyChunks,
-	/// Chunks not of uniform length or the chunks are empty.
-	#[error("Chunks are not unform, mismatch in length or are zero sized")]
-	NonUniformChunks,
-	/// An uneven byte-length of a shard is not valid for GF(2^16) encoding.
-	#[error("Uneven length is not valid for field GF(2^16)")]
-	UnevenLength,
-	/// Chunk index out of bounds.
-	#[error("Chunk is out of bounds: {chunk_index} not included in 0..{n_validators}")]
-	ChunkIndexOutOfBounds{ chunk_index: usize, n_validators: usize },
-	/// Bad payload in reconstructed bytes.
-	#[error("Reconstructed payload invalid")]
-	BadPayload,
-	/// Invalid branch proof.
-	#[error("Invalid branch proof")]
-	InvalidBranchProof,
-	/// Branch out of bounds.
-	#[error("Branch is out of bounds")]
-	BranchOutOfBounds,
+    /// Returned when there are too many validators.
+    #[error("There are too many validators")]
+    TooManyValidators,
+    /// Cannot encode something for zero or one validator
+    #[error("Expected at least 2 validators")]
+    NotEnoughValidators,
+    /// Cannot reconstruct: wrong number of validators.
+    #[error("Validator count mismatches between encoding and decoding")]
+    WrongValidatorCount,
+    /// Not enough chunks present.
+    #[error("Not enough chunks to reconstruct message")]
+    NotEnoughChunks,
+    /// Too many chunks present.
+    #[error("Too many chunks present")]
+    TooManyChunks,
+    /// Chunks not of uniform length or the chunks are empty.
+    #[error("Chunks are not unform, mismatch in length or are zero sized")]
+    NonUniformChunks,
+    /// An uneven byte-length of a shard is not valid for GF(2^16) encoding.
+    #[error("Uneven length is not valid for field GF(2^16)")]
+    UnevenLength,
+    /// Chunk index out of bounds.
+    #[error("Chunk is out of bounds: {chunk_index} not included in 0..{n_validators}")]
+    ChunkIndexOutOfBounds {
+        chunk_index: usize,
+        n_validators: usize,
+    },
+    /// Bad payload in reconstructed bytes.
+    #[error("Reconstructed payload invalid")]
+    BadPayload,
+    /// Invalid branch proof.
+    #[error("Invalid branch proof")]
+    InvalidBranchProof,
+    /// Branch out of bounds.
+    #[error("Branch is out of bounds")]
+    BranchOutOfBounds,
 }
 
 #[derive(Debug, PartialEq)]
 struct CodeParams {
-	data_shards: usize,
-	parity_shards: usize,
+    data_shards: usize,
+    parity_shards: usize,
 }
 
 impl CodeParams {
-	// the shard length needed for a payload with initial size `base_len`.
-	fn shard_len(&self, base_len: usize) -> usize {
-		// how many bytes we actually need.
-		let needed_shard_len = base_len / self.data_shards
-			+ (base_len % self.data_shards != 0) as usize;
+    // the shard length needed for a payload with initial size `base_len`.
+    fn shard_len(&self, base_len: usize) -> usize {
+        // how many bytes we actually need.
+        let needed_shard_len =
+            base_len / self.data_shards + (base_len % self.data_shards != 0) as usize;
 
-		// round up to next even number
-		// (no actual space overhead since we are working in GF(2^16)).
-		needed_shard_len + needed_shard_len % 2
-	}
+        // round up to next even number
+        // (no actual space overhead since we are working in GF(2^16)).
+        needed_shard_len + needed_shard_len % 2
+    }
 
-	fn make_shards_for(&self, payload: &[u8]) -> Vec<WrappedShard> {
-		let shard_len = self.shard_len(payload.len());
-		let mut shards = vec![
-			WrappedShard::new(vec![0; shard_len]);
-			self.data_shards + self.parity_shards
-		];
+    fn make_shards_for(&self, payload: &[u8]) -> Vec<WrappedShard> {
+        let shard_len = self.shard_len(payload.len());
+        let mut shards =
+            vec![WrappedShard::new(vec![0; shard_len]); self.data_shards + self.parity_shards];
 
-		for (data_chunk, blank_shard) in payload.chunks(shard_len).zip(&mut shards) {
-			// fill the empty shards with the corresponding piece of the payload,
-			// zero-padded to fit in the shards.
-			let len = std::cmp::min(shard_len, data_chunk.len());
-			let blank_shard: &mut [u8] = blank_shard.as_mut();
-			blank_shard[..len].copy_from_slice(&data_chunk[..len]);
-		}
+        for (data_chunk, blank_shard) in payload.chunks(shard_len).zip(&mut shards) {
+            // fill the empty shards with the corresponding piece of the payload,
+            // zero-padded to fit in the shards.
+            let len = std::cmp::min(shard_len, data_chunk.len());
+            let blank_shard: &mut [u8] = blank_shard.as_mut();
+            blank_shard[..len].copy_from_slice(&data_chunk[..len]);
+        }
 
-		shards
-	}
+        shards
+    }
 
-	// make a reed-solomon instance.
-	fn make_encoder(&self) -> ReedSolomon {
-		ReedSolomon::new(self.data_shards, self.parity_shards)
-			.expect("this struct is not created with invalid shard number; qed")
-	}
+    // make a reed-solomon instance.
+    fn make_encoder(&self) -> ReedSolomon {
+        ReedSolomon::new(self.data_shards, self.parity_shards)
+            .expect("this struct is not created with invalid shard number; qed")
+    }
 }
 
 fn code_params(n_validators: usize) -> Result<CodeParams, Error> {
-	if n_validators > MAX_VALIDATORS { return Err(Error::TooManyValidators) }
-	if n_validators <= 1 { return Err(Error::NotEnoughValidators) }
+    if n_validators > MAX_VALIDATORS {
+        return Err(Error::TooManyValidators);
+    }
+    if n_validators <= 1 {
+        return Err(Error::NotEnoughValidators);
+    }
 
-	let n_faulty = n_validators.saturating_sub(1) / 3;
-	let n_good = n_validators - n_faulty;
+    let n_faulty = n_validators.saturating_sub(1) / 3;
+    let n_good = n_validators - n_faulty;
 
-	Ok(CodeParams {
-		data_shards: n_faulty + 1,
-		parity_shards: n_good - 1,
-	})
+    Ok(CodeParams {
+        data_shards: n_faulty + 1,
+        parity_shards: n_good - 1,
+    })
 }
 
 /// Obtain erasure-coded chunks for v0 `AvailableData`, one for each validator.
 ///
 /// Works only up to 65536 validators, and `n_validators` must be non-zero.
-pub fn obtain_chunks_v0(n_validators: usize, data: &v0::AvailableData)
-	-> Result<Vec<Vec<u8>>, Error>
-{
-	obtain_chunks(n_validators, data)
+pub fn obtain_chunks_v0(
+    n_validators: usize,
+    data: &v0::AvailableData,
+) -> Result<Vec<Vec<u8>>, Error> {
+    obtain_chunks(n_validators, data)
 }
 
 /// Obtain erasure-coded chunks for v1 `AvailableData`, one for each validator.
 ///
 /// Works only up to 65536 validators, and `n_validators` must be non-zero.
-pub fn obtain_chunks_v1(n_validators: usize, data: &v1::AvailableData)
-	-> Result<Vec<Vec<u8>>, Error>
-{
-	obtain_chunks(n_validators, data)
+pub fn obtain_chunks_v1(
+    n_validators: usize,
+    data: &v1::AvailableData,
+) -> Result<Vec<Vec<u8>>, Error> {
+    obtain_chunks(n_validators, data)
 }
 
 /// Obtain erasure-coded chunks, one for each validator.
 ///
 /// Works only up to 65536 validators, and `n_validators` must be non-zero.
-fn obtain_chunks<T: Encode>(n_validators: usize, data: &T)
-	-> Result<Vec<Vec<u8>>, Error>
-{
-	let params = code_params(n_validators)?;
-	let encoded = data.encode();
+fn obtain_chunks<T: Encode>(n_validators: usize, data: &T) -> Result<Vec<Vec<u8>>, Error> {
+    let params = code_params(n_validators)?;
+    let encoded = data.encode();
 
-	if encoded.is_empty() {
-		return Err(Error::BadPayload);
-	}
+    if encoded.is_empty() {
+        return Err(Error::BadPayload);
+    }
 
-	let mut shards = params.make_shards_for(&encoded[..]);
+    let mut shards = params.make_shards_for(&encoded[..]);
 
-	params.make_encoder().encode(&mut shards[..])
-		.expect("Payload non-empty, shard sizes are uniform, and validator numbers checked; qed");
+    params
+        .make_encoder()
+        .encode(&mut shards[..])
+        .expect("Payload non-empty, shard sizes are uniform, and validator numbers checked; qed");
 
-	Ok(shards.into_iter().map(|w| w.into_inner()).collect())
+    Ok(shards.into_iter().map(|w| w.into_inner()).collect())
 }
 
 /// Reconstruct the v0 available data from a set of chunks.
@@ -179,11 +189,11 @@ fn obtain_chunks<T: Encode>(n_validators: usize, data: &T)
 /// are provided, recovery is not possible.
 ///
 /// Works only up to 65536 validators, and `n_validators` must be non-zero.
-pub fn reconstruct_v0<'a, I: 'a>(n_validators: usize, chunks: I)
-	-> Result<v0::AvailableData, Error>
-	where I: IntoIterator<Item=(&'a [u8], usize)>
+pub fn reconstruct_v0<'a, I: 'a>(n_validators: usize, chunks: I) -> Result<v0::AvailableData, Error>
+where
+    I: IntoIterator<Item = (&'a [u8], usize)>,
 {
-	reconstruct(n_validators, chunks)
+    reconstruct(n_validators, chunks)
 }
 
 /// Reconstruct the v1 available data from a set of chunks.
@@ -193,11 +203,11 @@ pub fn reconstruct_v0<'a, I: 'a>(n_validators: usize, chunks: I)
 /// are provided, recovery is not possible.
 ///
 /// Works only up to 65536 validators, and `n_validators` must be non-zero.
-pub fn reconstruct_v1<'a, I: 'a>(n_validators: usize, chunks: I)
-	-> Result<v1::AvailableData, Error>
-	where I: IntoIterator<Item=(&'a [u8], usize)>
+pub fn reconstruct_v1<'a, I: 'a>(n_validators: usize, chunks: I) -> Result<v1::AvailableData, Error>
+where
+    I: IntoIterator<Item = (&'a [u8], usize)>,
 {
-	reconstruct(n_validators, chunks)
+    reconstruct(n_validators, chunks)
 }
 
 /// Reconstruct decodable data from a set of chunks.
@@ -208,188 +218,204 @@ pub fn reconstruct_v1<'a, I: 'a>(n_validators: usize, chunks: I)
 ///
 /// Works only up to 65536 validators, and `n_validators` must be non-zero.
 fn reconstruct<'a, I: 'a, T: Decode>(n_validators: usize, chunks: I) -> Result<T, Error>
-	where I: IntoIterator<Item=(&'a [u8], usize)>
+where
+    I: IntoIterator<Item = (&'a [u8], usize)>,
 {
-	let params = code_params(n_validators)?;
-	let mut shards: Vec<Option<WrappedShard>> = vec![None; n_validators];
-	let mut shard_len = None;
-	for (chunk_data, chunk_idx) in chunks.into_iter().take(n_validators) {
-		if chunk_idx >= n_validators {
-			return Err(Error::ChunkIndexOutOfBounds{ chunk_index: chunk_idx, n_validators });
-		}
+    let params = code_params(n_validators)?;
+    let mut shards: Vec<Option<WrappedShard>> = vec![None; n_validators];
+    let mut shard_len = None;
+    for (chunk_data, chunk_idx) in chunks.into_iter().take(n_validators) {
+        if chunk_idx >= n_validators {
+            return Err(Error::ChunkIndexOutOfBounds {
+                chunk_index: chunk_idx,
+                n_validators,
+            });
+        }
 
-		let shard_len = shard_len.get_or_insert_with(|| chunk_data.len());
+        let shard_len = shard_len.get_or_insert_with(|| chunk_data.len());
 
-		if *shard_len % 2 != 0 {
-			return Err(Error::UnevenLength);
-		}
+        if *shard_len % 2 != 0 {
+            return Err(Error::UnevenLength);
+        }
 
-		if *shard_len != chunk_data.len() || *shard_len == 0 {
-			return Err(Error::NonUniformChunks);
-		}
+        if *shard_len != chunk_data.len() || *shard_len == 0 {
+            return Err(Error::NonUniformChunks);
+        }
 
-		shards[chunk_idx] = Some(WrappedShard::new(chunk_data.to_vec()));
-	}
+        shards[chunk_idx] = Some(WrappedShard::new(chunk_data.to_vec()));
+    }
 
-	if let Err(e) = params.make_encoder().reconstruct(&mut shards[..]) {
-		match e {
-			reed_solomon::Error::TooFewShardsPresent => Err(Error::NotEnoughChunks)?,
-			reed_solomon::Error::InvalidShardFlags => Err(Error::WrongValidatorCount)?,
-			reed_solomon::Error::TooManyShards => Err(Error::TooManyChunks)?,
-			reed_solomon::Error::EmptyShard => panic!("chunks are all non-empty; this is checked above; qed"),
-			reed_solomon::Error::IncorrectShardSize => panic!("chunks are all same len; this is checked above; qed"),
-			_ => panic!("reed_solomon encoder returns no more variants for this function; qed"),
-		}
-	}
+    if let Err(e) = params.make_encoder().reconstruct(&mut shards[..]) {
+        match e {
+            reed_solomon::Error::TooFewShardsPresent => Err(Error::NotEnoughChunks)?,
+            reed_solomon::Error::InvalidShardFlags => Err(Error::WrongValidatorCount)?,
+            reed_solomon::Error::TooManyShards => Err(Error::TooManyChunks)?,
+            reed_solomon::Error::EmptyShard => {
+                panic!("chunks are all non-empty; this is checked above; qed")
+            }
+            reed_solomon::Error::IncorrectShardSize => {
+                panic!("chunks are all same len; this is checked above; qed")
+            }
+            _ => panic!("reed_solomon encoder returns no more variants for this function; qed"),
+        }
+    }
 
-	// lazily decode from the data shards.
-	Decode::decode(&mut ShardInput {
-		remaining_len: shard_len.map(|s| s * params.data_shards).unwrap_or(0),
-		cur_shard: None,
-		shards: shards.iter()
-			.map(|x| x.as_ref())
-			.take(params.data_shards)
-			.map(|x| x.expect("all data shards have been recovered; qed"))
-			.map(|x| x.as_ref()),
-	}).or_else(|_| Err(Error::BadPayload))
+    // lazily decode from the data shards.
+    Decode::decode(&mut ShardInput {
+        remaining_len: shard_len.map(|s| s * params.data_shards).unwrap_or(0),
+        cur_shard: None,
+        shards: shards
+            .iter()
+            .map(|x| x.as_ref())
+            .take(params.data_shards)
+            .map(|x| x.expect("all data shards have been recovered; qed"))
+            .map(|x| x.as_ref()),
+    })
+    .or_else(|_| Err(Error::BadPayload))
 }
 
 /// An iterator that yields merkle branches and chunk data for all chunks to
 /// be sent to other validators.
 pub struct Branches<'a, I> {
-	trie_storage: MemoryDB<Blake2Hasher>,
-	root: H256,
-	chunks: &'a [I],
-	current_pos: usize,
+    trie_storage: MemoryDB<Blake2Hasher>,
+    root: H256,
+    chunks: &'a [I],
+    current_pos: usize,
 }
 
 impl<'a, I: AsRef<[u8]>> Branches<'a, I> {
-	/// Get the trie root.
-	pub fn root(&self) -> H256 { self.root.clone() }
+    /// Get the trie root.
+    pub fn root(&self) -> H256 {
+        self.root.clone()
+    }
 }
 
 impl<'a, I: AsRef<[u8]>> Iterator for Branches<'a, I> {
-	type Item = (Vec<Vec<u8>>, &'a [u8]);
+    type Item = (Vec<Vec<u8>>, &'a [u8]);
 
-	fn next(&mut self) -> Option<Self::Item> {
-		use sp_trie::Recorder;
+    fn next(&mut self) -> Option<Self::Item> {
+        use sp_trie::Recorder;
 
-		let trie = TrieDB::new(&self.trie_storage, &self.root)
+        let trie = TrieDB::new(&self.trie_storage, &self.root)
 			.expect("`Branches` is only created with a valid memorydb that contains all nodes for the trie with given root; qed");
 
-		let mut recorder = Recorder::new();
-		let res = (self.current_pos as u32).using_encoded(|s|
-			trie.get_with(s, &mut recorder)
-		);
+        let mut recorder = Recorder::new();
+        let res = (self.current_pos as u32).using_encoded(|s| trie.get_with(s, &mut recorder));
 
-		match res.expect("all nodes in trie present; qed") {
-			Some(_) => {
-				let nodes = recorder.drain().into_iter().map(|r| r.data).collect();
-				let chunk = self.chunks.get(self.current_pos)
-					.expect("there is a one-to-one mapping of chunks to valid merkle branches; qed");
+        match res.expect("all nodes in trie present; qed") {
+            Some(_) => {
+                let nodes = recorder.drain().into_iter().map(|r| r.data).collect();
+                let chunk = self.chunks.get(self.current_pos).expect(
+                    "there is a one-to-one mapping of chunks to valid merkle branches; qed",
+                );
 
-				self.current_pos += 1;
-				Some((nodes, chunk.as_ref()))
-			}
-			None => None,
-		}
-	}
+                self.current_pos += 1;
+                Some((nodes, chunk.as_ref()))
+            }
+            None => None,
+        }
+    }
 }
 
 /// Construct a trie from chunks of an erasure-coded value. This returns the root hash and an
 /// iterator of merkle proofs, one for each validator.
 pub fn branches<'a, I: 'a>(chunks: &'a [I]) -> Branches<'a, I>
-	where I: AsRef<[u8]>,
+where
+    I: AsRef<[u8]>,
 {
-	let mut trie_storage: MemoryDB<Blake2Hasher> = MemoryDB::default();
-	let mut root = H256::default();
+    let mut trie_storage: MemoryDB<Blake2Hasher> = MemoryDB::default();
+    let mut root = H256::default();
 
-	// construct trie mapping each chunk's index to its hash.
-	{
-		let mut trie = TrieDBMut::new(&mut trie_storage, &mut root);
-		for (i, chunk) in chunks.as_ref().iter().enumerate() {
-			(i as u32).using_encoded(|encoded_index| {
-				let chunk_hash = BlakeTwo256::hash(chunk.as_ref());
-				trie.insert(encoded_index, chunk_hash.as_ref())
-					.expect("a fresh trie stored in memory cannot have errors loading nodes; qed");
-			})
-		}
-	}
+    // construct trie mapping each chunk's index to its hash.
+    {
+        let mut trie = TrieDBMut::new(&mut trie_storage, &mut root);
+        for (i, chunk) in chunks.as_ref().iter().enumerate() {
+            (i as u32).using_encoded(|encoded_index| {
+                let chunk_hash = BlakeTwo256::hash(chunk.as_ref());
+                trie.insert(encoded_index, chunk_hash.as_ref())
+                    .expect("a fresh trie stored in memory cannot have errors loading nodes; qed");
+            })
+        }
+    }
 
-	Branches {
-		trie_storage,
-		root,
-		chunks: chunks,
-		current_pos: 0,
-	}
+    Branches {
+        trie_storage,
+        root,
+        chunks: chunks,
+        current_pos: 0,
+    }
 }
 
 /// Verify a merkle branch, yielding the chunk hash meant to be present at that
 /// index.
 pub fn branch_hash(root: &H256, branch_nodes: &[Vec<u8>], index: usize) -> Result<H256, Error> {
-	let mut trie_storage: MemoryDB<Blake2Hasher> = MemoryDB::default();
-	for node in branch_nodes.iter() {
-		(&mut trie_storage as &mut sp_trie::HashDB<_>).insert(EMPTY_PREFIX, node.as_slice());
-	}
+    let mut trie_storage: MemoryDB<Blake2Hasher> = MemoryDB::default();
+    for node in branch_nodes.iter() {
+        (&mut trie_storage as &mut sp_trie::HashDB<_>).insert(EMPTY_PREFIX, node.as_slice());
+    }
 
-	let trie = TrieDB::new(&trie_storage, &root).map_err(|_| Error::InvalidBranchProof)?;
-	let res = (index as u32).using_encoded(|key|
-		trie.get_with(key, |raw_hash: &[u8]| H256::decode(&mut &raw_hash[..]))
-	);
+    let trie = TrieDB::new(&trie_storage, &root).map_err(|_| Error::InvalidBranchProof)?;
+    let res = (index as u32).using_encoded(|key| {
+        trie.get_with(key, |raw_hash: &[u8]| H256::decode(&mut &raw_hash[..]))
+    });
 
-	match res {
-		Ok(Some(Ok(hash))) => Ok(hash),
-		Ok(Some(Err(_))) => Err(Error::InvalidBranchProof), // hash failed to decode
-		Ok(None) => Err(Error::BranchOutOfBounds),
-		Err(_) => Err(Error::InvalidBranchProof),
-	}
+    match res {
+        Ok(Some(Ok(hash))) => Ok(hash),
+        Ok(Some(Err(_))) => Err(Error::InvalidBranchProof), // hash failed to decode
+        Ok(None) => Err(Error::BranchOutOfBounds),
+        Err(_) => Err(Error::InvalidBranchProof),
+    }
 }
 
 // input for `codec` which draws data from the data shards
 struct ShardInput<'a, I> {
-	remaining_len: usize,
-	shards: I,
-	cur_shard: Option<(&'a [u8], usize)>,
+    remaining_len: usize,
+    shards: I,
+    cur_shard: Option<(&'a [u8], usize)>,
 }
 
-impl<'a, I: Iterator<Item=&'a [u8]>> parity_scale_codec::Input for ShardInput<'a, I> {
-	fn remaining_len(&mut self) -> Result<Option<usize>, parity_scale_codec::Error> {
-		Ok(Some(self.remaining_len))
-	}
+impl<'a, I: Iterator<Item = &'a [u8]>> parity_scale_codec::Input for ShardInput<'a, I> {
+    fn remaining_len(&mut self) -> Result<Option<usize>, parity_scale_codec::Error> {
+        Ok(Some(self.remaining_len))
+    }
 
-	fn read(&mut self, into: &mut [u8]) -> Result<(), parity_scale_codec::Error> {
-		let mut read_bytes = 0;
+    fn read(&mut self, into: &mut [u8]) -> Result<(), parity_scale_codec::Error> {
+        let mut read_bytes = 0;
 
-		loop {
-			if read_bytes == into.len() { break }
+        loop {
+            if read_bytes == into.len() {
+                break;
+            }
 
-			let cur_shard = self.cur_shard.take().or_else(|| self.shards.next().map(|s| (s, 0)));
-			let (active_shard, mut in_shard) = match cur_shard {
-				Some((s, i)) => (s, i),
-				None => break,
-			};
+            let cur_shard = self
+                .cur_shard
+                .take()
+                .or_else(|| self.shards.next().map(|s| (s, 0)));
+            let (active_shard, mut in_shard) = match cur_shard {
+                Some((s, i)) => (s, i),
+                None => break,
+            };
 
-			if in_shard >= active_shard.len() {
-				continue;
-			}
+            if in_shard >= active_shard.len() {
+                continue;
+            }
 
-			let remaining_len_out = into.len() - read_bytes;
-			let remaining_len_shard = active_shard.len() - in_shard;
+            let remaining_len_out = into.len() - read_bytes;
+            let remaining_len_shard = active_shard.len() - in_shard;
 
-			let write_len = std::cmp::min(remaining_len_out, remaining_len_shard);
-			into[read_bytes..][..write_len]
-				.copy_from_slice(&active_shard[in_shard..][..write_len]);
+            let write_len = std::cmp::min(remaining_len_out, remaining_len_shard);
+            into[read_bytes..][..write_len].copy_from_slice(&active_shard[in_shard..][..write_len]);
 
-			in_shard += write_len;
-			read_bytes += write_len;
-			self.cur_shard = Some((active_shard, in_shard))
-		}
+            in_shard += write_len;
+            read_bytes += write_len;
+            self.cur_shard = Some((active_shard, in_shard))
+        }
 
-		self.remaining_len -= read_bytes;
-		if read_bytes == into.len() {
-			Ok(())
-		} else {
-			Err("slice provided too big for input".into())
-		}
-	}
+        self.remaining_len -= read_bytes;
+        if read_bytes == into.len() {
+            Ok(())
+        } else {
+            Err("slice provided too big for input".into())
+        }
+    }
 }

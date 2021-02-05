@@ -43,9 +43,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod primitives;
 #[cfg(feature = "std")]
 pub mod wasm_executor;
-pub mod primitives;
 
 mod wasm_api;
 

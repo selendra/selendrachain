@@ -20,12 +20,18 @@
 //! Assuming the parameters are correct, this module provides a wrapper around
 //! a WASM VM for re-execution of a parachain candidate.
 
-use std::{any::{TypeId, Any}, path::PathBuf};
 use crate::primitives::{ValidationParams, ValidationResult};
 use parity_scale_codec::{Decode, Encode};
-use sp_core::{storage::{ChildInfo, TrackedStorageKey}, traits::{CallInWasm, SpawnNamed}};
+use sp_core::{
+    storage::{ChildInfo, TrackedStorageKey},
+    traits::{CallInWasm, SpawnNamed},
+};
 use sp_externalities::Extensions;
 use sp_wasm_interface::HostFunctions as _;
+use std::{
+    any::{Any, TypeId},
+    path::PathBuf,
+};
 
 #[cfg(not(any(target_os = "android", target_os = "unknown")))]
 pub use validation_host::{run_worker, ValidationPool, EXECUTION_TIMEOUT_SEC, WORKER_ARGS};
@@ -71,119 +77,121 @@ const MAX_VALIDATION_RESULT_HEADER_MEM: usize = MAX_CODE_MEM + 1024; // 16.001 M
 /// process. Also, running in process is convenient for testing.
 #[derive(Clone, Debug)]
 pub enum IsolationStrategy {
-	/// The validation worker is ran in a thread inside the same process.
-	InProcess,
-	/// The validation worker is ran using the process' executable and the subcommand `validation-worker` is passed
-	/// following by the address of the shared memory.
-	#[cfg(not(any(target_os = "android", target_os = "unknown")))]
-	ExternalProcessSelfHost(ValidationPool),
-	/// The validation worker is ran using the command provided and the argument provided. The address of the shared
-	/// memory is added at the end of the arguments.
-	#[cfg(not(any(target_os = "android", target_os = "unknown")))]
-	ExternalProcessCustomHost {
-		/// Validation pool.
-		pool: ValidationPool,
-		/// Path to the validation worker. The file must exists and be executable.
-		binary: PathBuf,
-		/// List of arguments passed to the validation worker. The address of the shared memory will be automatically
-		/// added after the arguments.
-		args: Vec<String>,
-	},
+    /// The validation worker is ran in a thread inside the same process.
+    InProcess,
+    /// The validation worker is ran using the process' executable and the subcommand `validation-worker` is passed
+    /// following by the address of the shared memory.
+    #[cfg(not(any(target_os = "android", target_os = "unknown")))]
+    ExternalProcessSelfHost(ValidationPool),
+    /// The validation worker is ran using the command provided and the argument provided. The address of the shared
+    /// memory is added at the end of the arguments.
+    #[cfg(not(any(target_os = "android", target_os = "unknown")))]
+    ExternalProcessCustomHost {
+        /// Validation pool.
+        pool: ValidationPool,
+        /// Path to the validation worker. The file must exists and be executable.
+        binary: PathBuf,
+        /// List of arguments passed to the validation worker. The address of the shared memory will be automatically
+        /// added after the arguments.
+        args: Vec<String>,
+    },
 }
 
 impl Default for IsolationStrategy {
-	fn default() -> Self {
-		#[cfg(not(any(target_os = "android", target_os = "unknown")))]
-		{
-			Self::ExternalProcessSelfHost(ValidationPool::new())
-		}
+    fn default() -> Self {
+        #[cfg(not(any(target_os = "android", target_os = "unknown")))]
+        {
+            Self::ExternalProcessSelfHost(ValidationPool::new())
+        }
 
-		#[cfg(any(target_os = "android", target_os = "unknown"))]
-		{
-			Self::InProcess
-		}
-	}
+        #[cfg(any(target_os = "android", target_os = "unknown"))]
+        {
+            Self::InProcess
+        }
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
 /// Candidate validation error.
 pub enum ValidationError {
-	/// Validation failed due to internal reasons. The candidate might still be valid.
-	#[error(transparent)]
-	Internal(#[from] InternalError),
-	/// Candidate is invalid.
-	#[error(transparent)]
-	InvalidCandidate(#[from] InvalidCandidate),
+    /// Validation failed due to internal reasons. The candidate might still be valid.
+    #[error(transparent)]
+    Internal(#[from] InternalError),
+    /// Candidate is invalid.
+    #[error(transparent)]
+    InvalidCandidate(#[from] InvalidCandidate),
 }
 
 /// Error type that indicates invalid candidate.
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidCandidate {
-	/// Wasm executor error.
-	#[error("WASM executor error")]
-	WasmExecutor(#[from] sc_executor::error::Error),
-	/// Call data is too large.
-	#[error("Validation parameters are {0} bytes, max allowed is {}", MAX_RUNTIME_MEM)]
-	ParamsTooLarge(usize),
-	/// Code size it too large.
-	#[error("WASM code is {0} bytes, max allowed is {}", MAX_CODE_MEM)]
-	CodeTooLarge(usize),
-	/// Error decoding returned data.
-	#[error("Validation function returned invalid data.")]
-	BadReturn,
-	#[error("Validation function timeout.")]
-	Timeout,
-	#[error("External WASM execution error: {0}")]
-	ExternalWasmExecutor(String),
+    /// Wasm executor error.
+    #[error("WASM executor error")]
+    WasmExecutor(#[from] sc_executor::error::Error),
+    /// Call data is too large.
+    #[error(
+        "Validation parameters are {0} bytes, max allowed is {}",
+        MAX_RUNTIME_MEM
+    )]
+    ParamsTooLarge(usize),
+    /// Code size it too large.
+    #[error("WASM code is {0} bytes, max allowed is {}", MAX_CODE_MEM)]
+    CodeTooLarge(usize),
+    /// Error decoding returned data.
+    #[error("Validation function returned invalid data.")]
+    BadReturn,
+    #[error("Validation function timeout.")]
+    Timeout,
+    #[error("External WASM execution error: {0}")]
+    ExternalWasmExecutor(String),
 }
 
 impl core::convert::From<String> for InvalidCandidate {
-	fn from(s: String) -> Self {
-		Self::ExternalWasmExecutor(s)
-	}
+    fn from(s: String) -> Self {
+        Self::ExternalWasmExecutor(s)
+    }
 }
 
 /// Host error during candidate validation. This does not indicate an invalid candidate.
 #[derive(Debug, thiserror::Error)]
 pub enum InternalError {
-	#[error("IO error: {0}")]
-	Io(#[from] std::io::Error),
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
 
-	#[error("System error: {0}")]
-	System(#[from] Box<dyn std::error::Error + Send + Sync + 'static>),
+    #[error("System error: {0}")]
+    System(#[from] Box<dyn std::error::Error + Send + Sync + 'static>),
 
-	#[cfg(not(any(target_os = "android", target_os = "unknown")))]
-	#[error("Shared memory error: {0}")]
-	SharedMem(#[from] shared_memory::SharedMemError),
+    #[cfg(not(any(target_os = "android", target_os = "unknown")))]
+    #[error("Shared memory error: {0}")]
+    SharedMem(#[from] shared_memory::SharedMemError),
 
-	#[error("WASM worker error: {0}")]
-	WasmWorker(String),
+    #[error("WASM worker error: {0}")]
+    WasmWorker(String),
 }
-
 
 /// Validate a candidate under the given validation code.
 ///
 /// This will fail if the validation code is not a proper parachain validation module.
 pub fn validate_candidate(
-	validation_code: &[u8],
-	params: ValidationParams,
-	isolation_strategy: &IsolationStrategy,
-	spawner: impl SpawnNamed + 'static,
+    validation_code: &[u8],
+    params: ValidationParams,
+    isolation_strategy: &IsolationStrategy,
+    spawner: impl SpawnNamed + 'static,
 ) -> Result<ValidationResult, ValidationError> {
-	match isolation_strategy {
-		IsolationStrategy::InProcess => {
-			validate_candidate_internal(validation_code, &params.encode(), spawner)
-		},
-		#[cfg(not(any(target_os = "android", target_os = "unknown")))]
-		IsolationStrategy::ExternalProcessSelfHost(pool) => {
-			pool.validate_candidate(validation_code, params)
-		},
-		#[cfg(not(any(target_os = "android", target_os = "unknown")))]
-		IsolationStrategy::ExternalProcessCustomHost { pool, binary, args } => {
-			let args: Vec<&str> = args.iter().map(|x| x.as_str()).collect();
-			pool.validate_candidate_custom(validation_code, params, binary, &args)
-		},
-	}
+    match isolation_strategy {
+        IsolationStrategy::InProcess => {
+            validate_candidate_internal(validation_code, &params.encode(), spawner)
+        }
+        #[cfg(not(any(target_os = "android", target_os = "unknown")))]
+        IsolationStrategy::ExternalProcessSelfHost(pool) => {
+            pool.validate_candidate(validation_code, params)
+        }
+        #[cfg(not(any(target_os = "android", target_os = "unknown")))]
+        IsolationStrategy::ExternalProcessCustomHost { pool, binary, args } => {
+            let args: Vec<&str> = args.iter().map(|x| x.as_str()).collect();
+            pool.validate_candidate_custom(validation_code, params, binary, &args)
+        }
+    }
 }
 
 /// The host functions provided by the wasm executor to the parachain wasm blob.
@@ -193,35 +201,37 @@ type HostFunctions = sp_io::SubstrateHostFunctions;
 ///
 /// This will fail if the validation code is not a proper parachain validation module.
 pub fn validate_candidate_internal(
-	validation_code: &[u8],
-	encoded_call_data: &[u8],
-	spawner: impl SpawnNamed + 'static,
+    validation_code: &[u8],
+    encoded_call_data: &[u8],
+    spawner: impl SpawnNamed + 'static,
 ) -> Result<ValidationResult, ValidationError> {
-	let executor = sc_executor::WasmExecutor::new(
-		sc_executor::WasmExecutionMethod::Interpreted,
-		// TODO: Make sure we don't use more than 1GB
-		Some(1024),
-		HostFunctions::host_functions(),
-		8
-	);
+    let executor = sc_executor::WasmExecutor::new(
+        sc_executor::WasmExecutionMethod::Interpreted,
+        // TODO: Make sure we don't use more than 1GB
+        Some(1024),
+        HostFunctions::host_functions(),
+        8,
+    );
 
-	let mut extensions = Extensions::new();
-	extensions.register(sp_core::traits::TaskExecutorExt::new(spawner));
-	extensions.register(sp_core::traits::CallInWasmExt::new(executor.clone()));
+    let mut extensions = Extensions::new();
+    extensions.register(sp_core::traits::TaskExecutorExt::new(spawner));
+    extensions.register(sp_core::traits::CallInWasmExt::new(executor.clone()));
 
-	let mut ext = ValidationExternalities(extensions);
+    let mut ext = ValidationExternalities(extensions);
 
-	let res = executor.call_in_wasm(
-		validation_code,
-		None,
-		"validate_block",
-		encoded_call_data,
-		&mut ext,
-		sp_core::traits::MissingHostFunctions::Allow,
-	).map_err(|e| ValidationError::InvalidCandidate(e.into()))?;
+    let res = executor
+        .call_in_wasm(
+            validation_code,
+            None,
+            "validate_block",
+            encoded_call_data,
+            &mut ext,
+            sp_core::traits::MissingHostFunctions::Allow,
+        )
+        .map_err(|e| ValidationError::InvalidCandidate(e.into()))?;
 
-	ValidationResult::decode(&mut &res[..])
-		.map_err(|_| ValidationError::InvalidCandidate(InvalidCandidate::BadReturn).into())
+    ValidationResult::decode(&mut &res[..])
+        .map_err(|_| ValidationError::InvalidCandidate(InvalidCandidate::BadReturn).into())
 }
 
 /// The validation externalities that will panic on any storage related access. They just provide
@@ -229,136 +239,132 @@ pub fn validate_candidate_internal(
 struct ValidationExternalities(Extensions);
 
 impl sp_externalities::Externalities for ValidationExternalities {
-	fn storage(&self, _: &[u8]) -> Option<Vec<u8>> {
-		panic!("storage: unsupported feature for parachain validation")
-	}
+    fn storage(&self, _: &[u8]) -> Option<Vec<u8>> {
+        panic!("storage: unsupported feature for parachain validation")
+    }
 
-	fn storage_hash(&self, _: &[u8]) -> Option<Vec<u8>> {
-		panic!("storage_hash: unsupported feature for parachain validation")
-	}
+    fn storage_hash(&self, _: &[u8]) -> Option<Vec<u8>> {
+        panic!("storage_hash: unsupported feature for parachain validation")
+    }
 
-	fn child_storage_hash(&self, _: &ChildInfo, _: &[u8]) -> Option<Vec<u8>> {
-		panic!("child_storage_hash: unsupported feature for parachain validation")
-	}
+    fn child_storage_hash(&self, _: &ChildInfo, _: &[u8]) -> Option<Vec<u8>> {
+        panic!("child_storage_hash: unsupported feature for parachain validation")
+    }
 
-	fn child_storage(&self, _: &ChildInfo, _: &[u8]) -> Option<Vec<u8>> {
-		panic!("child_storage: unsupported feature for parachain validation")
-	}
+    fn child_storage(&self, _: &ChildInfo, _: &[u8]) -> Option<Vec<u8>> {
+        panic!("child_storage: unsupported feature for parachain validation")
+    }
 
-	fn kill_child_storage(&mut self, _: &ChildInfo, _: Option<u32>) -> bool {
-		panic!("kill_child_storage: unsupported feature for parachain validation")
-	}
+    fn kill_child_storage(&mut self, _: &ChildInfo, _: Option<u32>) -> bool {
+        panic!("kill_child_storage: unsupported feature for parachain validation")
+    }
 
-	fn clear_prefix(&mut self, _: &[u8]) {
-		panic!("clear_prefix: unsupported feature for parachain validation")
-	}
+    fn clear_prefix(&mut self, _: &[u8]) {
+        panic!("clear_prefix: unsupported feature for parachain validation")
+    }
 
-	fn clear_child_prefix(&mut self, _: &ChildInfo, _: &[u8]) {
-		panic!("clear_child_prefix: unsupported feature for parachain validation")
-	}
+    fn clear_child_prefix(&mut self, _: &ChildInfo, _: &[u8]) {
+        panic!("clear_child_prefix: unsupported feature for parachain validation")
+    }
 
-	fn place_storage(&mut self, _: Vec<u8>, _: Option<Vec<u8>>) {
-		panic!("place_storage: unsupported feature for parachain validation")
-	}
+    fn place_storage(&mut self, _: Vec<u8>, _: Option<Vec<u8>>) {
+        panic!("place_storage: unsupported feature for parachain validation")
+    }
 
-	fn place_child_storage(&mut self, _: &ChildInfo, _: Vec<u8>, _: Option<Vec<u8>>) {
-		panic!("place_child_storage: unsupported feature for parachain validation")
-	}
+    fn place_child_storage(&mut self, _: &ChildInfo, _: Vec<u8>, _: Option<Vec<u8>>) {
+        panic!("place_child_storage: unsupported feature for parachain validation")
+    }
 
-	fn chain_id(&self) -> u64 {
-		panic!("chain_id: unsupported feature for parachain validation")
-	}
+    fn chain_id(&self) -> u64 {
+        panic!("chain_id: unsupported feature for parachain validation")
+    }
 
-	fn storage_root(&mut self) -> Vec<u8> {
-		panic!("storage_root: unsupported feature for parachain validation")
-	}
+    fn storage_root(&mut self) -> Vec<u8> {
+        panic!("storage_root: unsupported feature for parachain validation")
+    }
 
-	fn child_storage_root(&mut self, _: &ChildInfo) -> Vec<u8> {
-		panic!("child_storage_root: unsupported feature for parachain validation")
-	}
+    fn child_storage_root(&mut self, _: &ChildInfo) -> Vec<u8> {
+        panic!("child_storage_root: unsupported feature for parachain validation")
+    }
 
-	fn storage_changes_root(&mut self, _: &[u8]) -> Result<Option<Vec<u8>>, ()> {
-		panic!("storage_changes_root: unsupported feature for parachain validation")
-	}
+    fn storage_changes_root(&mut self, _: &[u8]) -> Result<Option<Vec<u8>>, ()> {
+        panic!("storage_changes_root: unsupported feature for parachain validation")
+    }
 
-	fn next_child_storage_key(&self, _: &ChildInfo, _: &[u8]) -> Option<Vec<u8>> {
-		panic!("next_child_storage_key: unsupported feature for parachain validation")
-	}
+    fn next_child_storage_key(&self, _: &ChildInfo, _: &[u8]) -> Option<Vec<u8>> {
+        panic!("next_child_storage_key: unsupported feature for parachain validation")
+    }
 
-	fn next_storage_key(&self, _: &[u8]) -> Option<Vec<u8>> {
-		panic!("next_storage_key: unsupported feature for parachain validation")
-	}
+    fn next_storage_key(&self, _: &[u8]) -> Option<Vec<u8>> {
+        panic!("next_storage_key: unsupported feature for parachain validation")
+    }
 
-	fn storage_append(
-		&mut self,
-		_key: Vec<u8>,
-		_value: Vec<u8>,
-	) {
-		panic!("storage_append: unsupported feature for parachain validation")
-	}
+    fn storage_append(&mut self, _key: Vec<u8>, _value: Vec<u8>) {
+        panic!("storage_append: unsupported feature for parachain validation")
+    }
 
-	fn storage_start_transaction(&mut self) {
-		panic!("storage_start_transaction: unsupported feature for parachain validation")
-	}
+    fn storage_start_transaction(&mut self) {
+        panic!("storage_start_transaction: unsupported feature for parachain validation")
+    }
 
-	fn storage_rollback_transaction(&mut self) -> Result<(), ()> {
-		panic!("storage_rollback_transaction: unsupported feature for parachain validation")
-	}
+    fn storage_rollback_transaction(&mut self) -> Result<(), ()> {
+        panic!("storage_rollback_transaction: unsupported feature for parachain validation")
+    }
 
-	fn storage_commit_transaction(&mut self) -> Result<(), ()> {
-		panic!("storage_commit_transaction: unsupported feature for parachain validation")
-	}
+    fn storage_commit_transaction(&mut self) -> Result<(), ()> {
+        panic!("storage_commit_transaction: unsupported feature for parachain validation")
+    }
 
-	fn wipe(&mut self) {
-		panic!("wipe: unsupported feature for parachain validation")
-	}
+    fn wipe(&mut self) {
+        panic!("wipe: unsupported feature for parachain validation")
+    }
 
-	fn commit(&mut self) {
-		panic!("commit: unsupported feature for parachain validation")
-	}
+    fn commit(&mut self) {
+        panic!("commit: unsupported feature for parachain validation")
+    }
 
-	fn read_write_count(&self) -> (u32, u32, u32, u32) {
-		panic!("read_write_count: unsupported feature for parachain validation")
-	}
+    fn read_write_count(&self) -> (u32, u32, u32, u32) {
+        panic!("read_write_count: unsupported feature for parachain validation")
+    }
 
-	fn reset_read_write_count(&mut self) {
-		panic!("reset_read_write_count: unsupported feature for parachain validation")
-	}
+    fn reset_read_write_count(&mut self) {
+        panic!("reset_read_write_count: unsupported feature for parachain validation")
+    }
 
-	fn get_whitelist(&self) -> Vec<TrackedStorageKey> {
-		panic!("get_whitelist: unsupported feature for parachain validation")
-	}
+    fn get_whitelist(&self) -> Vec<TrackedStorageKey> {
+        panic!("get_whitelist: unsupported feature for parachain validation")
+    }
 
-	fn set_whitelist(&mut self, _: Vec<TrackedStorageKey>) {
-		panic!("set_whitelist: unsupported feature for parachain validation")
-	}
+    fn set_whitelist(&mut self, _: Vec<TrackedStorageKey>) {
+        panic!("set_whitelist: unsupported feature for parachain validation")
+    }
 
-	fn set_offchain_storage(&mut self, _: &[u8], _: std::option::Option<&[u8]>) {
-		panic!("set_offchain_storage: unsupported feature for parachain validation")
-	}
+    fn set_offchain_storage(&mut self, _: &[u8], _: std::option::Option<&[u8]>) {
+        panic!("set_offchain_storage: unsupported feature for parachain validation")
+    }
 }
 
 impl sp_externalities::ExtensionStore for ValidationExternalities {
-	fn extension_by_type_id(&mut self, type_id: TypeId) -> Option<&mut dyn Any> {
-		self.0.get_mut(type_id)
-	}
+    fn extension_by_type_id(&mut self, type_id: TypeId) -> Option<&mut dyn Any> {
+        self.0.get_mut(type_id)
+    }
 
-	fn register_extension_with_type_id(
-		&mut self,
-		type_id: TypeId,
-		extension: Box<dyn sp_externalities::Extension>,
-	) -> Result<(), sp_externalities::Error> {
-		self.0.register_with_type_id(type_id, extension)
-	}
+    fn register_extension_with_type_id(
+        &mut self,
+        type_id: TypeId,
+        extension: Box<dyn sp_externalities::Extension>,
+    ) -> Result<(), sp_externalities::Error> {
+        self.0.register_with_type_id(type_id, extension)
+    }
 
-	fn deregister_extension_by_type_id(
-		&mut self,
-		type_id: TypeId,
-	) -> Result<(), sp_externalities::Error> {
-		if self.0.deregister(type_id) {
-			Ok(())
-		} else {
-			Err(sp_externalities::Error::ExtensionIsNotRegistered(type_id))
-		}
-	}
+    fn deregister_extension_by_type_id(
+        &mut self,
+        type_id: TypeId,
+    ) -> Result<(), sp_externalities::Error> {
+        if self.0.deregister(type_id) {
+            Ok(())
+        } else {
+            Err(sp_externalities::Error::ExtensionIsNotRegistered(type_id))
+        }
+    }
 }

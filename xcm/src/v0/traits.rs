@@ -17,51 +17,51 @@
 //! Cross-Consensus Message format data structures.
 
 use core::result;
-use parity_scale_codec::{Encode, Decode};
+use parity_scale_codec::{Decode, Encode};
 
 use super::{MultiLocation, Xcm};
 
 #[derive(Copy, Clone, Encode, Decode, Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub enum Error {
-	Undefined,
-	Unimplemented,
-	UnhandledXcmVersion,
-	UnhandledXcmMessage,
-	UnhandledEffect,
-	EscalationOfPrivilege,
-	UntrustedReserveLocation,
-	UntrustedTeleportLocation,
-	DestinationBufferOverflow,
-	CannotReachDestination,
-	MultiLocationFull,
-	FailedToDecode,
-	BadOrigin,
+    Undefined,
+    Unimplemented,
+    UnhandledXcmVersion,
+    UnhandledXcmMessage,
+    UnhandledEffect,
+    EscalationOfPrivilege,
+    UntrustedReserveLocation,
+    UntrustedTeleportLocation,
+    DestinationBufferOverflow,
+    CannotReachDestination,
+    MultiLocationFull,
+    FailedToDecode,
+    BadOrigin,
 }
 
 impl From<()> for Error {
-	fn from(_: ()) -> Self {
-		Self::Undefined
-	}
+    fn from(_: ()) -> Self {
+        Self::Undefined
+    }
 }
 
 pub type Result = result::Result<(), Error>;
 
 pub trait ExecuteXcm {
-	fn execute_xcm(origin: MultiLocation, msg: Xcm) -> Result;
+    fn execute_xcm(origin: MultiLocation, msg: Xcm) -> Result;
 }
 
 impl ExecuteXcm for () {
-	fn execute_xcm(_origin: MultiLocation, _msg: Xcm) -> Result {
-		Err(Error::Unimplemented)
-	}
+    fn execute_xcm(_origin: MultiLocation, _msg: Xcm) -> Result {
+        Err(Error::Unimplemented)
+    }
 }
 
 pub trait SendXcm {
-	fn send_xcm(dest: MultiLocation, msg: Xcm) -> Result;
+    fn send_xcm(dest: MultiLocation, msg: Xcm) -> Result;
 }
 
 impl SendXcm for () {
-	fn send_xcm(_dest: MultiLocation, _msg: Xcm) -> Result {
-		Err(Error::Unimplemented)
-	}
+    fn send_xcm(_dest: MultiLocation, _msg: Xcm) -> Result {
+        Err(Error::Unimplemented)
+    }
 }

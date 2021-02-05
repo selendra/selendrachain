@@ -23,41 +23,38 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod configuration;
+pub mod dmp;
+pub mod hrmp;
 pub mod inclusion;
 pub mod inclusion_inherent;
 pub mod initializer;
+pub mod origin;
 pub mod paras;
 pub mod scheduler;
 pub mod session_info;
-pub mod origin;
-pub mod dmp;
 pub mod ump;
-pub mod hrmp;
 
 pub mod runtime_api_impl;
 
 mod util;
 
-pub use origin::{Origin, ensure_parachain};
+pub use origin::{ensure_parachain, Origin};
 
 /// Schedule a para to be initialized at the start of the next session with the given genesis data.
 pub fn schedule_para_initialize<T: paras::Config>(
-	id: primitives::v1::Id,
-	genesis: paras::ParaGenesisArgs,
+    id: primitives::v1::Id,
+    genesis: paras::ParaGenesisArgs,
 ) {
-	<paras::Module<T>>::schedule_para_initialize(id, genesis);
+    <paras::Module<T>>::schedule_para_initialize(id, genesis);
 }
 
 /// Schedule a para to be cleaned up at the start of the next session.
 pub fn schedule_para_cleanup<T>(id: primitives::v1::Id)
 where
-	T: paras::Config
-	+ dmp::Config
-	+ ump::Config
-	+ hrmp::Config,
+    T: paras::Config + dmp::Config + ump::Config + hrmp::Config,
 {
-	<paras::Module<T>>::schedule_para_cleanup(id);
-	<dmp::Module<T>>::schedule_para_cleanup(id);
-	<ump::Module<T>>::schedule_para_cleanup(id);
-	<hrmp::Module<T>>::schedule_para_cleanup(id);
+    <paras::Module<T>>::schedule_para_cleanup(id);
+    <dmp::Module<T>>::schedule_para_cleanup(id);
+    <ump::Module<T>>::schedule_para_cleanup(id);
+    <hrmp::Module<T>>::schedule_para_cleanup(id);
 }

@@ -16,36 +16,39 @@
 
 //! Cross-Consensus Message format data structures.
 
-use core::{result, convert::TryFrom};
 use alloc::vec::Vec;
+use core::{convert::TryFrom, result};
 
-use parity_scale_codec::{self, Encode, Decode};
 use super::{MultiLocation, VersionedMultiAsset};
+use parity_scale_codec::{self, Decode, Encode};
 
 /// A general identifier for an instance of a non-fungible asset class.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, Debug)]
 pub enum AssetInstance {
-	/// Undefined - used if the NFA class has only one instance.
-	Undefined,
+    /// Undefined - used if the NFA class has only one instance.
+    Undefined,
 
-	/// A compact index. Technically this could be greater than u128, but this implementation supports only
-	/// values up to `2**128 - 1`.
-	Index { #[codec(compact)] id: u128 },
+    /// A compact index. Technically this could be greater than u128, but this implementation supports only
+    /// values up to `2**128 - 1`.
+    Index {
+        #[codec(compact)]
+        id: u128,
+    },
 
-	/// A 4-byte fixed-length datum.
-	Array4([u8; 4]),
+    /// A 4-byte fixed-length datum.
+    Array4([u8; 4]),
 
-	/// An 8-byte fixed-length datum.
-	Array8([u8; 8]),
+    /// An 8-byte fixed-length datum.
+    Array8([u8; 8]),
 
-	/// A 16-byte fixed-length datum.
-	Array16([u8; 16]),
+    /// A 16-byte fixed-length datum.
+    Array16([u8; 16]),
 
-	/// A 32-byte fixed-length datum.
-	Array32([u8; 32]),
+    /// A 32-byte fixed-length datum.
+    Array32([u8; 32]),
 
-	/// An arbitrary piece of data. Use only when necessary.
-	Blob(Vec<u8>),
+    /// An arbitrary piece of data. Use only when necessary.
+    Blob(Vec<u8>),
 }
 
 /// A single general identifier for an asset.
@@ -106,57 +109,71 @@ pub enum AssetInstance {
 ///
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, Debug)]
 pub enum MultiAsset {
-	/// No assets. Rarely used.
-	None,
+    /// No assets. Rarely used.
+    None,
 
-	/// All assets. Typically used for the subset of assets to be used for an `Order`, and in that context means
-	/// "all assets currently in holding".
-	All,
+    /// All assets. Typically used for the subset of assets to be used for an `Order`, and in that context means
+    /// "all assets currently in holding".
+    All,
 
-	/// All fungible assets. Typically used for the subset of assets to be used for an `Order`, and in that context
-	/// means "all fungible assets currently in holding".
-	AllFungible,
+    /// All fungible assets. Typically used for the subset of assets to be used for an `Order`, and in that context
+    /// means "all fungible assets currently in holding".
+    AllFungible,
 
-	/// All non-fungible assets. Typically used for the subset of assets to be used for an `Order`, and in that
-	/// context means "all non-fungible assets currently in holding".
-	AllNonFungible,
+    /// All non-fungible assets. Typically used for the subset of assets to be used for an `Order`, and in that
+    /// context means "all non-fungible assets currently in holding".
+    AllNonFungible,
 
-	/// All fungible assets of a given abstract asset `id`entifier.
-	AllAbstractFungible { id: Vec<u8> },
+    /// All fungible assets of a given abstract asset `id`entifier.
+    AllAbstractFungible { id: Vec<u8> },
 
-	/// All non-fungible assets of a given abstract asset `class`.
-	AllAbstractNonFungible { class: Vec<u8> },
+    /// All non-fungible assets of a given abstract asset `class`.
+    AllAbstractNonFungible { class: Vec<u8> },
 
-	/// All fungible assets of a given concrete asset `id`entifier.
-	AllConcreteFungible { id: MultiLocation },
+    /// All fungible assets of a given concrete asset `id`entifier.
+    AllConcreteFungible { id: MultiLocation },
 
-	/// All non-fungible assets of a given concrete asset `class`.
-	AllConcreteNonFungible { class: MultiLocation },
+    /// All non-fungible assets of a given concrete asset `class`.
+    AllConcreteNonFungible { class: MultiLocation },
 
-	/// Some specific `amount` of the fungible asset identified by an abstract `id`.
-	AbstractFungible { id: Vec<u8>, #[codec(compact)] amount: u128 },
+    /// Some specific `amount` of the fungible asset identified by an abstract `id`.
+    AbstractFungible {
+        id: Vec<u8>,
+        #[codec(compact)]
+        amount: u128,
+    },
 
-	/// Some specific `instance` of the non-fungible asset whose `class` is identified abstractly.
-	AbstractNonFungible { class: Vec<u8>, instance: AssetInstance },
+    /// Some specific `instance` of the non-fungible asset whose `class` is identified abstractly.
+    AbstractNonFungible {
+        class: Vec<u8>,
+        instance: AssetInstance,
+    },
 
-	/// Some specific `amount` of the fungible asset identified by an concrete `id`.
-	ConcreteFungible { id: MultiLocation, #[codec(compact)] amount: u128 },
+    /// Some specific `amount` of the fungible asset identified by an concrete `id`.
+    ConcreteFungible {
+        id: MultiLocation,
+        #[codec(compact)]
+        amount: u128,
+    },
 
-	/// Some specific `instance` of the non-fungible asset whose `class` is identified concretely.
-	ConcreteNonFungible { class: MultiLocation, instance: AssetInstance },
+    /// Some specific `instance` of the non-fungible asset whose `class` is identified concretely.
+    ConcreteNonFungible {
+        class: MultiLocation,
+        instance: AssetInstance,
+    },
 }
 
 impl From<MultiAsset> for VersionedMultiAsset {
-	fn from(x: MultiAsset) -> Self {
-		VersionedMultiAsset::V0(x)
-	}
+    fn from(x: MultiAsset) -> Self {
+        VersionedMultiAsset::V0(x)
+    }
 }
 
 impl TryFrom<VersionedMultiAsset> for MultiAsset {
-	type Error = ();
-	fn try_from(x: VersionedMultiAsset) -> result::Result<Self, ()> {
-		match x {
-			VersionedMultiAsset::V0(x) => Ok(x),
-		}
-	}
+    type Error = ();
+    fn try_from(x: VersionedMultiAsset) -> result::Result<Self, ()> {
+        match x {
+            VersionedMultiAsset::V0(x) => Ok(x),
+        }
+    }
 }

@@ -21,127 +21,137 @@
 //! as it has no initialization logic and its finalization logic depends only on the details of
 //! this module.
 
-use sp_std::prelude::*;
-use primitives::v1::{
-	BackedCandidate, SignedAvailabilityBitfields, INCLUSION_INHERENT_IDENTIFIER,
+use crate::{
+    inclusion,
+    scheduler::{self, FreedReason},
+    ump,
 };
 use frame_support::{
-	decl_error, decl_module, decl_storage, ensure,
-	dispatch::DispatchResult,
-	weights::{DispatchClass, Weight},
-	traits::Get,
+    decl_error, decl_module, decl_storage,
+    dispatch::DispatchResult,
+    ensure,
+    traits::Get,
+    weights::{DispatchClass, Weight},
 };
 use frame_system::ensure_none;
-use crate::{
-	inclusion,
-	scheduler::{self, FreedReason},
-	ump,
-};
-use sp_inherents::{InherentIdentifier, InherentData, MakeFatalError, ProvideInherent};
+use primitives::v1::{BackedCandidate, SignedAvailabilityBitfields, INCLUSION_INHERENT_IDENTIFIER};
+use sp_inherents::{InherentData, InherentIdentifier, MakeFatalError, ProvideInherent};
+use sp_std::prelude::*;
 
 pub trait Config: inclusion::Config + scheduler::Config {}
 
 decl_storage! {
-	trait Store for Module<T: Config> as ParaInclusionInherent {
-		/// Whether the inclusion inherent was included within this block.
-		///
-		/// The `Option<()>` is effectively a bool, but it never hits storage in the `None` variant
-		/// due to the guarantees of FRAME's storage APIs.
-		///
-		/// If this is `None` at the end of the block, we panic and render the block invalid.
-		Included: Option<()>;
-	}
+    trait Store for Module<T: Config> as ParaInclusionInherent {
+        /// Whether the inclusion inherent was included within this block.
+        ///
+        /// The `Option<()>` is effectively a bool, but it never hits storage in the `None` variant
+        /// due to the guarantees of FRAME's storage APIs.
+        ///
+        /// If this is `None` at the end of the block, we panic and render the block invalid.
+        Included: Option<()>;
+    }
 }
 
 decl_error! {
-	pub enum Error for Module<T: Config> {
-		/// Inclusion inherent called more than once per block.
-		TooManyInclusionInherents,
-	}
+    pub enum Error for Module<T: Config> {
+        /// Inclusion inherent called more than once per block.
+        TooManyInclusionInherents,
+    }
 }
 
 decl_module! {
-	/// The inclusion inherent module.
-	pub struct Module<T: Config> for enum Call where origin: <T as frame_system::Config>::Origin {
-		type Error = Error<T>;
+    /// The inclusion inherent module.
+    pub struct Module<T: Config> for enum Call where origin: <T as frame_system::Config>::Origin {
+        type Error = Error<T>;
 
-		fn on_initialize() -> Weight {
-			T::DbWeight::get().reads_writes(1, 1) // in on_finalize.
-		}
+        fn on_initialize() -> Weight {
+            T::DbWeight::get().reads_writes(1, 1) // in on_finalize.
+        }
 
-		fn on_finalize() {
-			if Included::take().is_none() {
-				panic!("Bitfields and heads must be included every block");
-			}
-		}
+        fn on_finalize() {
+            if Included::take().is_none() {
+                panic!("Bitfields and heads must be included every block");
+            }
+        }
 
-		/// Include backed candidates and bitfields.
-		#[weight = (1_000_000_000, DispatchClass::Mandatory)]
-		pub fn inclusion(
-			origin,
-			signed_bitfields: SignedAvailabilityBitfields,
-			backed_candidates: Vec<BackedCandidate<T::Hash>>,
-		) -> DispatchResult {
-			ensure_none(origin)?;
-			ensure!(!<Included>::exists(), Error::<T>::TooManyInclusionInherents);
+        /// Include backed candidates and bitfields.
+        #[weight = (1_000_000_000, DispatchClass::Mandatory)]
+        pub fn inclusion(
+            origin,
+            signed_bitfields: SignedAvailabilityBitfields,
+            backed_candidates: Vec<BackedCandidate<T::Hash>>,
+        ) -> DispatchResult {
+            ensure_none(origin)?;
+            ensure!(!<Included>::exists(), Error::<T>::TooManyInclusionInherents);
 
-			// Process new availability bitfields, yielding any availability cores whose
-			// work has now concluded.
-			let freed_concluded = <inclusion::Module<T>>::process_bitfields(
-				signed_bitfields,
-				<scheduler::Module<T>>::core_para,
-			)?;
+            // Process new availability bitfields, yielding any availability cores whose
+            // work has now concluded.
+            let freed_concluded = <inclusion::Module<T>>::process_bitfields(
+                signed_bitfields,
+                <scheduler::Module<T>>::core_para,
+            )?;
 
-			// Handle timeouts for any availability core work.
-			let availability_pred = <scheduler::Module<T>>::availability_timeout_predicate();
-			let freed_timeout = if let Some(pred) = availability_pred {
-				<inclusion::Module<T>>::collect_pending(pred)
-			} else {
-				Vec::new()
-			};
+            // Handle timeouts for any availability core work.
+            let availability_pred = <scheduler::Module<T>>::availability_timeout_predicate();
+            let freed_timeout = if let Some(pred) = availability_pred {
+                <inclusion::Module<T>>::collect_pending(pred)
+            } else {
+                Vec::new()
+            };
 
-			// Schedule paras again, given freed cores, and reasons for freeing.
-			let freed = freed_concluded.into_iter().map(|c| (c, FreedReason::Concluded))
-				.chain(freed_timeout.into_iter().map(|c| (c, FreedReason::TimedOut)));
+            // Schedule paras again, given freed cores, and reasons for freeing.
+            let freed = freed_concluded.into_iter().map(|c| (c, FreedReason::Concluded))
+                .chain(freed_timeout.into_iter().map(|c| (c, FreedReason::TimedOut)));
 
-			<scheduler::Module<T>>::schedule(freed);
+            <scheduler::Module<T>>::schedule(freed);
 
-			// Process backed candidates according to scheduled cores.
-			let occupied = <inclusion::Module<T>>::process_candidates(
-				backed_candidates,
-				<scheduler::Module<T>>::scheduled(),
-				<scheduler::Module<T>>::group_validators,
-			)?;
+            // Process backed candidates according to scheduled cores.
+            let occupied = <inclusion::Module<T>>::process_candidates(
+                backed_candidates,
+                <scheduler::Module<T>>::scheduled(),
+                <scheduler::Module<T>>::group_validators,
+            )?;
 
-			// Note which of the scheduled cores were actually occupied by a backed candidate.
-			<scheduler::Module<T>>::occupied(&occupied);
+            // Note which of the scheduled cores were actually occupied by a backed candidate.
+            <scheduler::Module<T>>::occupied(&occupied);
 
-			// Give some time slice to dispatch pending upward messages.
-			<ump::Module<T>>::process_pending_upward_messages();
+            // Give some time slice to dispatch pending upward messages.
+            <ump::Module<T>>::process_pending_upward_messages();
 
-			// And track that we've finished processing the inherent for this block.
-			Included::set(Some(()));
+            // And track that we've finished processing the inherent for this block.
+            Included::set(Some(()));
 
-			Ok(())
-		}
-	}
+            Ok(())
+        }
+    }
 }
 
 impl<T: Config> ProvideInherent for Module<T> {
-	type Call = Call<T>;
-	type Error = MakeFatalError<()>;
-	const INHERENT_IDENTIFIER: InherentIdentifier = INCLUSION_INHERENT_IDENTIFIER;
+    type Call = Call<T>;
+    type Error = MakeFatalError<()>;
+    const INHERENT_IDENTIFIER: InherentIdentifier = INCLUSION_INHERENT_IDENTIFIER;
 
-	fn create_inherent(data: &InherentData) -> Option<Self::Call> {
-		data.get_data(&Self::INHERENT_IDENTIFIER)
-			.expect("inclusion inherent data failed to decode")
-			.map(|(signed_bitfields, backed_candidates): (SignedAvailabilityBitfields, Vec<BackedCandidate<T::Hash>>)| {
-				// Sanity check: session changes can invalidate an inherent, and we _really_ don't want that to happen.
-				if Self::inclusion(frame_system::RawOrigin::None.into(), signed_bitfields.clone(), backed_candidates.clone()).is_ok() {
-					Call::inclusion(signed_bitfields, backed_candidates)
-				} else {
-					Call::inclusion(Vec::new().into(), Vec::new())
-				}
-			})
-	}
+    fn create_inherent(data: &InherentData) -> Option<Self::Call> {
+        data.get_data(&Self::INHERENT_IDENTIFIER)
+            .expect("inclusion inherent data failed to decode")
+            .map(
+                |(signed_bitfields, backed_candidates): (
+                    SignedAvailabilityBitfields,
+                    Vec<BackedCandidate<T::Hash>>,
+                )| {
+                    // Sanity check: session changes can invalidate an inherent, and we _really_ don't want that to happen.
+                    if Self::inclusion(
+                        frame_system::RawOrigin::None.into(),
+                        signed_bitfields.clone(),
+                        backed_candidates.clone(),
+                    )
+                    .is_ok()
+                    {
+                        Call::inclusion(signed_bitfields, backed_candidates)
+                    } else {
+                        Call::inclusion(Vec::new().into(), Vec::new())
+                    }
+                },
+            )
+    }
 }

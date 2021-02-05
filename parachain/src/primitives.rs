@@ -19,11 +19,11 @@
 
 use sp_std::vec::Vec;
 
-use parity_scale_codec::{Encode, Decode, CompactAs};
+use parity_scale_codec::{CompactAs, Decode, Encode};
 use sp_core::{RuntimeDebug, TypeId};
 
 #[cfg(feature = "std")]
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "std")]
 use sp_core::bytes;
@@ -34,49 +34,68 @@ use indracore_core_primitives::{Hash, OutboundHrmpMessage};
 pub use indracore_core_primitives::BlockNumber as RelayChainBlockNumber;
 
 /// Parachain head data included in the chain.
-#[derive(PartialEq, Eq, Clone, PartialOrd, Ord, Encode, Decode, RuntimeDebug, derive_more::From)]
+#[derive(
+    PartialEq, Eq, Clone, PartialOrd, Ord, Encode, Decode, RuntimeDebug, derive_more::From,
+)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize, Default, Hash))]
-pub struct HeadData(#[cfg_attr(feature = "std", serde(with="bytes"))] pub Vec<u8>);
+pub struct HeadData(#[cfg_attr(feature = "std", serde(with = "bytes"))] pub Vec<u8>);
 
 /// Parachain validation code.
 #[derive(Default, PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, derive_more::From)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize, Hash))]
-pub struct ValidationCode(#[cfg_attr(feature = "std", serde(with="bytes"))] pub Vec<u8>);
+pub struct ValidationCode(#[cfg_attr(feature = "std", serde(with = "bytes"))] pub Vec<u8>);
 
 /// Parachain block data.
 ///
 /// Contains everything required to validate para-block, may contain block and witness data.
 #[derive(PartialEq, Eq, Clone, Encode, Decode, derive_more::From)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize, Debug))]
-pub struct BlockData(#[cfg_attr(feature = "std", serde(with="bytes"))] pub Vec<u8>);
+pub struct BlockData(#[cfg_attr(feature = "std", serde(with = "bytes"))] pub Vec<u8>);
 
 /// Unique identifier of a parachain.
 #[derive(
-	Clone, CompactAs, Copy, Decode, Default, Encode, Eq,
-	Hash, Ord, PartialEq, PartialOrd, RuntimeDebug,
+    Clone,
+    CompactAs,
+    Copy,
+    Decode,
+    Default,
+    Encode,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    RuntimeDebug,
 )]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize, derive_more::Display))]
+#[cfg_attr(
+    feature = "std",
+    derive(serde::Serialize, serde::Deserialize, derive_more::Display)
+)]
 pub struct Id(u32);
 
 impl TypeId for Id {
-	const TYPE_ID: [u8; 4] = *b"para";
+    const TYPE_ID: [u8; 4] = *b"para";
 }
 
 impl From<Id> for u32 {
-	fn from(x: Id) -> Self { x.0 }
+    fn from(x: Id) -> Self {
+        x.0
+    }
 }
 
 impl From<u32> for Id {
-	fn from(x: u32) -> Self { Id(x) }
+    fn from(x: u32) -> Self {
+        Id(x)
+    }
 }
 
 impl From<usize> for Id {
-	fn from(x: usize) -> Self {
-		use sp_std::convert::TryInto;
-		// can't panic, so need to truncate
-		let x = x.try_into().unwrap_or(u32::MAX);
-		Id(x)
-	}
+    fn from(x: usize) -> Self {
+        use sp_std::convert::TryInto;
+        // can't panic, so need to truncate
+        let x = x.try_into().unwrap_or(u32::MAX);
+        Id(x)
+    }
 }
 
 // When we added a second From impl for Id, type inference could no longer
@@ -95,9 +114,9 @@ impl From<usize> for Id {
 // never matters whether the actual contained ID is `-1` or `4294967295`. Nobody
 // does arithmetic on a `ParaId`; doing so would be a bug.
 impl From<i32> for Id {
-	fn from(x: i32) -> Self {
-		Id(x as u32)
-	}
+    fn from(x: i32) -> Self {
+        Id(x as u32)
+    }
 }
 
 const USER_INDEX_START: u32 = 1000;
@@ -106,122 +125,130 @@ const USER_INDEX_START: u32 = 1000;
 pub const LOWEST_USER_ID: Id = Id(USER_INDEX_START);
 
 impl Id {
-	/// Create an `Id`.
-	pub const fn new(id: u32) -> Self {
-		Self(id)
-	}
+    /// Create an `Id`.
+    pub const fn new(id: u32) -> Self {
+        Self(id)
+    }
 
-	/// Returns `true` if this parachain runs with system-level privileges.
-	/// Use IsSystem instead.
-	#[deprecated]
-	pub fn is_system(&self) -> bool { self.0 < USER_INDEX_START }
+    /// Returns `true` if this parachain runs with system-level privileges.
+    /// Use IsSystem instead.
+    #[deprecated]
+    pub fn is_system(&self) -> bool {
+        self.0 < USER_INDEX_START
+    }
 }
 
 pub trait IsSystem {
-	fn is_system(&self) -> bool;
+    fn is_system(&self) -> bool;
 }
 
 impl IsSystem for Id {
-	fn is_system(&self) -> bool {
-		self.0 < USER_INDEX_START
-	}
+    fn is_system(&self) -> bool {
+        self.0 < USER_INDEX_START
+    }
 }
 
 impl sp_std::ops::Add<u32> for Id {
-	type Output = Self;
+    type Output = Self;
 
-	fn add(self, other: u32) -> Self {
-		Self(self.0 + other)
-	}
+    fn add(self, other: u32) -> Self {
+        Self(self.0 + other)
+    }
 }
 
 #[derive(Clone, Copy, Default, Encode, Decode, Eq, PartialEq, Ord, PartialOrd, RuntimeDebug)]
 pub struct Sibling(pub Id);
 
 impl From<Id> for Sibling {
-	fn from(i: Id) -> Self {
-		Self(i)
-	}
+    fn from(i: Id) -> Self {
+        Self(i)
+    }
 }
 
 impl From<Sibling> for Id {
-	fn from(i: Sibling) -> Self {
-		i.0
-	}
+    fn from(i: Sibling) -> Self {
+        i.0
+    }
 }
 
 impl AsRef<Id> for Sibling {
-	fn as_ref(&self) -> &Id {
-		&self.0
-	}
+    fn as_ref(&self) -> &Id {
+        &self.0
+    }
 }
 
 impl TypeId for Sibling {
-	const TYPE_ID: [u8; 4] = *b"sibl";
+    const TYPE_ID: [u8; 4] = *b"sibl";
 }
 
 impl From<Sibling> for u32 {
-	fn from(x: Sibling) -> Self { x.0.into() }
+    fn from(x: Sibling) -> Self {
+        x.0.into()
+    }
 }
 
 impl From<u32> for Sibling {
-	fn from(x: u32) -> Self { Sibling(x.into()) }
+    fn from(x: u32) -> Self {
+        Sibling(x.into())
+    }
 }
 
 impl IsSystem for Sibling {
-	fn is_system(&self) -> bool {
-		IsSystem::is_system(&self.0)
-	}
+    fn is_system(&self) -> bool {
+        IsSystem::is_system(&self.0)
+    }
 }
 
 /// This type can be converted into and possibly from an AccountId (which itself is generic).
 pub trait AccountIdConversion<AccountId>: Sized {
-	/// Convert into an account ID. This is infallible.
-	fn into_account(&self) -> AccountId;
+    /// Convert into an account ID. This is infallible.
+    fn into_account(&self) -> AccountId;
 
- 	/// Try to convert an account ID into this type. Might not succeed.
-	fn try_from_account(a: &AccountId) -> Option<Self>;
+    /// Try to convert an account ID into this type. Might not succeed.
+    fn try_from_account(a: &AccountId) -> Option<Self>;
 }
 
 // TODO: Remove all of this, move sp-runtime::AccountIdConversion to own crate and and use that.
 struct TrailingZeroInput<'a>(&'a [u8]);
 impl<'a> parity_scale_codec::Input for TrailingZeroInput<'a> {
-	fn remaining_len(&mut self) -> Result<Option<usize>, parity_scale_codec::Error> {
-		Ok(None)
-	}
+    fn remaining_len(&mut self) -> Result<Option<usize>, parity_scale_codec::Error> {
+        Ok(None)
+    }
 
-	fn read(&mut self, into: &mut [u8]) -> Result<(), parity_scale_codec::Error> {
-		let len = into.len().min(self.0.len());
-		into[..len].copy_from_slice(&self.0[..len]);
-		for i in &mut into[len..] {
-			*i = 0;
-		}
-		self.0 = &self.0[len..];
-		Ok(())
-	}
+    fn read(&mut self, into: &mut [u8]) -> Result<(), parity_scale_codec::Error> {
+        let len = into.len().min(self.0.len());
+        into[..len].copy_from_slice(&self.0[..len]);
+        for i in &mut into[len..] {
+            *i = 0;
+        }
+        self.0 = &self.0[len..];
+        Ok(())
+    }
 }
 
 /// Format is b"para" ++ encode(parachain ID) ++ 00.... where 00... is indefinite trailing
 /// zeroes to fill AccountId.
 impl<T: Encode + Decode + Default> AccountIdConversion<T> for Id {
-	fn into_account(&self) -> T {
-		(b"para", self).using_encoded(|b|
-			T::decode(&mut TrailingZeroInput(b))
-		).unwrap_or_default()
-	}
+    fn into_account(&self) -> T {
+        (b"para", self)
+            .using_encoded(|b| T::decode(&mut TrailingZeroInput(b)))
+            .unwrap_or_default()
+    }
 
- 	fn try_from_account(x: &T) -> Option<Self> {
-		x.using_encoded(|d| {
-			if &d[0..4] != b"para" { return None }
-			let mut cursor = &d[4..];
-			let result = Decode::decode(&mut cursor).ok()?;
-			if cursor.iter().all(|x| *x == 0) {
-				Some(result)
-			} else {
-				None
-			}
-		})
-	}
+    fn try_from_account(x: &T) -> Option<Self> {
+        x.using_encoded(|d| {
+            if &d[0..4] != b"para" {
+                return None;
+            }
+            let mut cursor = &d[4..];
+            let result = Decode::decode(&mut cursor).ok()?;
+            if cursor.iter().all(|x| *x == 0) {
+                Some(result)
+            } else {
+                None
+            }
+        })
+    }
 }
 
 /// A type that uniquely identifies an HRMP channel. An HRMP channel is established between two paras.
@@ -233,10 +260,10 @@ impl<T: Encode + Decode + Default> AccountIdConversion<T> for Id {
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 #[cfg_attr(feature = "std", derive(Hash))]
 pub struct HrmpChannelId {
-	/// The para that acts as the sender in this channel.
-	pub sender: Id,
-	/// The para that acts as the recipient in this channel.
-	pub recipient: Id,
+    /// The para that acts as the sender in this channel.
+    pub sender: Id,
+    /// The para that acts as the recipient in this channel.
+    pub recipient: Id,
 }
 
 /// A message from a parachain to its Relay Chain.
@@ -247,21 +274,21 @@ pub type UpwardMessage = Vec<u8>;
 #[derive(PartialEq, Eq, Decode)]
 #[cfg_attr(feature = "std", derive(Debug, Encode))]
 pub struct ValidationParams {
-	/// Previous head-data.
-	pub parent_head: HeadData,
-	/// The collation body.
-	pub block_data: BlockData,
-	/// The current relay-chain block number.
-	pub relay_chain_height: RelayChainBlockNumber,
-	/// The MQC head for the DMQ.
-	///
-	/// The DMQ MQC head will be used by the validation function to authorize the downward messages
-	/// passed by the collator.
-	pub dmq_mqc_head: Hash,
-	/// The list of MQC heads for the inbound HRMP channels paired with the sender para ids. This
-	/// vector is sorted ascending by the para id and doesn't contain multiple entries with the same
-	/// sender.
-	pub hrmp_mqc_heads: Vec<(Id, Hash)>,
+    /// Previous head-data.
+    pub parent_head: HeadData,
+    /// The collation body.
+    pub block_data: BlockData,
+    /// The current relay-chain block number.
+    pub relay_chain_height: RelayChainBlockNumber,
+    /// The MQC head for the DMQ.
+    ///
+    /// The DMQ MQC head will be used by the validation function to authorize the downward messages
+    /// passed by the collator.
+    pub dmq_mqc_head: Hash,
+    /// The list of MQC heads for the inbound HRMP channels paired with the sender para ids. This
+    /// vector is sorted ascending by the para id and doesn't contain multiple entries with the same
+    /// sender.
+    pub hrmp_mqc_heads: Vec<(Id, Hash)>,
 }
 
 /// The result of parachain validation.
@@ -269,18 +296,18 @@ pub struct ValidationParams {
 #[derive(PartialEq, Eq, Encode)]
 #[cfg_attr(feature = "std", derive(Debug, Decode))]
 pub struct ValidationResult {
-	/// New head data that should be included in the relay chain state.
-	pub head_data: HeadData,
-	/// An update to the validation code that should be scheduled in the relay chain.
-	pub new_validation_code: Option<ValidationCode>,
-	/// Upward messages send by the Parachain.
-	pub upward_messages: Vec<UpwardMessage>,
-	/// Outbound horizontal messages sent by the parachain.
-	pub horizontal_messages: Vec<OutboundHrmpMessage<Id>>,
-	/// Number of downward messages that were processed by the Parachain.
-	///
-	/// It is expected that the Parachain processes them from first to last.
-	pub processed_downward_messages: u32,
-	/// The mark which specifies the block number up to which all inbound HRMP messages are processed.
-	pub hrmp_watermark: RelayChainBlockNumber,
+    /// New head data that should be included in the relay chain state.
+    pub head_data: HeadData,
+    /// An update to the validation code that should be scheduled in the relay chain.
+    pub new_validation_code: Option<ValidationCode>,
+    /// Upward messages send by the Parachain.
+    pub upward_messages: Vec<UpwardMessage>,
+    /// Outbound horizontal messages sent by the parachain.
+    pub horizontal_messages: Vec<OutboundHrmpMessage<Id>>,
+    /// Number of downward messages that were processed by the Parachain.
+    ///
+    /// It is expected that the Parachain processes them from first to last.
+    pub processed_downward_messages: u32,
+    /// The mark which specifies the block number up to which all inbound HRMP messages are processed.
+    pub hrmp_watermark: RelayChainBlockNumber,
 }

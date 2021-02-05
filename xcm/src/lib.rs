@@ -23,24 +23,24 @@
 #![no_std]
 extern crate alloc;
 
-use parity_scale_codec::{Encode, Decode};
+use parity_scale_codec::{Decode, Encode};
 
 pub mod v0;
 
 /// A single XCM message, together with its version code.
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Debug)]
 pub enum VersionedXcm {
-	V0(v0::Xcm),
+    V0(v0::Xcm),
 }
 
 /// A versioned multi-location, a relative location of a cross-consensus system identifier.
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Debug)]
 pub enum VersionedMultiLocation {
-	V0(v0::MultiLocation),
+    V0(v0::MultiLocation),
 }
 
 /// A versioned multi-asset, an identifier for an asset within a consensus system.
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Debug)]
 pub enum VersionedMultiAsset {
-	V0(v0::MultiAsset),
+    V0(v0::MultiAsset),
 }

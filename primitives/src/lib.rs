@@ -1,4 +1,3 @@
-
 // Copyright 2017-2020 Parity Technologies (UK) Ltd.
 // This file is part of Polkadot.
 
@@ -18,7 +17,6 @@
 //! Indracore types shared between the runtime and the Node-side code.
 
 #![warn(missing_docs)]
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod v0;

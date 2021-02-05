@@ -33,7 +33,6 @@
 // --header=./file_header.txt
 // --output=./runtime/indracore/src/weights/
 
-
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
@@ -43,14 +42,14 @@ use sp_std::marker::PhantomData;
 /// Weight functions for pallet_session.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_session::WeightInfo for WeightInfo<T> {
-	fn set_keys() -> Weight {
-		(95_877_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(7 as Weight))
-			.saturating_add(T::DbWeight::get().writes(6 as Weight))
-	}
-	fn purge_keys() -> Weight {
-		(56_080_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(6 as Weight))
-	}
+    fn set_keys() -> Weight {
+        (95_877_000 as Weight)
+            .saturating_add(T::DbWeight::get().reads(7 as Weight))
+            .saturating_add(T::DbWeight::get().writes(6 as Weight))
+    }
+    fn purge_keys() -> Weight {
+        (56_080_000 as Weight)
+            .saturating_add(T::DbWeight::get().reads(2 as Weight))
+            .saturating_add(T::DbWeight::get().writes(6 as Weight))
+    }
 }

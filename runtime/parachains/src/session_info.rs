@@ -19,115 +19,115 @@
 //!
 //! See https://w3f.github.io/parachain-implementers-guide/runtime/session_info.html.
 
-use primitives::v1::{AuthorityDiscoveryId, SessionIndex, SessionInfo};
-use frame_support::{
-	decl_storage, decl_module, decl_error,
-	weights::Weight,
-};
 use crate::{configuration, paras, scheduler};
+use frame_support::{decl_error, decl_module, decl_storage, weights::Weight};
+use primitives::v1::{AuthorityDiscoveryId, SessionIndex, SessionInfo};
 use sp_std::{cmp, vec::Vec};
 
 pub trait Config:
-	frame_system::Config
-	+ configuration::Config
-	+ paras::Config
-	+ scheduler::Config
-	+ AuthorityDiscoveryConfig
+    frame_system::Config
+    + configuration::Config
+    + paras::Config
+    + scheduler::Config
+    + AuthorityDiscoveryConfig
 {
 }
 
 decl_storage! {
-	trait Store for Module<T: Config> as ParaSessionInfo {
-		/// The earliest session for which previous session info is stored.
-		EarliestStoredSession get(fn earliest_stored_session): SessionIndex;
-		/// Session information in a rolling window.
-		/// Should have an entry in range `EarliestStoredSession..=CurrentSessionIndex`.
-		/// Does not have any entries before the session index in the first session change notification.
-		Sessions get(fn session_info): map hasher(identity) SessionIndex => Option<SessionInfo>;
-	}
+    trait Store for Module<T: Config> as ParaSessionInfo {
+        /// The earliest session for which previous session info is stored.
+        EarliestStoredSession get(fn earliest_stored_session): SessionIndex;
+        /// Session information in a rolling window.
+        /// Should have an entry in range `EarliestStoredSession..=CurrentSessionIndex`.
+        /// Does not have any entries before the session index in the first session change notification.
+        Sessions get(fn session_info): map hasher(identity) SessionIndex => Option<SessionInfo>;
+    }
 }
 
 decl_error! {
-	pub enum Error for Module<T: Config> { }
+    pub enum Error for Module<T: Config> { }
 }
 
 decl_module! {
-	/// The session info module.
-	pub struct Module<T: Config> for enum Call where origin: <T as frame_system::Config>::Origin {
-		type Error = Error<T>;
-	}
+    /// The session info module.
+    pub struct Module<T: Config> for enum Call where origin: <T as frame_system::Config>::Origin {
+        type Error = Error<T>;
+    }
 }
 
 /// An abstraction for the authority discovery pallet
 /// to help with mock testing.
 pub trait AuthorityDiscoveryConfig {
-	/// Retrieve authority identifiers of the current and next authority set.
-	fn authorities() -> Vec<AuthorityDiscoveryId>;
+    /// Retrieve authority identifiers of the current and next authority set.
+    fn authorities() -> Vec<AuthorityDiscoveryId>;
 }
 
 impl<T: pallet_authority_discovery::Config> AuthorityDiscoveryConfig for T {
-	fn authorities() -> Vec<AuthorityDiscoveryId> {
-		<pallet_authority_discovery::Module<T>>::authorities()
-	}
+    fn authorities() -> Vec<AuthorityDiscoveryId> {
+        <pallet_authority_discovery::Module<T>>::authorities()
+    }
 }
 
 impl<T: Config> Module<T> {
-	/// Handle an incoming session change.
-	pub(crate) fn initializer_on_new_session(
-		notification: &crate::initializer::SessionChangeNotification<T::BlockNumber>
-	) {
-		let config = <configuration::Module<T>>::config();
+    /// Handle an incoming session change.
+    pub(crate) fn initializer_on_new_session(
+        notification: &crate::initializer::SessionChangeNotification<T::BlockNumber>,
+    ) {
+        let config = <configuration::Module<T>>::config();
 
-		let dispute_period = config.dispute_period;
-		let n_parachains = <paras::Module<T>>::parachains().len() as u32;
+        let dispute_period = config.dispute_period;
+        let n_parachains = <paras::Module<T>>::parachains().len() as u32;
 
-		let validators = notification.validators.clone();
-		let discovery_keys = <T as AuthorityDiscoveryConfig>::authorities();
-		// FIXME: once we store these keys
-		let approval_keys = Default::default();
-		let validator_groups = <scheduler::Module<T>>::validator_groups();
-		let n_cores = n_parachains + config.parathread_cores;
-		let zeroth_delay_tranche_width = config.zeroth_delay_tranche_width;
-		let relay_vrf_modulo_samples = config.relay_vrf_modulo_samples;
-		let n_delay_tranches = config.n_delay_tranches;
-		let no_show_slots = config.no_show_slots;
-		let needed_approvals = config.needed_approvals;
+        let validators = notification.validators.clone();
+        let discovery_keys = <T as AuthorityDiscoveryConfig>::authorities();
+        // FIXME: once we store these keys
+        let approval_keys = Default::default();
+        let validator_groups = <scheduler::Module<T>>::validator_groups();
+        let n_cores = n_parachains + config.parathread_cores;
+        let zeroth_delay_tranche_width = config.zeroth_delay_tranche_width;
+        let relay_vrf_modulo_samples = config.relay_vrf_modulo_samples;
+        let n_delay_tranches = config.n_delay_tranches;
+        let no_show_slots = config.no_show_slots;
+        let needed_approvals = config.needed_approvals;
 
-		let new_session_index = notification.session_index;
-		let old_earliest_stored_session = EarliestStoredSession::get();
-		let dispute_period = cmp::max(1, dispute_period);
-		let new_earliest_stored_session = new_session_index.checked_sub(dispute_period - 1).unwrap_or(0);
-		let new_earliest_stored_session = cmp::max(new_earliest_stored_session, old_earliest_stored_session);
-		// update `EarliestStoredSession` based on `config.dispute_period`
-		EarliestStoredSession::set(new_earliest_stored_session);
-		// remove all entries from `Sessions` from the previous value up to the new value
-		// avoid a potentially heavy loop when introduced on a live chain
-		if old_earliest_stored_session != 0 || Sessions::get(0).is_some() {
-			for idx in old_earliest_stored_session..new_earliest_stored_session {
-				Sessions::remove(&idx);
-			}
-		}
-		// create a new entry in `Sessions` with information about the current session
-		let new_session_info = SessionInfo {
-			validators,
-			discovery_keys,
-			approval_keys,
-			validator_groups,
-			n_cores,
-			zeroth_delay_tranche_width,
-			relay_vrf_modulo_samples,
-			n_delay_tranches,
-			no_show_slots,
-			needed_approvals,
-		};
-		Sessions::insert(&new_session_index, &new_session_info);
-	}
+        let new_session_index = notification.session_index;
+        let old_earliest_stored_session = EarliestStoredSession::get();
+        let dispute_period = cmp::max(1, dispute_period);
+        let new_earliest_stored_session = new_session_index
+            .checked_sub(dispute_period - 1)
+            .unwrap_or(0);
+        let new_earliest_stored_session =
+            cmp::max(new_earliest_stored_session, old_earliest_stored_session);
+        // update `EarliestStoredSession` based on `config.dispute_period`
+        EarliestStoredSession::set(new_earliest_stored_session);
+        // remove all entries from `Sessions` from the previous value up to the new value
+        // avoid a potentially heavy loop when introduced on a live chain
+        if old_earliest_stored_session != 0 || Sessions::get(0).is_some() {
+            for idx in old_earliest_stored_session..new_earliest_stored_session {
+                Sessions::remove(&idx);
+            }
+        }
+        // create a new entry in `Sessions` with information about the current session
+        let new_session_info = SessionInfo {
+            validators,
+            discovery_keys,
+            approval_keys,
+            validator_groups,
+            n_cores,
+            zeroth_delay_tranche_width,
+            relay_vrf_modulo_samples,
+            n_delay_tranches,
+            no_show_slots,
+            needed_approvals,
+        };
+        Sessions::insert(&new_session_index, &new_session_info);
+    }
 
-	/// Called by the initializer to initialize the session info module.
-	pub(crate) fn initializer_initialize(_now: T::BlockNumber) -> Weight {
-		0
-	}
+    /// Called by the initializer to initialize the session info module.
+    pub(crate) fn initializer_initialize(_now: T::BlockNumber) -> Weight {
+        0
+    }
 
-	/// Called by the initializer to finalize the session info module.
-	pub(crate) fn initializer_finalize() {}
+    /// Called by the initializer to finalize the session info module.
+    pub(crate) fn initializer_finalize() {}
 }

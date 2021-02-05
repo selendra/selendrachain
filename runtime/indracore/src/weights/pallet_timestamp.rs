@@ -33,7 +33,6 @@
 // --header=./file_header.txt
 // --output=./runtime/indracore/src/weights/
 
-
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
@@ -43,12 +42,12 @@ use sp_std::marker::PhantomData;
 /// Weight functions for pallet_timestamp.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_timestamp::WeightInfo for WeightInfo<T> {
-	fn set() -> Weight {
-		(11_397_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	fn on_finalize() -> Weight {
-		(6_096_000 as Weight)
-	}
+    fn set() -> Weight {
+        (11_397_000 as Weight)
+            .saturating_add(T::DbWeight::get().reads(2 as Weight))
+            .saturating_add(T::DbWeight::get().writes(1 as Weight))
+    }
+    fn on_finalize() -> Weight {
+        (6_096_000 as Weight)
+    }
 }

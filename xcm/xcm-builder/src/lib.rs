@@ -18,39 +18,44 @@
 
 mod location_conversion;
 pub use location_conversion::{
-	Account32Hash, ParentIsDefault, ChildParachainConvertsVia, SiblingParachainConvertsVia, AccountId32Aliases
+    Account32Hash, AccountId32Aliases, ChildParachainConvertsVia, ParentIsDefault,
+    SiblingParachainConvertsVia,
 };
 
 mod origin_conversion;
 pub use origin_conversion::{
-	SovereignSignedViaLocation, ParentAsSuperuser, ChildSystemParachainAsSuperuser, SiblingSystemParachainAsSuperuser,
-	ChildParachainAsNative, SiblingParachainAsNative, RelayChainAsNative, SignedAccountId32AsNative
+    ChildParachainAsNative, ChildSystemParachainAsSuperuser, ParentAsSuperuser, RelayChainAsNative,
+    SiblingParachainAsNative, SiblingSystemParachainAsSuperuser, SignedAccountId32AsNative,
+    SovereignSignedViaLocation,
 };
 
 mod currency_adapter;
 pub use currency_adapter::CurrencyAdapter;
 
-use sp_std::marker::PhantomData;
-use xcm_executor::traits::InvertLocation;
-use xcm::v0::{MultiLocation, Junction};
 use frame_support::traits::Get;
+use sp_std::marker::PhantomData;
+use xcm::v0::{Junction, MultiLocation};
+use xcm_executor::traits::InvertLocation;
 
 /// Simple location inverter; give it this location's ancestry and it'll
 pub struct LocationInverter<Ancestry>(PhantomData<Ancestry>);
 
 impl<Ancestry: Get<MultiLocation>> InvertLocation for LocationInverter<Ancestry> {
-	fn invert_location(location: &MultiLocation) -> MultiLocation {
-		let mut ancestry = Ancestry::get();
-		let mut result = location.clone();
-		for (i, j) in location.iter_rev()
-			.map(|j| match j {
-				Junction::Parent => ancestry.take_first().unwrap_or(Junction::OnlyChild),
-				_ => Junction::Parent,
-			})
-			.enumerate()
-		{
-			*result.at_mut(i).expect("location and result begin equal; same size; qed") = j;
-		}
-		result
-	}
+    fn invert_location(location: &MultiLocation) -> MultiLocation {
+        let mut ancestry = Ancestry::get();
+        let mut result = location.clone();
+        for (i, j) in location
+            .iter_rev()
+            .map(|j| match j {
+                Junction::Parent => ancestry.take_first().unwrap_or(Junction::OnlyChild),
+                _ => Junction::Parent,
+            })
+            .enumerate()
+        {
+            *result
+                .at_mut(i)
+                .expect("location and result begin equal; same size; qed") = j;
+        }
+        result
+    }
 }

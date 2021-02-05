@@ -19,69 +19,74 @@
 #![deny(unused_results)]
 
 pub mod chain_spec;
-mod grandpa_support;
 mod client;
+mod grandpa_support;
 
 #[cfg(feature = "full-node")]
 use {
-	std::convert::TryInto,
-	std::time::Duration,
-
-	tracing::info,
-	indracore_node_core_av_store::Config as AvailabilityConfig,
-	indracore_node_core_proposer::ProposerFactory,
-	indracore_overseer::{AllSubsystems, BlockInfo, Overseer, OverseerHandler},
-	indracore_primitives::v1::ParachainHost,
-	sc_authority_discovery::Service as AuthorityDiscoveryService,
-	sp_blockchain::HeaderBackend,
-	sp_core::traits::SpawnNamed,
-	sp_keystore::SyncCryptoStorePtr,
-	sp_trie::PrefixedMemoryDB,
-	sc_client_api::ExecutorProvider,
+    indracore_node_core_av_store::Config as AvailabilityConfig,
+    indracore_node_core_proposer::ProposerFactory,
+    indracore_overseer::{AllSubsystems, BlockInfo, Overseer, OverseerHandler},
+    indracore_primitives::v1::ParachainHost,
+    sc_authority_discovery::Service as AuthorityDiscoveryService,
+    sc_client_api::ExecutorProvider,
+    sp_blockchain::HeaderBackend,
+    sp_core::traits::SpawnNamed,
+    sp_keystore::SyncCryptoStorePtr,
+    sp_trie::PrefixedMemoryDB,
+    std::convert::TryInto,
+    std::time::Duration,
+    tracing::info,
 };
 
 use grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider};
-use std::sync::Arc;
 use prometheus_endpoint::Registry;
 use sc_executor::native_executor_instance;
 use service::RpcHandlers;
+use std::sync::Arc;
 
-pub use sc_client_api::{Backend, ExecutionStrategy, CallExecutor};
+pub use sc_client_api::{Backend, CallExecutor, ExecutionStrategy};
 pub use sc_consensus::LongestChain;
 pub use sc_executor::NativeExecutionDispatch;
 
-pub use self::client::{AbstractClient, Client, ClientHandle, ExecuteWithClient, RuntimeApiCollection};
-pub use chain_spec::{IndracoreChainSpec};
-pub use consensus_common::{Proposal, SelectChain, BlockImport, RecordProof, block_validation::Chain};
+pub use self::client::{
+    AbstractClient, Client, ClientHandle, ExecuteWithClient, RuntimeApiCollection,
+};
+pub use chain_spec::IndracoreChainSpec;
+pub use consensus_common::{
+    block_validation::Chain, BlockImport, Proposal, RecordProof, SelectChain,
+};
 pub use indracore_parachain::wasm_executor::IsolationStrategy;
 pub use indracore_primitives::v1::{Block, BlockId, CollatorId, Hash, Id as ParaId};
 
 pub use service::{
-	Role, PruningMode, TransactionPoolOptions, Error, RuntimeGenesis,
-	TFullClient, TLightClient, TFullBackend, TLightBackend, TFullCallExecutor, TLightCallExecutor,
-	Configuration, ChainSpec, TaskManager,
+    ChainSpec, Configuration, Error, PruningMode, Role, RuntimeGenesis, TFullBackend,
+    TFullCallExecutor, TFullClient, TLightBackend, TLightCallExecutor, TLightClient, TaskManager,
+    TransactionPoolOptions,
 };
 
 pub use service::config::{DatabaseConfig, PrometheusConfig};
-pub use sp_api::{ApiRef, Core as CoreApi, ConstructRuntimeApi, ProvideRuntimeApi, StateBackend};
-pub use sp_runtime::traits::{DigestFor, HashFor, NumberFor, Block as BlockT, self as runtime_traits, BlakeTwo256};
+pub use sp_api::{ApiRef, ConstructRuntimeApi, Core as CoreApi, ProvideRuntimeApi, StateBackend};
+pub use sp_runtime::traits::{
+    self as runtime_traits, BlakeTwo256, Block as BlockT, DigestFor, HashFor, NumberFor,
+};
 
 pub use indracore_runtime;
 
 native_executor_instance!(
-	pub IndracoreExecutor,
-	indracore_runtime::api::dispatch,
-	indracore_runtime::native_version,
-	frame_benchmarking::benchmarking::HostFunctions,
+    pub IndracoreExecutor,
+    indracore_runtime::api::dispatch,
+    indracore_runtime::native_version,
+    frame_benchmarking::benchmarking::HostFunctions,
 );
 
 // If we're using prometheus, use a registry with a prefix of `indracore`.
 fn set_prometheus_registry(config: &mut Configuration) -> Result<(), Error> {
-	if let Some(PrometheusConfig { registry, .. }) = config.prometheus_config.as_mut() {
-		*registry = Registry::new_custom(Some("indracore".into()), None)?;
-	}
+    if let Some(PrometheusConfig { registry, .. }) = config.prometheus_config.as_mut() {
+        *registry = Registry::new_custom(Some("indracore".into()), None)?;
+    }
 
-	Ok(())
+    Ok(())
 }
 
 pub type FullBackend = service::TFullBackend<Block>;
@@ -90,330 +95,311 @@ type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 pub type FullClient<RuntimeApi, Executor> = service::TFullClient<Block, RuntimeApi, Executor>;
 #[cfg(feature = "full-node")]
 type FullGrandpaBlockImport<RuntimeApi, Executor> = grandpa::GrandpaBlockImport<
-	FullBackend, Block, FullClient<RuntimeApi, Executor>, FullSelectChain
+    FullBackend,
+    Block,
+    FullClient<RuntimeApi, Executor>,
+    FullSelectChain,
 >;
 
 type LightBackend = service::TLightBackendWithHash<Block, sp_runtime::traits::BlakeTwo256>;
 
 type LightClient<RuntimeApi, Executor> =
-	service::TLightClientWithBackend<Block, RuntimeApi, Executor, LightBackend>;
+    service::TLightClientWithBackend<Block, RuntimeApi, Executor, LightBackend>;
 
 #[cfg(feature = "full-node")]
-fn new_partial<RuntimeApi, Executor>(config: &mut Configuration) -> Result<
-	service::PartialComponents<
-		FullClient<RuntimeApi, Executor>, FullBackend, FullSelectChain,
-		consensus_common::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
-		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
-		(
-			impl Fn(
-				indracore_rpc::DenyUnsafe,
-				indracore_rpc::SubscriptionTaskExecutor,
-			) -> indracore_rpc::RpcExtension,
-			(
-				babe::BabeBlockImport<
-					Block, FullClient<RuntimeApi, Executor>, FullGrandpaBlockImport<RuntimeApi, Executor>
-				>,
-				grandpa::LinkHalf<Block, FullClient<RuntimeApi, Executor>, FullSelectChain>,
-				babe::BabeLink<Block>
-			),
-			grandpa::SharedVoterState,
-		)
-	>,
-	Error
+fn new_partial<RuntimeApi, Executor>(
+    config: &mut Configuration,
+) -> Result<
+    service::PartialComponents<
+        FullClient<RuntimeApi, Executor>,
+        FullBackend,
+        FullSelectChain,
+        consensus_common::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
+        sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
+        (
+            impl Fn(
+                indracore_rpc::DenyUnsafe,
+                indracore_rpc::SubscriptionTaskExecutor,
+            ) -> indracore_rpc::RpcExtension,
+            (
+                babe::BabeBlockImport<
+                    Block,
+                    FullClient<RuntimeApi, Executor>,
+                    FullGrandpaBlockImport<RuntimeApi, Executor>,
+                >,
+                grandpa::LinkHalf<Block, FullClient<RuntimeApi, Executor>, FullSelectChain>,
+                babe::BabeLink<Block>,
+            ),
+            grandpa::SharedVoterState,
+        ),
+    >,
+    Error,
 >
-	where
-		RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
-		RuntimeApi::RuntimeApi:
-		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
-		Executor: NativeExecutionDispatch + 'static,
+where
+    RuntimeApi:
+        ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+    RuntimeApi::RuntimeApi:
+        RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
+    Executor: NativeExecutionDispatch + 'static,
 {
-	set_prometheus_registry(config)?;
+    set_prometheus_registry(config)?;
 
-	let inherent_data_providers = inherents::InherentDataProviders::new();
+    let inherent_data_providers = inherents::InherentDataProviders::new();
 
-	let (client, backend, keystore_container, task_manager) =
-		service::new_full_parts::<Block, RuntimeApi, Executor>(&config)?;
-	let client = Arc::new(client);
+    let (client, backend, keystore_container, task_manager) =
+        service::new_full_parts::<Block, RuntimeApi, Executor>(&config)?;
+    let client = Arc::new(client);
 
-	let select_chain = sc_consensus::LongestChain::new(backend.clone());
+    let select_chain = sc_consensus::LongestChain::new(backend.clone());
 
-	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
-		config.transaction_pool.clone(),
-		config.prometheus_registry(),
-		task_manager.spawn_handle(),
-		client.clone(),
-	);
+    let transaction_pool = sc_transaction_pool::BasicPool::new_full(
+        config.transaction_pool.clone(),
+        config.prometheus_registry(),
+        task_manager.spawn_handle(),
+        client.clone(),
+    );
 
-	let grandpa_hard_forks = Vec::new();
+    let grandpa_hard_forks = Vec::new();
 
-	let (grandpa_block_import, grandpa_link) =
-		grandpa::block_import_with_authority_set_hard_forks(
-			client.clone(),
-			&(client.clone() as Arc<_>),
-			select_chain.clone(),
-			grandpa_hard_forks,
-		)?;
+    let (grandpa_block_import, grandpa_link) = grandpa::block_import_with_authority_set_hard_forks(
+        client.clone(),
+        &(client.clone() as Arc<_>),
+        select_chain.clone(),
+        grandpa_hard_forks,
+    )?;
 
-	let justification_import = grandpa_block_import.clone();
+    let justification_import = grandpa_block_import.clone();
 
-	let (block_import, babe_link) = babe::block_import(
-		babe::Config::get_or_compute(&*client)?,
-		grandpa_block_import,
-		client.clone(),
-	)?;
+    let (block_import, babe_link) = babe::block_import(
+        babe::Config::get_or_compute(&*client)?,
+        grandpa_block_import,
+        client.clone(),
+    )?;
 
-	let import_queue = babe::import_queue(
-		babe_link.clone(),
-		block_import.clone(),
-		Some(Box::new(justification_import)),
-		client.clone(),
-		select_chain.clone(),
-		inherent_data_providers.clone(),
-		&task_manager.spawn_handle(),
-		config.prometheus_registry(),
-		consensus_common::CanAuthorWithNativeVersion::new(client.executor().clone()),
-	)?;
+    let import_queue = babe::import_queue(
+        babe_link.clone(),
+        block_import.clone(),
+        Some(Box::new(justification_import)),
+        client.clone(),
+        select_chain.clone(),
+        inherent_data_providers.clone(),
+        &task_manager.spawn_handle(),
+        config.prometheus_registry(),
+        consensus_common::CanAuthorWithNativeVersion::new(client.executor().clone()),
+    )?;
 
-	let justification_stream = grandpa_link.justification_stream();
-	let shared_authority_set = grandpa_link.shared_authority_set().clone();
-	let shared_voter_state = grandpa::SharedVoterState::empty();
-	let finality_proof_provider =
-		GrandpaFinalityProofProvider::new_for_service(backend.clone(), client.clone());
+    let justification_stream = grandpa_link.justification_stream();
+    let shared_authority_set = grandpa_link.shared_authority_set().clone();
+    let shared_voter_state = grandpa::SharedVoterState::empty();
+    let finality_proof_provider =
+        GrandpaFinalityProofProvider::new_for_service(backend.clone(), client.clone());
 
-	let import_setup = (block_import.clone(), grandpa_link, babe_link.clone());
-	let rpc_setup = shared_voter_state.clone();
+    let import_setup = (block_import.clone(), grandpa_link, babe_link.clone());
+    let rpc_setup = shared_voter_state.clone();
 
-	let babe_config = babe_link.config().clone();
-	let shared_epoch_changes = babe_link.epoch_changes().clone();
+    let babe_config = babe_link.config().clone();
+    let shared_epoch_changes = babe_link.epoch_changes().clone();
 
-	let rpc_extensions_builder = {
-		let client = client.clone();
-		let keystore = keystore_container.sync_keystore();
-		let transaction_pool = transaction_pool.clone();
-		let select_chain = select_chain.clone();
-		let chain_spec = config.chain_spec.cloned_box();
+    let rpc_extensions_builder = {
+        let client = client.clone();
+        let keystore = keystore_container.sync_keystore();
+        let transaction_pool = transaction_pool.clone();
+        let select_chain = select_chain.clone();
+        let chain_spec = config.chain_spec.cloned_box();
 
-		move |deny_unsafe, subscription_executor| -> indracore_rpc::RpcExtension {
-			let deps = indracore_rpc::FullDeps {
-				client: client.clone(),
-				pool: transaction_pool.clone(),
-				select_chain: select_chain.clone(),
-				chain_spec: chain_spec.cloned_box(),
-				deny_unsafe,
-				babe: indracore_rpc::BabeDeps {
-					babe_config: babe_config.clone(),
-					shared_epoch_changes: shared_epoch_changes.clone(),
-					keystore: keystore.clone(),
-				},
-				grandpa: indracore_rpc::GrandpaDeps {
-					shared_voter_state: shared_voter_state.clone(),
-					shared_authority_set: shared_authority_set.clone(),
-					justification_stream: justification_stream.clone(),
-					subscription_executor,
-					finality_provider: finality_proof_provider.clone(),
-				},
-			};
+        move |deny_unsafe, subscription_executor| -> indracore_rpc::RpcExtension {
+            let deps = indracore_rpc::FullDeps {
+                client: client.clone(),
+                pool: transaction_pool.clone(),
+                select_chain: select_chain.clone(),
+                chain_spec: chain_spec.cloned_box(),
+                deny_unsafe,
+                babe: indracore_rpc::BabeDeps {
+                    babe_config: babe_config.clone(),
+                    shared_epoch_changes: shared_epoch_changes.clone(),
+                    keystore: keystore.clone(),
+                },
+                grandpa: indracore_rpc::GrandpaDeps {
+                    shared_voter_state: shared_voter_state.clone(),
+                    shared_authority_set: shared_authority_set.clone(),
+                    justification_stream: justification_stream.clone(),
+                    subscription_executor,
+                    finality_provider: finality_proof_provider.clone(),
+                },
+            };
 
-			indracore_rpc::create_full(deps)
-		}
-	};
+            indracore_rpc::create_full(deps)
+        }
+    };
 
-	Ok(service::PartialComponents {
-		client,
-		backend,
-		task_manager,
-		keystore_container,
-		select_chain,
-		import_queue,
-		transaction_pool,
-		inherent_data_providers,
-		other: (rpc_extensions_builder, import_setup, rpc_setup)
-	})
+    Ok(service::PartialComponents {
+        client,
+        backend,
+        task_manager,
+        keystore_container,
+        select_chain,
+        import_queue,
+        transaction_pool,
+        inherent_data_providers,
+        other: (rpc_extensions_builder, import_setup, rpc_setup),
+    })
 }
 
-#[cfg(all(feature="full-node", not(feature = "real-overseer")))]
+#[cfg(all(feature = "full-node", not(feature = "real-overseer")))]
 fn real_overseer<Spawner, RuntimeClient>(
-	leaves: impl IntoIterator<Item = BlockInfo>,
-	_: SyncCryptoStorePtr,
-	_: Arc<RuntimeClient>,
-	_: AvailabilityConfig,
-	_: Arc<sc_network::NetworkService<Block, Hash>>,
-	_: AuthorityDiscoveryService,
-	registry: Option<&Registry>,
-	spawner: Spawner,
-	_: IsCollator,
-	_: IsolationStrategy,
+    leaves: impl IntoIterator<Item = BlockInfo>,
+    _: SyncCryptoStorePtr,
+    _: Arc<RuntimeClient>,
+    _: AvailabilityConfig,
+    _: Arc<sc_network::NetworkService<Block, Hash>>,
+    _: AuthorityDiscoveryService,
+    registry: Option<&Registry>,
+    spawner: Spawner,
+    _: IsCollator,
+    _: IsolationStrategy,
 ) -> Result<(Overseer<Spawner>, OverseerHandler), Error>
 where
-	RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-	RuntimeClient::Api: ParachainHost<Block>,
-	Spawner: 'static + SpawnNamed + Clone + Unpin,
+    RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
+    RuntimeClient::Api: ParachainHost<Block>,
+    Spawner: 'static + SpawnNamed + Clone + Unpin,
 {
-	Overseer::new(
-		leaves,
-		AllSubsystems::<()>::dummy(),
-		registry,
-		spawner,
-	).map_err(|e| Error::Other(format!("Failed to create an Overseer: {:?}", e)))
+    Overseer::new(leaves, AllSubsystems::<()>::dummy(), registry, spawner)
+        .map_err(|e| Error::Other(format!("Failed to create an Overseer: {:?}", e)))
 }
 
 #[cfg(all(feature = "full-node", feature = "real-overseer"))]
 fn real_overseer<Spawner, RuntimeClient>(
-	leaves: impl IntoIterator<Item = BlockInfo>,
-	keystore: SyncCryptoStorePtr,
-	runtime_client: Arc<RuntimeClient>,
-	availability_config: AvailabilityConfig,
-	network_service: Arc<sc_network::NetworkService<Block, Hash>>,
-	authority_discovery: AuthorityDiscoveryService,
-	registry: Option<&Registry>,
-	spawner: Spawner,
-	is_collator: IsCollator,
-	isolation_strategy: IsolationStrategy,
+    leaves: impl IntoIterator<Item = BlockInfo>,
+    keystore: SyncCryptoStorePtr,
+    runtime_client: Arc<RuntimeClient>,
+    availability_config: AvailabilityConfig,
+    network_service: Arc<sc_network::NetworkService<Block, Hash>>,
+    authority_discovery: AuthorityDiscoveryService,
+    registry: Option<&Registry>,
+    spawner: Spawner,
+    is_collator: IsCollator,
+    isolation_strategy: IsolationStrategy,
 ) -> Result<(Overseer<Spawner>, OverseerHandler), Error>
 where
-	RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-	RuntimeClient::Api: ParachainHost<Block>,
-	Spawner: 'static + SpawnNamed + Clone + Unpin,
+    RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
+    RuntimeClient::Api: ParachainHost<Block>,
+    Spawner: 'static + SpawnNamed + Clone + Unpin,
 {
-	use indracore_node_subsystem_util::metrics::Metrics;
+    use indracore_node_subsystem_util::metrics::Metrics;
 
-	use indracore_availability_distribution::AvailabilityDistributionSubsystem;
-	use indracore_node_core_av_store::AvailabilityStoreSubsystem;
-	use indracore_availability_bitfield_distribution::BitfieldDistribution as BitfieldDistributionSubsystem;
-	use indracore_node_core_bitfield_signing::BitfieldSigningSubsystem;
-	use indracore_node_core_backing::CandidateBackingSubsystem;
-	use indracore_node_core_candidate_selection::CandidateSelectionSubsystem;
-	use indracore_node_core_candidate_validation::CandidateValidationSubsystem;
-	use indracore_node_core_chain_api::ChainApiSubsystem;
-	use indracore_node_collation_generation::CollationGenerationSubsystem;
-	use indracore_collator_protocol::{CollatorProtocolSubsystem, ProtocolSide};
-	use indracore_network_bridge::NetworkBridge as NetworkBridgeSubsystem;
-	use indracore_pov_distribution::PoVDistribution as PoVDistributionSubsystem;
-	use indracore_node_core_provisioner::ProvisioningSubsystem as ProvisionerSubsystem;
-	use indracore_node_core_runtime_api::RuntimeApiSubsystem;
-	use indracore_statement_distribution::StatementDistribution as StatementDistributionSubsystem;
+    use indracore_availability_bitfield_distribution::BitfieldDistribution as BitfieldDistributionSubsystem;
+    use indracore_availability_distribution::AvailabilityDistributionSubsystem;
+    use indracore_collator_protocol::{CollatorProtocolSubsystem, ProtocolSide};
+    use indracore_network_bridge::NetworkBridge as NetworkBridgeSubsystem;
+    use indracore_node_collation_generation::CollationGenerationSubsystem;
+    use indracore_node_core_av_store::AvailabilityStoreSubsystem;
+    use indracore_node_core_backing::CandidateBackingSubsystem;
+    use indracore_node_core_bitfield_signing::BitfieldSigningSubsystem;
+    use indracore_node_core_candidate_selection::CandidateSelectionSubsystem;
+    use indracore_node_core_candidate_validation::CandidateValidationSubsystem;
+    use indracore_node_core_chain_api::ChainApiSubsystem;
+    use indracore_node_core_provisioner::ProvisioningSubsystem as ProvisionerSubsystem;
+    use indracore_node_core_runtime_api::RuntimeApiSubsystem;
+    use indracore_pov_distribution::PoVDistribution as PoVDistributionSubsystem;
+    use indracore_statement_distribution::StatementDistribution as StatementDistributionSubsystem;
 
-	let all_subsystems = AllSubsystems {
-		availability_distribution: AvailabilityDistributionSubsystem::new(
-			keystore.clone(),
-			Metrics::register(registry)?,
-		),
-		availability_store: AvailabilityStoreSubsystem::new_on_disk(
-			availability_config,
-			Metrics::register(registry)?,
-		)?,
-		bitfield_distribution: BitfieldDistributionSubsystem::new(
-			Metrics::register(registry)?,
-		),
-		bitfield_signing: BitfieldSigningSubsystem::new(
-			spawner.clone(),
-			keystore.clone(),
-			Metrics::register(registry)?,
-		),
-		candidate_backing: CandidateBackingSubsystem::new(
-			spawner.clone(),
-			keystore.clone(),
-			Metrics::register(registry)?,
-		),
-		candidate_selection: CandidateSelectionSubsystem::new(
-			spawner.clone(),
-			keystore.clone(),
-			Metrics::register(registry)?,
-		),
-		candidate_validation: CandidateValidationSubsystem::new(
-			spawner.clone(),
-			Metrics::register(registry)?,
-			isolation_strategy,
-		),
-		chain_api: ChainApiSubsystem::new(
-			runtime_client.clone(),
-			Metrics::register(registry)?,
-		),
-		collation_generation: CollationGenerationSubsystem::new(
-			Metrics::register(registry)?,
-		),
-		collator_protocol: {
-			let side = match is_collator {
-				IsCollator::Yes(id) => ProtocolSide::Collator(id, Metrics::register(registry)?),
-				IsCollator::No => ProtocolSide::Validator(Metrics::register(registry)?),
-			};
-			CollatorProtocolSubsystem::new(
-				side,
-			)
-		},
-		network_bridge: NetworkBridgeSubsystem::new(
-			network_service,
-			authority_discovery,
-		),
-		pov_distribution: PoVDistributionSubsystem::new(
-			Metrics::register(registry)?,
-		),
-		provisioner: ProvisionerSubsystem::new(
-			spawner.clone(),
-			(),
-			Metrics::register(registry)?,
-		),
-		runtime_api: RuntimeApiSubsystem::new(
-			runtime_client,
-			Metrics::register(registry)?,
-			spawner.clone(),
-		),
-		statement_distribution: StatementDistributionSubsystem::new(
-			Metrics::register(registry)?,
-		),
-	};
+    let all_subsystems = AllSubsystems {
+        availability_distribution: AvailabilityDistributionSubsystem::new(
+            keystore.clone(),
+            Metrics::register(registry)?,
+        ),
+        availability_store: AvailabilityStoreSubsystem::new_on_disk(
+            availability_config,
+            Metrics::register(registry)?,
+        )?,
+        bitfield_distribution: BitfieldDistributionSubsystem::new(Metrics::register(registry)?),
+        bitfield_signing: BitfieldSigningSubsystem::new(
+            spawner.clone(),
+            keystore.clone(),
+            Metrics::register(registry)?,
+        ),
+        candidate_backing: CandidateBackingSubsystem::new(
+            spawner.clone(),
+            keystore.clone(),
+            Metrics::register(registry)?,
+        ),
+        candidate_selection: CandidateSelectionSubsystem::new(
+            spawner.clone(),
+            keystore.clone(),
+            Metrics::register(registry)?,
+        ),
+        candidate_validation: CandidateValidationSubsystem::new(
+            spawner.clone(),
+            Metrics::register(registry)?,
+            isolation_strategy,
+        ),
+        chain_api: ChainApiSubsystem::new(runtime_client.clone(), Metrics::register(registry)?),
+        collation_generation: CollationGenerationSubsystem::new(Metrics::register(registry)?),
+        collator_protocol: {
+            let side = match is_collator {
+                IsCollator::Yes(id) => ProtocolSide::Collator(id, Metrics::register(registry)?),
+                IsCollator::No => ProtocolSide::Validator(Metrics::register(registry)?),
+            };
+            CollatorProtocolSubsystem::new(side)
+        },
+        network_bridge: NetworkBridgeSubsystem::new(network_service, authority_discovery),
+        pov_distribution: PoVDistributionSubsystem::new(Metrics::register(registry)?),
+        provisioner: ProvisionerSubsystem::new(spawner.clone(), (), Metrics::register(registry)?),
+        runtime_api: RuntimeApiSubsystem::new(
+            runtime_client,
+            Metrics::register(registry)?,
+            spawner.clone(),
+        ),
+        statement_distribution: StatementDistributionSubsystem::new(Metrics::register(registry)?),
+    };
 
-	Overseer::new(
-		leaves,
-		all_subsystems,
-		registry,
-		spawner,
-	).map_err(|e| Error::Other(format!("Failed to create an Overseer: {:?}", e)))
+    Overseer::new(leaves, all_subsystems, registry, spawner)
+        .map_err(|e| Error::Other(format!("Failed to create an Overseer: {:?}", e)))
 }
 
 #[cfg(feature = "full-node")]
 pub struct NewFull<C> {
-	pub task_manager: TaskManager,
-	pub client: C,
-	pub overseer_handler: Option<OverseerHandler>,
-	pub network: Arc<sc_network::NetworkService<Block, <Block as BlockT>::Hash>>,
-	pub network_status_sinks: service::NetworkStatusSinks<Block>,
-	pub rpc_handlers: RpcHandlers,
-	pub backend: Arc<FullBackend>,
+    pub task_manager: TaskManager,
+    pub client: C,
+    pub overseer_handler: Option<OverseerHandler>,
+    pub network: Arc<sc_network::NetworkService<Block, <Block as BlockT>::Hash>>,
+    pub network_status_sinks: service::NetworkStatusSinks<Block>,
+    pub rpc_handlers: RpcHandlers,
+    pub backend: Arc<FullBackend>,
 }
 
 #[cfg(feature = "full-node")]
 impl<C> NewFull<C> {
-	/// Convert the client type using the given `func`.
-	pub fn with_client<NC>(self, func: impl FnOnce(C) -> NC) -> NewFull<NC> {
-		NewFull {
-			client: func(self.client),
-			task_manager: self.task_manager,
-			overseer_handler: self.overseer_handler,
-			network: self.network,
-			network_status_sinks: self.network_status_sinks,
-			rpc_handlers: self.rpc_handlers,
-			backend: self.backend,
-		}
-	}
+    /// Convert the client type using the given `func`.
+    pub fn with_client<NC>(self, func: impl FnOnce(C) -> NC) -> NewFull<NC> {
+        NewFull {
+            client: func(self.client),
+            task_manager: self.task_manager,
+            overseer_handler: self.overseer_handler,
+            network: self.network,
+            network_status_sinks: self.network_status_sinks,
+            rpc_handlers: self.rpc_handlers,
+            backend: self.backend,
+        }
+    }
 }
 
 /// Is this node a collator?
 #[cfg(feature = "full-node")]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum IsCollator {
-	/// This node is a collator.
-	Yes(CollatorId),
-	/// This node is not a collator.
-	No,
+    /// This node is a collator.
+    Yes(CollatorId),
+    /// This node is not a collator.
+    No,
 }
 
 #[cfg(feature = "full-node")]
 impl IsCollator {
-	/// Is this a collator?
-	fn is_collator(&self) -> bool {
-		matches!(self, Self::Yes(_))
-	}
+    /// Is this a collator?
+    fn is_collator(&self) -> bool {
+        matches!(self, Self::Yes(_))
+    }
 }
 
 /// Create a new full node of arbitrary runtime and executor.
@@ -422,412 +408,452 @@ impl IsCollator {
 /// a better choice.
 #[cfg(feature = "full-node")]
 pub fn new_full<RuntimeApi, Executor>(
-	mut config: Configuration,
-	is_collator: IsCollator,
-	grandpa_pause: Option<(u32, u32)>,
-	isolation_strategy: IsolationStrategy,
+    mut config: Configuration,
+    is_collator: IsCollator,
+    grandpa_pause: Option<(u32, u32)>,
+    isolation_strategy: IsolationStrategy,
 ) -> Result<NewFull<Arc<FullClient<RuntimeApi, Executor>>>, Error>
-	where
-		RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
-		RuntimeApi::RuntimeApi:
-		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
-		Executor: NativeExecutionDispatch + 'static,
+where
+    RuntimeApi:
+        ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+    RuntimeApi::RuntimeApi:
+        RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
+    Executor: NativeExecutionDispatch + 'static,
 {
-	let role = config.role.clone();
-	let force_authoring = config.force_authoring;
-	let backoff_authoring_blocks =
-		Some(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default());
-	let disable_grandpa = config.disable_grandpa;
-	let name = config.network.node_name.clone();
+    let role = config.role.clone();
+    let force_authoring = config.force_authoring;
+    let backoff_authoring_blocks =
+        Some(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default());
+    let disable_grandpa = config.disable_grandpa;
+    let name = config.network.node_name.clone();
 
-	let service::PartialComponents {
-		client,
-		backend,
-		mut task_manager,
-		keystore_container,
-		select_chain,
-		import_queue,
-		transaction_pool,
-		inherent_data_providers,
-		other: (rpc_extensions_builder, import_setup, rpc_setup)
-	} = new_partial::<RuntimeApi, Executor>(&mut config)?;
+    let service::PartialComponents {
+        client,
+        backend,
+        mut task_manager,
+        keystore_container,
+        select_chain,
+        import_queue,
+        transaction_pool,
+        inherent_data_providers,
+        other: (rpc_extensions_builder, import_setup, rpc_setup),
+    } = new_partial::<RuntimeApi, Executor>(&mut config)?;
 
-	let prometheus_registry = config.prometheus_registry().cloned();
+    let prometheus_registry = config.prometheus_registry().cloned();
 
-	let shared_voter_state = rpc_setup;
+    let shared_voter_state = rpc_setup;
 
-	#[cfg(feature = "real-overseer")]
-	config.network.notifications_protocols.extend(indracore_network_bridge::notifications_protocol_info());
-	config.network.notifications_protocols.push(grandpa::GRANDPA_PROTOCOL_NAME.into());
+    #[cfg(feature = "real-overseer")]
+    config
+        .network
+        .notifications_protocols
+        .extend(indracore_network_bridge::notifications_protocol_info());
+    config
+        .network
+        .notifications_protocols
+        .push(grandpa::GRANDPA_PROTOCOL_NAME.into());
 
-	let (network, network_status_sinks, system_rpc_tx, network_starter) =
-		service::build_network(service::BuildNetworkParams {
-			config: &config,
-			client: client.clone(),
-			transaction_pool: transaction_pool.clone(),
-			spawn_handle: task_manager.spawn_handle(),
-			import_queue,
-			on_demand: None,
-			block_announce_validator_builder: None,
-		})?;
+    let (network, network_status_sinks, system_rpc_tx, network_starter) =
+        service::build_network(service::BuildNetworkParams {
+            config: &config,
+            client: client.clone(),
+            transaction_pool: transaction_pool.clone(),
+            spawn_handle: task_manager.spawn_handle(),
+            import_queue,
+            on_demand: None,
+            block_announce_validator_builder: None,
+        })?;
 
-	if config.offchain_worker.enabled {
-		let _ = service::build_offchain_workers(
-			&config, backend.clone(), task_manager.spawn_handle(), client.clone(), network.clone(),
-		);
-	}
+    if config.offchain_worker.enabled {
+        let _ = service::build_offchain_workers(
+            &config,
+            backend.clone(),
+            task_manager.spawn_handle(),
+            client.clone(),
+            network.clone(),
+        );
+    }
 
-	let telemetry_connection_sinks = service::TelemetryConnectionSinks::default();
+    let telemetry_connection_sinks = service::TelemetryConnectionSinks::default();
 
-	let availability_config = config.database.clone().try_into();
+    let availability_config = config.database.clone().try_into();
 
-	let rpc_handlers = service::spawn_tasks(service::SpawnTasksParams {
-		config,
-		backend: backend.clone(),
-		client: client.clone(),
-		keystore: keystore_container.sync_keystore(),
-		network: network.clone(),
-		rpc_extensions_builder: Box::new(rpc_extensions_builder),
-		transaction_pool: transaction_pool.clone(),
-		task_manager: &mut task_manager,
-		on_demand: None,
-		remote_blockchain: None,
-		telemetry_connection_sinks: telemetry_connection_sinks.clone(),
-		network_status_sinks: network_status_sinks.clone(),
-		system_rpc_tx,
-	})?;
+    let rpc_handlers = service::spawn_tasks(service::SpawnTasksParams {
+        config,
+        backend: backend.clone(),
+        client: client.clone(),
+        keystore: keystore_container.sync_keystore(),
+        network: network.clone(),
+        rpc_extensions_builder: Box::new(rpc_extensions_builder),
+        transaction_pool: transaction_pool.clone(),
+        task_manager: &mut task_manager,
+        on_demand: None,
+        remote_blockchain: None,
+        telemetry_connection_sinks: telemetry_connection_sinks.clone(),
+        network_status_sinks: network_status_sinks.clone(),
+        system_rpc_tx,
+    })?;
 
-	let (block_import, link_half, babe_link) = import_setup;
+    let (block_import, link_half, babe_link) = import_setup;
 
-	let overseer_client = client.clone();
-	let spawner = task_manager.spawn_handle();
-	let leaves: Vec<_> = select_chain.clone()
-		.leaves()
-		.unwrap_or_else(|_| vec![])
-		.into_iter()
-		.filter_map(|hash| {
-			let number = client.number(hash).ok()??;
-			let parent_hash = client.header(&BlockId::Hash(hash)).ok()??.parent_hash;
+    let overseer_client = client.clone();
+    let spawner = task_manager.spawn_handle();
+    let leaves: Vec<_> = select_chain
+        .clone()
+        .leaves()
+        .unwrap_or_else(|_| vec![])
+        .into_iter()
+        .filter_map(|hash| {
+            let number = client.number(hash).ok()??;
+            let parent_hash = client.header(&BlockId::Hash(hash)).ok()??.parent_hash;
 
-			Some(BlockInfo {
-				hash,
-				parent_hash,
-				number,
-			})
-		})
-		.collect();
+            Some(BlockInfo {
+                hash,
+                parent_hash,
+                number,
+            })
+        })
+        .collect();
 
-	let authority_discovery_service = if role.is_authority() || is_collator.is_collator() {
-		use sc_network::Event;
-		use futures::StreamExt;
+    let authority_discovery_service = if role.is_authority() || is_collator.is_collator() {
+        use futures::StreamExt;
+        use sc_network::Event;
 
-		let authority_discovery_role = if role.is_authority() {
-			sc_authority_discovery::Role::PublishAndDiscover(
-				keystore_container.keystore(),
-			)
-		} else {
-			// don't publish our addresses when we're only a collator
-			sc_authority_discovery::Role::Discover
-		};
-		let dht_event_stream = network.event_stream("authority-discovery")
-			.filter_map(|e| async move { match e {
-				Event::Dht(e) => Some(e),
-				_ => None,
-			}});
-		let (worker, service) = sc_authority_discovery::new_worker_and_service(
-			client.clone(),
-			network.clone(),
-			Box::pin(dht_event_stream),
-			authority_discovery_role,
-			prometheus_registry.clone(),
-		);
+        let authority_discovery_role = if role.is_authority() {
+            sc_authority_discovery::Role::PublishAndDiscover(keystore_container.keystore())
+        } else {
+            // don't publish our addresses when we're only a collator
+            sc_authority_discovery::Role::Discover
+        };
+        let dht_event_stream =
+            network
+                .event_stream("authority-discovery")
+                .filter_map(|e| async move {
+                    match e {
+                        Event::Dht(e) => Some(e),
+                        _ => None,
+                    }
+                });
+        let (worker, service) = sc_authority_discovery::new_worker_and_service(
+            client.clone(),
+            network.clone(),
+            Box::pin(dht_event_stream),
+            authority_discovery_role,
+            prometheus_registry.clone(),
+        );
 
-		task_manager.spawn_handle().spawn("authority-discovery-worker", worker.run());
-		Some(service)
-	} else {
-		None
-	};
+        task_manager
+            .spawn_handle()
+            .spawn("authority-discovery-worker", worker.run());
+        Some(service)
+    } else {
+        None
+    };
 
-	// we'd say let overseer_handler = authority_discovery_service.map(|authority_discovery_service|, ...),
-	// but in that case we couldn't use ? to propagate errors
-	let overseer_handler = if let Some(authority_discovery_service) = authority_discovery_service {
-		let (overseer, overseer_handler) = real_overseer(
-			leaves,
-			keystore_container.sync_keystore(),
-			overseer_client.clone(),
-			availability_config?,
-			network.clone(),
-			authority_discovery_service,
-			prometheus_registry.as_ref(),
-			spawner,
-			is_collator,
-			isolation_strategy,
-		)?;
-		let overseer_handler_clone = overseer_handler.clone();
+    // we'd say let overseer_handler = authority_discovery_service.map(|authority_discovery_service|, ...),
+    // but in that case we couldn't use ? to propagate errors
+    let overseer_handler = if let Some(authority_discovery_service) = authority_discovery_service {
+        let (overseer, overseer_handler) = real_overseer(
+            leaves,
+            keystore_container.sync_keystore(),
+            overseer_client.clone(),
+            availability_config?,
+            network.clone(),
+            authority_discovery_service,
+            prometheus_registry.as_ref(),
+            spawner,
+            is_collator,
+            isolation_strategy,
+        )?;
+        let overseer_handler_clone = overseer_handler.clone();
 
-		task_manager.spawn_essential_handle().spawn_blocking("overseer", Box::pin(async move {
-			use futures::{pin_mut, select, FutureExt};
+        task_manager.spawn_essential_handle().spawn_blocking(
+            "overseer",
+            Box::pin(async move {
+                use futures::{pin_mut, select, FutureExt};
 
-			let forward = indracore_overseer::forward_events(overseer_client, overseer_handler_clone);
+                let forward =
+                    indracore_overseer::forward_events(overseer_client, overseer_handler_clone);
 
-			let forward = forward.fuse();
-			let overseer_fut = overseer.run().fuse();
+                let forward = forward.fuse();
+                let overseer_fut = overseer.run().fuse();
 
-			pin_mut!(overseer_fut);
-			pin_mut!(forward);
+                pin_mut!(overseer_fut);
+                pin_mut!(forward);
 
-			select! {
-				_ = forward => (),
-				_ = overseer_fut => (),
-				complete => (),
-			}
-		}));
+                select! {
+                    _ = forward => (),
+                    _ = overseer_fut => (),
+                    complete => (),
+                }
+            }),
+        );
 
-		Some(overseer_handler)
-	} else { None };
+        Some(overseer_handler)
+    } else {
+        None
+    };
 
-	if role.is_authority() {
-		let can_author_with =
-			consensus_common::CanAuthorWithNativeVersion::new(client.executor().clone());
+    if role.is_authority() {
+        let can_author_with =
+            consensus_common::CanAuthorWithNativeVersion::new(client.executor().clone());
 
-		let proposer = ProposerFactory::new(
-			task_manager.spawn_handle(),
-			client.clone(),
-			transaction_pool,
-			overseer_handler.as_ref().ok_or("authorities require real overseer handlers")?.clone(),
-			prometheus_registry.as_ref(),
-		);
+        let proposer = ProposerFactory::new(
+            task_manager.spawn_handle(),
+            client.clone(),
+            transaction_pool,
+            overseer_handler
+                .as_ref()
+                .ok_or("authorities require real overseer handlers")?
+                .clone(),
+            prometheus_registry.as_ref(),
+        );
 
-		let babe_config = babe::BabeParams {
-			keystore: keystore_container.sync_keystore(),
-			client: client.clone(),
-			select_chain,
-			block_import,
-			env: proposer,
-			sync_oracle: network.clone(),
-			inherent_data_providers: inherent_data_providers.clone(),
-			force_authoring,
-			backoff_authoring_blocks,
-			babe_link,
-			can_author_with,
-		};
+        let babe_config = babe::BabeParams {
+            keystore: keystore_container.sync_keystore(),
+            client: client.clone(),
+            select_chain,
+            block_import,
+            env: proposer,
+            sync_oracle: network.clone(),
+            inherent_data_providers: inherent_data_providers.clone(),
+            force_authoring,
+            backoff_authoring_blocks,
+            babe_link,
+            can_author_with,
+        };
 
-		let babe = babe::start_babe(babe_config)?;
-		task_manager.spawn_essential_handle().spawn_blocking("babe", babe);
-	}
+        let babe = babe::start_babe(babe_config)?;
+        task_manager
+            .spawn_essential_handle()
+            .spawn_blocking("babe", babe);
+    }
 
-	// if the node isn't actively participating in consensus then it doesn't
-	// need a keystore, regardless of which protocol we use below.
-	let keystore_opt = if role.is_authority() {
-		Some(keystore_container.sync_keystore())
-	} else {
-		None
-	};
+    // if the node isn't actively participating in consensus then it doesn't
+    // need a keystore, regardless of which protocol we use below.
+    let keystore_opt = if role.is_authority() {
+        Some(keystore_container.sync_keystore())
+    } else {
+        None
+    };
 
-	let config = grandpa::Config {
-		// FIXME substrate#1578 make this available through chainspec
-		gossip_duration: Duration::from_millis(1000),
-		justification_period: 512,
-		name: Some(name),
-		observer_enabled: false,
-		keystore: keystore_opt,
-		is_authority: role.is_network_authority(),
-	};
+    let config = grandpa::Config {
+        // FIXME substrate#1578 make this available through chainspec
+        gossip_duration: Duration::from_millis(1000),
+        justification_period: 512,
+        name: Some(name),
+        observer_enabled: false,
+        keystore: keystore_opt,
+        is_authority: role.is_network_authority(),
+    };
 
-	let enable_grandpa = !disable_grandpa;
-	if enable_grandpa {
-		// start the full GRANDPA voter
-		// NOTE: unlike in substrate we are currently running the full
-		// GRANDPA voter protocol for all full nodes (regardless of whether
-		// they're validators or not). at this point the full voter should
-		// provide better guarantees of block and vote data availability than
-		// the observer.
+    let enable_grandpa = !disable_grandpa;
+    if enable_grandpa {
+        // start the full GRANDPA voter
+        // NOTE: unlike in substrate we are currently running the full
+        // GRANDPA voter protocol for all full nodes (regardless of whether
+        // they're validators or not). at this point the full voter should
+        // provide better guarantees of block and vote data availability than
+        // the observer.
 
-		// add a custom voting rule to temporarily stop voting for new blocks
-		// after the given pause block is finalized and restarting after the
-		// given delay.
-		let voting_rule = match grandpa_pause {
-			Some((block, delay)) => {
-				info!(
-					block_number = %block,
-					delay = %delay,
-					"GRANDPA scheduled voting pause set for block #{} with a duration of {} blocks.",
-					block,
-					delay,
-				);
+        // add a custom voting rule to temporarily stop voting for new blocks
+        // after the given pause block is finalized and restarting after the
+        // given delay.
+        let voting_rule = match grandpa_pause {
+            Some((block, delay)) => {
+                info!(
+                    block_number = %block,
+                    delay = %delay,
+                    "GRANDPA scheduled voting pause set for block #{} with a duration of {} blocks.",
+                    block,
+                    delay,
+                );
 
-				grandpa::VotingRulesBuilder::default()
-					.add(grandpa_support::PauseAfterBlockFor(block, delay))
-					.build()
-			}
-			None => grandpa::VotingRulesBuilder::default().build(),
-		};
+                grandpa::VotingRulesBuilder::default()
+                    .add(grandpa_support::PauseAfterBlockFor(block, delay))
+                    .build()
+            }
+            None => grandpa::VotingRulesBuilder::default().build(),
+        };
 
-		let grandpa_config = grandpa::GrandpaParams {
-			config,
-			link: link_half,
-			network: network.clone(),
-			telemetry_on_connect: Some(telemetry_connection_sinks.on_connect_stream()),
-			voting_rule,
-			prometheus_registry: prometheus_registry.clone(),
-			shared_voter_state,
-		};
+        let grandpa_config = grandpa::GrandpaParams {
+            config,
+            link: link_half,
+            network: network.clone(),
+            telemetry_on_connect: Some(telemetry_connection_sinks.on_connect_stream()),
+            voting_rule,
+            prometheus_registry: prometheus_registry.clone(),
+            shared_voter_state,
+        };
 
-		task_manager.spawn_essential_handle().spawn_blocking(
-			"grandpa-voter",
-			grandpa::run_grandpa_voter(grandpa_config)?
-		);
-	}
+        task_manager
+            .spawn_essential_handle()
+            .spawn_blocking("grandpa-voter", grandpa::run_grandpa_voter(grandpa_config)?);
+    }
 
-	network_starter.start_network();
+    network_starter.start_network();
 
-	Ok(NewFull {
-		task_manager,
-		client,
-		overseer_handler,
-		network,
-		network_status_sinks,
-		rpc_handlers,
-		backend,
-	})
+    Ok(NewFull {
+        task_manager,
+        client,
+        overseer_handler,
+        network,
+        network_status_sinks,
+        rpc_handlers,
+        backend,
+    })
 }
 
 /// Builds a new service for a light client.
-fn new_light<Runtime, Dispatch>(mut config: Configuration) -> Result<(TaskManager, RpcHandlers), Error>
-	where
-		Runtime: 'static + Send + Sync + ConstructRuntimeApi<Block, LightClient<Runtime, Dispatch>>,
-		<Runtime as ConstructRuntimeApi<Block, LightClient<Runtime, Dispatch>>>::RuntimeApi:
-		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<LightBackend, Block>>,
-		Dispatch: NativeExecutionDispatch + 'static,
+fn new_light<Runtime, Dispatch>(
+    mut config: Configuration,
+) -> Result<(TaskManager, RpcHandlers), Error>
+where
+    Runtime: 'static + Send + Sync + ConstructRuntimeApi<Block, LightClient<Runtime, Dispatch>>,
+    <Runtime as ConstructRuntimeApi<Block, LightClient<Runtime, Dispatch>>>::RuntimeApi:
+        RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<LightBackend, Block>>,
+    Dispatch: NativeExecutionDispatch + 'static,
 {
-	set_prometheus_registry(&mut config)?;
-	use sc_client_api::backend::RemoteBackend;
+    set_prometheus_registry(&mut config)?;
+    use sc_client_api::backend::RemoteBackend;
 
-	let (client, backend, keystore_container, mut task_manager, on_demand) =
-		service::new_light_parts::<Block, Runtime, Dispatch>(&config)?;
+    let (client, backend, keystore_container, mut task_manager, on_demand) =
+        service::new_light_parts::<Block, Runtime, Dispatch>(&config)?;
 
-	let select_chain = sc_consensus::LongestChain::new(backend.clone());
+    let select_chain = sc_consensus::LongestChain::new(backend.clone());
 
-	let transaction_pool = Arc::new(sc_transaction_pool::BasicPool::new_light(
-		config.transaction_pool.clone(),
-		config.prometheus_registry(),
-		task_manager.spawn_handle(),
-		client.clone(),
-		on_demand.clone(),
-	));
+    let transaction_pool = Arc::new(sc_transaction_pool::BasicPool::new_light(
+        config.transaction_pool.clone(),
+        config.prometheus_registry(),
+        task_manager.spawn_handle(),
+        client.clone(),
+        on_demand.clone(),
+    ));
 
-	let (grandpa_block_import, _) = grandpa::block_import(
-		client.clone(),
-		&(client.clone() as Arc<_>),
-		select_chain.clone(),
-	)?;
-	let justification_import = grandpa_block_import.clone();
+    let (grandpa_block_import, _) = grandpa::block_import(
+        client.clone(),
+        &(client.clone() as Arc<_>),
+        select_chain.clone(),
+    )?;
+    let justification_import = grandpa_block_import.clone();
 
-	let (babe_block_import, babe_link) = babe::block_import(
-		babe::Config::get_or_compute(&*client)?,
-		grandpa_block_import,
-		client.clone(),
-	)?;
+    let (babe_block_import, babe_link) = babe::block_import(
+        babe::Config::get_or_compute(&*client)?,
+        grandpa_block_import,
+        client.clone(),
+    )?;
 
-	let inherent_data_providers = inherents::InherentDataProviders::new();
+    let inherent_data_providers = inherents::InherentDataProviders::new();
 
-	// FIXME: pruning task isn't started since light client doesn't do `AuthoritySetup`.
-	let import_queue = babe::import_queue(
-		babe_link,
-		babe_block_import,
-		Some(Box::new(justification_import)),
-		client.clone(),
-		select_chain.clone(),
-		inherent_data_providers.clone(),
-		&task_manager.spawn_handle(),
-		config.prometheus_registry(),
-		consensus_common::NeverCanAuthor,
-	)?;
+    // FIXME: pruning task isn't started since light client doesn't do `AuthoritySetup`.
+    let import_queue = babe::import_queue(
+        babe_link,
+        babe_block_import,
+        Some(Box::new(justification_import)),
+        client.clone(),
+        select_chain.clone(),
+        inherent_data_providers.clone(),
+        &task_manager.spawn_handle(),
+        config.prometheus_registry(),
+        consensus_common::NeverCanAuthor,
+    )?;
 
-	let (network, network_status_sinks, system_rpc_tx, network_starter) =
-		service::build_network(service::BuildNetworkParams {
-			config: &config,
-			client: client.clone(),
-			transaction_pool: transaction_pool.clone(),
-			spawn_handle: task_manager.spawn_handle(),
-			import_queue,
-			on_demand: Some(on_demand.clone()),
-			block_announce_validator_builder: None,
-		})?;
+    let (network, network_status_sinks, system_rpc_tx, network_starter) =
+        service::build_network(service::BuildNetworkParams {
+            config: &config,
+            client: client.clone(),
+            transaction_pool: transaction_pool.clone(),
+            spawn_handle: task_manager.spawn_handle(),
+            import_queue,
+            on_demand: Some(on_demand.clone()),
+            block_announce_validator_builder: None,
+        })?;
 
-	if config.offchain_worker.enabled {
-		let _ = service::build_offchain_workers(
-			&config,
-			backend.clone(),
-			task_manager.spawn_handle(),
-			client.clone(),
-			network.clone(),
-		);
-	}
+    if config.offchain_worker.enabled {
+        let _ = service::build_offchain_workers(
+            &config,
+            backend.clone(),
+            task_manager.spawn_handle(),
+            client.clone(),
+            network.clone(),
+        );
+    }
 
-	let light_deps = indracore_rpc::LightDeps {
-		remote_blockchain: backend.remote_blockchain(),
-		fetcher: on_demand.clone(),
-		client: client.clone(),
-		pool: transaction_pool.clone(),
-	};
+    let light_deps = indracore_rpc::LightDeps {
+        remote_blockchain: backend.remote_blockchain(),
+        fetcher: on_demand.clone(),
+        client: client.clone(),
+        pool: transaction_pool.clone(),
+    };
 
-	let rpc_extensions = indracore_rpc::create_light(light_deps);
+    let rpc_extensions = indracore_rpc::create_light(light_deps);
 
-	let rpc_handlers = service::spawn_tasks(service::SpawnTasksParams {
-		on_demand: Some(on_demand),
-		remote_blockchain: Some(backend.remote_blockchain()),
-		rpc_extensions_builder: Box::new(service::NoopRpcExtensionBuilder(rpc_extensions)),
-		task_manager: &mut task_manager,
-		telemetry_connection_sinks: service::TelemetryConnectionSinks::default(),
-		config,
-		keystore: keystore_container.sync_keystore(),
-		backend,
-		transaction_pool,
-		client,
-		network,
-		network_status_sinks,
-		system_rpc_tx,
-	})?;
+    let rpc_handlers = service::spawn_tasks(service::SpawnTasksParams {
+        on_demand: Some(on_demand),
+        remote_blockchain: Some(backend.remote_blockchain()),
+        rpc_extensions_builder: Box::new(service::NoopRpcExtensionBuilder(rpc_extensions)),
+        task_manager: &mut task_manager,
+        telemetry_connection_sinks: service::TelemetryConnectionSinks::default(),
+        config,
+        keystore: keystore_container.sync_keystore(),
+        backend,
+        transaction_pool,
+        client,
+        network,
+        network_status_sinks,
+        system_rpc_tx,
+    })?;
 
-	network_starter.start_network();
+    network_starter.start_network();
 
-	Ok((task_manager, rpc_handlers))
+    Ok((task_manager, rpc_handlers))
 }
 
 /// Builds a new object suitable for chain operations.
 #[cfg(feature = "full-node")]
-pub fn new_chain_ops(mut config: &mut Configuration) -> Result<
-	(
-		Arc<Client>,
-		Arc<FullBackend>,
-		consensus_common::import_queue::BasicQueue<Block, PrefixedMemoryDB<BlakeTwo256>>,
-		TaskManager,
-	),
-	Error
->
-{
-	config.keystore = service::config::KeystoreConfig::InMemory;
-    let service::PartialComponents { client, backend, import_queue, task_manager, .. }
-        = new_partial::<indracore_runtime::RuntimeApi, IndracoreExecutor>(config)?;
-    Ok((Arc::new(Client::Indracore(client)), backend, import_queue, task_manager))
+pub fn new_chain_ops(
+    mut config: &mut Configuration,
+) -> Result<
+    (
+        Arc<Client>,
+        Arc<FullBackend>,
+        consensus_common::import_queue::BasicQueue<Block, PrefixedMemoryDB<BlakeTwo256>>,
+        TaskManager,
+    ),
+    Error,
+> {
+    config.keystore = service::config::KeystoreConfig::InMemory;
+    let service::PartialComponents {
+        client,
+        backend,
+        import_queue,
+        task_manager,
+        ..
+    } = new_partial::<indracore_runtime::RuntimeApi, IndracoreExecutor>(config)?;
+    Ok((
+        Arc::new(Client::Indracore(client)),
+        backend,
+        import_queue,
+        task_manager,
+    ))
 }
 
 /// Build a new light node.
 pub fn build_light(config: Configuration) -> Result<(TaskManager, RpcHandlers), Error> {
-	new_light::<indracore_runtime::RuntimeApi, IndracoreExecutor>(config)
+    new_light::<indracore_runtime::RuntimeApi, IndracoreExecutor>(config)
 }
 
 #[cfg(feature = "full-node")]
 pub fn build_full(
-	config: Configuration,
-	is_collator: IsCollator,
-	grandpa_pause: Option<(u32, u32)>,
+    config: Configuration,
+    is_collator: IsCollator,
+    grandpa_pause: Option<(u32, u32)>,
 ) -> Result<NewFull<Client>, Error> {
     new_full::<indracore_runtime::RuntimeApi, IndracoreExecutor>(
         config,
         is_collator,
         grandpa_pause,
         Default::default(),
-    ).map(|full| full.with_client(Client::Indracore))
+    )
+    .map(|full| full.with_client(Client::Indracore))
 }
