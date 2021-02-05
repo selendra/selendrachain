@@ -2062,6 +2062,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "indracore-statement-distribution"
+version = "0.1.0"
+dependencies = [
+ "arrayvec 0.5.2",
+ "futures 0.3.12",
+ "indexmap",
+ "indracore-node-network-protocol",
+ "indracore-node-primitives",
+ "indracore-node-subsystem",
+ "indracore-node-subsystem-util",
+ "indracore-primitives",
+ "sp-staking",
+ "tracing",
+ "tracing-futures",
+]
+
+[[package]]
 name = "indracore-statement-table"
 version = "0.1.0"
 dependencies = [

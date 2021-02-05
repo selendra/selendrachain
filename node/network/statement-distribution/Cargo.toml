@@ -1,0 +1,19 @@
+[package]
+name = "indracore-statement-distribution"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+description = "Statement Distribution Subsystem"
+edition = "2018"
+
+[dependencies]
+futures = "0.3.8"
+tracing = "0.1.22"
+tracing-futures = "0.2.4"
+indracore-primitives = { path = "../../../primitives" }
+node-primitives = { package = "indracore-node-primitives", path = "../../primitives" }
+sp-staking = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
+indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
+indracore-node-subsystem-util = { path = "../../subsystem-util" }
+indracore-node-network-protocol = { path = "../../network/protocol" }
+arrayvec = "0.5.2"
+indexmap = "1.6.0"
