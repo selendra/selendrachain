@@ -11,6 +11,7 @@ members = [
     "xcm/xcm-builder",
     "node/primitives",
     "node/subsystem",
+    "node/overseer",
     "node/subsystem-util",
     "node/collation-generation",
     "node/network/protocol",

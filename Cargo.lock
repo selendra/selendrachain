@@ -1845,6 +1845,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "indracore-overseer"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "futures 0.3.12",
+ "futures-timer 3.0.2",
+ "indracore-node-primitives",
+ "indracore-node-subsystem",
+ "indracore-node-subsystem-util",
+ "indracore-primitives",
+ "sc-client-api",
+ "streamunordered",
+ "tracing",
+ "tracing-futures",
+]
+
+[[package]]
 name = "indracore-parachain"
 version = "0.1.0"
 dependencies = [
