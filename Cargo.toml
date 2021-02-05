@@ -14,6 +14,7 @@ members = [
     "node/subsystem-util",
     "node/collation-generation",
     "node/network/protocol",
+    "node/network/bitfield-distribution",
     "node/network/availability-distribution",
     "node/network/collator-protocol",
     "node/network/pov-distribution",
