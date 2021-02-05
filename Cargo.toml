@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "indracore",
 	"core-primitives",
     "parachain",
     "primitives",
@@ -7,6 +8,7 @@ members = [
     "statement-table",
     "rpc",
     "xcm",
+    "cli",
     "xcm/xcm-executor",
     "xcm/xcm-builder",
     "node/service",

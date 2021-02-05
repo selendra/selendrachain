@@ -1,0 +1,55 @@
+[package]
+name = "indracore"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+description = "Implementation of a node in Rust based on the Substrate framework."
+license = "GPL-3.0-only"
+edition = "2018"
+
+[[bin]]
+name = "indracore"
+path = "src/main.rs"
+
+[dependencies]
+cli = { package = "indracore-cli", path = "../cli" }
+color-eyre = "0.5.10"
+futures = "0.3.8"
+service = { package = "indracore-service", path = "../node/service" }
+parity-util-mem = { version = "*", default-features = false, features = ["jemalloc-global"] }
+
+[badges]
+maintenance = { status = "actively-developed" }
+
+[features]
+runtime-benchmarks=["cli/runtime-benchmarks"]
+real-overseer=["cli/real-overseer"]
+
+# Configuration for building a .deb package - for use with `cargo-deb`
+[package.metadata.deb]
+name = "indracore"
+extended-description = "Implementation of  node in Rust based on the Substrate framework."
+section = "misc"
+maintainer = "martin@parity.io"
+license-file = ["LICENSE", "0"]
+
+maintainer-scripts = "scripts/packaging/deb-maintainer-scripts"
+assets = [
+	["target/release/indracore", "/usr/bin/", "755"],
+	["scripts/packaging/indracore.service", "/lib/systemd/system/", "644"]
+]
+conf-files = [
+	"/etc/default/indracore"
+]
+
+# Configuration for building an .rpm package - for use with `cargo-rpm`
+[package.metadata.rpm]
+package = "indracore"
+
+[package.metadata.rpm.cargo]
+buildflags = ["--release"]
+
+[package.metadata.rpm.targets]
+indracore = { path = "/usr/bin/indracore" }
+
+[package.metadata.rpm.files]
+"../scripts/packaging/indracore.service" = { path = "/usr/lib/systemd/system/indracore.service", mode = "644" }
