@@ -52,7 +52,7 @@ use std::collections::{HashMap, HashSet};
 use std::iter;
 use thiserror::Error;
 
-const LOG_TARGET: &'static str = "availability_distribution";
+const LOG_TARGET: &str = "availability_distribution";
 
 #[derive(Debug, Error)]
 enum Error {
@@ -224,9 +224,9 @@ impl ProtocolState {
         relay_parents_and_ancestors
             .into_iter()
             .filter_map(|relay_parent_or_ancestor| self.receipts.get(&relay_parent_or_ancestor))
-            .map(|receipt_set| receipt_set.into_iter())
+            .map(|receipt_set| receipt_set.iter())
             .flatten()
-            .map(|(receipt_hash, receipt)| (receipt_hash.clone(), receipt.clone()))
+            .map(|(receipt_hash, receipt)| (*receipt_hash, receipt.clone()))
             .collect()
     }
 
@@ -246,10 +246,9 @@ impl ProtocolState {
         // register the relation of relay_parent to candidate..
         // ..and the reverse association.
         for (relay_parent_or_ancestor, (receipt_hash, receipt)) in candidates.clone() {
-            self.reverse
-                .insert(receipt_hash.clone(), relay_parent_or_ancestor.clone());
-            let per_candidate = self.per_candidate.entry(receipt_hash.clone()).or_default();
-            per_candidate.validator_index = validator_index.clone();
+            self.reverse.insert(receipt_hash, relay_parent_or_ancestor);
+            let per_candidate = self.per_candidate.entry(receipt_hash).or_default();
+            per_candidate.validator_index = validator_index;
             per_candidate.validators = validators.clone();
 
             self.receipts
@@ -273,7 +272,7 @@ impl ProtocolState {
         // mark all the ancestors as "needed" by this newly added relay parent
         for ancestor in ancestors.iter() {
             self.ancestry
-                .entry(ancestor.clone())
+                .entry(*ancestor)
                 .or_default()
                 .insert(relay_parent);
         }
@@ -430,7 +429,7 @@ where
                     .cached_live_candidates_unioned(view.0.iter())
                     .contains_key(&candidate_hash)
             })
-            .map(|(peer, _view)| peer.clone())
+            .map(|(peer, _view)| peer)
             .collect();
 
         // distribute all erasure messages to interested peers
@@ -577,7 +576,7 @@ async fn handle_peer_view_change<Context>(
         let per_candidate = state.per_candidate.entry(candidate_hash).or_default();
 
         // obtain the relevant chunk indices not sent yet
-        let messages = ((0 as ValidatorIndex)..(per_candidate.validators.len() as ValidatorIndex))
+        let messages = (0_u32..(per_candidate.validators.len() as ValidatorIndex))
             .into_iter()
             .filter_map(|erasure_chunk_index: ValidatorIndex| {
                 let message_id = (candidate_hash, erasure_chunk_index);
@@ -666,7 +665,7 @@ where
     let message_id = (message.candidate_hash, message.erasure_chunk.index);
 
     {
-        let per_candidate = state.per_candidate.entry(message_id.0.clone()).or_default();
+        let per_candidate = state.per_candidate.entry(message_id.0).or_default();
 
         // check if this particular erasure chunk was already sent by that peer before
         {
@@ -678,7 +677,7 @@ where
                 modify_reputation(ctx, origin, COST_PEER_DUPLICATE_MESSAGE).await;
                 return Ok(());
             } else {
-                received_set.insert(message_id.clone());
+                received_set.insert(message_id);
             }
         }
 
@@ -697,8 +696,8 @@ where
                 if message.erasure_chunk.index == validator_index {
                     if let Err(_e) = store_chunk(
                         ctx,
-                        message.candidate_hash.clone(),
-                        live_candidate.descriptor.relay_parent.clone(),
+                        message.candidate_hash,
+                        live_candidate.descriptor.relay_parent,
                         message.erasure_chunk.index,
                         message.erasure_chunk.clone(),
                     )
@@ -724,10 +723,10 @@ where
                 .cached_live_candidates_unioned(view.0.iter())
                 .contains_key(&message_id.0)
         })
-        .map(|(peer, _)| -> PeerId { peer.clone() })
+        .map(|(peer, _)| -> PeerId { peer })
         .collect::<Vec<_>>();
 
-    let per_candidate = state.per_candidate.entry(message_id.0.clone()).or_default();
+    let per_candidate = state.per_candidate.entry(message_id.0).or_default();
 
     let peers = peers
         .into_iter()
@@ -765,10 +764,7 @@ impl AvailabilityDistributionSubsystem {
         // work: process incoming messages from the overseer.
         let mut state = ProtocolState::default();
         loop {
-            let message = ctx
-                .recv()
-                .await
-                .map_err(|e| Error::IncomingMessageChannel(e))?;
+            let message = ctx.recv().await.map_err(Error::IncomingMessageChannel)?;
             match message {
                 FromOverseer::Communication {
                     msg: AvailabilityDistributionMessage::NetworkBridgeUpdateV1(event),
@@ -886,11 +882,9 @@ where
                     .get(relay_parent_or_ancestor)
                     .and_then(|receipts| {
                         // directly extend the live_candidates with the cached value
-                        live_candidates.extend(receipts.into_iter().map(
-                            |(receipt_hash, receipt)| {
-                                (relay_parent, (receipt_hash.clone(), receipt.clone()))
-                            },
-                        ));
+                        live_candidates.extend(receipts.iter().map(|(receipt_hash, receipt)| {
+                            (relay_parent, (*receipt_hash, receipt.clone()))
+                        }));
                         Some(())
                     })
                     .is_none()
@@ -925,8 +919,8 @@ where
 
     let all_para_ids: Vec<_> = rx
         .await
-        .map_err(|e| Error::AvailabilityCoresResponseChannel(e))?
-        .map_err(|e| Error::AvailabilityCores(e))?;
+        .map_err(Error::AvailabilityCoresResponseChannel)?
+        .map_err(Error::AvailabilityCores)?;
 
     let occupied_para_ids = all_para_ids
         .into_iter()
@@ -974,8 +968,7 @@ where
     ))
     .await;
 
-    rx.await
-        .map_err(|e| Error::QueryAvailabilityResponseChannel(e))
+    rx.await.map_err(Error::QueryAvailabilityResponseChannel)
 }
 
 #[tracing::instrument(level = "trace", skip(ctx), fields(subsystem = LOG_TARGET))]
@@ -993,7 +986,7 @@ where
     ))
     .await;
 
-    rx.await.map_err(|e| Error::QueryChunkResponseChannel(e))
+    rx.await.map_err(Error::QueryChunkResponseChannel)
 }
 
 #[tracing::instrument(level = "trace", skip(ctx, erasure_chunk), fields(subsystem = LOG_TARGET))]
@@ -1019,7 +1012,7 @@ where
     ))
     .await;
 
-    rx.await.map_err(|e| Error::StoreChunkResponseChannel(e))
+    rx.await.map_err(Error::StoreChunkResponseChannel)
 }
 
 /// Request the head data for a particular para.
@@ -1040,8 +1033,8 @@ where
     .await;
 
     rx.await
-        .map_err(|e| Error::QueryPendingAvailabilityResponseChannel(e))?
-        .map_err(|e| Error::QueryPendingAvailability(e))
+        .map_err(Error::QueryPendingAvailabilityResponseChannel)?
+        .map_err(Error::QueryPendingAvailability)
 }
 
 /// Query the validator set.
@@ -1061,8 +1054,8 @@ where
 
     ctx.send_message(query_validators).await;
     rx.await
-        .map_err(|e| Error::QueryValidatorsResponseChannel(e))?
-        .map_err(|e| Error::QueryValidators(e))
+        .map_err(Error::QueryValidatorsResponseChannel)?
+        .map_err(Error::QueryValidators)
 }
 
 /// Query the hash of the `K` ancestors
@@ -1084,8 +1077,8 @@ where
 
     ctx.send_message(query_ancestors).await;
     rx.await
-        .map_err(|e| Error::QueryAncestorsResponseChannel(e))?
-        .map_err(|e| Error::QueryAncestors(e))
+        .map_err(Error::QueryAncestorsResponseChannel)?
+        .map_err(Error::QueryAncestors)
 }
 
 /// Query the session index of a relay parent
@@ -1105,8 +1098,8 @@ where
 
     ctx.send_message(query_session_idx_for_child).await;
     rx.await
-        .map_err(|e| Error::QuerySessionResponseChannel(e))?
-        .map_err(|e| Error::QuerySession(e))
+        .map_err(Error::QuerySessionResponseChannel)?
+        .map_err(Error::QuerySession)
 }
 
 /// Queries up to k ancestors with the constraints of equiv session

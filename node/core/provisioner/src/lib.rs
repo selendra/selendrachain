@@ -314,7 +314,7 @@ async fn send_inherent_data(
     let availability_cores = request_availability_cores(relay_parent, from_job)
         .await?
         .await
-        .map_err(|err| Error::CanceledAvailabilityCores(err))??;
+        .map_err(Error::CanceledAvailabilityCores)??;
 
     let bitfields = select_availability_bitfields(&availability_cores, bitfields);
     let candidates = select_candidates(
@@ -426,7 +426,7 @@ async fn select_candidates(
         )
         .await?
         .await
-        .map_err(|err| Error::CanceledPersistedValidationData(err))??
+        .map_err(Error::CanceledPersistedValidationData)??
         {
             Some(v) => v,
             None => continue,
@@ -456,10 +456,8 @@ async fn select_candidates(
             .into(),
         )
         .await
-        .map_err(|err| Error::GetBackedCandidatesSend(err))?;
-    let candidates = rx
-        .await
-        .map_err(|err| Error::CanceledBackedCandidates(err))?;
+        .map_err(Error::GetBackedCandidatesSend)?;
+    let candidates = rx.await.map_err(Error::CanceledBackedCandidates)?;
 
     // `selected_candidates` is generated in ascending order by core index, and `GetBackedCandidates`
     // _should_ preserve that property, but let's just make sure.
@@ -479,7 +477,7 @@ async fn select_candidates(
         }
     }
     if candidates.len() != backed_idx {
-        Err(Error::BackedCandidateOrderingProblem)?;
+        return Err(Error::BackedCandidateOrderingProblem);
     }
 
     Ok(candidates)
@@ -496,8 +494,8 @@ async fn get_block_number_under_construction(
     sender
         .send(AllMessages::from(ChainApiMessage::BlockNumber(relay_parent, tx)).into())
         .await
-        .map_err(|e| Error::ChainApiMessageSend(e))?;
-    match rx.await.map_err(|err| Error::CanceledBlockNumber(err))? {
+        .map_err(Error::ChainApiMessageSend)?;
+    match rx.await.map_err(Error::CanceledBlockNumber)? {
         Ok(Some(n)) => Ok(n + 1),
         Ok(None) => Ok(0),
         Err(err) => Err(err.into()),

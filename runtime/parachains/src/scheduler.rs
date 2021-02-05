@@ -479,7 +479,7 @@ impl<T: Config> Module<T> {
                     Some(CoreAssignment {
                         kind: AssignmentKind::Parachain,
                         para_id: parachains[core_index],
-                        core: core.clone(),
+                        core,
                         group_idx: Self::group_assigned_to_core(core, now).expect(
                             "core is not out of bounds and we are guaranteed \
 									to be after the most recent session start; qed",
@@ -494,7 +494,7 @@ impl<T: Config> Module<T> {
                         .map(|entry| CoreAssignment {
                             kind: AssignmentKind::Parathread(entry.claim.1, entry.retries),
                             para_id: entry.claim.0,
-                            core: core.clone(),
+                            core,
                             group_idx: Self::group_assigned_to_core(core, now).expect(
                                 "core is not out of bounds and we are guaranteed \
 									to be after the most recent session start; qed",
@@ -583,9 +583,7 @@ impl<T: Config> Module<T> {
 
     /// Get the validators in the given group, if the group index is valid for this session.
     pub(crate) fn group_validators(group_index: GroupIndex) -> Option<Vec<ValidatorIndex>> {
-        ValidatorGroups::get()
-            .get(group_index.0 as usize)
-            .map(|g| g.clone())
+        ValidatorGroups::get().get(group_index.0 as usize).cloned()
     }
 
     /// Get the group assigned to a specific core by index at the current block number. Result undefined if the core index is unknown
@@ -608,14 +606,10 @@ impl<T: Config> Module<T> {
         }
 
         let rotations_since_session_start: T::BlockNumber =
-            (at - session_start_block) / config.group_rotation_frequency.into();
+            (at - session_start_block) / config.group_rotation_frequency;
 
         let rotations_since_session_start =
-            match <T::BlockNumber as TryInto<u32>>::try_into(rotations_since_session_start) {
-                Ok(i) => i,
-                Err(_) => 0, // can only happen if rotations occur only once every u32::max(),
-                             // so functionally no difference in behavior.
-            };
+            <T::BlockNumber as TryInto<u32>>::try_into(rotations_since_session_start).unwrap_or(0);
 
         let group_idx =
             (core.0 as usize + rotations_since_session_start as usize) % validator_groups.len();

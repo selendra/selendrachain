@@ -148,7 +148,7 @@ impl<BlockNumber: Default + From<u32>> Default for HostConfiguration<BlockNumber
             group_rotation_frequency: 1u32.into(),
             chain_availability_period: 1u32.into(),
             thread_availability_period: 1u32.into(),
-            no_show_slots: 1u32.into(),
+            no_show_slots: 1u32,
             validation_upgrade_frequency: Default::default(),
             validation_upgrade_delay: Default::default(),
             acceptance_period: Default::default(),

@@ -231,7 +231,7 @@ pub fn validate_candidate_internal(
         .map_err(|e| ValidationError::InvalidCandidate(e.into()))?;
 
     ValidationResult::decode(&mut &res[..])
-        .map_err(|_| ValidationError::InvalidCandidate(InvalidCandidate::BadReturn).into())
+        .map_err(|_| ValidationError::InvalidCandidate(InvalidCandidate::BadReturn))
 }
 
 /// The validation externalities that will panic on any storage related access. They just provide

@@ -93,9 +93,7 @@ impl<T: Config> Module<T> {
         let new_session_index = notification.session_index;
         let old_earliest_stored_session = EarliestStoredSession::get();
         let dispute_period = cmp::max(1, dispute_period);
-        let new_earliest_stored_session = new_session_index
-            .checked_sub(dispute_period - 1)
-            .unwrap_or(0);
+        let new_earliest_stored_session = new_session_index.saturating_sub(dispute_period - 1);
         let new_earliest_stored_session =
             cmp::max(new_earliest_stored_session, old_earliest_stored_session);
         // update `EarliestStoredSession` based on `config.dispute_period`

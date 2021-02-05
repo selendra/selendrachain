@@ -43,81 +43,81 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_multisig::WeightInfo for WeightInfo<T> {
     fn as_multi_threshold_1(z: u32) -> Weight {
-        (12_532_000 as Weight)
+        12_532_000_u64
             // Standard Error: 0
-            .saturating_add((1_000 as Weight).saturating_mul(z as Weight))
+            .saturating_add(1_000_u64.saturating_mul(z as Weight))
     }
     fn as_multi_create(s: u32, z: u32) -> Weight {
-        (70_460_000 as Weight)
+        70_460_000_u64
             // Standard Error: 0
-            .saturating_add((86_000 as Weight).saturating_mul(s as Weight))
+            .saturating_add(86_000_u64.saturating_mul(s as Weight))
             // Standard Error: 0
-            .saturating_add((1_000 as Weight).saturating_mul(z as Weight))
-            .saturating_add(T::DbWeight::get().reads(2 as Weight))
-            .saturating_add(T::DbWeight::get().writes(1 as Weight))
+            .saturating_add(1_000_u64.saturating_mul(z as Weight))
+            .saturating_add(T::DbWeight::get().reads(2_u64))
+            .saturating_add(T::DbWeight::get().writes(1_u64))
     }
     fn as_multi_create_store(s: u32, z: u32) -> Weight {
-        (79_056_000 as Weight)
+        79_056_000_u64
             // Standard Error: 0
-            .saturating_add((90_000 as Weight).saturating_mul(s as Weight))
+            .saturating_add(90_000_u64.saturating_mul(s as Weight))
             // Standard Error: 0
-            .saturating_add((3_000 as Weight).saturating_mul(z as Weight))
-            .saturating_add(T::DbWeight::get().reads(3 as Weight))
-            .saturating_add(T::DbWeight::get().writes(2 as Weight))
+            .saturating_add(3_000_u64.saturating_mul(z as Weight))
+            .saturating_add(T::DbWeight::get().reads(3_u64))
+            .saturating_add(T::DbWeight::get().writes(2_u64))
     }
     fn as_multi_approve(s: u32, z: u32) -> Weight {
-        (42_175_000 as Weight)
+        42_175_000_u64
             // Standard Error: 0
-            .saturating_add((113_000 as Weight).saturating_mul(s as Weight))
+            .saturating_add(113_000_u64.saturating_mul(s as Weight))
             // Standard Error: 0
-            .saturating_add((1_000 as Weight).saturating_mul(z as Weight))
-            .saturating_add(T::DbWeight::get().reads(1 as Weight))
-            .saturating_add(T::DbWeight::get().writes(1 as Weight))
+            .saturating_add(1_000_u64.saturating_mul(z as Weight))
+            .saturating_add(T::DbWeight::get().reads(1_u64))
+            .saturating_add(T::DbWeight::get().writes(1_u64))
     }
     fn as_multi_approve_store(s: u32, z: u32) -> Weight {
-        (75_726_000 as Weight)
+        75_726_000_u64
             // Standard Error: 0
-            .saturating_add((126_000 as Weight).saturating_mul(s as Weight))
+            .saturating_add(126_000_u64.saturating_mul(s as Weight))
             // Standard Error: 0
-            .saturating_add((3_000 as Weight).saturating_mul(z as Weight))
-            .saturating_add(T::DbWeight::get().reads(2 as Weight))
-            .saturating_add(T::DbWeight::get().writes(2 as Weight))
+            .saturating_add(3_000_u64.saturating_mul(z as Weight))
+            .saturating_add(T::DbWeight::get().reads(2_u64))
+            .saturating_add(T::DbWeight::get().writes(2_u64))
     }
     fn as_multi_complete(s: u32, z: u32) -> Weight {
-        (87_543_000 as Weight)
+        87_543_000_u64
             // Standard Error: 0
-            .saturating_add((247_000 as Weight).saturating_mul(s as Weight))
+            .saturating_add(247_000_u64.saturating_mul(s as Weight))
             // Standard Error: 0
-            .saturating_add((5_000 as Weight).saturating_mul(z as Weight))
-            .saturating_add(T::DbWeight::get().reads(3 as Weight))
-            .saturating_add(T::DbWeight::get().writes(3 as Weight))
+            .saturating_add(5_000_u64.saturating_mul(z as Weight))
+            .saturating_add(T::DbWeight::get().reads(3_u64))
+            .saturating_add(T::DbWeight::get().writes(3_u64))
     }
     fn approve_as_multi_create(s: u32) -> Weight {
-        (69_831_000 as Weight)
+        69_831_000_u64
             // Standard Error: 0
-            .saturating_add((89_000 as Weight).saturating_mul(s as Weight))
-            .saturating_add(T::DbWeight::get().reads(2 as Weight))
-            .saturating_add(T::DbWeight::get().writes(1 as Weight))
+            .saturating_add(89_000_u64.saturating_mul(s as Weight))
+            .saturating_add(T::DbWeight::get().reads(2_u64))
+            .saturating_add(T::DbWeight::get().writes(1_u64))
     }
     fn approve_as_multi_approve(s: u32) -> Weight {
-        (41_395_000 as Weight)
+        41_395_000_u64
             // Standard Error: 0
-            .saturating_add((111_000 as Weight).saturating_mul(s as Weight))
-            .saturating_add(T::DbWeight::get().reads(1 as Weight))
-            .saturating_add(T::DbWeight::get().writes(1 as Weight))
+            .saturating_add(111_000_u64.saturating_mul(s as Weight))
+            .saturating_add(T::DbWeight::get().reads(1_u64))
+            .saturating_add(T::DbWeight::get().writes(1_u64))
     }
     fn approve_as_multi_complete(s: u32) -> Weight {
-        (162_511_000 as Weight)
+        162_511_000_u64
             // Standard Error: 0
-            .saturating_add((249_000 as Weight).saturating_mul(s as Weight))
-            .saturating_add(T::DbWeight::get().reads(3 as Weight))
-            .saturating_add(T::DbWeight::get().writes(3 as Weight))
+            .saturating_add(249_000_u64.saturating_mul(s as Weight))
+            .saturating_add(T::DbWeight::get().reads(3_u64))
+            .saturating_add(T::DbWeight::get().writes(3_u64))
     }
     fn cancel_as_multi(s: u32) -> Weight {
-        (112_698_000 as Weight)
+        112_698_000_u64
             // Standard Error: 0
-            .saturating_add((90_000 as Weight).saturating_mul(s as Weight))
-            .saturating_add(T::DbWeight::get().reads(2 as Weight))
-            .saturating_add(T::DbWeight::get().writes(2 as Weight))
+            .saturating_add(90_000_u64.saturating_mul(s as Weight))
+            .saturating_add(T::DbWeight::get().reads(2_u64))
+            .saturating_add(T::DbWeight::get().writes(2_u64))
     }
 }

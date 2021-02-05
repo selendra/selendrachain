@@ -162,7 +162,7 @@ async fn handle_signal(
             let _timer = state.metrics.time_handle_signal();
 
             for relay_parent in activated {
-                match request_validators_ctx(relay_parent.clone(), ctx).await {
+                match request_validators_ctx(relay_parent, ctx).await {
                     Ok(vals_rx) => {
                         let n_validators = match vals_rx.await? {
                             Ok(v) => v.len(),

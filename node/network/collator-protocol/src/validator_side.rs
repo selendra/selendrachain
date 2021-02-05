@@ -256,10 +256,10 @@ async fn fetch_collation<Context>(
 
     // Has the collator in question advertised a relevant collation?
     for (k, v) in state.advertisements.iter() {
-        if v.contains(&(para_id, relay_parent)) {
-            if state.known_collators.get(k) == Some(&collator_id) {
-                relevant_advertiser = Some(k.clone());
-            }
+        if v.contains(&(para_id, relay_parent))
+            && state.known_collators.get(k) == Some(&collator_id)
+        {
+            relevant_advertiser = Some(k.clone());
         }
     }
 
@@ -415,7 +415,7 @@ async fn request_collation<Context>(
 
     if state
         .requested_collations
-        .contains_key(&(relay_parent, para_id.clone(), peer_id.clone()))
+        .contains_key(&(relay_parent, para_id, peer_id.clone()))
     {
         tracing::trace!(
             target: LOG_TARGET,
@@ -445,7 +445,7 @@ async fn request_collation<Context>(
 
     state
         .requested_collations
-        .insert((relay_parent, para_id.clone(), peer_id.clone()), request_id);
+        .insert((relay_parent, para_id, peer_id.clone()), request_id);
 
     state.requests_info.insert(request_id, per_request);
 
@@ -556,7 +556,7 @@ async fn handle_our_view_change(state: &mut State, view: View) -> Result<()> {
     state.recently_removed_heads.clear();
 
     for removed in removed.into_iter() {
-        state.recently_removed_heads.insert(removed.clone());
+        state.recently_removed_heads.insert(removed);
         remove_relay_parent(state, removed).await?;
     }
 
@@ -573,12 +573,12 @@ where
 
     // We have to go backwards in the map, again.
     if let Some(key) = find_val_in_map(&state.requested_collations, &id) {
-        if let Some(_) = state.requested_collations.remove(&key) {
-            if let Some(_) = state.requests_info.remove(&id) {
-                let peer_id = key.2;
+        if state.requested_collations.remove(&key).is_some()
+            && state.requests_info.remove(&id).is_some()
+        {
+            let peer_id = key.2;
 
-                modify_reputation(ctx, peer_id, COST_REQUEST_TIMED_OUT).await;
-            }
+            modify_reputation(ctx, peer_id, COST_REQUEST_TIMED_OUT).await;
         }
     }
 }

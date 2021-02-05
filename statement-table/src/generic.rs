@@ -242,7 +242,7 @@ impl<C: Context> CandidateData<C> {
                     }
                 })
                 .take(validity_threshold)
-                .map(|(k, v)| (k.clone(), v.clone()))
+                .map(|(k, v)| (k.clone(), v))
                 .collect();
 
             assert!(
@@ -489,7 +489,7 @@ impl<C: Context> Table<C> {
 
                         return Err(Misbehavior::MultipleCandidates(MultipleCandidates {
                             first: (old_candidate, old_sig.clone()),
-                            second: (candidate, signature.clone()),
+                            second: (candidate, signature),
                         }));
                     }
 
@@ -618,7 +618,7 @@ impl<C: Context> Table<C> {
             }
             Entry::Vacant(vacant) => {
                 if let ValidityVote::Invalid(_) = vote {
-                    votes.indicated_bad_by.push(from.clone());
+                    votes.indicated_bad_by.push(from);
                 }
 
                 vacant.insert(vote);

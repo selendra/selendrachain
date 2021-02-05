@@ -242,7 +242,7 @@ impl JobTrait for BitfieldSigningJob {
         _receiver: mpsc::Receiver<BitfieldSigningMessage>,
         mut sender: mpsc::Sender<FromJobCommand>,
     ) -> Pin<Box<dyn Future<Output = Result<(), Self::Error>> + Send>> {
-        let metrics = metrics.clone();
+        let metrics = metrics;
         async move {
 			let wait_until = Instant::now() + JOB_DELAY;
 
@@ -276,7 +276,7 @@ impl JobTrait for BitfieldSigningJob {
 			let signed_bitfield = validator
 				.sign(keystore.clone(), bitfield)
 				.await
-				.map_err(|e| Error::Keystore(e))?;
+				.map_err(Error::Keystore)?;
 			metrics.on_bitfield_signed();
 
 			sender

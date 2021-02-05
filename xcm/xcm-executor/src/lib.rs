@@ -72,7 +72,7 @@ impl<Config: config::Config> ExecuteXcm for XcmExecutor<Config> {
                     // sovereign assets.
                     (Assets::from(assets), effects)
                 } else {
-                    Err(XcmError::UntrustedReserveLocation)?
+                    return Err(XcmError::UntrustedReserveLocation);
                 }
             }
             (origin, Xcm::TeleportAsset { assets, effects }) => {
@@ -87,7 +87,7 @@ impl<Config: config::Config> ExecuteXcm for XcmExecutor<Config> {
                     // sovereign assets.
                     (Assets::from(assets), effects)
                 } else {
-                    Err(XcmError::UntrustedTeleportLocation)?
+                    return Err(XcmError::UntrustedTeleportLocation);
                 }
             }
             (origin, Xcm::Transact { origin_type, call }) => {
@@ -116,11 +116,10 @@ impl<Config: config::Config> ExecuteXcm for XcmExecutor<Config> {
                 let msg = Xcm::RelayedFrom {
                     superorigin: origin,
                     inner,
-                }
-                .into();
+                };
                 return Config::XcmSender::send_xcm(Junction::Parachain { id }.into(), msg);
             }
-            _ => Err(XcmError::UnhandledXcmMessage)?, // Unhandled XCM message.
+            _ => return Err(XcmError::UnhandledXcmMessage), // Unhandled XCM message.
         };
 
         // TODO: stuff that should happen after holding is populated but before effects,
@@ -188,7 +187,7 @@ impl<Config: config::Config> XcmExecutor<Config> {
                 let assets = Self::reanchored(holding.min(assets.iter()), &dest);
                 Config::XcmSender::send_xcm(dest, Xcm::Balances { query_id, assets })
             }
-            _ => Err(XcmError::UnhandledEffect)?,
+            _ => Err(XcmError::UnhandledEffect),
         }
     }
 }

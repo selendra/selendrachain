@@ -701,7 +701,7 @@ where
         RuntimeApiRequest::CandidateEvents(tx),
     ));
 
-    ctx.send_message(msg.into()).await;
+    ctx.send_message(msg).await;
 
     Ok(rx.await??)
 }
@@ -878,7 +878,7 @@ where
     )))
     .await;
 
-    Ok(rx.await??.map(|number| number).unwrap_or_default())
+    Ok(rx.await??.unwrap_or_default())
 }
 
 #[tracing::instrument(level = "trace", skip(subsystem, available_data), fields(subsystem = LOG_TARGET))]
@@ -974,7 +974,7 @@ fn store_chunk(
     }
 
     let pruning_record = ChunkPruningRecord {
-        candidate_hash: candidate_hash.clone(),
+        candidate_hash: *candidate_hash,
         block_number,
         candidate_state: CandidateState::Stored,
         chunk_index: chunk.index,

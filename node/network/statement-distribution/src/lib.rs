@@ -179,9 +179,9 @@ impl PeerRelayParentKnowledge {
                 self.seconded_counts
                     .entry(fingerprint.1)
                     .or_default()
-                    .note_local(h.clone());
+                    .note_local(*h);
 
-                self.known_candidates.insert(h.clone())
+                self.known_candidates.insert(*h)
             }
             CompactStatement::Valid(ref h) | CompactStatement::Invalid(ref h) => {
                 // The peer can only accept Valid and Invalid statements for which it is aware
@@ -233,7 +233,7 @@ impl PeerRelayParentKnowledge {
                     .seconded_counts
                     .entry(fingerprint.1)
                     .or_insert_with(Default::default)
-                    .note_remote(h.clone());
+                    .note_remote(*h);
 
                 if !allowed_remote {
                     return Err(COST_UNEXPECTED_STATEMENT);
@@ -264,7 +264,7 @@ impl PeerRelayParentKnowledge {
         }
 
         self.received_statements.insert(fingerprint.clone());
-        Ok(self.known_candidates.insert(candidate_hash.clone()))
+        Ok(self.known_candidates.insert(*candidate_hash))
     }
 }
 
@@ -293,7 +293,7 @@ impl PeerData {
     ) -> Option<bool> {
         self.view_knowledge
             .get_mut(relay_parent)
-            .map_or(None, |k| k.send(fingerprint))
+            .and_then(|k| k.send(fingerprint))
     }
 
     /// Attempt to update our view of the peer's knowledge with this statement's fingerprint based on
@@ -758,7 +758,7 @@ async fn handle_incoming_message<'a>(
                 peer_data,
                 ctx,
                 relay_parent,
-                fingerprint.0.candidate_hash().clone(),
+                *fingerprint.0.candidate_hash(),
                 &*active_head,
                 metrics,
             )

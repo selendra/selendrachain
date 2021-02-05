@@ -43,31 +43,31 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_scheduler::WeightInfo for WeightInfo<T> {
     fn schedule(s: u32) -> Weight {
-        (34_190_000 as Weight)
+        34_190_000_u64
             // Standard Error: 0
-            .saturating_add((41_000 as Weight).saturating_mul(s as Weight))
-            .saturating_add(T::DbWeight::get().reads(1 as Weight))
-            .saturating_add(T::DbWeight::get().writes(1 as Weight))
+            .saturating_add(41_000_u64.saturating_mul(s as Weight))
+            .saturating_add(T::DbWeight::get().reads(1_u64))
+            .saturating_add(T::DbWeight::get().writes(1_u64))
     }
     fn cancel(s: u32) -> Weight {
-        (31_368_000 as Weight)
+        31_368_000_u64
             // Standard Error: 7_000
-            .saturating_add((3_230_000 as Weight).saturating_mul(s as Weight))
-            .saturating_add(T::DbWeight::get().reads(1 as Weight))
-            .saturating_add(T::DbWeight::get().writes(2 as Weight))
+            .saturating_add(3_230_000_u64.saturating_mul(s as Weight))
+            .saturating_add(T::DbWeight::get().reads(1_u64))
+            .saturating_add(T::DbWeight::get().writes(2_u64))
     }
     fn schedule_named(s: u32) -> Weight {
-        (44_444_000 as Weight)
+        44_444_000_u64
             // Standard Error: 1_000
-            .saturating_add((55_000 as Weight).saturating_mul(s as Weight))
-            .saturating_add(T::DbWeight::get().reads(2 as Weight))
-            .saturating_add(T::DbWeight::get().writes(2 as Weight))
+            .saturating_add(55_000_u64.saturating_mul(s as Weight))
+            .saturating_add(T::DbWeight::get().reads(2_u64))
+            .saturating_add(T::DbWeight::get().writes(2_u64))
     }
     fn cancel_named(s: u32) -> Weight {
-        (35_660_000 as Weight)
+        35_660_000_u64
             // Standard Error: 7_000
-            .saturating_add((3_238_000 as Weight).saturating_mul(s as Weight))
-            .saturating_add(T::DbWeight::get().reads(2 as Weight))
-            .saturating_add(T::DbWeight::get().writes(2 as Weight))
+            .saturating_add(3_238_000_u64.saturating_mul(s as Weight))
+            .saturating_add(T::DbWeight::get().reads(2_u64))
+            .saturating_add(T::DbWeight::get().writes(2_u64))
     }
 }

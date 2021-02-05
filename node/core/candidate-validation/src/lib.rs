@@ -51,7 +51,7 @@ use futures::prelude::*;
 
 use std::sync::Arc;
 
-const LOG_TARGET: &'static str = "candidate_validation";
+const LOG_TARGET: &str = "candidate_validation";
 
 /// The candidate validation subsystem.
 pub struct CandidateValidationSubsystem<S> {
@@ -464,7 +464,7 @@ fn validate_candidate_exhaustive<B: ValidationBackend, S: SpawnNamed + 'static>(
         ),
         Err(ValidationError::InvalidCandidate(WasmInvalidCandidate::ExternalWasmExecutor(e))) => {
             Ok(ValidationResult::Invalid(InvalidCandidate::ExecutionError(
-                e.to_string(),
+                e,
             )))
         }
         Err(ValidationError::Internal(e)) => Err(ValidationFailed(e.to_string())),

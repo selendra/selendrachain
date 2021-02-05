@@ -149,7 +149,7 @@ impl<T: Config> ProvideInherent for Module<T> {
                     {
                         Call::inclusion(signed_bitfields, backed_candidates)
                     } else {
-                        Call::inclusion(Vec::new().into(), Vec::new())
+                        Call::inclusion(Vec::new(), Vec::new())
                     }
                 },
             )

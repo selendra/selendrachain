@@ -36,7 +36,7 @@ use indracore_subsystem::{
 mod collator_side;
 mod validator_side;
 
-const LOG_TARGET: &'static str = "collator_protocol";
+const LOG_TARGET: &str = "collator_protocol";
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(1);
 
 #[derive(Debug, Error)]

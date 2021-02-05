@@ -97,7 +97,7 @@ const CHANNEL_CAPACITY: usize = 1024;
 // A graceful `Overseer` teardown time delay.
 const STOP_DELAY: u64 = 1;
 // Target for logs.
-const LOG_TARGET: &'static str = "overseer";
+const LOG_TARGET: &str = "overseer";
 
 /// A type of messages that are sent from [`Subsystem`] to [`Overseer`].
 ///
@@ -1134,9 +1134,7 @@ where
     {
         let (events_tx, events_rx) = mpsc::channel(CHANNEL_CAPACITY);
 
-        let handler = OverseerHandler {
-            events_tx: events_tx.clone(),
-        };
+        let handler = OverseerHandler { events_tx };
 
         let mut running_subsystems_rx = StreamUnordered::new();
         let mut running_subsystems = FuturesUnordered::new();

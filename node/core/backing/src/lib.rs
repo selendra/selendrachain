@@ -175,7 +175,7 @@ impl TableContextTrait for TableContext {
     fn is_member_of(&self, authority: &ValidatorIndex, group: &ParaId) -> bool {
         self.groups
             .get(group)
-            .map_or(false, |g| g.iter().position(|a| a == authority).is_some())
+            .map_or(false, |g| g.iter().any(|a| a == authority))
     }
 
     fn requisite_votes(&self, group: &ParaId) -> usize {
@@ -192,8 +192,8 @@ struct InvalidErasureRoot;
 fn primitive_statement_to_table(s: &SignedFullStatement) -> TableSignedStatement {
     let statement = match s.payload() {
         Statement::Seconded(c) => TableStatement::Candidate(c.clone()),
-        Statement::Valid(h) => TableStatement::Valid(h.clone()),
-        Statement::Invalid(h) => TableStatement::Invalid(h.clone()),
+        Statement::Valid(h) => TableStatement::Valid(*h),
+        Statement::Invalid(h) => TableStatement::Invalid(*h),
     };
 
     TableSignedStatement {
@@ -739,7 +739,7 @@ impl CandidateBackingJob {
                     })
                     .collect();
 
-                tx.send(backed).map_err(|data| Error::Send(data))?;
+                tx.send(backed).map_err(Error::Send)?;
             }
         }
 

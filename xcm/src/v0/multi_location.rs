@@ -228,7 +228,7 @@ impl MultiLocation {
             MultiLocation::X1(a) => MultiLocation::X2(a, new),
             MultiLocation::X2(a, b) => MultiLocation::X3(a, b, new),
             MultiLocation::X3(a, b, c) => MultiLocation::X4(a, b, c, new),
-            s => Err(s)?,
+            s => return Err(s),
         })
     }
 
@@ -240,7 +240,7 @@ impl MultiLocation {
             MultiLocation::X1(a) => MultiLocation::X2(new, a),
             MultiLocation::X2(a, b) => MultiLocation::X3(new, a, b),
             MultiLocation::X3(a, b, c) => MultiLocation::X4(new, a, b, c),
-            s => Err(s)?,
+            s => return Err(s),
         })
     }
 

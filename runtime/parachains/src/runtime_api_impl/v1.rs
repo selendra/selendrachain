@@ -97,7 +97,7 @@ pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::BlockNum
                         <inclusion::Module<T>>::pending_availability(para_id)
                             .expect("Occupied core always has pending availability; qed");
 
-                    let backed_in_number = pending_availability.backed_in_number().clone();
+                    let backed_in_number = *pending_availability.backed_in_number();
                     OccupiedCore {
                         para_id,
                         next_up_on_available: <scheduler::Module<T>>::next_up_on_available(
@@ -124,7 +124,7 @@ pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::BlockNum
                         <inclusion::Module<T>>::pending_availability(para_id)
                             .expect("Occupied core always has pending availability; qed");
 
-                    let backed_in_number = pending_availability.backed_in_number().clone();
+                    let backed_in_number = *pending_availability.backed_in_number();
                     OccupiedCore {
                         para_id,
                         next_up_on_available: <scheduler::Module<T>>::next_up_on_available(
@@ -154,7 +154,7 @@ pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::BlockNum
     for scheduled in <scheduler::Module<T>>::scheduled() {
         core_states[scheduled.core.0 as usize] = CoreState::Scheduled(ScheduledCore {
             para_id: scheduled.para_id,
-            collator: scheduled.required_collator().map(|c| c.clone()),
+            collator: scheduled.required_collator().cloned(),
         });
     }
 

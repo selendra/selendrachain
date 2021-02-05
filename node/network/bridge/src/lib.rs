@@ -54,9 +54,9 @@ mod validator_discovery;
 const MAX_VIEW_HEADS: usize = 5;
 
 /// The protocol name for the validation peer-set.
-pub const VALIDATION_PROTOCOL_NAME: &'static str = "/indracore/validation/1";
+pub const VALIDATION_PROTOCOL_NAME: &str = "/indracore/validation/1";
 /// The protocol name for the collation peer-set.
-pub const COLLATION_PROTOCOL_NAME: &'static str = "/indracore/collation/1";
+pub const COLLATION_PROTOCOL_NAME: &str = "/indracore/collation/1";
 
 const MALFORMED_MESSAGE_COST: ReputationChange =
     ReputationChange::new(-500, "Malformed Network-bridge message");
@@ -65,7 +65,7 @@ const UNCONNECTED_PEERSET_COST: ReputationChange =
 const MALFORMED_VIEW_COST: ReputationChange = ReputationChange::new(-500, "Malformed view");
 
 // network bridge log target
-const LOG_TARGET: &'static str = "network_bridge";
+const LOG_TARGET: &str = "network_bridge";
 
 /// Messages received on the network.
 #[derive(Debug, Encode, Decode, Clone)]

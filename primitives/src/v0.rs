@@ -485,7 +485,7 @@ impl AbridgedCandidateReceipt {
             relay_parent: self.relay_parent,
             collator: self.collator.clone(),
             signature: self.signature.clone(),
-            pov_hash: self.pov_block_hash.clone(),
+            pov_hash: self.pov_block_hash,
         }
     }
 }

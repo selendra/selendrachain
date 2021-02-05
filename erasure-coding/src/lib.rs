@@ -247,9 +247,9 @@ where
 
     if let Err(e) = params.make_encoder().reconstruct(&mut shards[..]) {
         match e {
-            reed_solomon::Error::TooFewShardsPresent => Err(Error::NotEnoughChunks)?,
-            reed_solomon::Error::InvalidShardFlags => Err(Error::WrongValidatorCount)?,
-            reed_solomon::Error::TooManyShards => Err(Error::TooManyChunks)?,
+            reed_solomon::Error::TooFewShardsPresent => return Err(Error::NotEnoughChunks),
+            reed_solomon::Error::InvalidShardFlags => return Err(Error::WrongValidatorCount),
+            reed_solomon::Error::TooManyShards => return Err(Error::TooManyChunks),
             reed_solomon::Error::EmptyShard => {
                 panic!("chunks are all non-empty; this is checked above; qed")
             }
@@ -271,7 +271,7 @@ where
             .map(|x| x.expect("all data shards have been recovered; qed"))
             .map(|x| x.as_ref()),
     })
-    .or_else(|_| Err(Error::BadPayload))
+    .map_err(|_| Error::BadPayload)
 }
 
 /// An iterator that yields merkle branches and chunk data for all chunks to
@@ -286,7 +286,7 @@ pub struct Branches<'a, I> {
 impl<'a, I: AsRef<[u8]>> Branches<'a, I> {
     /// Get the trie root.
     pub fn root(&self) -> H256 {
-        self.root.clone()
+        self.root
     }
 }
 
@@ -341,7 +341,7 @@ where
     Branches {
         trie_storage,
         root,
-        chunks: chunks,
+        chunks,
         current_pos: 0,
     }
 }

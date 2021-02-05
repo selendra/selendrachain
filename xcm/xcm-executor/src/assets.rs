@@ -340,14 +340,14 @@ impl Assets {
                 MultiAsset::All => return self.swapped(Assets::default()),
                 MultiAsset::AllFungible => {
                     // Remove all fungible assets, and copy them into `result`.
-                    let fungible = mem::replace(&mut self.fungible, Default::default());
+                    let fungible = std::mem::take(&mut self.fungible);
                     fungible.into_iter().for_each(|(id, amount)| {
                         result.saturating_subsume_fungible(id, amount);
                     })
                 }
                 MultiAsset::AllNonFungible => {
                     // Remove all non-fungible assets, and copy them into `result`.
-                    let non_fungible = mem::replace(&mut self.non_fungible, Default::default());
+                    let non_fungible = std::mem::take(&mut self.non_fungible);
                     non_fungible.into_iter().for_each(|(class, instance)| {
                         result.saturating_subsume_non_fungible(class, instance);
                     });
@@ -361,7 +361,7 @@ impl Assets {
                     };
                     // At the end of this block, we will be left with only the non-matching fungibles.
                     let mut non_matching_fungibles = BTreeMap::<AssetId, u128>::new();
-                    let fungible = mem::replace(&mut self.fungible, Default::default());
+                    let fungible = std::mem::take(&mut self.fungible);
                     fungible.into_iter().for_each(|(iden, amount)| {
                         if iden == id {
                             result.saturating_subsume_fungible(iden, amount);
@@ -381,7 +381,7 @@ impl Assets {
                     // At the end of this block, we will be left with only the non-matching non-fungibles.
                     let mut non_matching_non_fungibles =
                         BTreeSet::<(AssetId, AssetInstance)>::new();
-                    let non_fungible = mem::replace(&mut self.non_fungible, Default::default());
+                    let non_fungible = std::mem::take(&mut self.non_fungible);
                     non_fungible.into_iter().for_each(|(c, instance)| {
                         if class == c {
                             result.saturating_subsume_non_fungible(c, instance);
@@ -411,7 +411,7 @@ impl Assets {
                             result.saturating_subsume_fungible(id, amount);
                         } else {
                             self.fungible.remove(&id);
-                            result.saturating_subsume_fungible(id, e.clone());
+                            result.saturating_subsume_fungible(id, e);
                         }
                     }
                 }

@@ -144,7 +144,7 @@ impl<N: Ord + Copy> ParaPastCodeMeta<N> {
     // The block at which the most recently tracked code change occurred, from the perspective
     // of the para.
     fn most_recent_change(&self) -> Option<N> {
-        self.upgrade_times.last().map(|x| x.expected_at.clone())
+        self.upgrade_times.last().map(|x| x.expected_at)
     }
 
     // prunes all code upgrade logs occurring at or before `max`.
@@ -440,7 +440,7 @@ impl<T: Config> Module<T> {
                     v.remove(i);
                     UpcomingParasGenesis::remove(id);
                     // If a para was only in the pending state it should not be moved to `Outgoing`
-                    return T::DbWeight::get().reads_writes(2, 2);
+                    T::DbWeight::get().reads_writes(2, 2)
                 }
                 Err(_) => T::DbWeight::get().reads_writes(1, 0),
             }

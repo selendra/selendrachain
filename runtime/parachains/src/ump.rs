@@ -229,7 +229,7 @@ impl<T: Config> Module<T> {
         let (mut para_queue_count, mut para_queue_size) =
             <Self as Store>::RelayDispatchQueueSize::get(&para);
 
-        for (idx, msg) in upward_messages.into_iter().enumerate() {
+        for (idx, msg) in upward_messages.iter().enumerate() {
             let msg_size = msg.len() as u32;
             if msg_size > config.max_upward_message_size {
                 return Err(AcceptanceCheckErr::MessageSize {

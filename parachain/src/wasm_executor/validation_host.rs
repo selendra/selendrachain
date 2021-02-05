@@ -29,9 +29,9 @@ use shared_memory::{EventSet, EventState, EventWait, SharedMem, SharedMemConf, W
 use sp_core::traits::SpawnNamed;
 use std::{env, path::PathBuf, process, sync::atomic, sync::Arc};
 
-const WORKER_ARG: &'static str = "validation-worker";
+const WORKER_ARG: &str = "validation-worker";
 /// CLI Argument to start in validation worker mode.
-pub const WORKER_ARGS: &[&'static str] = &[WORKER_ARG];
+pub const WORKER_ARGS: &[&str] = &[WORKER_ARG];
 
 /// Execution timeout in seconds;
 #[cfg(debug_assertions)]
@@ -182,7 +182,7 @@ pub fn run_worker(mem_id: &str) -> Result<(), String> {
                 let (header_buf, rest) = data.split_at_mut(1024);
                 let mut header_buf: &[u8] = header_buf;
                 let header = ValidationHeader::decode(&mut header_buf)
-                    .map_err(|_| format!("Error decoding validation request."))?;
+                    .map_err(|_| "Error decoding validation request.".to_string())?;
                 debug!("{} Candidate header: {:?}", process::id(), header);
                 let (code, rest) = rest.split_at_mut(MAX_CODE_MEM);
                 let (code, _) = code.split_at_mut(header.code_size as usize);

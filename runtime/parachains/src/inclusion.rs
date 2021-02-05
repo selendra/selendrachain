@@ -82,7 +82,7 @@ impl<H, N> CandidatePendingAvailability<H, N> {
 
     /// Get the core index.
     pub(crate) fn core_occupied(&self) -> CoreIndex {
-        self.core.clone()
+        self.core
     }
 }
 
@@ -446,7 +446,7 @@ impl<T: Config> Module<T> {
 						u32::from(para_id),
 						err,
 					);
-                    Err(err.strip_into_dispatch_err::<T>())?;
+                    return Err(err.strip_into_dispatch_err::<T>().into());
                 };
 
                 for (i, assignment) in scheduled[skip..].iter().enumerate() {
@@ -491,7 +491,7 @@ impl<T: Config> Module<T> {
                         skip = i + skip + 1;
 
                         let group_vals = group_validators(assignment.group_idx)
-                            .ok_or_else(|| Error::<T>::InvalidGroupIndex)?;
+                            .ok_or(Error::<T>::InvalidGroupIndex)?;
 
                         // check the signatures in the backing and that it is a majority.
                         {
@@ -503,7 +503,7 @@ impl<T: Config> Module<T> {
                                     group_vals
                                         .get(idx)
                                         .and_then(|i| validators.get(*i as usize))
-                                        .map(|v| v.clone())
+                                        .cloned()
                                 },
                             );
 
@@ -513,7 +513,7 @@ impl<T: Config> Module<T> {
                                     Error::<T>::InsufficientBacking,
                                 ),
                                 Err(()) => {
-                                    Err(Error::<T>::InvalidBacking)?;
+                                    return Err(Error::<T>::InvalidBacking.into());
                                 }
                             }
                         }

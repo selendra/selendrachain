@@ -31,7 +31,7 @@ impl<LocationConverter: LocationConversion<Origin::AccountId>, Origin: OriginTra
     fn convert_origin(origin: MultiLocation, kind: OriginKind) -> Result<Origin, MultiLocation> {
         if let OriginKind::SovereignAccount = kind {
             let location = LocationConverter::from_location(&origin).ok_or(origin)?;
-            Ok(Origin::signed(location).into())
+            Ok(Origin::signed(location))
         } else {
             Err(origin)
         }

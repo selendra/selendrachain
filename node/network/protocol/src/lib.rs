@@ -146,7 +146,7 @@ impl<M> NetworkBridgeEvent<M> {
     {
         Ok(match *self {
             NetworkBridgeEvent::PeerConnected(ref peer, ref role) => {
-                NetworkBridgeEvent::PeerConnected(peer.clone(), role.clone())
+                NetworkBridgeEvent::PeerConnected(peer.clone(), *role)
             }
             NetworkBridgeEvent::PeerDisconnected(ref peer) => {
                 NetworkBridgeEvent::PeerDisconnected(peer.clone())

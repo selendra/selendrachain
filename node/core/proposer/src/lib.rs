@@ -138,7 +138,7 @@ where
     async fn get_provisioner_data(&self) -> Result<ProvisionerInherentData, Error> {
         // clone this (lightweight) data because we're going to move it into the future
         let mut overseer = self.overseer.clone();
-        let parent_header_hash = self.parent_header_hash.clone();
+        let parent_header_hash = self.parent_header_hash;
 
         let pid = async {
             let (sender, receiver) = futures::channel::oneshot::channel();

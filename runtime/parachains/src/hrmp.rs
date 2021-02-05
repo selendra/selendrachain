@@ -422,13 +422,13 @@ impl<T: Config> Module<T> {
         for sender in <Self as Store>::HrmpIngressChannelsIndex::take(&outgoing_para) {
             Self::close_hrmp_channel(&HrmpChannelId {
                 sender,
-                recipient: outgoing_para.clone(),
+                recipient: outgoing_para,
             });
         }
         // close all channels where the outgoing para acts as the sender.
         for recipient in <Self as Store>::HrmpEgressChannelsIndex::take(&outgoing_para) {
             Self::close_hrmp_channel(&HrmpChannelId {
-                sender: outgoing_para.clone(),
+                sender: outgoing_para,
                 recipient,
             });
         }
@@ -603,9 +603,9 @@ impl<T: Config> Module<T> {
             Ok(())
         } else {
             let digest = <Self as Store>::HrmpChannelDigests::get(&recipient);
-            if !digest
+            if digest
                 .binary_search_by_key(&new_hrmp_watermark, |(block_no, _)| *block_no)
-                .is_ok()
+                .is_err()
             {
                 return Err(HrmpWatermarkAcceptanceErr::LandsOnBlockWithNoMessages {
                     new_watermark: new_hrmp_watermark,
@@ -784,7 +784,7 @@ impl<T: Config> Module<T> {
             channel.total_size += inbound.data.len() as u32;
 
             // compute the new MQC head of the channel
-            let prev_head = channel.mqc_head.clone().unwrap_or(Default::default());
+            let prev_head = channel.mqc_head.clone().unwrap_or_default();
             let new_head = BlakeTwo256::hash_of(&(
                 prev_head,
                 inbound.sent_at,
@@ -1048,7 +1048,7 @@ impl<T: Config> Module<T> {
                 <Self as Store>::HrmpChannels::get(&HrmpChannelId { sender, recipient });
             let mqc_head = channel_metadata
                 .and_then(|metadata| metadata.mqc_head)
-                .unwrap_or(Hash::default());
+                .unwrap_or_default();
             mqc_heads.push((sender, mqc_head));
         }
 

@@ -28,7 +28,7 @@ use indracore_primitives::v1::{AuthorityDiscoveryId, Block, Hash};
 use sc_authority_discovery::Service as AuthorityDiscoveryService;
 use sc_network::multiaddr::{Multiaddr, Protocol};
 
-const PRIORITY_GROUP: &'static str = "parachain_validators";
+const PRIORITY_GROUP: &str = "parachain_validators";
 const LOG_TARGET: &str = "validator_discovery";
 
 /// An abstraction over networking for the purposes of validator discovery service.
