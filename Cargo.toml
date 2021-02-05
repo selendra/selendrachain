@@ -23,6 +23,7 @@ members = [
     "node/network/bridge",
     "node/core/av-store",
     "node/core/backing",
+    "node/core/bitfield-signing",
     "runtime/common",
     "runtime/parachains",
     "runtime/indracore",

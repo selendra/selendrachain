@@ -2193,6 +2193,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "indracore-node-core-bitfield-signing"
+version = "0.1.0"
+dependencies = [
+ "futures 0.3.12",
+ "indracore-node-subsystem",
+ "indracore-node-subsystem-util",
+ "indracore-primitives",
+ "sp-keystore",
+ "thiserror",
+ "tracing",
+ "tracing-futures",
+ "wasm-timer",
+]
+
+[[package]]
 name = "indracore-node-network-protocol"
 version = "0.1.0"
 dependencies = [
