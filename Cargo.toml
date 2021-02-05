@@ -21,6 +21,7 @@ members = [
     "node/network/collator-protocol",
     "node/network/pov-distribution",
     "node/network/bridge",
+    "node/core/av-store",
     "runtime/common",
     "runtime/parachains",
     "runtime/indracore",
