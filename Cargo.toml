@@ -24,6 +24,7 @@ members = [
     "node/core/av-store",
     "node/core/backing",
     "node/core/bitfield-signing",
+    "node/core/candidate-selection",
     "runtime/common",
     "runtime/parachains",
     "runtime/indracore",
