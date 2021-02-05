@@ -2274,6 +2274,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "indracore-node-core-provisioner"
+version = "0.1.0"
+dependencies = [
+ "bitvec 0.17.4",
+ "futures 0.3.12",
+ "futures-timer 3.0.2",
+ "indracore-node-subsystem",
+ "indracore-node-subsystem-util",
+ "indracore-primitives",
+ "thiserror",
+ "tracing",
+ "tracing-futures",
+]
+
+[[package]]
 name = "indracore-node-core-runtime-api"
 version = "0.1.0"
 dependencies = [

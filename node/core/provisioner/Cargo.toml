@@ -1,0 +1,16 @@
+[package]
+name = "indracore-node-core-provisioner"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+bitvec = { version = "0.17.4", default-features = false, features = ["alloc"] }
+futures = "0.3.8"
+tracing = "0.1.22"
+tracing-futures = "0.2.4"
+thiserror = "1.0.22"
+indracore-primitives = { path = "../../../primitives" }
+indracore-node-subsystem = { path = "../../subsystem" }
+indracore-node-subsystem-util = { path = "../../subsystem-util" }
+futures-timer = "3.0.2"

@@ -29,6 +29,7 @@ members = [
     "node/core/chain-api",
     "node/core/proposer",
     "node/core/runtime-api",
+    "node/core/provisioner",
     "runtime/common",
     "runtime/parachains",
     "runtime/indracore",
