@@ -2238,6 +2238,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "indracore-node-core-chain-api"
+version = "0.1.0"
+dependencies = [
+ "futures 0.3.12",
+ "indracore-node-subsystem",
+ "indracore-node-subsystem-util",
+ "indracore-primitives",
+ "sp-blockchain",
+ "tracing",
+ "tracing-futures",
+]
+
+[[package]]
 name = "indracore-node-network-protocol"
 version = "0.1.0"
 dependencies = [

@@ -1,0 +1,14 @@
+[package]
+name = "indracore-node-core-chain-api"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+futures = "0.3.8"
+tracing = "0.1.22"
+tracing-futures = "0.2.4"
+sp-blockchain = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
+indracore-primitives = { path = "../../../primitives" }
+indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
+indracore-node-subsystem-util = { path = "../../subsystem-util" }
