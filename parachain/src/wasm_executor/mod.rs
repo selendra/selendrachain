@@ -206,6 +206,16 @@ pub fn validate_candidate_internal(
     spawner: impl SpawnNamed + 'static,
 ) -> Result<ValidationResult, ValidationError> {
     let executor = sc_executor::WasmExecutor::new(
+        #[cfg(all(
+            feature = "wasmtime",
+            not(any(target_os = "android", target_os = "unknown"))
+        ))]
+        sc_executor::WasmExecutionMethod::Compiled,
+        #[cfg(any(
+            not(feature = "wasmtime"),
+            target_os = "android",
+            target_os = "unknown"
+        ))]
         sc_executor::WasmExecutionMethod::Interpreted,
         // TODO: Make sure we don't use more than 1GB
         Some(1024),
@@ -231,7 +241,7 @@ pub fn validate_candidate_internal(
         .map_err(|e| ValidationError::InvalidCandidate(e.into()))?;
 
     ValidationResult::decode(&mut &res[..])
-        .map_err(|_| ValidationError::InvalidCandidate(InvalidCandidate::BadReturn))
+        .map_err(|_| ValidationError::InvalidCandidate(InvalidCandidate::BadReturn).into())
 }
 
 /// The validation externalities that will panic on any storage related access. They just provide
@@ -273,10 +283,6 @@ impl sp_externalities::Externalities for ValidationExternalities {
 
     fn place_child_storage(&mut self, _: &ChildInfo, _: Vec<u8>, _: Option<Vec<u8>>) {
         panic!("place_child_storage: unsupported feature for parachain validation")
-    }
-
-    fn chain_id(&self) -> u64 {
-        panic!("chain_id: unsupported feature for parachain validation")
     }
 
     fn storage_root(&mut self) -> Vec<u8> {

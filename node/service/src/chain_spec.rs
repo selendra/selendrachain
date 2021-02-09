@@ -16,26 +16,22 @@
 
 //! Indracore chain configurations.
 
-use serde::{Deserialize, Serialize};
-
 use babe_primitives::AuthorityId as BabeId;
+use grandpa::AuthorityId as GrandpaId;
+use indracore::constants::currency::SELS;
+use indracore_primitives::v1::{AccountId, AccountPublic, AssignmentId, Balance, ValidatorId};
+use indracore_runtime as indracore;
+use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
+use pallet_staking::Forcing;
+use sc_chain_spec::{ChainSpecExtension, ChainType};
+use serde::{Deserialize, Serialize};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::{traits::IdentifyAccount, Perbill};
-
-use grandpa::AuthorityId as GrandpaId;
-use sc_chain_spec::{ChainSpecExtension, ChainType};
 use telemetry::TelemetryEndpoints;
 
-use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
-use pallet_staking::Forcing;
-
-use indracore::constants::currency::SELS;
-use indracore_primitives::v1::{AccountId, AccountPublic, Balance, ValidatorId};
-use indracore_runtime as indracore;
-
-const INDRACORE_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
-const DEFAULT_PROTOCOL_ID: &str = "sel";
+const INDRACORE_STAGING_TELEMETRY_URL: &str = "wss://telemetry.indracore.io/submit/";
+const DEFAULT_PROTOCOL_ID: &str = "dot";
 
 /// Node `ChainSpec` extensions.
 ///
@@ -61,14 +57,16 @@ fn indracore_session_keys(
     babe: BabeId,
     grandpa: GrandpaId,
     im_online: ImOnlineId,
-    parachain_validator: ValidatorId,
+    para_validator: ValidatorId,
+    para_assignment: AssignmentId,
     authority_discovery: AuthorityDiscoveryId,
 ) -> indracore::SessionKeys {
     indracore::SessionKeys {
         babe,
         grandpa,
         im_online,
-        parachain_validator,
+        para_validator,
+        para_assignment,
         authority_discovery,
     }
 }
@@ -84,11 +82,12 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
         GrandpaId,
         ImOnlineId,
         ValidatorId,
+        AssignmentId,
         AuthorityDiscoveryId,
     )> = vec![];
 
     let endownment: Balance = 2u128.pow(32) * SELS;
-    const STASH: Balance = 100 * SELS;
+    const STASH: u128 = 100 * SELS;
 
     indracore::GenesisConfig {
         frame_system: Some(indracore::SystemConfig {
@@ -116,6 +115,7 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
                             x.4.clone(),
                             x.5.clone(),
                             x.6.clone(),
+                            x.7.clone(),
                         ),
                     )
                 })
@@ -156,6 +156,7 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
         pallet_im_online: Some(Default::default()),
         pallet_authority_discovery: Some(indracore::AuthorityDiscoveryConfig { keys: vec![] }),
         pallet_vesting: Some(indracore::VestingConfig { vesting: vec![] }),
+        pallet_treasury: Some(Default::default()),
     }
 }
 
@@ -205,6 +206,7 @@ pub fn get_authority_keys_from_seed(
     GrandpaId,
     ImOnlineId,
     ValidatorId,
+    AssignmentId,
     AuthorityDiscoveryId,
 ) {
     (
@@ -214,6 +216,7 @@ pub fn get_authority_keys_from_seed(
         get_from_seed::<GrandpaId>(seed),
         get_from_seed::<ImOnlineId>(seed),
         get_from_seed::<ValidatorId>(seed),
+        get_from_seed::<AssignmentId>(seed),
         get_from_seed::<AuthorityDiscoveryId>(seed),
     )
 }
@@ -245,6 +248,7 @@ pub fn indracore_testnet_genesis(
         GrandpaId,
         ImOnlineId,
         ValidatorId,
+        AssignmentId,
         AuthorityDiscoveryId,
     )>,
     _root_key: AccountId,
@@ -280,6 +284,7 @@ pub fn indracore_testnet_genesis(
                             x.4.clone(),
                             x.5.clone(),
                             x.6.clone(),
+                            x.7.clone(),
                         ),
                     )
                 })
@@ -320,6 +325,7 @@ pub fn indracore_testnet_genesis(
         pallet_im_online: Some(Default::default()),
         pallet_authority_discovery: Some(indracore::AuthorityDiscoveryConfig { keys: vec![] }),
         pallet_vesting: Some(indracore::VestingConfig { vesting: vec![] }),
+        pallet_treasury: Some(Default::default()),
     }
 }
 

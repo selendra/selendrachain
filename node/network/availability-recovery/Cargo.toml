@@ -1,0 +1,34 @@
+[package]
+name = "indracore-availability-recovery"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+futures = "0.3.12"
+lru = "0.6.1"
+rand = "0.7.3"
+thiserror = "1.0.21"
+tracing = "0.1.22"
+tracing-futures = "0.2.4"
+futures-timer = "3.0.2"
+streamunordered = "0.5.1"
+
+indracore-erasure-coding = { path = "../../../erasure-coding" }
+indracore-primitives = { path = "../../../primitives" }
+indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
+indracore-node-subsystem-util = { path = "../../subsystem-util" }
+indracore-node-network-protocol = { path = "../../network/protocol" }
+
+[dev-dependencies]
+assert_matches = "1.4.0"
+env_logger = "0.8.1"
+futures-timer = "3.0.2"
+log = "0.4.11"
+smallvec = "1.5.1"
+
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-keyring = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+
+indracore-subsystem-testhelpers = { package = "indracore-node-subsystem-test-helpers", path = "../../subsystem-test-helpers" }

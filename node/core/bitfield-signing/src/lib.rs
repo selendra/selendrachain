@@ -29,10 +29,12 @@ use futures::{
 };
 use indracore_node_subsystem::{
     errors::RuntimeApiError,
+    jaeger,
     messages::{
         AllMessages, AvailabilityStoreMessage, BitfieldDistributionMessage, BitfieldSigningMessage,
         RuntimeApiMessage, RuntimeApiRequest,
     },
+    JaegerSpan, PerLeafSpan,
 };
 use indracore_node_subsystem_util::{
     self as util,
@@ -41,8 +43,7 @@ use indracore_node_subsystem_util::{
 };
 use indracore_primitives::v1::{AvailabilityBitfield, CoreState, Hash, ValidatorIndex};
 use sp_keystore::{Error as KeystoreError, SyncCryptoStorePtr};
-use std::{iter::FromIterator, pin::Pin, time::Duration};
-use thiserror::Error;
+use std::{iter::FromIterator, pin::Pin, sync::Arc, time::Duration};
 use wasm_timer::{Delay, Instant};
 
 /// Delay between starting a bitfield signing job and its attempting to create a bitfield.
@@ -53,77 +54,69 @@ const LOG_TARGET: &str = "bitfield_signing";
 pub struct BitfieldSigningJob;
 
 /// Errors we may encounter in the course of executing the `BitfieldSigningSubsystem`.
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
 pub enum Error {
-    /// error propagated from the utility subsystem
     #[error(transparent)]
     Util(#[from] util::Error),
-    /// io error
+
     #[error(transparent)]
     Io(#[from] std::io::Error),
-    /// a one shot channel was canceled
+
     #[error(transparent)]
     Oneshot(#[from] oneshot::Canceled),
-    /// a mspc channel failed to send
+
     #[error(transparent)]
     MpscSend(#[from] mpsc::SendError),
-    /// the runtime API failed to return what we wanted
+
     #[error(transparent)]
     Runtime(#[from] RuntimeApiError),
-    /// the keystore failed to process signing request
+
     #[error("Keystore failed: {0:?}")]
     Keystore(KeystoreError),
 }
 
 /// If there is a candidate pending availability, query the Availability Store
 /// for whether we have the availability chunk for our validator index.
-#[tracing::instrument(level = "trace", skip(sender), fields(subsystem = LOG_TARGET))]
+#[tracing::instrument(level = "trace", skip(sender, span), fields(subsystem = LOG_TARGET))]
 async fn get_core_availability(
     relay_parent: Hash,
     core: CoreState,
     validator_idx: ValidatorIndex,
     sender: &Mutex<&mut mpsc::Sender<FromJobCommand>>,
+    span: &jaeger::JaegerSpan,
 ) -> Result<bool, Error> {
     if let CoreState::Occupied(core) = core {
-        let (tx, rx) = oneshot::channel();
-        sender
-            .lock()
-            .await
-            .send(
-                AllMessages::from(RuntimeApiMessage::Request(
-                    relay_parent,
-                    RuntimeApiRequest::CandidatePendingAvailability(core.para_id, tx),
-                ))
-                .into(),
-            )
-            .await?;
+        let _span = span.child("query-chunk-availability");
 
-        let committed_candidate_receipt = match rx.await? {
-            Ok(Some(ccr)) => ccr,
-            Ok(None) => return Ok(false),
-            Err(e) => {
-                // Don't take down the node on runtime API errors.
-                tracing::warn!(target: LOG_TARGET, err = ?e, "Encountered a runtime API error");
-                return Ok(false);
-            }
-        };
         let (tx, rx) = oneshot::channel();
         sender
             .lock()
             .await
             .send(
                 AllMessages::from(AvailabilityStoreMessage::QueryChunkAvailability(
-                    committed_candidate_receipt.hash(),
+                    core.candidate_hash,
                     validator_idx,
                     tx,
                 ))
                 .into(),
             )
             .await?;
-        return rx.await.map_err(Into::into);
-    }
 
-    Ok(false)
+        let res = rx.await.map_err(Into::into);
+
+        tracing::trace!(
+            target: LOG_TARGET,
+            para_id = %core.para_id(),
+            availability = ?res,
+            ?core.candidate_hash,
+            "Candidate availability",
+        );
+
+        res
+    } else {
+        Ok(false)
+    }
 }
 
 /// delegates to the v1 runtime API
@@ -152,14 +145,18 @@ async fn get_availability_cores(
 /// - for each core, concurrently determine chunk availability (see `get_core_availability`)
 /// - return the bitfield if there were no errors at any point in this process
 ///   (otherwise, it's prone to false negatives)
-#[tracing::instrument(level = "trace", skip(sender), fields(subsystem = LOG_TARGET))]
+#[tracing::instrument(level = "trace", skip(sender, span), fields(subsystem = LOG_TARGET))]
 async fn construct_availability_bitfield(
     relay_parent: Hash,
+    span: &jaeger::JaegerSpan,
     validator_idx: ValidatorIndex,
     sender: &mut mpsc::Sender<FromJobCommand>,
 ) -> Result<AvailabilityBitfield, Error> {
     // get the set of availability cores from the runtime
-    let availability_cores = get_availability_cores(relay_parent, sender).await?;
+    let availability_cores = {
+        let _span = span.child("get-availability-cores");
+        get_availability_cores(relay_parent, sender).await?
+    };
 
     // Wrap the sender in a Mutex to share it between the futures.
     //
@@ -173,7 +170,7 @@ async fn construct_availability_bitfield(
     let results = future::try_join_all(
         availability_cores
             .into_iter()
-            .map(|core| get_core_availability(relay_parent, core, validator_idx, &sender)),
+            .map(|core| get_core_availability(relay_parent, core, validator_idx, &sender, span)),
     )
     .await?;
 
@@ -234,16 +231,19 @@ impl JobTrait for BitfieldSigningJob {
     const NAME: &'static str = "BitfieldSigningJob";
 
     /// Run a job for the parent block indicated
-    #[tracing::instrument(skip(keystore, metrics, _receiver, sender), fields(subsystem = LOG_TARGET))]
+    #[tracing::instrument(skip(span, keystore, metrics, _receiver, sender), fields(subsystem = LOG_TARGET))]
     fn run(
         relay_parent: Hash,
+        span: Arc<JaegerSpan>,
         keystore: Self::RunArgs,
         metrics: Self::Metrics,
         _receiver: mpsc::Receiver<BitfieldSigningMessage>,
         mut sender: mpsc::Sender<FromJobCommand>,
     ) -> Pin<Box<dyn Future<Output = Result<(), Self::Error>> + Send>> {
-        let metrics = metrics;
+        let metrics = metrics.clone();
         async move {
+			let span = PerLeafSpan::new(span, "bitfield-signing");
+			let _span = span.child("delay");
 			let wait_until = Instant::now() + JOB_DELAY;
 
 			// now do all the work we can before we need to wait for the availability store
@@ -261,8 +261,16 @@ impl JobTrait for BitfieldSigningJob {
 			// JOB_DELAY each time.
 			let _timer = metrics.time_run();
 
+			drop(_span);
+			let span_availability = span.child("availability");
+
 			let bitfield =
-				match construct_availability_bitfield(relay_parent, validator.index(), &mut sender).await
+				match construct_availability_bitfield(
+					relay_parent,
+					&span_availability,
+					validator.index(),
+					&mut sender,
+				).await
 			{
 				Err(Error::Runtime(runtime_err)) => {
 					// Don't take down the node on runtime API errors.
@@ -273,11 +281,17 @@ impl JobTrait for BitfieldSigningJob {
 				Ok(bitfield) => bitfield,
 			};
 
+			drop(span_availability);
+			let _span = span.child("signing");
+
 			let signed_bitfield = validator
 				.sign(keystore.clone(), bitfield)
 				.await
-				.map_err(Error::Keystore)?;
+				.map_err(|e| Error::Keystore(e))?;
 			metrics.on_bitfield_signed();
+
+			drop(_span);
+			let _span = span.child("gossip");
 
 			sender
 				.send(
@@ -295,3 +309,78 @@ impl JobTrait for BitfieldSigningJob {
 /// BitfieldSigningSubsystem manages a number of bitfield signing jobs.
 pub type BitfieldSigningSubsystem<Spawner, Context> =
     JobManager<Spawner, Context, BitfieldSigningJob>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use futures::{executor::block_on, pin_mut};
+    use indracore_primitives::v1::{CandidateHash, OccupiedCore};
+
+    fn occupied_core(para_id: u32, candidate_hash: CandidateHash) -> CoreState {
+        CoreState::Occupied(OccupiedCore {
+            group_responsible: para_id.into(),
+            next_up_on_available: None,
+            occupied_since: 100_u32,
+            time_out_at: 200_u32,
+            next_up_on_time_out: None,
+            availability: Default::default(),
+            candidate_hash,
+            candidate_descriptor: Default::default(),
+        })
+    }
+
+    #[test]
+    fn construct_availability_bitfield_works() {
+        block_on(async move {
+            let (mut sender, mut receiver) = mpsc::channel(10);
+            let relay_parent = Hash::default();
+            let validator_index = 1u32;
+
+            let future = construct_availability_bitfield(
+                relay_parent,
+                &jaeger::JaegerSpan::Disabled,
+                validator_index,
+                &mut sender,
+            )
+            .fuse();
+            pin_mut!(future);
+
+            let hash_a = CandidateHash(Hash::repeat_byte(1));
+            let hash_b = CandidateHash(Hash::repeat_byte(2));
+
+            loop {
+                futures::select! {
+                    m = receiver.next() => match m.unwrap() {
+                        FromJobCommand::SendMessage(
+                            AllMessages::RuntimeApi(
+                                RuntimeApiMessage::Request(rp, RuntimeApiRequest::AvailabilityCores(tx)),
+                            ),
+                        ) => {
+                            assert_eq!(relay_parent, rp);
+                            tx.send(Ok(vec![CoreState::Free, occupied_core(1, hash_a), occupied_core(2, hash_b)])).unwrap();
+                        },
+                        FromJobCommand::SendMessage(
+                            AllMessages::AvailabilityStore(
+                                AvailabilityStoreMessage::QueryChunkAvailability(c_hash, vidx, tx),
+                            ),
+                        ) => {
+                            assert_eq!(validator_index, vidx);
+
+                            tx.send(c_hash == hash_a).unwrap();
+                        },
+                        o => panic!("Unknown message: {:?}", o),
+                    },
+                    r = future => match r {
+                        Ok(r) => {
+                            assert!(!r.0.get(0).unwrap());
+                            assert!(r.0.get(1).unwrap());
+                            assert!(!r.0.get(2).unwrap());
+                            break
+                        },
+                        Err(e) => panic!("Failed: {:?}", e),
+                    },
+                }
+            }
+        });
+    }
+}

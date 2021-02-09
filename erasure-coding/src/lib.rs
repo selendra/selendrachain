@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! As part of Polkadot's availability system, certain pieces of data
+//! As part of Indracore's availability system, certain pieces of data
 //! for each block are required to be kept available.
 //!
 //! The way we accomplish this is by erasure coding the data into n pieces
@@ -29,11 +29,11 @@ use primitives::v0::{self, BlakeTwo256, Hash as H256, HashT};
 use primitives::v1;
 use reed_solomon::galois_16::{self, ReedSolomon};
 use sp_core::Blake2Hasher;
-use sp_trie::{
+use thiserror::Error;
+use trie::{
     trie_types::{TrieDB, TrieDBMut},
     MemoryDB, Trie, TrieMut, EMPTY_PREFIX,
 };
-use thiserror::Error;
 
 use self::wrapped_shard::WrappedShard;
 
@@ -124,7 +124,10 @@ impl CodeParams {
     }
 }
 
-fn code_params(n_validators: usize) -> Result<CodeParams, Error> {
+/// Returns the maximum number of allowed, faulty chunks
+/// which does not prevent recovery given all other pieces
+/// are correct.
+const fn n_faulty(n_validators: usize) -> Result<usize, Error> {
     if n_validators > MAX_VALIDATORS {
         return Err(Error::TooManyValidators);
     }
@@ -132,13 +135,24 @@ fn code_params(n_validators: usize) -> Result<CodeParams, Error> {
         return Err(Error::NotEnoughValidators);
     }
 
-    let n_faulty = n_validators.saturating_sub(1) / 3;
+    Ok(n_validators.saturating_sub(1) / 3)
+}
+
+fn code_params(n_validators: usize) -> Result<CodeParams, Error> {
+    let n_faulty = n_faulty(n_validators)?;
     let n_good = n_validators - n_faulty;
 
     Ok(CodeParams {
         data_shards: n_faulty + 1,
         parity_shards: n_good - 1,
     })
+}
+
+/// Obtain a threshold of chunks that should be enough to recover the data.
+pub fn recovery_threshold(n_validators: usize) -> Result<usize, Error> {
+    let n_faulty = n_faulty(n_validators)?;
+
+    Ok(n_faulty + 1)
 }
 
 /// Obtain erasure-coded chunks for v0 `AvailableData`, one for each validator.
@@ -247,9 +261,9 @@ where
 
     if let Err(e) = params.make_encoder().reconstruct(&mut shards[..]) {
         match e {
-            reed_solomon::Error::TooFewShardsPresent => return Err(Error::NotEnoughChunks),
-            reed_solomon::Error::InvalidShardFlags => return Err(Error::WrongValidatorCount),
-            reed_solomon::Error::TooManyShards => return Err(Error::TooManyChunks),
+            reed_solomon::Error::TooFewShardsPresent => Err(Error::NotEnoughChunks)?,
+            reed_solomon::Error::InvalidShardFlags => Err(Error::WrongValidatorCount)?,
+            reed_solomon::Error::TooManyShards => Err(Error::TooManyChunks)?,
             reed_solomon::Error::EmptyShard => {
                 panic!("chunks are all non-empty; this is checked above; qed")
             }
@@ -271,7 +285,7 @@ where
             .map(|x| x.expect("all data shards have been recovered; qed"))
             .map(|x| x.as_ref()),
     })
-    .map_err(|_| Error::BadPayload)
+    .or_else(|_| Err(Error::BadPayload))
 }
 
 /// An iterator that yields merkle branches and chunk data for all chunks to
@@ -286,7 +300,7 @@ pub struct Branches<'a, I> {
 impl<'a, I: AsRef<[u8]>> Branches<'a, I> {
     /// Get the trie root.
     pub fn root(&self) -> H256 {
-        self.root
+        self.root.clone()
     }
 }
 
@@ -294,7 +308,7 @@ impl<'a, I: AsRef<[u8]>> Iterator for Branches<'a, I> {
     type Item = (Vec<Vec<u8>>, &'a [u8]);
 
     fn next(&mut self) -> Option<Self::Item> {
-        use sp_trie::Recorder;
+        use trie::Recorder;
 
         let trie = TrieDB::new(&self.trie_storage, &self.root)
 			.expect("`Branches` is only created with a valid memorydb that contains all nodes for the trie with given root; qed");
@@ -341,7 +355,7 @@ where
     Branches {
         trie_storage,
         root,
-        chunks,
+        chunks: chunks,
         current_pos: 0,
     }
 }
@@ -351,7 +365,7 @@ where
 pub fn branch_hash(root: &H256, branch_nodes: &[Vec<u8>], index: usize) -> Result<H256, Error> {
     let mut trie_storage: MemoryDB<Blake2Hasher> = MemoryDB::default();
     for node in branch_nodes.iter() {
-        (&mut trie_storage as &mut sp_trie::HashDB<_>).insert(EMPTY_PREFIX, node.as_slice());
+        (&mut trie_storage as &mut trie::HashDB<_>).insert(EMPTY_PREFIX, node.as_slice());
     }
 
     let trie = TrieDB::new(&trie_storage, &root).map_err(|_| Error::InvalidBranchProof)?;
@@ -416,6 +430,145 @@ impl<'a, I: Iterator<Item = &'a [u8]>> parity_scale_codec::Input for ShardInput<
             Ok(())
         } else {
             Err("slice provided too big for input".into())
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use primitives::v0::{AvailableData, BlockData, PoVBlock};
+
+    #[test]
+    fn field_order_is_right_size() {
+        assert_eq!(MAX_VALIDATORS, 65536);
+    }
+
+    #[test]
+    fn test_code_params() {
+        assert_eq!(code_params(0), Err(Error::NotEnoughValidators));
+
+        assert_eq!(code_params(1), Err(Error::NotEnoughValidators));
+
+        assert_eq!(
+            code_params(2),
+            Ok(CodeParams {
+                data_shards: 1,
+                parity_shards: 1,
+            })
+        );
+
+        assert_eq!(
+            code_params(3),
+            Ok(CodeParams {
+                data_shards: 1,
+                parity_shards: 2,
+            })
+        );
+
+        assert_eq!(
+            code_params(4),
+            Ok(CodeParams {
+                data_shards: 2,
+                parity_shards: 2,
+            })
+        );
+
+        assert_eq!(
+            code_params(100),
+            Ok(CodeParams {
+                data_shards: 34,
+                parity_shards: 66,
+            })
+        );
+    }
+
+    #[test]
+    fn shard_len_is_reasonable() {
+        let mut params = CodeParams {
+            data_shards: 5,
+            parity_shards: 0, // doesn't affect calculation.
+        };
+
+        assert_eq!(params.shard_len(100), 20);
+        assert_eq!(params.shard_len(99), 20);
+
+        // see if it rounds up to 2.
+        assert_eq!(params.shard_len(95), 20);
+        assert_eq!(params.shard_len(94), 20);
+
+        assert_eq!(params.shard_len(89), 18);
+
+        params.data_shards = 7;
+
+        // needs 3 bytes to fit, rounded up to next even number.
+        assert_eq!(params.shard_len(19), 4);
+    }
+
+    #[test]
+    fn round_trip_works() {
+        let pov_block = PoVBlock {
+            block_data: BlockData((0..255).collect()),
+        };
+
+        let available_data = AvailableData {
+            pov_block,
+            omitted_validation: Default::default(),
+        };
+        let chunks = obtain_chunks(10, &available_data).unwrap();
+
+        assert_eq!(chunks.len(), 10);
+
+        // any 4 chunks should work.
+        let reconstructed: AvailableData = reconstruct(
+            10,
+            [
+                (&*chunks[1], 1),
+                (&*chunks[4], 4),
+                (&*chunks[6], 6),
+                (&*chunks[9], 9),
+            ]
+            .iter()
+            .cloned(),
+        )
+        .unwrap();
+
+        assert_eq!(reconstructed, available_data);
+    }
+
+    #[test]
+    fn reconstruct_does_not_panic_on_low_validator_count() {
+        let reconstructed = reconstruct_v1(1, [].iter().cloned());
+        assert_eq!(reconstructed, Err(Error::NotEnoughValidators));
+    }
+
+    #[test]
+    fn construct_valid_branches() {
+        let pov_block = PoVBlock {
+            block_data: BlockData(vec![2; 256]),
+        };
+
+        let available_data = AvailableData {
+            pov_block,
+            omitted_validation: Default::default(),
+        };
+
+        let chunks = obtain_chunks(10, &available_data).unwrap();
+
+        assert_eq!(chunks.len(), 10);
+
+        let branches = branches(chunks.as_ref());
+        let root = branches.root();
+
+        let proofs: Vec<_> = branches.map(|(proof, _)| proof).collect();
+
+        assert_eq!(proofs.len(), 10);
+
+        for (i, proof) in proofs.into_iter().enumerate() {
+            assert_eq!(
+                branch_hash(&root, &proof, i).unwrap(),
+                BlakeTwo256::hash(&chunks[i])
+            );
         }
     }
 }

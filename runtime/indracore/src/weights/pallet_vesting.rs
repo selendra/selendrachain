@@ -43,45 +43,45 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_vesting::WeightInfo for WeightInfo<T> {
     fn vest_locked(l: u32) -> Weight {
-        55_961_000_u64
+        (55_961_000 as Weight)
             // Standard Error: 0
-            .saturating_add(138_000_u64.saturating_mul(l as Weight))
-            .saturating_add(T::DbWeight::get().reads(2_u64))
-            .saturating_add(T::DbWeight::get().writes(1_u64))
+            .saturating_add((138_000 as Weight).saturating_mul(l as Weight))
+            .saturating_add(T::DbWeight::get().reads(2 as Weight))
+            .saturating_add(T::DbWeight::get().writes(1 as Weight))
     }
     fn vest_unlocked(l: u32) -> Weight {
-        60_522_000_u64
+        (60_522_000 as Weight)
             // Standard Error: 2_000
-            .saturating_add(107_000_u64.saturating_mul(l as Weight))
-            .saturating_add(T::DbWeight::get().reads(2_u64))
-            .saturating_add(T::DbWeight::get().writes(2_u64))
+            .saturating_add((107_000 as Weight).saturating_mul(l as Weight))
+            .saturating_add(T::DbWeight::get().reads(2 as Weight))
+            .saturating_add(T::DbWeight::get().writes(2 as Weight))
     }
     fn vest_other_locked(l: u32) -> Weight {
-        55_712_000_u64
+        (55_712_000 as Weight)
             // Standard Error: 0
-            .saturating_add(135_000_u64.saturating_mul(l as Weight))
-            .saturating_add(T::DbWeight::get().reads(3_u64))
-            .saturating_add(T::DbWeight::get().writes(2_u64))
+            .saturating_add((135_000 as Weight).saturating_mul(l as Weight))
+            .saturating_add(T::DbWeight::get().reads(3 as Weight))
+            .saturating_add(T::DbWeight::get().writes(2 as Weight))
     }
     fn vest_other_unlocked(l: u32) -> Weight {
-        59_981_000_u64
+        (59_981_000 as Weight)
             // Standard Error: 2_000
-            .saturating_add(113_000_u64.saturating_mul(l as Weight))
-            .saturating_add(T::DbWeight::get().reads(3_u64))
-            .saturating_add(T::DbWeight::get().writes(3_u64))
+            .saturating_add((113_000 as Weight).saturating_mul(l as Weight))
+            .saturating_add(T::DbWeight::get().reads(3 as Weight))
+            .saturating_add(T::DbWeight::get().writes(3 as Weight))
     }
     fn vested_transfer(l: u32) -> Weight {
-        122_684_000_u64
+        (122_684_000 as Weight)
             // Standard Error: 8_000
-            .saturating_add(171_000_u64.saturating_mul(l as Weight))
-            .saturating_add(T::DbWeight::get().reads(3_u64))
-            .saturating_add(T::DbWeight::get().writes(3_u64))
+            .saturating_add((171_000 as Weight).saturating_mul(l as Weight))
+            .saturating_add(T::DbWeight::get().reads(3 as Weight))
+            .saturating_add(T::DbWeight::get().writes(3 as Weight))
     }
     fn force_vested_transfer(l: u32) -> Weight {
-        121_973_000_u64
+        (121_973_000 as Weight)
             // Standard Error: 8_000
-            .saturating_add(165_000_u64.saturating_mul(l as Weight))
-            .saturating_add(T::DbWeight::get().reads(4_u64))
-            .saturating_add(T::DbWeight::get().writes(4_u64))
+            .saturating_add((165_000 as Weight).saturating_mul(l as Weight))
+            .saturating_add(T::DbWeight::get().reads(4 as Weight))
+            .saturating_add(T::DbWeight::get().writes(4 as Weight))
     }
 }

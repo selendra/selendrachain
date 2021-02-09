@@ -28,11 +28,12 @@ pub enum NetworkId {
     Named(Vec<u8>),
     /// The Polkadot Relay chain
     Polkadot,
-    /// Indracore Relay chain.
+    /// The Indracore Eelay chain.
     Indracore,
 }
 
 /// A single item in a path to describe the relative location of a consensus system.
+///
 /// Each item assumes a pre-existing location as its context and is defined in terms of it.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, Debug)]
 pub enum Junction {
@@ -43,7 +44,7 @@ pub enum Junction {
     Parent,
     /// An indexed parachain belonging to and operated by the context.
     ///
-    /// Generally used when the context is a Indracore Relay-chain.
+    /// Generally used when the context is a Polkadot Relay-chain.
     Parachain {
         #[codec(compact)]
         id: u32,

@@ -43,123 +43,26 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_treasury::WeightInfo for WeightInfo<T> {
     fn propose_spend() -> Weight {
-        54_574_000_u64
-            .saturating_add(T::DbWeight::get().reads(1_u64))
-            .saturating_add(T::DbWeight::get().writes(2_u64))
+        (55_957_000 as Weight)
+            .saturating_add(T::DbWeight::get().reads(1 as Weight))
+            .saturating_add(T::DbWeight::get().writes(2 as Weight))
     }
     fn reject_proposal() -> Weight {
-        85_554_000_u64
-            .saturating_add(T::DbWeight::get().reads(2_u64))
-            .saturating_add(T::DbWeight::get().writes(2_u64))
+        (45_616_000 as Weight)
+            .saturating_add(T::DbWeight::get().reads(2 as Weight))
+            .saturating_add(T::DbWeight::get().writes(2 as Weight))
     }
     fn approve_proposal() -> Weight {
-        11_791_000_u64
-            .saturating_add(T::DbWeight::get().reads(2_u64))
-            .saturating_add(T::DbWeight::get().writes(1_u64))
-    }
-    fn report_awesome(r: u32) -> Weight {
-        67_174_000_u64
-            // Standard Error: 0
-            .saturating_add(2_000_u64.saturating_mul(r as Weight))
-            .saturating_add(T::DbWeight::get().reads(2_u64))
-            .saturating_add(T::DbWeight::get().writes(2_u64))
-    }
-    fn retract_tip() -> Weight {
-        56_466_000_u64
-            .saturating_add(T::DbWeight::get().reads(1_u64))
-            .saturating_add(T::DbWeight::get().writes(2_u64))
-    }
-    fn tip_new(r: u32, t: u32) -> Weight {
-        42_193_000_u64
-            // Standard Error: 0
-            .saturating_add(2_000_u64.saturating_mul(r as Weight))
-            // Standard Error: 0
-            .saturating_add(149_000_u64.saturating_mul(t as Weight))
-            .saturating_add(T::DbWeight::get().reads(2_u64))
-            .saturating_add(T::DbWeight::get().writes(2_u64))
-    }
-    fn tip(t: u32) -> Weight {
-        28_405_000_u64
-            // Standard Error: 1_000
-            .saturating_add(705_000_u64.saturating_mul(t as Weight))
-            .saturating_add(T::DbWeight::get().reads(2_u64))
-            .saturating_add(T::DbWeight::get().writes(1_u64))
-    }
-    fn close_tip(t: u32) -> Weight {
-        106_075_000_u64
-            // Standard Error: 0
-            .saturating_add(361_000_u64.saturating_mul(t as Weight))
-            .saturating_add(T::DbWeight::get().reads(3_u64))
-            .saturating_add(T::DbWeight::get().writes(3_u64))
-    }
-    fn propose_bounty(d: u32) -> Weight {
-        58_025_000_u64
-            // Standard Error: 0
-            .saturating_add(1_000_u64.saturating_mul(d as Weight))
-            .saturating_add(T::DbWeight::get().reads(2_u64))
-            .saturating_add(T::DbWeight::get().writes(4_u64))
-    }
-    fn approve_bounty() -> Weight {
-        15_338_000_u64
-            .saturating_add(T::DbWeight::get().reads(2_u64))
-            .saturating_add(T::DbWeight::get().writes(2_u64))
-    }
-    fn propose_curator() -> Weight {
-        12_080_000_u64
-            .saturating_add(T::DbWeight::get().reads(1_u64))
-            .saturating_add(T::DbWeight::get().writes(1_u64))
-    }
-    fn unassign_curator() -> Weight {
-        69_557_000_u64
-            .saturating_add(T::DbWeight::get().reads(2_u64))
-            .saturating_add(T::DbWeight::get().writes(2_u64))
-    }
-    fn accept_curator() -> Weight {
-        47_745_000_u64
-            .saturating_add(T::DbWeight::get().reads(2_u64))
-            .saturating_add(T::DbWeight::get().writes(2_u64))
-    }
-    fn award_bounty() -> Weight {
-        33_468_000_u64
-            .saturating_add(T::DbWeight::get().reads(1_u64))
-            .saturating_add(T::DbWeight::get().writes(1_u64))
-    }
-    fn claim_bounty() -> Weight {
-        161_390_000_u64
-            .saturating_add(T::DbWeight::get().reads(4_u64))
-            .saturating_add(T::DbWeight::get().writes(5_u64))
-    }
-    fn close_bounty_proposed() -> Weight {
-        68_016_000_u64
-            .saturating_add(T::DbWeight::get().reads(2_u64))
-            .saturating_add(T::DbWeight::get().writes(3_u64))
-    }
-    fn close_bounty_active() -> Weight {
-        106_292_000_u64
-            .saturating_add(T::DbWeight::get().reads(3_u64))
-            .saturating_add(T::DbWeight::get().writes(4_u64))
-    }
-    fn extend_bounty_expiry() -> Weight {
-        32_515_000_u64
-            .saturating_add(T::DbWeight::get().reads(1_u64))
-            .saturating_add(T::DbWeight::get().writes(1_u64))
+        (13_362_000 as Weight)
+            .saturating_add(T::DbWeight::get().reads(2 as Weight))
+            .saturating_add(T::DbWeight::get().writes(1 as Weight))
     }
     fn on_initialize_proposals(p: u32) -> Weight {
-        72_159_000_u64
-            // Standard Error: 26_000
-            .saturating_add(72_167_000_u64.saturating_mul(p as Weight))
-            .saturating_add(T::DbWeight::get().reads(2_u64))
-            .saturating_add(T::DbWeight::get().reads(3_u64.saturating_mul(p as Weight)))
-            .saturating_add(T::DbWeight::get().writes(2_u64))
-            .saturating_add(T::DbWeight::get().writes(3_u64.saturating_mul(p as Weight)))
-    }
-    fn on_initialize_bounties(b: u32) -> Weight {
-        66_526_000_u64
-            // Standard Error: 18_000
-            .saturating_add(71_398_000_u64.saturating_mul(b as Weight))
-            .saturating_add(T::DbWeight::get().reads(2_u64))
-            .saturating_add(T::DbWeight::get().reads(3_u64.saturating_mul(b as Weight)))
-            .saturating_add(T::DbWeight::get().writes(2_u64))
-            .saturating_add(T::DbWeight::get().writes(3_u64.saturating_mul(b as Weight)))
+        (74_689_000 as Weight)
+            .saturating_add((71_943_000 as Weight).saturating_mul(p as Weight))
+            .saturating_add(T::DbWeight::get().reads(2 as Weight))
+            .saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(p as Weight)))
+            .saturating_add(T::DbWeight::get().writes(2 as Weight))
+            .saturating_add(T::DbWeight::get().writes((3 as Weight).saturating_mul(p as Weight)))
     }
 }

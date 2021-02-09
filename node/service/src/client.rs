@@ -105,7 +105,7 @@ where
 
 /// Execute something with the client instance.
 ///
-/// As there exist multiple chains inside Indracore, like Indracore itself, Kusama, Westend etc,
+/// As there exist multiple chains inside Indracore, like Indracore itself,etc,
 /// there can exist different kinds of client types. As these client types differ in the generics
 /// that are being used, we can not easily return them from a function. For returning them from a
 /// function there exists [`Client`]. However, the problem on how to use this client instance still
@@ -130,7 +130,7 @@ pub trait ExecuteWithClient {
 
 /// A handle to a Indracore client instance.
 ///
-/// The Indracore service supports multiple different runtimes (Westend, Indracore itself, etc). As each runtime has a
+/// The Indracore service supports multiple different runtimes Indracore itself, etc. As each runtime has a
 /// specialized client, we need to hide them behind a trait. This is this trait.
 ///
 /// When wanting to work with the inner client, you need to use `execute_with`.

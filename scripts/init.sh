@@ -7,7 +7,6 @@ echo "*** Initializing WASM build environment"
 if [ -z $CI_PROJECT_NAME ] ; then
    rustup update nightly
    rustup update stable
-   rustup override set nightly
 fi
 
 rustup target add wasm32-unknown-unknown --toolchain nightly

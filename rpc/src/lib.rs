@@ -14,13 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Polkadot-specific RPCs implementation.
+//! Indracore-specific RPCs implementation.
 
 #![warn(missing_docs)]
 
 use std::sync::Arc;
 
-use indracore_primitives::v1::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
+use indracore_primitives::v0::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
 use sc_client_api::light::{Fetcher, RemoteBlockchain};
 use sc_client_api::AuxStore;
 use sc_consensus_babe::Epoch;
@@ -33,7 +33,7 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus::SelectChain;
 use sp_consensus_babe::BabeApi;
 use sp_keystore::SyncCryptoStorePtr;
-use sp_transaction_pool::TransactionPool;
+use txpool_api::TransactionPool;
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
@@ -102,7 +102,7 @@ where
         + Send
         + Sync
         + 'static,
-    C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
+    C::Api: frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
     C::Api: BabeApi<Block>,
     C::Api: BlockBuilder<Block>,
@@ -111,10 +111,10 @@ where
     B: sc_client_api::Backend<Block> + Send + Sync + 'static,
     B::State: sc_client_api::StateBackend<sp_runtime::traits::HashFor<Block>>,
 {
+    use frame_rpc_system::{FullSystem, SystemApi};
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
     use sc_consensus_babe_rpc::BabeRpcHandler;
     use sc_finality_grandpa_rpc::{GrandpaApi, GrandpaRpcHandler};
-    use substrate_frame_rpc_system::{FullSystem, SystemApi};
 
     let mut io = jsonrpc_core::IoHandler::default();
     let FullDeps {
@@ -180,12 +180,12 @@ where
     C: ProvideRuntimeApi<Block>,
     C: HeaderBackend<Block>,
     C: Send + Sync + 'static,
-    C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
+    C::Api: frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
     P: TransactionPool + Sync + Send + 'static,
     F: Fetcher<Block> + 'static,
 {
-    use substrate_frame_rpc_system::{LightSystem, SystemApi};
+    use frame_rpc_system::{LightSystem, SystemApi};
 
     let LightDeps {
         client,

@@ -14,11 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Common runtime code for Indracore.
+//! Common runtime code for Indracore and Kusama.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+
 pub mod impls;
+pub mod paras_registrar;
+pub mod paras_sudo_wrapper;
+pub mod slot_range;
+pub mod slots;
 
 pub use frame_support::weights::constants::{
     BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight,
@@ -30,7 +35,7 @@ use frame_support::{
 };
 use frame_system::limits;
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
-use primitives::v1::{BlockNumber, ValidatorId};
+use primitives::v1::{AssignmentId, BlockNumber, ValidatorId};
 use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
 use static_assertions::const_assert;
 
@@ -47,6 +52,10 @@ pub use impls::ToAuthor;
 pub type NegativeImbalance<T> = <pallet_balances::Module<T> as Currency<
     <T as frame_system::Config>::AccountId,
 >>::NegativeImbalance;
+
+/// The sequence of bytes a valid wasm module binary always starts with. Apart from that it's also a
+/// valid wasm module.
+pub const WASM_MAGIC: &[u8] = &[0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00];
 
 /// We assume that an on-initialize consumes 2.5% of the weight on average, hence a single extrinsic
 /// will not be allowed to consume more than `AvailableBlockRatio - 2.5%`.
@@ -109,7 +118,7 @@ parameter_types! {
 }
 
 /// Parameterized slow adjusting fee updated based on
-/// https://w3f-research.readthedocs.io/en/latest/polkadot/economics/1-token-economics.html
+/// https://w3f-research.readthedocs.io/en/latest/polkadot/Token%20Economics.html#-2.-slow-adjusting-mechanism
 pub type SlowAdjustingFeeUpdate<R> =
     TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 
@@ -146,4 +155,123 @@ impl<T: pallet_session::Config> pallet_session::OneSessionHandler<T::AccountId>
     }
 
     fn on_disabled(_: usize) {}
+}
+
+/// A placeholder since there is currently no provided session key handler for parachain validator
+/// keys.
+pub struct AssignmentSessionKeyPlaceholder<T>(sp_std::marker::PhantomData<T>);
+impl<T> sp_runtime::BoundToRuntimeAppPublic for AssignmentSessionKeyPlaceholder<T> {
+    type Public = AssignmentId;
+}
+
+impl<T: pallet_session::Config> pallet_session::OneSessionHandler<T::AccountId>
+    for AssignmentSessionKeyPlaceholder<T>
+{
+    type Key = AssignmentId;
+
+    fn on_genesis_session<'a, I: 'a>(_validators: I)
+    where
+        I: Iterator<Item = (&'a T::AccountId, AssignmentId)>,
+        T::AccountId: 'a,
+    {
+    }
+
+    fn on_new_session<'a, I: 'a>(_changed: bool, _v: I, _q: I)
+    where
+        I: Iterator<Item = (&'a T::AccountId, AssignmentId)>,
+        T::AccountId: 'a,
+    {
+    }
+
+    fn on_disabled(_: usize) {}
+}
+
+#[cfg(test)]
+mod multiplier_tests {
+    use super::*;
+    use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
+    use sp_core::H256;
+    use sp_runtime::{
+        testing::Header,
+        traits::{BlakeTwo256, Convert, IdentityLookup},
+        Perbill,
+    };
+
+    #[derive(Clone, PartialEq, Eq, Debug)]
+    pub struct Runtime;
+
+    impl_outer_origin! {
+        pub enum Origin for Runtime {}
+    }
+
+    parameter_types! {
+        pub const BlockHashCount: u64 = 250;
+        pub const AvailableBlockRatio: Perbill = Perbill::one();
+        pub BlockLength: frame_system::limits::BlockLength =
+            frame_system::limits::BlockLength::max(2 * 1024);
+        pub BlockWeights: frame_system::limits::BlockWeights =
+            frame_system::limits::BlockWeights::simple_max(1024);
+    }
+
+    impl frame_system::Config for Runtime {
+        type BaseCallFilter = ();
+        type BlockWeights = BlockWeights;
+        type BlockLength = ();
+        type DbWeight = ();
+        type Origin = Origin;
+        type Index = u64;
+        type BlockNumber = u64;
+        type Call = ();
+        type Hash = H256;
+        type Hashing = BlakeTwo256;
+        type AccountId = u64;
+        type Lookup = IdentityLookup<Self::AccountId>;
+        type Header = Header;
+        type Event = ();
+        type BlockHashCount = BlockHashCount;
+        type Version = ();
+        type PalletInfo = ();
+        type AccountData = ();
+        type OnNewAccount = ();
+        type OnKilledAccount = ();
+        type SystemWeightInfo = ();
+        type SS58Prefix = ();
+    }
+
+    type System = frame_system::Module<Runtime>;
+
+    fn run_with_system_weight<F>(w: Weight, assertions: F)
+    where
+        F: Fn() -> (),
+    {
+        let mut t: sp_io::TestExternalities = frame_system::GenesisConfig::default()
+            .build_storage::<Runtime>()
+            .unwrap()
+            .into();
+        t.execute_with(|| {
+            System::set_block_consumed_resources(w, 0);
+            assertions()
+        });
+    }
+
+    #[test]
+    fn multiplier_can_grow_from_zero() {
+        let minimum_multiplier = MinimumMultiplier::get();
+        let target = TargetBlockFullness::get()
+            * BlockWeights::get()
+                .get(DispatchClass::Normal)
+                .max_total
+                .unwrap();
+        // if the min is too small, then this will not change, and we are doomed forever.
+        // the weight is 1/10th bigger than target.
+        run_with_system_weight(target * 101 / 100, || {
+            let next = SlowAdjustingFeeUpdate::<Runtime>::convert(minimum_multiplier);
+            assert!(
+                next > minimum_multiplier,
+                "{:?} !>= {:?}",
+                next,
+                minimum_multiplier
+            );
+        })
+    }
 }

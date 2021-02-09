@@ -31,6 +31,7 @@ use indracore_node_subsystem::{
         AllMessages, CandidateBackingMessage, ChainApiMessage, ProvisionableData,
         ProvisionerInherentData, ProvisionerMessage,
     },
+    JaegerSpan, PerLeafSpan,
 };
 use indracore_node_subsystem_util::{
     self as util, delegated_subsystem,
@@ -41,7 +42,7 @@ use indracore_primitives::v1::{
     BackedCandidate, BlockNumber, CandidateReceipt, CoreState, Hash, OccupiedCoreAssumption,
     SignedAvailabilityBitfield, ValidatorIndex,
 };
-use std::{collections::BTreeMap, pin::Pin};
+use std::{collections::BTreeMap, pin::Pin, sync::Arc};
 use thiserror::Error;
 
 /// How long to wait before proposing.
@@ -142,9 +143,10 @@ impl JobTrait for ProvisioningJob {
     /// Run a job for the parent block indicated
     //
     // this function is in charge of creating and executing the job's main loop
-    #[tracing::instrument(skip(_run_args, metrics, receiver, sender), fields(subsystem = LOG_TARGET))]
+    #[tracing::instrument(skip(span, _run_args, metrics, receiver, sender), fields(subsystem = LOG_TARGET))]
     fn run(
         relay_parent: Hash,
+        span: Arc<JaegerSpan>,
         _run_args: Self::RunArgs,
         metrics: Self::Metrics,
         receiver: mpsc::Receiver<ProvisionerMessage>,
@@ -153,9 +155,7 @@ impl JobTrait for ProvisioningJob {
         async move {
             let job = ProvisioningJob::new(relay_parent, metrics, sender, receiver);
 
-            // it isn't necessary to break run_loop into its own function,
-            // but it's convenient to separate the concerns in this way
-            job.run_loop().await
+            job.run_loop(PerLeafSpan::new(span, "provisioner")).await
         }
         .boxed()
     }
@@ -181,15 +181,15 @@ impl ProvisioningJob {
         }
     }
 
-    async fn run_loop(mut self) -> Result<(), Error> {
+    async fn run_loop(mut self, span: PerLeafSpan) -> Result<(), Error> {
         use ProvisionerMessage::{
             ProvisionableData, RequestBlockAuthorshipData, RequestInherentData,
         };
-
         loop {
             futures::select! {
                 msg = self.receiver.next().fuse() => match msg {
                     Some(RequestInherentData(_, return_sender)) => {
+                        let _span = span.child("req-inherent-data");
                         let _timer = self.metrics.time_request_inherent_data();
 
                         if self.inherent_after.is_ready() {
@@ -199,9 +199,11 @@ impl ProvisioningJob {
                         }
                     }
                     Some(RequestBlockAuthorshipData(_, sender)) => {
+                        let _span = span.child("req-block-authorship");
                         self.provisionable_data_channels.push(sender)
                     }
                     Some(ProvisionableData(_, data)) => {
+                        let _span = span.child("provisionable-data");
                         let _timer = self.metrics.time_provisionable_data();
 
                         let mut bad_indices = Vec::new();
@@ -239,6 +241,7 @@ impl ProvisioningJob {
                     None => break,
                 },
                 _ = self.inherent_after.ready().fuse() => {
+                    let _span = span.child("send-inherent-data");
                     let return_senders = std::mem::take(&mut self.awaiting_inherent);
                     if !return_senders.is_empty() {
                         self.send_inherent_data(return_senders).await;
@@ -314,7 +317,7 @@ async fn send_inherent_data(
     let availability_cores = request_availability_cores(relay_parent, from_job)
         .await?
         .await
-        .map_err(Error::CanceledAvailabilityCores)??;
+        .map_err(|err| Error::CanceledAvailabilityCores(err))??;
 
     let bitfields = select_availability_bitfields(&availability_cores, bitfields);
     let candidates = select_candidates(
@@ -426,7 +429,7 @@ async fn select_candidates(
         )
         .await?
         .await
-        .map_err(Error::CanceledPersistedValidationData)??
+        .map_err(|err| Error::CanceledPersistedValidationData(err))??
         {
             Some(v) => v,
             None => continue,
@@ -456,8 +459,10 @@ async fn select_candidates(
             .into(),
         )
         .await
-        .map_err(Error::GetBackedCandidatesSend)?;
-    let candidates = rx.await.map_err(Error::CanceledBackedCandidates)?;
+        .map_err(|err| Error::GetBackedCandidatesSend(err))?;
+    let candidates = rx
+        .await
+        .map_err(|err| Error::CanceledBackedCandidates(err))?;
 
     // `selected_candidates` is generated in ascending order by core index, and `GetBackedCandidates`
     // _should_ preserve that property, but let's just make sure.
@@ -477,7 +482,7 @@ async fn select_candidates(
         }
     }
     if candidates.len() != backed_idx {
-        return Err(Error::BackedCandidateOrderingProblem);
+        Err(Error::BackedCandidateOrderingProblem)?;
     }
 
     Ok(candidates)
@@ -494,8 +499,8 @@ async fn get_block_number_under_construction(
     sender
         .send(AllMessages::from(ChainApiMessage::BlockNumber(relay_parent, tx)).into())
         .await
-        .map_err(Error::ChainApiMessageSend)?;
-    match rx.await.map_err(Error::CanceledBlockNumber)? {
+        .map_err(|e| Error::ChainApiMessageSend(e))?;
+    match rx.await.map_err(|err| Error::CanceledBlockNumber(err))? {
         Ok(Some(n)) => Ok(n + 1),
         Ok(None) => Ok(0),
         Err(err) => Err(err.into()),
@@ -619,3 +624,6 @@ impl metrics::Metrics for Metrics {
 }
 
 delegated_subsystem!(ProvisioningJob((), Metrics) <- ProvisionerMessage as ProvisioningSubsystem);
+
+#[cfg(test)]
+mod tests;

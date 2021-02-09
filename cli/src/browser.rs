@@ -15,7 +15,7 @@
 // along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
 
 use browser_utils::{
-    browser_configuration, init_console_log, set_console_error_panic_hook, Client,
+    browser_configuration, init_logging_and_telemetry, set_console_error_panic_hook, Client,
 };
 use log::info;
 use wasm_bindgen::prelude::*;
@@ -30,28 +30,30 @@ pub async fn start_client(chain_spec: String, log_level: String) -> Result<Clien
 
 async fn start_inner(
     chain_spec: String,
-    log_level: String,
+    log_directives: String,
 ) -> Result<Client, Box<dyn std::error::Error>> {
     set_console_error_panic_hook();
-    init_console_log(log_level.parse()?)?;
+    let telemetry_worker = init_logging_and_telemetry(&log_directives)?;
 
     let chain_spec = service::IndracoreChainSpec::from_json_bytes(chain_spec.as_bytes().to_vec())
         .map_err(|e| format!("{:?}", e))?;
-    let config = browser_configuration(chain_spec).await?;
+    let telemetry_handle = telemetry_worker.handle();
+    let config = browser_configuration(chain_spec, Some(telemetry_handle)).await?;
 
-    info!("🌏 Indracore browser node");
-    info!("🗝 by Selendra, 2020-2021");
-    info!("💂🏻‍♂️ version {}", config.impl_version);
+    info!("Indracore browser node");
+    info!("  version {}", config.impl_version);
+    info!("  by Selendra, 2020-2021");
     info!("📋 Chain specification: {}", config.chain_spec.name());
-    info!("💻 Node name: {}", config.network.node_name);
+    info!("🏷  Node name: {}", config.network.node_name);
     info!("👤 Role: {}", config.display_role());
 
     // Create the service. This is the most heavy initialization step.
-    let (task_manager, rpc_handlers) =
+    let (task_manager, rpc_handlers, _) =
         service::build_light(config).map_err(|e| format!("{:?}", e))?;
 
-    Ok(sustratebrowser_utils::start_client(
-        task_manager,
-        rpc_handlers,
-    ))
+    task_manager
+        .spawn_handle()
+        .spawn("telemetry", telemetry_worker.run());
+
+    Ok(browser_utils::start_client(task_manager, rpc_handlers))
 }

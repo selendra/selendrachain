@@ -54,6 +54,42 @@ impl UmpSink for () {
     }
 }
 
+/// A specific implementation of a UmpSink where messages are in the XCM format
+/// and will be forwarded to the XCM Executor.
+pub struct XcmSink<Config>(sp_std::marker::PhantomData<Config>);
+
+impl<Config: xcm_executor::Config> UmpSink for XcmSink<Config> {
+    fn process_upward_message(origin: ParaId, msg: Vec<u8>) -> Weight {
+        use parity_scale_codec::Decode;
+        use xcm::v0::{ExecuteXcm, Junction, MultiLocation};
+        use xcm::VersionedXcm;
+        use xcm_executor::XcmExecutor;
+
+        let weight: Weight = 0;
+
+        if let Ok(versioned_xcm_message) = VersionedXcm::decode(&mut &msg[..]) {
+            match versioned_xcm_message {
+                VersionedXcm::V0(xcm_message) => {
+                    let xcm_junction: Junction = Junction::Parachain { id: origin.into() };
+                    let xcm_location: MultiLocation = xcm_junction.into();
+                    // TODO: Do something with result.
+                    let _result = XcmExecutor::<Config>::execute_xcm(xcm_location, xcm_message);
+                }
+            }
+        } else {
+            frame_support::debug::error!(
+                target: "xcm",
+                "Failed to decode versioned XCM from upward message.",
+            );
+        }
+
+        // TODO: to be sound, this implementation must ensure that returned (and thus consumed)
+        // weight is limited to some small portion of the total block weight (as a ballpark, 1/4, 1/8
+        // or lower).
+        weight
+    }
+}
+
 /// An error returned by [`check_upward_messages`] that indicates a violation of one of acceptance
 /// criteria rules.
 pub enum AcceptanceCheckErr {
@@ -136,6 +172,8 @@ decl_storage! {
         ///
         /// Invariant:
         /// - The set of keys should exactly match the set of keys of `RelayDispatchQueues`.
+        // NOTE that this field is used by parachains via merkle storage proofs, therefore changing
+        // the format will require migration of parachains.
         RelayDispatchQueueSize: map hasher(twox_64_concat) ParaId => (u32, u32);
         /// The ordered list of `ParaId`s that have a `RelayDispatchQueue` entry.
         ///
@@ -229,7 +267,7 @@ impl<T: Config> Module<T> {
         let (mut para_queue_count, mut para_queue_size) =
             <Self as Store>::RelayDispatchQueueSize::get(&para);
 
-        for (idx, msg) in upward_messages.iter().enumerate() {
+        for (idx, msg) in upward_messages.into_iter().enumerate() {
             let msg_size = msg.len() as u32;
             if msg_size > config.max_upward_message_size {
                 return Err(AcceptanceCheckErr::MessageSize {
@@ -490,5 +528,415 @@ impl NeedsDispatchCursor {
         let next_one = self.peek();
         <Module<T> as Store>::NextDispatchRoundStartWith::set(next_one);
         <Module<T> as Store>::NeedsDispatch::put(self.needs_dispatch);
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod mock_sink {
+    //! An implementation of a mock UMP sink that allows attaching a probe for mocking the weights
+    //! and checking the sent messages.
+    //!
+    //! A default behavior of the UMP sink is to ignore an incoming message and return 0 weight.
+    //!
+    //! A probe can be attached to the mock UMP sink. When attached, the mock sink would consult the
+    //! probe to check whether the received message was expected and what weight it should return.
+    //!
+    //! There are two rules on how to use a probe:
+    //!
+    //! 1. There can be only one active probe at a time. Creation of another probe while there is
+    //!    already an active one leads to a panic. The probe is scoped to a thread where it was created.
+    //!
+    //! 2. All messages expected by the probe must be received by the time of dropping it. Unreceived
+    //!    messages will lead to a panic while dropping a probe.
+
+    use super::{ParaId, UmpSink, UpwardMessage};
+    use frame_support::weights::Weight;
+    use std::cell::RefCell;
+    use std::collections::vec_deque::VecDeque;
+
+    #[derive(Debug)]
+    struct UmpExpectation {
+        expected_origin: ParaId,
+        expected_msg: UpwardMessage,
+        mock_weight: Weight,
+    }
+
+    std::thread_local! {
+        // `Some` here indicates that there is an active probe.
+        static HOOK: RefCell<Option<VecDeque<UmpExpectation>>> = RefCell::new(None);
+    }
+
+    pub struct MockUmpSink;
+    impl UmpSink for MockUmpSink {
+        fn process_upward_message(actual_origin: ParaId, actual_msg: Vec<u8>) -> Weight {
+            HOOK.with(|opt_hook| match &mut *opt_hook.borrow_mut() {
+                Some(hook) => {
+                    let UmpExpectation {
+                        expected_origin,
+                        expected_msg,
+                        mock_weight,
+                    } = match hook.pop_front() {
+                        Some(expectation) => expectation,
+                        None => {
+                            panic!(
+                                "The probe is active but didn't expect the message:\n\n\t{:?}.",
+                                actual_msg,
+                            );
+                        }
+                    };
+                    assert_eq!(expected_origin, actual_origin);
+                    assert_eq!(expected_msg, actual_msg);
+                    mock_weight
+                }
+                None => 0,
+            })
+        }
+    }
+
+    pub struct Probe {
+        _private: (),
+    }
+
+    impl Probe {
+        pub fn new() -> Self {
+            HOOK.with(|opt_hook| {
+                let prev = opt_hook.borrow_mut().replace(VecDeque::default());
+
+                // that can trigger if there were two probes were created during one session which
+                // is may be a bit strict, but may save time figuring out what's wrong.
+                // if you land here and you do need the two probes in one session consider
+                // dropping the the existing probe explicitly.
+                assert!(prev.is_none());
+            });
+            Self { _private: () }
+        }
+
+        /// Add an expected message.
+        ///
+        /// The enqueued messages are processed in FIFO order.
+        pub fn assert_msg(
+            &mut self,
+            expected_origin: ParaId,
+            expected_msg: UpwardMessage,
+            mock_weight: Weight,
+        ) {
+            HOOK.with(|opt_hook| {
+                opt_hook
+                    .borrow_mut()
+                    .as_mut()
+                    .unwrap()
+                    .push_back(UmpExpectation {
+                        expected_origin,
+                        expected_msg,
+                        mock_weight,
+                    })
+            });
+        }
+    }
+
+    impl Drop for Probe {
+        fn drop(&mut self) {
+            let _ = HOOK.try_with(|opt_hook| {
+                let prev = opt_hook.borrow_mut().take().expect(
+                    "this probe was created and hasn't been yet destroyed;
+					the probe cannot be replaced;
+					there is only one probe at a time allowed;
+					thus it cannot be `None`;
+					qed",
+                );
+
+                if !prev.is_empty() {
+                    // some messages are left unchecked. We should notify the developer about this.
+                    // however, we do so only if the thread doesn't panic already. Otherwise, the
+                    // developer would get a SIGILL or SIGABRT without a meaningful error message.
+                    if !std::thread::panicking() {
+                        panic!(
+                            "the probe is dropped and not all expected messages arrived: {:?}",
+                            prev
+                        );
+                    }
+                }
+            });
+            // an `Err` here signals here that the thread local was already destroyed.
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::mock_sink::Probe;
+    use super::*;
+    use crate::mock::{new_test_ext, Configuration, GenesisConfig as MockGenesisConfig, Ump};
+    use frame_support::IterableStorageMap;
+    use std::collections::HashSet;
+
+    struct GenesisConfigBuilder {
+        max_upward_message_size: u32,
+        max_upward_message_num_per_candidate: u32,
+        max_upward_queue_count: u32,
+        max_upward_queue_size: u32,
+        preferred_dispatchable_upward_messages_step_weight: Weight,
+    }
+
+    impl Default for GenesisConfigBuilder {
+        fn default() -> Self {
+            Self {
+                max_upward_message_size: 16,
+                max_upward_message_num_per_candidate: 2,
+                max_upward_queue_count: 4,
+                max_upward_queue_size: 64,
+                preferred_dispatchable_upward_messages_step_weight: 1000,
+            }
+        }
+    }
+
+    impl GenesisConfigBuilder {
+        fn build(self) -> crate::mock::GenesisConfig {
+            let mut genesis = default_genesis_config();
+            let config = &mut genesis.configuration.config;
+
+            config.max_upward_message_size = self.max_upward_message_size;
+            config.max_upward_message_num_per_candidate = self.max_upward_message_num_per_candidate;
+            config.max_upward_queue_count = self.max_upward_queue_count;
+            config.max_upward_queue_size = self.max_upward_queue_size;
+            config.preferred_dispatchable_upward_messages_step_weight =
+                self.preferred_dispatchable_upward_messages_step_weight;
+            genesis
+        }
+    }
+
+    fn default_genesis_config() -> MockGenesisConfig {
+        MockGenesisConfig {
+            configuration: crate::configuration::GenesisConfig {
+                config: crate::configuration::HostConfiguration {
+                    max_downward_message_size: 1024,
+                    ..Default::default()
+                },
+            },
+            ..Default::default()
+        }
+    }
+
+    fn queue_upward_msg(para: ParaId, msg: UpwardMessage) {
+        let msgs = vec![msg];
+        assert!(Ump::check_upward_messages(&Configuration::config(), para, &msgs).is_ok());
+        let _ = Ump::enact_upward_messages(para, msgs);
+    }
+
+    fn assert_storage_consistency_exhaustive() {
+        // check that empty queues don't clutter the storage.
+        for (_para, queue) in <Ump as Store>::RelayDispatchQueues::iter() {
+            assert!(!queue.is_empty());
+        }
+
+        // actually count the counts and sizes in queues and compare them to the bookkeeped version.
+        for (para, queue) in <Ump as Store>::RelayDispatchQueues::iter() {
+            let (expected_count, expected_size) = <Ump as Store>::RelayDispatchQueueSize::get(para);
+            let (actual_count, actual_size) =
+                queue.into_iter().fold((0, 0), |(acc_count, acc_size), x| {
+                    (acc_count + 1, acc_size + x.len() as u32)
+                });
+
+            assert_eq!(expected_count, actual_count);
+            assert_eq!(expected_size, actual_size);
+        }
+
+        // since we wipe the empty queues the sets of paras in queue contents, queue sizes and
+        // need dispatch set should all be equal.
+        let queue_contents_set = <Ump as Store>::RelayDispatchQueues::iter()
+            .map(|(k, _)| k)
+            .collect::<HashSet<ParaId>>();
+        let queue_sizes_set = <Ump as Store>::RelayDispatchQueueSize::iter()
+            .map(|(k, _)| k)
+            .collect::<HashSet<ParaId>>();
+        let needs_dispatch_set = <Ump as Store>::NeedsDispatch::get()
+            .into_iter()
+            .collect::<HashSet<ParaId>>();
+        assert_eq!(queue_contents_set, queue_sizes_set);
+        assert_eq!(queue_contents_set, needs_dispatch_set);
+
+        // `NextDispatchRoundStartWith` should point into a para that is tracked.
+        if let Some(para) = <Ump as Store>::NextDispatchRoundStartWith::get() {
+            assert!(queue_contents_set.contains(&para));
+        }
+
+        // `NeedsDispatch` is always sorted.
+        assert!(<Ump as Store>::NeedsDispatch::get()
+            .windows(2)
+            .all(|xs| xs[0] <= xs[1]));
+    }
+
+    #[test]
+    fn dispatch_empty() {
+        new_test_ext(default_genesis_config()).execute_with(|| {
+            assert_storage_consistency_exhaustive();
+
+            // make sure that the case with empty queues is handled properly
+            Ump::process_pending_upward_messages();
+
+            assert_storage_consistency_exhaustive();
+        });
+    }
+
+    #[test]
+    fn dispatch_single_message() {
+        let a = ParaId::from(228);
+        let msg = vec![1, 2, 3];
+
+        new_test_ext(GenesisConfigBuilder::default().build()).execute_with(|| {
+            let mut probe = Probe::new();
+
+            probe.assert_msg(a, msg.clone(), 0);
+            queue_upward_msg(a, msg);
+
+            Ump::process_pending_upward_messages();
+
+            assert_storage_consistency_exhaustive();
+        });
+    }
+
+    #[test]
+    fn dispatch_resume_after_exceeding_dispatch_stage_weight() {
+        let a = ParaId::from(128);
+        let c = ParaId::from(228);
+        let q = ParaId::from(911);
+
+        let a_msg_1 = vec![1, 2, 3];
+        let a_msg_2 = vec![3, 2, 1];
+        let c_msg_1 = vec![4, 5, 6];
+        let c_msg_2 = vec![9, 8, 7];
+        let q_msg = b"we are Q".to_vec();
+
+        new_test_ext(
+            GenesisConfigBuilder {
+                preferred_dispatchable_upward_messages_step_weight: 500,
+                ..Default::default()
+            }
+            .build(),
+        )
+        .execute_with(|| {
+            queue_upward_msg(q, q_msg.clone());
+            queue_upward_msg(c, c_msg_1.clone());
+            queue_upward_msg(a, a_msg_1.clone());
+            queue_upward_msg(a, a_msg_2.clone());
+
+            assert_storage_consistency_exhaustive();
+
+            // we expect only two first messages to fit in the first iteration.
+            {
+                let mut probe = Probe::new();
+
+                probe.assert_msg(a, a_msg_1.clone(), 300);
+                probe.assert_msg(c, c_msg_1.clone(), 300);
+                Ump::process_pending_upward_messages();
+                assert_storage_consistency_exhaustive();
+
+                drop(probe);
+            }
+
+            queue_upward_msg(c, c_msg_2.clone());
+            assert_storage_consistency_exhaustive();
+
+            // second iteration should process the second message.
+            {
+                let mut probe = Probe::new();
+
+                probe.assert_msg(q, q_msg.clone(), 500);
+                Ump::process_pending_upward_messages();
+                assert_storage_consistency_exhaustive();
+
+                drop(probe);
+            }
+
+            // 3rd iteration.
+            {
+                let mut probe = Probe::new();
+
+                probe.assert_msg(a, a_msg_2.clone(), 100);
+                probe.assert_msg(c, c_msg_2.clone(), 100);
+                Ump::process_pending_upward_messages();
+                assert_storage_consistency_exhaustive();
+
+                drop(probe);
+            }
+
+            // finally, make sure that the queue is empty.
+            {
+                let probe = Probe::new();
+
+                Ump::process_pending_upward_messages();
+                assert_storage_consistency_exhaustive();
+
+                drop(probe);
+            }
+        });
+    }
+
+    #[test]
+    fn dispatch_correctly_handle_remove_of_latest() {
+        let a = ParaId::from(1991);
+        let b = ParaId::from(1999);
+
+        let a_msg_1 = vec![1, 2, 3];
+        let a_msg_2 = vec![3, 2, 1];
+        let b_msg_1 = vec![4, 5, 6];
+
+        new_test_ext(
+            GenesisConfigBuilder {
+                preferred_dispatchable_upward_messages_step_weight: 900,
+                ..Default::default()
+            }
+            .build(),
+        )
+        .execute_with(|| {
+            // We want to test here an edge case, where we remove the queue with the highest
+            // para id (i.e. last in the needs_dispatch order).
+            //
+            // If the last entry was removed we should proceed execution, assuming we still have
+            // weight available.
+
+            queue_upward_msg(a, a_msg_1.clone());
+            queue_upward_msg(a, a_msg_2.clone());
+            queue_upward_msg(b, b_msg_1.clone());
+
+            {
+                let mut probe = Probe::new();
+
+                probe.assert_msg(a, a_msg_1.clone(), 300);
+                probe.assert_msg(b, b_msg_1.clone(), 300);
+                probe.assert_msg(a, a_msg_2.clone(), 300);
+
+                Ump::process_pending_upward_messages();
+
+                drop(probe);
+            }
+        });
+    }
+
+    #[test]
+    fn verify_relay_dispatch_queue_size_is_externally_accessible() {
+        // Make sure that the relay dispatch queue size storage entry is accessible via well known
+        // keys and is decodable into a (u32, u32).
+
+        use parity_scale_codec::Decode as _;
+        use primitives::v1::well_known_keys;
+
+        let a = ParaId::from(228);
+        let msg = vec![1, 2, 3];
+
+        new_test_ext(GenesisConfigBuilder::default().build()).execute_with(|| {
+            queue_upward_msg(a, msg);
+
+            let raw_queue_size =
+                sp_io::storage::get(&well_known_keys::relay_dispatch_queue_size(a)).expect(
+                    "enqueing a message should create the dispatch queue\
+				and it should be accessible via the well known keys",
+                );
+            let (cnt, size) = <(u32, u32)>::decode(&mut &raw_queue_size[..])
+                .expect("the dispatch queue size should be decodable into (u32, u32)");
+
+            assert_eq!(cnt, 1);
+            assert_eq!(size, 3);
+        });
     }
 }

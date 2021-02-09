@@ -5,12 +5,20 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
-futures = "0.3.8"
+futures = "0.3.12"
 tracing = "0.1.22"
 tracing-futures = "0.2.4"
-sp-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
+memory-lru = "0.1.0"
+parity-util-mem = { version = "0.8.0", default-features = false }
+
+sp-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
 
 indracore-primitives = { path = "../../../primitives" }
 indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
 indracore-node-subsystem-util = { path = "../../subsystem-util" }
+
+[dev-dependencies]
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+futures = { version = "0.3.12", features = ["thread-pool"] }
+indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }

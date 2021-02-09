@@ -25,10 +25,12 @@ use futures::{
 };
 use indracore_node_subsystem::{
     errors::ChainApiError,
+    jaeger,
     messages::{
         AllMessages, CandidateBackingMessage, CandidateSelectionMessage, CollatorProtocolMessage,
         RuntimeApiRequest,
     },
+    JaegerSpan, PerLeafSpan,
 };
 use indracore_node_subsystem_util::{
     self as util, delegated_subsystem,
@@ -39,10 +41,10 @@ use indracore_primitives::v1::{
     CandidateReceipt, CollatorId, CoreIndex, CoreState, Hash, Id as ParaId, PoV,
 };
 use sp_keystore::SyncCryptoStorePtr;
-use std::pin::Pin;
+use std::{pin::Pin, sync::Arc};
 use thiserror::Error;
 
-const LOG_TARGET: &str = "candidate_selection";
+const LOG_TARGET: &'static str = "candidate_selection";
 
 struct CandidateSelectionJob {
     assignment: ParaId,
@@ -95,12 +97,15 @@ impl JobTrait for CandidateSelectionJob {
     #[tracing::instrument(skip(keystore, metrics, receiver, sender), fields(subsystem = LOG_TARGET))]
     fn run(
         relay_parent: Hash,
+        span: Arc<JaegerSpan>,
         keystore: Self::RunArgs,
         metrics: Self::Metrics,
         receiver: mpsc::Receiver<CandidateSelectionMessage>,
         mut sender: mpsc::Sender<FromJobCommand>,
     ) -> Pin<Box<dyn Future<Output = Result<(), Self::Error>> + Send>> {
+        let span = PerLeafSpan::new(span, "candidate-selection");
         async move {
+            let _span = span.child("query-runtime");
             let (groups, cores) = futures::try_join!(
                 try_runtime_api!(request_validator_groups(relay_parent, &mut sender).await),
                 try_runtime_api!(
@@ -113,6 +118,9 @@ impl JobTrait for CandidateSelectionJob {
 
             let (validator_groups, group_rotation_info) = try_runtime_api!(groups);
             let cores = try_runtime_api!(cores);
+
+            drop(_span);
+            let _span = span.child("find-assignment");
 
             let n_cores = cores.len();
 
@@ -144,8 +152,10 @@ impl JobTrait for CandidateSelectionJob {
                 None => return Ok(()),
             };
 
+            drop(_span);
+
             CandidateSelectionJob::new(assignment, metrics, sender, receiver)
-                .run_loop()
+                .run_loop(&span)
                 .await
         }
         .boxed()
@@ -168,14 +178,17 @@ impl CandidateSelectionJob {
         }
     }
 
-    async fn run_loop(&mut self) -> Result<(), Error> {
+    async fn run_loop(&mut self, span: &jaeger::JaegerSpan) -> Result<(), Error> {
+        let span = span.child("run-loop");
         loop {
             match self.receiver.next().await {
                 Some(CandidateSelectionMessage::Collation(relay_parent, para_id, collator_id)) => {
+                    let _span = span.child("handle-collation");
                     self.handle_collation(relay_parent, para_id, collator_id)
                         .await;
                 }
                 Some(CandidateSelectionMessage::Invalid(_, candidate_receipt)) => {
+                    let _span = span.child("handle-invalid");
                     self.handle_invalid(candidate_receipt).await;
                 }
                 None => break,
@@ -453,3 +466,211 @@ impl metrics::Metrics for Metrics {
 }
 
 delegated_subsystem!(CandidateSelectionJob(SyncCryptoStorePtr, Metrics) <- CandidateSelectionMessage as CandidateSelectionSubsystem);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use futures::lock::Mutex;
+    use indracore_primitives::v1::BlockData;
+    use sp_core::crypto::Public;
+    use std::sync::Arc;
+
+    fn test_harness<Preconditions, TestBuilder, Test, Postconditions>(
+        preconditions: Preconditions,
+        test: TestBuilder,
+        postconditions: Postconditions,
+    ) where
+        Preconditions: FnOnce(&mut CandidateSelectionJob),
+        TestBuilder:
+            FnOnce(mpsc::Sender<CandidateSelectionMessage>, mpsc::Receiver<FromJobCommand>) -> Test,
+        Test: Future<Output = ()>,
+        Postconditions: FnOnce(CandidateSelectionJob, Result<(), Error>),
+    {
+        let (to_job_tx, to_job_rx) = mpsc::channel(0);
+        let (from_job_tx, from_job_rx) = mpsc::channel(0);
+        let mut job = CandidateSelectionJob {
+            assignment: 123.into(),
+            sender: from_job_tx,
+            receiver: to_job_rx,
+            metrics: Default::default(),
+            seconded_candidate: None,
+        };
+
+        preconditions(&mut job);
+        let span = jaeger::JaegerSpan::Disabled;
+        let (_, job_result) = futures::executor::block_on(future::join(
+            test(to_job_tx, from_job_rx),
+            job.run_loop(&span),
+        ));
+
+        postconditions(job, job_result);
+    }
+
+    /// when nothing is seconded so far, the collation is fetched and seconded
+    #[test]
+    fn fetches_and_seconds_a_collation() {
+        let relay_parent = Hash::random();
+        let para_id: ParaId = 123.into();
+        let collator_id = CollatorId::from_slice(&(0..32).collect::<Vec<u8>>());
+        let collator_id_clone = collator_id.clone();
+
+        let candidate_receipt = CandidateReceipt::default();
+        let pov = PoV {
+            block_data: BlockData((0..32).cycle().take(256).collect()),
+        };
+
+        let was_seconded = Arc::new(Mutex::new(false));
+        let was_seconded_clone = was_seconded.clone();
+
+        test_harness(
+            |_job| {},
+            |mut to_job, mut from_job| async move {
+                to_job
+                    .send(CandidateSelectionMessage::Collation(
+                        relay_parent,
+                        para_id,
+                        collator_id_clone.clone(),
+                    ))
+                    .await
+                    .unwrap();
+                std::mem::drop(to_job);
+
+                while let Some(msg) = from_job.next().await {
+                    match msg {
+                        FromJobCommand::SendMessage(AllMessages::CollatorProtocol(
+                            CollatorProtocolMessage::FetchCollation(
+                                got_relay_parent,
+                                collator_id,
+                                got_para_id,
+                                return_sender,
+                            ),
+                        )) => {
+                            assert_eq!(got_relay_parent, relay_parent);
+                            assert_eq!(got_para_id, para_id);
+                            assert_eq!(collator_id, collator_id_clone);
+
+                            return_sender
+                                .send((candidate_receipt.clone(), pov.clone()))
+                                .unwrap();
+                        }
+                        FromJobCommand::SendMessage(AllMessages::CandidateBacking(
+                            CandidateBackingMessage::Second(
+                                got_relay_parent,
+                                got_candidate_receipt,
+                                got_pov,
+                            ),
+                        )) => {
+                            assert_eq!(got_relay_parent, relay_parent);
+                            assert_eq!(got_candidate_receipt, candidate_receipt);
+                            assert_eq!(got_pov, pov);
+
+                            *was_seconded_clone.lock().await = true;
+                        }
+                        other => panic!("unexpected message from job: {:?}", other),
+                    }
+                }
+            },
+            |job, job_result| {
+                assert!(job_result.is_ok());
+                assert_eq!(job.seconded_candidate.unwrap(), collator_id);
+            },
+        );
+
+        assert!(Arc::try_unwrap(was_seconded).unwrap().into_inner());
+    }
+
+    /// when something has been seconded, further collation notifications are ignored
+    #[test]
+    fn ignores_collation_notifications_after_the_first() {
+        let relay_parent = Hash::random();
+        let para_id: ParaId = 123.into();
+        let prev_collator_id = CollatorId::from_slice(&(0..32).rev().collect::<Vec<u8>>());
+        let collator_id = CollatorId::from_slice(&(0..32).collect::<Vec<u8>>());
+        let collator_id_clone = collator_id.clone();
+
+        let was_seconded = Arc::new(Mutex::new(false));
+        let was_seconded_clone = was_seconded.clone();
+
+        test_harness(
+            |job| job.seconded_candidate = Some(prev_collator_id.clone()),
+            |mut to_job, mut from_job| async move {
+                to_job
+                    .send(CandidateSelectionMessage::Collation(
+                        relay_parent,
+                        para_id,
+                        collator_id_clone,
+                    ))
+                    .await
+                    .unwrap();
+                std::mem::drop(to_job);
+
+                while let Some(msg) = from_job.next().await {
+                    match msg {
+                        FromJobCommand::SendMessage(AllMessages::CandidateBacking(
+                            CandidateBackingMessage::Second(
+                                _got_relay_parent,
+                                _got_candidate_receipt,
+                                _got_pov,
+                            ),
+                        )) => {
+                            *was_seconded_clone.lock().await = true;
+                        }
+                        other => panic!("unexpected message from job: {:?}", other),
+                    }
+                }
+            },
+            |job, job_result| {
+                assert!(job_result.is_ok());
+                assert_eq!(job.seconded_candidate.unwrap(), prev_collator_id);
+            },
+        );
+
+        assert!(!Arc::try_unwrap(was_seconded).unwrap().into_inner());
+    }
+
+    /// reports of invalidity from candidate backing are propagated
+    #[test]
+    fn propagates_invalidity_reports() {
+        let relay_parent = Hash::random();
+        let collator_id = CollatorId::from_slice(&(0..32).collect::<Vec<u8>>());
+        let collator_id_clone = collator_id.clone();
+
+        let candidate_receipt = CandidateReceipt::default();
+
+        let sent_report = Arc::new(Mutex::new(false));
+        let sent_report_clone = sent_report.clone();
+
+        test_harness(
+            |job| job.seconded_candidate = Some(collator_id.clone()),
+            |mut to_job, mut from_job| async move {
+                to_job
+                    .send(CandidateSelectionMessage::Invalid(
+                        relay_parent,
+                        candidate_receipt,
+                    ))
+                    .await
+                    .unwrap();
+                std::mem::drop(to_job);
+
+                while let Some(msg) = from_job.next().await {
+                    match msg {
+                        FromJobCommand::SendMessage(AllMessages::CollatorProtocol(
+                            CollatorProtocolMessage::ReportCollator(got_collator_id),
+                        )) => {
+                            assert_eq!(got_collator_id, collator_id_clone);
+
+                            *sent_report_clone.lock().await = true;
+                        }
+                        other => panic!("unexpected message from job: {:?}", other),
+                    }
+                }
+            },
+            |job, job_result| {
+                assert!(job_result.is_ok());
+                assert_eq!(job.seconded_candidate.unwrap(), collator_id);
+            },
+        );
+
+        assert!(Arc::try_unwrap(sent_report).unwrap().into_inner());
+    }
+}

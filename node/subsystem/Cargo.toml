@@ -2,27 +2,38 @@
 name = "indracore-node-subsystem"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
-description = "Subsystem traits and message definitions"
 edition = "2018"
+description = "Subsystem traits and message definitions"
 
 [dependencies]
-parity-scale-codec = { version = "1.3.5", default-features = false, features = ["derive"] }
-parking_lot = { version = "0.11.1", optional = true }
+smallvec = "1.6.1"
+thiserror = "1.0.23"
+log = "0.4.13"
+async-std = "1.8.0"
 async-trait = "0.1.42"
 derive_more = "0.99.11"
-futures = "0.3.8"
+futures = "0.3.12"
 futures-timer = "3.0.2"
+mick-jaeger = "0.1.2"
+lazy_static = "1.4"
 tracing = "0.1.22"
 tracing-futures = "0.2.4"
-pin-project = "1.0.2"
-smallvec = "1.5.1"
-thiserror = "1.0.22"
+parking_lot = "0.11.1"
+pin-project = "1.0.4"
+parity-scale-codec = { version = "1.3.6", default-features = false, features = ["derive"] }
 
-sc-network = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
-substrate-prometheus-endpoint = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+substrate-prometheus-endpoint = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
 
 indracore-node-primitives = { path = "../primitives" }
 indracore-node-network-protocol = { path = "../network/protocol" }
 indracore-primitives = { path = "../../primitives" }
 indracore-statement-table = { path = "../../statement-table" }
+indracore-node-jaeger = { path = "../jaeger" }
+
+[dev-dependencies]
+assert_matches = "1.4.0"
+async-trait = "0.1.42"
+futures = { version = "0.3.12", features = ["thread-pool"] }
+indracore-node-subsystem-test-helpers = { path = "../subsystem-test-helpers" }

@@ -21,6 +21,7 @@
 use futures::prelude::*;
 use futures::select;
 use indracore_node_subsystem::{
+    jaeger,
     messages::{AllMessages, ProvisionerInherentData, ProvisionerMessage},
     SubsystemError,
 };
@@ -94,11 +95,13 @@ where
         // data to be moved into the future
         let overseer = self.overseer.clone();
         let parent_header_hash = parent_header.hash();
+        let parent_header = parent_header.clone();
 
         async move {
             Ok(Proposer {
                 inner: proposer?,
                 overseer,
+                parent_header,
                 parent_header_hash,
             })
         }
@@ -113,6 +116,7 @@ where
 pub struct Proposer<TxPool: TransactionPool<Block = Block>, Backend, Client> {
     inner: sc_basic_authorship::Proposer<Backend, Block, Client, TxPool>,
     overseer: OverseerHandler,
+    parent_header: Header,
     parent_header_hash: Hash,
 }
 
@@ -138,7 +142,7 @@ where
     async fn get_provisioner_data(&self) -> Result<ProvisionerInherentData, Error> {
         // clone this (lightweight) data because we're going to move it into the future
         let mut overseer = self.overseer.clone();
-        let parent_header_hash = self.parent_header_hash;
+        let parent_header_hash = self.parent_header_hash.clone();
 
         let pid = async {
             let (sender, receiver) = futures::channel::oneshot::channel();
@@ -203,6 +207,9 @@ where
         record_proof: RecordProof,
     ) -> Self::Proposal {
         async move {
+			let span = jaeger::hash_span(&self.parent_header_hash, "propose");
+			let _span = span.child("get-provisioner");
+
 			let provisioner_data = match self.get_provisioner_data().await {
 				Ok(pd) => pd,
 				Err(err) => {
@@ -211,11 +218,19 @@ where
 				}
 			};
 
+			drop(_span);
+
+			let inclusion_inherent_data = (
+				provisioner_data.0,
+				provisioner_data.1,
+				self.parent_header,
+			);
 			inherent_data.put_data(
 				indracore_primitives::v1::INCLUSION_INHERENT_IDENTIFIER,
-				&provisioner_data,
+				&inclusion_inherent_data,
 			)?;
 
+			let _span = span.child("authorship-propose");
 			self.inner
 				.propose(inherent_data, inherent_digests, max_duration, record_proof)
 				.await

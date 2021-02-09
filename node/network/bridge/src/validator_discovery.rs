@@ -17,33 +17,34 @@
 //! A validator discovery service for the Network Bridge.
 
 use core::marker::PhantomData;
+use std::borrow::Cow;
 use std::collections::{hash_map, HashMap, HashSet};
 use std::sync::Arc;
 
 use async_trait::async_trait;
 use futures::channel::mpsc;
 
+use indracore_node_network_protocol::peer_set::PeerSet;
 use indracore_node_network_protocol::PeerId;
 use indracore_primitives::v1::{AuthorityDiscoveryId, Block, Hash};
 use sc_authority_discovery::Service as AuthorityDiscoveryService;
 use sc_network::multiaddr::{Multiaddr, Protocol};
 
-const PRIORITY_GROUP: &str = "parachain_validators";
 const LOG_TARGET: &str = "validator_discovery";
 
 /// An abstraction over networking for the purposes of validator discovery service.
 #[async_trait]
 pub trait Network: Send + 'static {
     /// Ask the network to connect to these nodes and not disconnect from them until removed from the priority group.
-    async fn add_to_priority_group(
+    async fn add_peers_to_reserved_set(
         &mut self,
-        group_id: String,
+        protocol: Cow<'static, str>,
         multiaddresses: HashSet<Multiaddr>,
     ) -> Result<(), String>;
     /// Remove the peers from the priority group.
-    async fn remove_from_priority_group(
+    async fn remove_peers_from_reserved_set(
         &mut self,
-        group_id: String,
+        protocol: Cow<'static, str>,
         multiaddresses: HashSet<Multiaddr>,
     ) -> Result<(), String>;
 }
@@ -65,21 +66,24 @@ pub trait AuthorityDiscovery: Send + 'static {
 
 #[async_trait]
 impl Network for Arc<sc_network::NetworkService<Block, Hash>> {
-    async fn add_to_priority_group(
+    async fn add_peers_to_reserved_set(
         &mut self,
-        group_id: String,
+        protocol: Cow<'static, str>,
         multiaddresses: HashSet<Multiaddr>,
     ) -> Result<(), String> {
-        sc_network::NetworkService::add_to_priority_group(&**self, group_id, multiaddresses).await
+        sc_network::NetworkService::add_peers_to_reserved_set(&**self, protocol, multiaddresses)
     }
 
-    async fn remove_from_priority_group(
+    async fn remove_peers_from_reserved_set(
         &mut self,
-        group_id: String,
+        protocol: Cow<'static, str>,
         multiaddresses: HashSet<Multiaddr>,
     ) -> Result<(), String> {
-        sc_network::NetworkService::remove_from_priority_group(&**self, group_id, multiaddresses)
-            .await
+        sc_network::NetworkService::remove_peers_from_reserved_set(
+            &**self,
+            protocol,
+            multiaddresses,
+        )
     }
 }
 
@@ -323,16 +327,34 @@ impl<N: Network, AD: AuthorityDiscovery> Service<N, AD> {
         }
 
         // ask the network to connect to these nodes and not disconnect
-        // from them until removed from the priority group
+        // from them until removed from the set
         if let Err(e) = network_service
-            .add_to_priority_group(PRIORITY_GROUP.to_owned(), multiaddr_to_add)
+            .add_peers_to_reserved_set(
+                PeerSet::Collation.into_protocol_name(),
+                multiaddr_to_add.clone(),
+            )
+            .await
+        {
+            tracing::warn!(target: LOG_TARGET, err = ?e, "AuthorityDiscoveryService returned an invalid multiaddress");
+        }
+        if let Err(e) = network_service
+            .add_peers_to_reserved_set(PeerSet::Validation.into_protocol_name(), multiaddr_to_add)
             .await
         {
             tracing::warn!(target: LOG_TARGET, err = ?e, "AuthorityDiscoveryService returned an invalid multiaddress");
         }
         // the addresses are known to be valid
         let _ = network_service
-            .remove_from_priority_group(PRIORITY_GROUP.to_owned(), multiaddr_to_remove)
+            .remove_peers_from_reserved_set(
+                PeerSet::Collation.into_protocol_name(),
+                multiaddr_to_remove.clone(),
+            )
+            .await;
+        let _ = network_service
+            .remove_peers_from_reserved_set(
+                PeerSet::Validation.into_protocol_name(),
+                multiaddr_to_remove,
+            )
             .await;
 
         let pending = validator_ids
@@ -380,5 +402,315 @@ impl<N: Network, AD: AuthorityDiscovery> Service<N, AD> {
     /// Should be called when a peer disconnected.
     pub fn on_peer_disconnected(&mut self, peer_id: &PeerId) {
         self.connected_peers.remove(peer_id);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use futures::stream::StreamExt as _;
+
+    use sp_keyring::Sr25519Keyring;
+
+    fn new_service() -> Service<TestNetwork, TestAuthorityDiscovery> {
+        Service::new()
+    }
+
+    fn new_network() -> (TestNetwork, TestAuthorityDiscovery) {
+        (TestNetwork::default(), TestAuthorityDiscovery::new())
+    }
+
+    #[derive(Default)]
+    struct TestNetwork {
+        peers_set: HashSet<Multiaddr>,
+    }
+
+    #[derive(Default)]
+    struct TestAuthorityDiscovery {
+        by_authority_id: HashMap<AuthorityDiscoveryId, Multiaddr>,
+        by_peer_id: HashMap<PeerId, AuthorityDiscoveryId>,
+    }
+
+    impl TestAuthorityDiscovery {
+        fn new() -> Self {
+            let peer_ids = known_peer_ids();
+            let authorities = known_authorities();
+            let multiaddr = known_multiaddr();
+            Self {
+                by_authority_id: authorities
+                    .iter()
+                    .cloned()
+                    .zip(multiaddr.into_iter())
+                    .collect(),
+                by_peer_id: peer_ids.into_iter().zip(authorities.into_iter()).collect(),
+            }
+        }
+    }
+
+    #[async_trait]
+    impl Network for TestNetwork {
+        async fn add_peers_to_reserved_set(
+            &mut self,
+            _protocol: Cow<'static, str>,
+            multiaddresses: HashSet<Multiaddr>,
+        ) -> Result<(), String> {
+            self.peers_set.extend(multiaddresses.into_iter());
+            Ok(())
+        }
+
+        async fn remove_peers_from_reserved_set(
+            &mut self,
+            _protocol: Cow<'static, str>,
+            multiaddresses: HashSet<Multiaddr>,
+        ) -> Result<(), String> {
+            self.peers_set.retain(|elem| !multiaddresses.contains(elem));
+            Ok(())
+        }
+    }
+
+    #[async_trait]
+    impl AuthorityDiscovery for TestAuthorityDiscovery {
+        async fn get_addresses_by_authority_id(
+            &mut self,
+            authority: AuthorityDiscoveryId,
+        ) -> Option<Vec<Multiaddr>> {
+            self.by_authority_id
+                .get(&authority)
+                .cloned()
+                .map(|addr| vec![addr])
+        }
+
+        async fn get_authority_id_by_peer_id(
+            &mut self,
+            peer_id: PeerId,
+        ) -> Option<AuthorityDiscoveryId> {
+            self.by_peer_id.get(&peer_id).cloned()
+        }
+    }
+
+    fn known_authorities() -> Vec<AuthorityDiscoveryId> {
+        [
+            Sr25519Keyring::Alice,
+            Sr25519Keyring::Bob,
+            Sr25519Keyring::Charlie,
+        ]
+        .iter()
+        .map(|k| k.public().into())
+        .collect()
+    }
+
+    fn known_peer_ids() -> Vec<PeerId> {
+        (0..3).map(|_| PeerId::random()).collect()
+    }
+
+    fn known_multiaddr() -> Vec<Multiaddr> {
+        vec![
+            "/ip4/127.0.0.1/tcp/1234".parse().unwrap(),
+            "/ip4/127.0.0.1/tcp/1235".parse().unwrap(),
+            "/ip4/127.0.0.1/tcp/1236".parse().unwrap(),
+        ]
+    }
+
+    #[test]
+    fn request_is_revoked_when_the_receiver_is_dropped() {
+        let (sender, receiver) = mpsc::channel(0);
+
+        let mut request = NonRevokedConnectionRequestState::new(Vec::new(), HashSet::new(), sender);
+
+        assert!(!request.is_revoked());
+
+        drop(receiver);
+
+        assert!(request.is_revoked());
+    }
+
+    #[test]
+    fn requests_are_fulfilled_immediately_for_already_connected_peers() {
+        let mut service = new_service();
+
+        let (ns, mut ads) = new_network();
+
+        let peer_ids: Vec<_> = ads.by_peer_id.keys().cloned().collect();
+        let authority_ids: Vec<_> = ads.by_peer_id.values().cloned().collect();
+
+        futures::executor::block_on(async move {
+            let req1 = vec![authority_ids[0].clone(), authority_ids[1].clone()];
+            let (sender, mut receiver) = mpsc::channel(2);
+
+            service.on_peer_connected(&peer_ids[0], &mut ads).await;
+
+            let _ = service.on_request(req1, sender, ns, ads).await;
+
+            // the results should be immediately available
+            let reply1 = receiver.next().await.unwrap();
+            assert_eq!(reply1.0, authority_ids[0]);
+            assert_eq!(reply1.1, peer_ids[0]);
+        });
+    }
+
+    #[test]
+    fn requests_are_fulfilled_on_peer_connection() {
+        let mut service = new_service();
+
+        let (ns, ads) = new_network();
+
+        let peer_ids: Vec<_> = ads.by_peer_id.keys().cloned().collect();
+        let authority_ids: Vec<_> = ads.by_peer_id.values().cloned().collect();
+
+        futures::executor::block_on(async move {
+            let req1 = vec![authority_ids[0].clone(), authority_ids[1].clone()];
+            let (sender, mut receiver) = mpsc::channel(2);
+
+            let (_, mut ads) = service.on_request(req1, sender, ns, ads).await;
+
+            service.on_peer_connected(&peer_ids[0], &mut ads).await;
+            let reply1 = receiver.next().await.unwrap();
+            assert_eq!(reply1.0, authority_ids[0]);
+            assert_eq!(reply1.1, peer_ids[0]);
+
+            service.on_peer_connected(&peer_ids[1], &mut ads).await;
+            let reply2 = receiver.next().await.unwrap();
+            assert_eq!(reply2.0, authority_ids[1]);
+            assert_eq!(reply2.1, peer_ids[1]);
+        });
+    }
+
+    // Test cleanup works.
+    #[test]
+    fn requests_are_removed_on_revoke() {
+        let mut service = new_service();
+
+        let (ns, mut ads) = new_network();
+
+        let peer_ids: Vec<_> = ads.by_peer_id.keys().cloned().collect();
+        let authority_ids: Vec<_> = ads.by_peer_id.values().cloned().collect();
+
+        futures::executor::block_on(async move {
+            let (sender, mut receiver) = mpsc::channel(1);
+
+            service.on_peer_connected(&peer_ids[0], &mut ads).await;
+            service.on_peer_connected(&peer_ids[1], &mut ads).await;
+
+            let (ns, ads) = service
+                .on_request(vec![authority_ids[0].clone()], sender, ns, ads)
+                .await;
+
+            let _ = receiver.next().await.unwrap();
+            // revoke the request
+            drop(receiver);
+
+            let (sender, mut receiver) = mpsc::channel(1);
+
+            let _ = service
+                .on_request(vec![authority_ids[1].clone()], sender, ns, ads)
+                .await;
+
+            let reply = receiver.next().await.unwrap();
+            assert_eq!(reply.0, authority_ids[1]);
+            assert_eq!(reply.1, peer_ids[1]);
+            assert_eq!(service.non_revoked_discovery_requests.len(), 1);
+        });
+    }
+
+    // More complex test with overlapping revoked requests
+    #[test]
+    fn revoking_requests_with_overlapping_validator_sets() {
+        let mut service = new_service();
+
+        let (ns, mut ads) = new_network();
+
+        let peer_ids: Vec<_> = ads.by_peer_id.keys().cloned().collect();
+        let authority_ids: Vec<_> = ads.by_peer_id.values().cloned().collect();
+
+        futures::executor::block_on(async move {
+            let (sender, mut receiver) = mpsc::channel(1);
+
+            service.on_peer_connected(&peer_ids[0], &mut ads).await;
+            service.on_peer_connected(&peer_ids[1], &mut ads).await;
+
+            let (ns, ads) = service
+                .on_request(
+                    vec![authority_ids[0].clone(), authority_ids[2].clone()],
+                    sender,
+                    ns,
+                    ads,
+                )
+                .await;
+
+            let _ = receiver.next().await.unwrap();
+            // revoke the first request
+            drop(receiver);
+
+            let (sender, mut receiver) = mpsc::channel(1);
+
+            let (ns, ads) = service
+                .on_request(
+                    vec![authority_ids[0].clone(), authority_ids[1].clone()],
+                    sender,
+                    ns,
+                    ads,
+                )
+                .await;
+
+            let _ = receiver.next().await.unwrap();
+            assert_eq!(service.non_revoked_discovery_requests.len(), 1);
+            assert_eq!(ns.peers_set.len(), 2);
+
+            // revoke the second request
+            drop(receiver);
+
+            let (sender, mut receiver) = mpsc::channel(1);
+
+            let (ns, _) = service
+                .on_request(vec![authority_ids[0].clone()], sender, ns, ads)
+                .await;
+
+            let _ = receiver.next().await.unwrap();
+            assert_eq!(service.non_revoked_discovery_requests.len(), 1);
+            assert_eq!(ns.peers_set.len(), 1);
+        });
+    }
+
+    /// A test for when a validator connects, but the authority discovery not yet knows that the connecting node
+    /// is a validator. This can happen for example at startup of a node.
+    #[test]
+    fn handle_validator_connect_without_authority_discovery_knowing_it() {
+        let mut service = new_service();
+
+        let ns = TestNetwork::default();
+        let mut ads = TestAuthorityDiscovery::default();
+
+        let validator_peer_id = PeerId::random();
+        let validator_id: AuthorityDiscoveryId = Sr25519Keyring::Alice.public().into();
+
+        futures::executor::block_on(async move {
+            let (sender, mut receiver) = mpsc::channel(1);
+
+            service
+                .on_peer_connected(&validator_peer_id, &mut ads)
+                .await;
+
+            let address = known_multiaddr()[0]
+                .clone()
+                .with(Protocol::P2p(validator_peer_id.clone().into()));
+            ads.by_peer_id
+                .insert(validator_peer_id.clone(), validator_id.clone());
+            ads.by_authority_id.insert(validator_id.clone(), address);
+
+            let _ = service
+                .on_request(vec![validator_id.clone()], sender, ns, ads)
+                .await;
+
+            assert_eq!(
+                (validator_id.clone(), validator_peer_id.clone()),
+                receiver.next().await.unwrap()
+            );
+            assert!(service
+                .connected_peers
+                .get(&validator_peer_id)
+                .unwrap()
+                .contains(&validator_id));
+        });
     }
 }

@@ -22,16 +22,17 @@ pub mod chain_spec;
 mod client;
 mod grandpa_support;
 
+use grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider};
 #[cfg(feature = "full-node")]
 use {
     indracore_node_core_av_store::Config as AvailabilityConfig,
+    indracore_node_core_av_store::Error as AvailabilityError,
     indracore_node_core_proposer::ProposerFactory,
     indracore_overseer::{AllSubsystems, BlockInfo, Overseer, OverseerHandler},
     indracore_primitives::v1::ParachainHost,
     sc_authority_discovery::Service as AuthorityDiscoveryService,
     sc_client_api::ExecutorProvider,
     sp_blockchain::HeaderBackend,
-    sp_core::traits::SpawnNamed,
     sp_keystore::SyncCryptoStorePtr,
     sp_trie::PrefixedMemoryDB,
     std::convert::TryInto,
@@ -39,15 +40,16 @@ use {
     tracing::info,
 };
 
-use grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider};
+use sp_core::traits::SpawnNamed;
+
+use indracore_subsystem::jaeger;
+
+use std::sync::Arc;
+
 use prometheus_endpoint::Registry;
 use sc_executor::native_executor_instance;
 use service::RpcHandlers;
-use std::sync::Arc;
-
-pub use sc_client_api::{Backend, CallExecutor, ExecutionStrategy};
-pub use sc_consensus::LongestChain;
-pub use sc_executor::NativeExecutionDispatch;
+use telemetry::TelemetryConnectionNotifier;
 
 pub use self::client::{
     AbstractClient, Client, ClientHandle, ExecuteWithClient, RuntimeApiCollection,
@@ -58,14 +60,15 @@ pub use consensus_common::{
 };
 pub use indracore_parachain::wasm_executor::IsolationStrategy;
 pub use indracore_primitives::v1::{Block, BlockId, CollatorId, Hash, Id as ParaId};
-
-pub use service::{
-    ChainSpec, Configuration, Error, PruningMode, Role, RuntimeGenesis, TFullBackend,
-    TFullCallExecutor, TFullClient, TLightBackend, TLightCallExecutor, TLightClient, TaskManager,
-    TransactionPoolOptions,
-};
-
+pub use sc_client_api::{Backend, CallExecutor, ExecutionStrategy};
+pub use sc_consensus::LongestChain;
+pub use sc_executor::NativeExecutionDispatch;
 pub use service::config::{DatabaseConfig, PrometheusConfig};
+pub use service::{
+    ChainSpec, Configuration, Error as SubstrateServiceError, PruningMode, Role, RuntimeGenesis,
+    TFullBackend, TFullCallExecutor, TFullClient, TLightBackend, TLightCallExecutor, TLightClient,
+    TaskManager, TransactionPoolOptions,
+};
 pub use sp_api::{ApiRef, ConstructRuntimeApi, Core as CoreApi, ProvideRuntimeApi, StateBackend};
 pub use sp_runtime::traits::{
     self as runtime_traits, BlakeTwo256, Block as BlockT, DigestFor, HashFor, NumberFor,
@@ -80,12 +83,64 @@ native_executor_instance!(
     frame_benchmarking::benchmarking::HostFunctions,
 );
 
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+
+    #[error(transparent)]
+    AddrFormatInvalid(#[from] std::net::AddrParseError),
+
+    #[error(transparent)]
+    Sub(#[from] SubstrateServiceError),
+
+    #[error(transparent)]
+    Blockchain(#[from] sp_blockchain::Error),
+
+    #[error(transparent)]
+    Consensus(#[from] consensus_common::Error),
+
+    #[error("Failed to create an overseer")]
+    Overseer(#[from] indracore_overseer::SubsystemError),
+
+    #[error(transparent)]
+    Prometheus(#[from] prometheus_endpoint::PrometheusError),
+
+    #[error(transparent)]
+    Jaeger(#[from] indracore_subsystem::jaeger::JaegerError),
+
+    #[cfg(feature = "full-node")]
+    #[error(transparent)]
+    Availability(#[from] AvailabilityError),
+
+    #[error("Authorities require the real overseer implementation")]
+    AuthoritiesRequireRealOverseer,
+}
+
 // If we're using prometheus, use a registry with a prefix of `indracore`.
 fn set_prometheus_registry(config: &mut Configuration) -> Result<(), Error> {
     if let Some(PrometheusConfig { registry, .. }) = config.prometheus_config.as_mut() {
         *registry = Registry::new_custom(Some("indracore".into()), None)?;
     }
 
+    Ok(())
+}
+
+/// Initialize the `Jeager` collector. The destination must listen
+/// on the given address and port for `UDP` packets.
+fn jaeger_launch_collector_with_agent(
+    spawner: impl SpawnNamed,
+    config: &Configuration,
+    agent: Option<std::net::SocketAddr>,
+) -> Result<(), Error> {
+    if let Some(agent) = agent {
+        let cfg = jaeger::JaegerConfig::builder()
+            .agent(agent)
+            .named(&config.network.node_name)
+            .build();
+
+        jaeger::Jaeger::new(cfg).launch(spawner)?;
+    }
     Ok(())
 }
 
@@ -109,6 +164,7 @@ type LightClient<RuntimeApi, Executor> =
 #[cfg(feature = "full-node")]
 fn new_partial<RuntimeApi, Executor>(
     config: &mut Configuration,
+    jaeger_agent: Option<std::net::SocketAddr>,
 ) -> Result<
     service::PartialComponents<
         FullClient<RuntimeApi, Executor>,
@@ -131,6 +187,7 @@ fn new_partial<RuntimeApi, Executor>(
                 babe::BabeLink<Block>,
             ),
             grandpa::SharedVoterState,
+            Option<telemetry::TelemetrySpan>,
         ),
     >,
     Error,
@@ -146,14 +203,17 @@ where
 
     let inherent_data_providers = inherents::InherentDataProviders::new();
 
-    let (client, backend, keystore_container, task_manager) =
+    let (client, backend, keystore_container, task_manager, telemetry_span) =
         service::new_full_parts::<Block, RuntimeApi, Executor>(&config)?;
     let client = Arc::new(client);
+
+    jaeger_launch_collector_with_agent(task_manager.spawn_handle(), &*config, jaeger_agent)?;
 
     let select_chain = sc_consensus::LongestChain::new(backend.clone());
 
     let transaction_pool = sc_transaction_pool::BasicPool::new_full(
         config.transaction_pool.clone(),
+        config.role.is_authority().into(),
         config.prometheus_registry(),
         task_manager.spawn_handle(),
         client.clone(),
@@ -191,8 +251,10 @@ where
     let justification_stream = grandpa_link.justification_stream();
     let shared_authority_set = grandpa_link.shared_authority_set().clone();
     let shared_voter_state = grandpa::SharedVoterState::empty();
-    let finality_proof_provider =
-        GrandpaFinalityProofProvider::new_for_service(backend.clone(), client.clone());
+    let finality_proof_provider = GrandpaFinalityProofProvider::new_for_service(
+        backend.clone(),
+        Some(shared_authority_set.clone()),
+    );
 
     let import_setup = (block_import.clone(), grandpa_link, babe_link.clone());
     let rpc_setup = shared_voter_state.clone();
@@ -241,7 +303,12 @@ where
         import_queue,
         transaction_pool,
         inherent_data_providers,
-        other: (rpc_extensions_builder, import_setup, rpc_setup),
+        other: (
+            rpc_extensions_builder,
+            import_setup,
+            rpc_setup,
+            telemetry_span,
+        ),
     })
 }
 
@@ -263,8 +330,7 @@ where
     RuntimeClient::Api: ParachainHost<Block>,
     Spawner: 'static + SpawnNamed + Clone + Unpin,
 {
-    Overseer::new(leaves, AllSubsystems::<()>::dummy(), registry, spawner)
-        .map_err(|e| Error::Other(format!("Failed to create an Overseer: {:?}", e)))
+    Overseer::new(leaves, AllSubsystems::<()>::dummy(), registry, spawner).map_err(|e| e.into())
 }
 
 #[cfg(all(feature = "full-node", feature = "real-overseer"))]
@@ -287,8 +353,10 @@ where
 {
     use indracore_node_subsystem_util::metrics::Metrics;
 
+    use indracore_approval_distribution::ApprovalDistribution as ApprovalDistributionSubsystem;
     use indracore_availability_bitfield_distribution::BitfieldDistribution as BitfieldDistributionSubsystem;
     use indracore_availability_distribution::AvailabilityDistributionSubsystem;
+    use indracore_availability_recovery::AvailabilityRecoverySubsystem;
     use indracore_collator_protocol::{CollatorProtocolSubsystem, ProtocolSide};
     use indracore_network_bridge::NetworkBridge as NetworkBridgeSubsystem;
     use indracore_node_collation_generation::CollationGenerationSubsystem;
@@ -308,6 +376,7 @@ where
             keystore.clone(),
             Metrics::register(registry)?,
         ),
+        availability_recovery: AvailabilityRecoverySubsystem::new(),
         availability_store: AvailabilityStoreSubsystem::new_on_disk(
             availability_config,
             Metrics::register(registry)?,
@@ -351,10 +420,10 @@ where
             spawner.clone(),
         ),
         statement_distribution: StatementDistributionSubsystem::new(Metrics::register(registry)?),
+        approval_distribution: ApprovalDistributionSubsystem::new(Metrics::register(registry)?),
     };
 
-    Overseer::new(leaves, all_subsystems, registry, spawner)
-        .map_err(|e| Error::Other(format!("Failed to create an Overseer: {:?}", e)))
+    Overseer::new(leaves, all_subsystems, registry, spawner).map_err(|e| e.into())
 }
 
 #[cfg(feature = "full-node")]
@@ -411,6 +480,7 @@ pub fn new_full<RuntimeApi, Executor>(
     mut config: Configuration,
     is_collator: IsCollator,
     grandpa_pause: Option<(u32, u32)>,
+    jaeger_agent: Option<std::net::SocketAddr>,
     isolation_strategy: IsolationStrategy,
 ) -> Result<NewFull<Arc<FullClient<RuntimeApi, Executor>>>, Error>
 where
@@ -436,22 +506,47 @@ where
         import_queue,
         transaction_pool,
         inherent_data_providers,
-        other: (rpc_extensions_builder, import_setup, rpc_setup),
-    } = new_partial::<RuntimeApi, Executor>(&mut config)?;
+        other: (rpc_extensions_builder, import_setup, rpc_setup, telemetry_span),
+    } = new_partial::<RuntimeApi, Executor>(&mut config, jaeger_agent)?;
 
     let prometheus_registry = config.prometheus_registry().cloned();
 
     let shared_voter_state = rpc_setup;
 
+    // Note: GrandPa is pushed before the Indracore-specific protocols. This doesn't change
+    // anything in terms of behaviour, but makes the logs more consistent with the other
+    // Substrate nodes.
+    config
+        .network
+        .extra_sets
+        .push(grandpa::grandpa_peers_set_config());
     #[cfg(feature = "real-overseer")]
     config
         .network
-        .notifications_protocols
-        .extend(indracore_network_bridge::notifications_protocol_info());
-    config
-        .network
-        .notifications_protocols
-        .push(grandpa::GRANDPA_PROTOCOL_NAME.into());
+        .extra_sets
+        .extend(indracore_network_bridge::peer_sets_info());
+
+    // TODO: At the moment, the collator protocol uses notifications protocols to download
+    // collations. Because of DoS-protection measures, notifications protocols have a very limited
+    // bandwidth capacity, resulting in the collation download taking a long time.
+    // The lines of code below considerably relaxes this DoS protection in order to circumvent
+    // this problem. This configuraiton change should preferably not reach any live network, and
+    // should be removed once the collation protocol is finished.
+    #[cfg(feature = "real-overseer")]
+    fn adjust_yamux(cfg: &mut sc_network::config::NetworkConfiguration) {
+        cfg.yamux_window_size = Some(5 * 1024 * 1024);
+    }
+    #[cfg(not(feature = "real-overseer"))]
+    fn adjust_yamux(_: &mut sc_network::config::NetworkConfiguration) {}
+    adjust_yamux(&mut config.network);
+
+    config.network.request_response_protocols.push(
+        sc_finality_grandpa_warp_sync::request_response_config_for_chain(
+            &config,
+            task_manager.spawn_handle(),
+            backend.clone(),
+        ),
+    );
 
     let (network, network_status_sinks, system_rpc_tx, network_starter) =
         service::build_network(service::BuildNetworkParams {
@@ -474,25 +569,28 @@ where
         );
     }
 
-    let telemetry_connection_sinks = service::TelemetryConnectionSinks::default();
+    let availability_config = config
+        .database
+        .clone()
+        .try_into()
+        .map_err(Error::Availability)?;
 
-    let availability_config = config.database.clone().try_into();
-
-    let rpc_handlers = service::spawn_tasks(service::SpawnTasksParams {
-        config,
-        backend: backend.clone(),
-        client: client.clone(),
-        keystore: keystore_container.sync_keystore(),
-        network: network.clone(),
-        rpc_extensions_builder: Box::new(rpc_extensions_builder),
-        transaction_pool: transaction_pool.clone(),
-        task_manager: &mut task_manager,
-        on_demand: None,
-        remote_blockchain: None,
-        telemetry_connection_sinks: telemetry_connection_sinks.clone(),
-        network_status_sinks: network_status_sinks.clone(),
-        system_rpc_tx,
-    })?;
+    let (rpc_handlers, telemetry_connection_notifier) =
+        service::spawn_tasks(service::SpawnTasksParams {
+            config,
+            backend: backend.clone(),
+            client: client.clone(),
+            keystore: keystore_container.sync_keystore(),
+            network: network.clone(),
+            rpc_extensions_builder: Box::new(rpc_extensions_builder),
+            transaction_pool: transaction_pool.clone(),
+            task_manager: &mut task_manager,
+            on_demand: None,
+            remote_blockchain: None,
+            network_status_sinks: network_status_sinks.clone(),
+            system_rpc_tx,
+            telemetry_span,
+        })?;
 
     let (block_import, link_half, babe_link) = import_setup;
 
@@ -557,7 +655,7 @@ where
             leaves,
             keystore_container.sync_keystore(),
             overseer_client.clone(),
-            availability_config?,
+            availability_config,
             network.clone(),
             authority_discovery_service,
             prometheus_registry.as_ref(),
@@ -604,7 +702,7 @@ where
             transaction_pool,
             overseer_handler
                 .as_ref()
-                .ok_or("authorities require real overseer handlers")?
+                .ok_or(Error::AuthoritiesRequireRealOverseer)?
                 .clone(),
             prometheus_registry.as_ref(),
         );
@@ -680,7 +778,7 @@ where
             config,
             link: link_half,
             network: network.clone(),
-            telemetry_on_connect: Some(telemetry_connection_sinks.on_connect_stream()),
+            telemetry_on_connect: telemetry_connection_notifier.map(|x| x.on_connect_stream()),
             voting_rule,
             prometheus_registry: prometheus_registry.clone(),
             shared_voter_state,
@@ -707,7 +805,14 @@ where
 /// Builds a new service for a light client.
 fn new_light<Runtime, Dispatch>(
     mut config: Configuration,
-) -> Result<(TaskManager, RpcHandlers), Error>
+) -> Result<
+    (
+        TaskManager,
+        RpcHandlers,
+        Option<TelemetryConnectionNotifier>,
+    ),
+    Error,
+>
 where
     Runtime: 'static + Send + Sync + ConstructRuntimeApi<Block, LightClient<Runtime, Dispatch>>,
     <Runtime as ConstructRuntimeApi<Block, LightClient<Runtime, Dispatch>>>::RuntimeApi:
@@ -717,7 +822,7 @@ where
     set_prometheus_registry(&mut config)?;
     use sc_client_api::backend::RemoteBackend;
 
-    let (client, backend, keystore_container, mut task_manager, on_demand) =
+    let (client, backend, keystore_container, mut task_manager, on_demand, telemetry_span) =
         service::new_light_parts::<Block, Runtime, Dispatch>(&config)?;
 
     let select_chain = sc_consensus::LongestChain::new(backend.clone());
@@ -788,31 +893,33 @@ where
 
     let rpc_extensions = indracore_rpc::create_light(light_deps);
 
-    let rpc_handlers = service::spawn_tasks(service::SpawnTasksParams {
-        on_demand: Some(on_demand),
-        remote_blockchain: Some(backend.remote_blockchain()),
-        rpc_extensions_builder: Box::new(service::NoopRpcExtensionBuilder(rpc_extensions)),
-        task_manager: &mut task_manager,
-        telemetry_connection_sinks: service::TelemetryConnectionSinks::default(),
-        config,
-        keystore: keystore_container.sync_keystore(),
-        backend,
-        transaction_pool,
-        client,
-        network,
-        network_status_sinks,
-        system_rpc_tx,
-    })?;
+    let (rpc_handlers, telemetry_connection_notifier) =
+        service::spawn_tasks(service::SpawnTasksParams {
+            on_demand: Some(on_demand),
+            remote_blockchain: Some(backend.remote_blockchain()),
+            rpc_extensions_builder: Box::new(service::NoopRpcExtensionBuilder(rpc_extensions)),
+            task_manager: &mut task_manager,
+            config,
+            keystore: keystore_container.sync_keystore(),
+            backend,
+            transaction_pool,
+            client,
+            network,
+            network_status_sinks,
+            system_rpc_tx,
+            telemetry_span,
+        })?;
 
     network_starter.start_network();
 
-    Ok((task_manager, rpc_handlers))
+    Ok((task_manager, rpc_handlers, telemetry_connection_notifier))
 }
 
 /// Builds a new object suitable for chain operations.
 #[cfg(feature = "full-node")]
 pub fn new_chain_ops(
     mut config: &mut Configuration,
+    jaeger_agent: Option<std::net::SocketAddr>,
 ) -> Result<
     (
         Arc<Client>,
@@ -829,7 +936,7 @@ pub fn new_chain_ops(
         import_queue,
         task_manager,
         ..
-    } = new_partial::<indracore_runtime::RuntimeApi, IndracoreExecutor>(config)?;
+    } = new_partial::<indracore_runtime::RuntimeApi, IndracoreExecutor>(config, jaeger_agent)?;
     Ok((
         Arc::new(Client::Indracore(client)),
         backend,
@@ -839,7 +946,16 @@ pub fn new_chain_ops(
 }
 
 /// Build a new light node.
-pub fn build_light(config: Configuration) -> Result<(TaskManager, RpcHandlers), Error> {
+pub fn build_light(
+    config: Configuration,
+) -> Result<
+    (
+        TaskManager,
+        RpcHandlers,
+        Option<TelemetryConnectionNotifier>,
+    ),
+    Error,
+> {
     new_light::<indracore_runtime::RuntimeApi, IndracoreExecutor>(config)
 }
 
@@ -848,11 +964,13 @@ pub fn build_full(
     config: Configuration,
     is_collator: IsCollator,
     grandpa_pause: Option<(u32, u32)>,
+    jaeger_agent: Option<std::net::SocketAddr>,
 ) -> Result<NewFull<Client>, Error> {
     new_full::<indracore_runtime::RuntimeApi, IndracoreExecutor>(
         config,
         is_collator,
         grandpa_pause,
+        jaeger_agent,
         Default::default(),
     )
     .map(|full| full.with_client(Client::Indracore))

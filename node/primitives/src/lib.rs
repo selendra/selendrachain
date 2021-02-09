@@ -27,7 +27,7 @@ use indracore_primitives::v1::{
     CandidateCommitments, CandidateHash, CandidateReceipt, CollatorPair, CommittedCandidateReceipt,
     CompactStatement, EncodeAs, Hash, HeadData, Id as ParaId, OutboundHrmpMessage,
     PersistedValidationData, PoV, Signed, SigningContext, UpwardMessage, ValidationCode,
-    ValidationData, ValidatorId, ValidatorIndex,
+    ValidatorId, ValidatorIndex,
 };
 use indracore_statement_table::{
     generic::{
@@ -40,6 +40,8 @@ use parity_scale_codec::{Decode, Encode};
 use std::pin::Pin;
 
 pub use sp_core::traits::SpawnNamed;
+
+pub mod approval;
 
 /// A statement, where the candidate receipt is included in the `Seconded` variant.
 ///
@@ -61,6 +63,17 @@ pub enum Statement {
 }
 
 impl Statement {
+    /// Get the candidate hash referenced by this statement.
+    ///
+    /// If this is a `Statement::Seconded`, this does hash the candidate receipt, which may be expensive
+    /// for large candidates.
+    pub fn candidate_hash(&self) -> CandidateHash {
+        match *self {
+            Statement::Valid(ref h) | Statement::Invalid(ref h) => *h,
+            Statement::Seconded(ref c) => c.hash(),
+        }
+    }
+
     /// Transform this statement into its compact version, which references only the hash
     /// of the candidate.
     pub fn to_compact(&self) -> CompactStatement {
@@ -69,6 +82,12 @@ impl Statement {
             Statement::Valid(hash) => CompactStatement::Valid(hash),
             Statement::Invalid(hash) => CompactStatement::Invalid(hash),
         }
+    }
+}
+
+impl From<&'_ Statement> for CompactStatement {
+    fn from(stmt: &Statement) -> Self {
+        stmt.to_compact()
     }
 }
 
@@ -137,6 +156,8 @@ pub enum InvalidCandidate {
     HashMismatch,
     /// Bad collator signature.
     BadSignature,
+    /// Para head hash does not match.
+    ParaHeadHashMismatch,
 }
 
 /// Result of the validation of the candidate.
@@ -292,7 +313,10 @@ pub struct Collation<BlockNumber = indracore_primitives::v1::BlockNumber> {
 /// block should be build on and the [`ValidationData`] that provides
 /// information about the state of the parachain on the relay chain.
 pub type CollatorFn = Box<
-    dyn Fn(Hash, &ValidationData) -> Pin<Box<dyn Future<Output = Option<Collation>> + Send>>
+    dyn Fn(
+            Hash,
+            &PersistedValidationData,
+        ) -> Pin<Box<dyn Future<Output = Option<Collation>> + Send>>
         + Send
         + Sync,
 >;

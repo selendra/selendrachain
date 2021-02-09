@@ -340,14 +340,14 @@ impl Assets {
                 MultiAsset::All => return self.swapped(Assets::default()),
                 MultiAsset::AllFungible => {
                     // Remove all fungible assets, and copy them into `result`.
-                    let fungible = std::mem::take(&mut self.fungible);
+                    let fungible = mem::replace(&mut self.fungible, Default::default());
                     fungible.into_iter().for_each(|(id, amount)| {
                         result.saturating_subsume_fungible(id, amount);
                     })
                 }
                 MultiAsset::AllNonFungible => {
                     // Remove all non-fungible assets, and copy them into `result`.
-                    let non_fungible = std::mem::take(&mut self.non_fungible);
+                    let non_fungible = mem::replace(&mut self.non_fungible, Default::default());
                     non_fungible.into_iter().for_each(|(class, instance)| {
                         result.saturating_subsume_non_fungible(class, instance);
                     });
@@ -361,7 +361,7 @@ impl Assets {
                     };
                     // At the end of this block, we will be left with only the non-matching fungibles.
                     let mut non_matching_fungibles = BTreeMap::<AssetId, u128>::new();
-                    let fungible = std::mem::take(&mut self.fungible);
+                    let fungible = mem::replace(&mut self.fungible, Default::default());
                     fungible.into_iter().for_each(|(iden, amount)| {
                         if iden == id {
                             result.saturating_subsume_fungible(iden, amount);
@@ -381,7 +381,7 @@ impl Assets {
                     // At the end of this block, we will be left with only the non-matching non-fungibles.
                     let mut non_matching_non_fungibles =
                         BTreeSet::<(AssetId, AssetInstance)>::new();
-                    let non_fungible = std::mem::take(&mut self.non_fungible);
+                    let non_fungible = mem::replace(&mut self.non_fungible, Default::default());
                     non_fungible.into_iter().for_each(|(c, instance)| {
                         if class == c {
                             result.saturating_subsume_non_fungible(c, instance);
@@ -411,7 +411,7 @@ impl Assets {
                             result.saturating_subsume_fungible(id, amount);
                         } else {
                             self.fungible.remove(&id);
-                            result.saturating_subsume_fungible(id, e);
+                            result.saturating_subsume_fungible(id, e.clone());
                         }
                     }
                 }
@@ -441,5 +441,252 @@ impl Assets {
     pub fn swapped(&mut self, mut with: Assets) -> Self {
         mem::swap(&mut *self, &mut with);
         with
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[allow(non_snake_case)]
+    fn AF(id: u8, amount: u128) -> MultiAsset {
+        MultiAsset::AbstractFungible {
+            id: vec![id],
+            amount,
+        }
+    }
+    #[allow(non_snake_case)]
+    fn ANF(class: u8, instance_id: u128) -> MultiAsset {
+        MultiAsset::AbstractNonFungible {
+            class: vec![class],
+            instance: AssetInstance::Index { id: instance_id },
+        }
+    }
+    #[allow(non_snake_case)]
+    fn CF(amount: u128) -> MultiAsset {
+        MultiAsset::ConcreteFungible {
+            id: MultiLocation::Null,
+            amount,
+        }
+    }
+    #[allow(non_snake_case)]
+    fn CNF(instance_id: u128) -> MultiAsset {
+        MultiAsset::ConcreteNonFungible {
+            class: MultiLocation::Null,
+            instance: AssetInstance::Index { id: instance_id },
+        }
+    }
+
+    fn test_assets() -> Assets {
+        let mut assets_vec: Vec<MultiAsset> = Vec::new();
+        assets_vec.push(AF(1, 100));
+        assets_vec.push(ANF(2, 200));
+        assets_vec.push(CF(300));
+        assets_vec.push(CNF(400));
+        assets_vec.into()
+    }
+
+    #[test]
+    fn into_assets_iter_works() {
+        let assets = test_assets();
+        let mut iter = assets.into_assets_iter();
+        // Order defined by implementation: CF, AF, CNF, ANF
+        assert_eq!(Some(CF(300)), iter.next());
+        assert_eq!(Some(AF(1, 100)), iter.next());
+        assert_eq!(Some(CNF(400)), iter.next());
+        assert_eq!(Some(ANF(2, 200)), iter.next());
+        assert_eq!(None, iter.next());
+    }
+
+    #[test]
+    fn assets_into_works() {
+        let mut assets_vec: Vec<MultiAsset> = Vec::new();
+        assets_vec.push(AF(1, 100));
+        assets_vec.push(ANF(2, 200));
+        assets_vec.push(CF(300));
+        assets_vec.push(CNF(400));
+        // Push same group of tokens again
+        assets_vec.push(AF(1, 100));
+        assets_vec.push(ANF(2, 200));
+        assets_vec.push(CF(300));
+        assets_vec.push(CNF(400));
+
+        let assets: Assets = assets_vec.into();
+        let mut iter = assets.into_assets_iter();
+        // Fungibles add
+        assert_eq!(Some(CF(600)), iter.next());
+        assert_eq!(Some(AF(1, 200)), iter.next());
+        // Non-fungibles collapse
+        assert_eq!(Some(CNF(400)), iter.next());
+        assert_eq!(Some(ANF(2, 200)), iter.next());
+        assert_eq!(None, iter.next());
+    }
+
+    #[test]
+    fn min_all_and_none_works() {
+        let assets = test_assets();
+        let none = vec![MultiAsset::None];
+        let all = vec![MultiAsset::All];
+
+        let none_min = assets.min(none.iter());
+        assert_eq!(None, none_min.assets_iter().next());
+        let all_min = assets.min(all.iter());
+        assert!(all_min.assets_iter().eq(assets.assets_iter()));
+    }
+
+    #[test]
+    fn min_all_fungible_and_all_non_fungible_works() {
+        let assets = test_assets();
+        let fungible = vec![MultiAsset::AllFungible];
+        let non_fungible = vec![MultiAsset::AllNonFungible];
+
+        let fungible = assets.min(fungible.iter());
+        let fungible = fungible.assets_iter().collect::<Vec<_>>();
+        assert_eq!(fungible, vec![CF(300), AF(1, 100)]);
+        let non_fungible = assets.min(non_fungible.iter());
+        let non_fungible = non_fungible.assets_iter().collect::<Vec<_>>();
+        assert_eq!(non_fungible, vec![CNF(400), ANF(2, 200)]);
+    }
+
+    #[test]
+    fn min_all_abstract_works() {
+        let assets = test_assets();
+        let fungible = vec![MultiAsset::AllAbstractFungible { id: vec![1] }];
+        let non_fungible = vec![MultiAsset::AllAbstractNonFungible { class: vec![2] }];
+
+        let fungible = assets.min(fungible.iter());
+        let fungible = fungible.assets_iter().collect::<Vec<_>>();
+        assert_eq!(fungible, vec![AF(1, 100)]);
+        let non_fungible = assets.min(non_fungible.iter());
+        let non_fungible = non_fungible.assets_iter().collect::<Vec<_>>();
+        assert_eq!(non_fungible, vec![ANF(2, 200)]);
+    }
+
+    #[test]
+    fn min_all_concrete_works() {
+        let assets = test_assets();
+        let fungible = vec![MultiAsset::AllConcreteFungible {
+            id: MultiLocation::Null,
+        }];
+        let non_fungible = vec![MultiAsset::AllConcreteNonFungible {
+            class: MultiLocation::Null,
+        }];
+
+        let fungible = assets.min(fungible.iter());
+        let fungible = fungible.assets_iter().collect::<Vec<_>>();
+        assert_eq!(fungible, vec![CF(300)]);
+        let non_fungible = assets.min(non_fungible.iter());
+        let non_fungible = non_fungible.assets_iter().collect::<Vec<_>>();
+        assert_eq!(non_fungible, vec![CNF(400)]);
+    }
+
+    #[test]
+    fn min_basic_works() {
+        let assets1 = test_assets();
+
+        let mut assets2_vec: Vec<MultiAsset> = Vec::new();
+        // This is less than 100, so it will decrease to 50
+        assets2_vec.push(AF(1, 50));
+        // This asset does not exist, so not included
+        assets2_vec.push(ANF(2, 400));
+        // This is more then 300, so it should stay at 300
+        assets2_vec.push(CF(600));
+        // This asset should be included
+        assets2_vec.push(CNF(400));
+        let assets2: Assets = assets2_vec.into();
+
+        let assets_min = assets1.min(assets2.assets_iter());
+        let assets_min = assets_min.into_assets_iter().collect::<Vec<_>>();
+        assert_eq!(assets_min, vec![CF(300), AF(1, 50), CNF(400)]);
+    }
+
+    #[test]
+    fn saturating_take_all_and_none_works() {
+        let mut assets = test_assets();
+        let none = vec![MultiAsset::None];
+        let all = vec![MultiAsset::All];
+
+        let taken_none = assets.saturating_take(none);
+        assert_eq!(None, taken_none.assets_iter().next());
+        let taken_all = assets.saturating_take(all);
+        // Everything taken
+        assert_eq!(None, assets.assets_iter().next());
+        let all_iter = taken_all.assets_iter();
+        assert!(all_iter.eq(test_assets().assets_iter()));
+    }
+
+    #[test]
+    fn saturating_take_all_fungible_and_all_non_fungible_works() {
+        let mut assets = test_assets();
+        let fungible = vec![MultiAsset::AllFungible];
+        let non_fungible = vec![MultiAsset::AllNonFungible];
+
+        let fungible = assets.saturating_take(fungible);
+        let fungible = fungible.assets_iter().collect::<Vec<_>>();
+        assert_eq!(fungible, vec![CF(300), AF(1, 100)]);
+        let non_fungible = assets.saturating_take(non_fungible);
+        let non_fungible = non_fungible.assets_iter().collect::<Vec<_>>();
+        assert_eq!(non_fungible, [CNF(400), ANF(2, 200)]);
+        // Assets completely drained
+        assert_eq!(None, assets.assets_iter().next());
+    }
+
+    #[test]
+    fn saturating_take_all_abstract_works() {
+        let mut assets = test_assets();
+        let fungible = vec![MultiAsset::AllAbstractFungible { id: vec![1] }];
+        let non_fungible = vec![MultiAsset::AllAbstractNonFungible { class: vec![2] }];
+
+        let fungible = assets.saturating_take(fungible);
+        let fungible = fungible.assets_iter().collect::<Vec<_>>();
+        assert_eq!(fungible, vec![AF(1, 100)]);
+        let non_fungible = assets.saturating_take(non_fungible);
+        let non_fungible = non_fungible.assets_iter().collect::<Vec<_>>();
+        assert_eq!(non_fungible, vec![ANF(2, 200)]);
+        // Assets drained of abstract
+        let final_assets = assets.assets_iter().collect::<Vec<_>>();
+        assert_eq!(final_assets, vec![CF(300), CNF(400)]);
+    }
+
+    #[test]
+    fn saturating_take_all_concrete_works() {
+        let mut assets = test_assets();
+        let fungible = vec![MultiAsset::AllConcreteFungible {
+            id: MultiLocation::Null,
+        }];
+        let non_fungible = vec![MultiAsset::AllConcreteNonFungible {
+            class: MultiLocation::Null,
+        }];
+
+        let fungible = assets.saturating_take(fungible);
+        let fungible = fungible.assets_iter().collect::<Vec<_>>();
+        assert_eq!(fungible, vec![CF(300)]);
+        let non_fungible = assets.saturating_take(non_fungible);
+        let non_fungible = non_fungible.assets_iter().collect::<Vec<_>>();
+        assert_eq!(non_fungible, vec![CNF(400)]);
+        // Assets drained of concrete
+        let assets = assets.assets_iter().collect::<Vec<_>>();
+        assert_eq!(assets, vec![AF(1, 100), ANF(2, 200)]);
+    }
+
+    #[test]
+    fn saturating_take_basic_works() {
+        let mut assets1 = test_assets();
+
+        let mut assets2_vec: Vec<MultiAsset> = Vec::new();
+        // We should take 50
+        assets2_vec.push(AF(1, 50));
+        // This asset should not be taken
+        assets2_vec.push(ANF(2, 400));
+        // This is more then 300, so it takes everything
+        assets2_vec.push(CF(600));
+        // This asset should be taken
+        assets2_vec.push(CNF(400));
+
+        let taken = assets1.saturating_take(assets2_vec);
+        let taken = taken.into_assets_iter().collect::<Vec<_>>();
+        assert_eq!(taken, vec![CF(300), AF(1, 50), CNF(400)]);
+
+        let assets = assets1.into_assets_iter().collect::<Vec<_>>();
+        assert_eq!(assets, vec![AF(1, 50), ANF(2, 200)]);
     }
 }

@@ -25,13 +25,15 @@ use sp_std::prelude::*;
 use bitvec::vec::BitVec;
 use parity_scale_codec::{Decode, Encode};
 #[cfg(feature = "std")]
+use parity_util_mem::{MallocSizeOf, MallocSizeOfOps};
+#[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "std")]
-use sp_application_crypto::AppKey;
-use sp_application_crypto::KeyTypeId;
-use sp_core::RuntimeDebug;
-use sp_inherents::InherentIdentifier;
+use application_crypto::AppKey;
+use application_crypto::KeyTypeId;
+use inherents::InherentIdentifier;
+use primitives::RuntimeDebug;
 #[cfg(feature = "std")]
 use sp_keystore::{CryptoStore, Error as KeystoreError, SyncCryptoStorePtr};
 use sp_runtime::traits::{AppVerify, Block as BlockT};
@@ -52,12 +54,22 @@ pub const COLLATOR_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"coll");
 pub const NEW_HEADS_IDENTIFIER: InherentIdentifier = *b"newheads";
 
 mod collator_app {
-    use sp_application_crypto::{app_crypto, sr25519};
+    use application_crypto::{app_crypto, sr25519};
     app_crypto!(sr25519, super::COLLATOR_KEY_TYPE_ID);
 }
 
 /// Identity that collators use.
 pub type CollatorId = collator_app::Public;
+
+#[cfg(feature = "std")]
+impl MallocSizeOf for CollatorId {
+    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+        0
+    }
+    fn constant_size() -> Option<usize> {
+        Some(0)
+    }
+}
 
 /// A Parachain collator keypair.
 #[cfg(feature = "std")]
@@ -66,11 +78,21 @@ pub type CollatorPair = collator_app::Pair;
 /// Signature on candidate's block data by a collator.
 pub type CollatorSignature = collator_app::Signature;
 
+#[cfg(feature = "std")]
+impl MallocSizeOf for CollatorSignature {
+    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+        0
+    }
+    fn constant_size() -> Option<usize> {
+        Some(0)
+    }
+}
+
 /// The key type ID for a parachain validator key.
 pub const PARACHAIN_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"para");
 
 mod validator_app {
-    use sp_application_crypto::{app_crypto, sr25519};
+    use application_crypto::{app_crypto, sr25519};
     app_crypto!(sr25519, super::PARACHAIN_KEY_TYPE_ID);
 }
 
@@ -80,10 +102,20 @@ mod validator_app {
 /// so we define it to be the same type as `SessionKey`. In the future it may have different crypto.
 pub type ValidatorId = validator_app::Public;
 
+#[cfg(feature = "std")]
+impl MallocSizeOf for ValidatorId {
+    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+        0
+    }
+    fn constant_size() -> Option<usize> {
+        Some(0)
+    }
+}
+
 /// Index of the validator is used as a lightweight replacement of the `ValidatorId` when appropriate.
 pub type ValidatorIndex = u32;
 
-sp_application_crypto::with_pair! {
+application_crypto::with_pair! {
     /// A Parachain validator keypair.
     pub type ValidatorPair = validator_app::Pair;
 }
@@ -93,6 +125,16 @@ sp_application_crypto::with_pair! {
 /// For now we assert that parachain validator set is exactly equivalent to the authority set, and
 /// so we define it to be the same type as `SessionKey`. In the future it may have different crypto.
 pub type ValidatorSignature = validator_app::Signature;
+
+#[cfg(feature = "std")]
+impl MallocSizeOf for ValidatorSignature {
+    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+        0
+    }
+    fn constant_size() -> Option<usize> {
+        Some(0)
+    }
+}
 
 /// Retriability for a given active para.
 #[derive(Clone, Eq, PartialEq, Encode, Decode)]
@@ -485,7 +527,7 @@ impl AbridgedCandidateReceipt {
             relay_parent: self.relay_parent,
             collator: self.collator.clone(),
             signature: self.signature.clone(),
-            pov_hash: self.pov_block_hash,
+            pov_hash: self.pov_block_hash.clone(),
         }
     }
 }
@@ -929,9 +971,22 @@ impl<Payload: EncodeAs<RealPayload>, RealPayload: Encode> Signed<Payload, RealPa
     pub fn into_payload(self) -> Payload {
         self.payload
     }
+
+    /// Convert `Payload` into `RealPayload`.
+    pub fn convert_payload(&self) -> Signed<RealPayload>
+    where
+        for<'a> &'a Payload: Into<RealPayload>,
+    {
+        Signed {
+            signature: self.signature.clone(),
+            validator_index: self.validator_index,
+            payload: self.payload().into(),
+            real_payload: sp_std::marker::PhantomData,
+        }
+    }
 }
 
-/// Custom validity errors used in indracore while validating transactions.
+/// Custom validity errors used in Indracore while validating transactions.
 #[repr(u8)]
 pub enum ValidityError {
     /// The Ethereum signature is invalid.
@@ -955,14 +1010,14 @@ impl From<ValidityError> for u8 {
 /// Any rewards for misbehavior reporting will be paid out to this account.
 pub mod fisherman {
     use super::{Signature, Verify};
-    use sp_core::crypto::KeyTypeId;
+    use primitives::crypto::KeyTypeId;
 
     /// Key type for the reporting module. Used for reporting BABE, GRANDPA
     /// and Parachain equivocations.
     pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"fish");
 
     mod app {
-        use sp_application_crypto::{app_crypto, sr25519};
+        use application_crypto::{app_crypto, sr25519};
         app_crypto!(sr25519, super::KEY_TYPE);
     }
 
@@ -976,7 +1031,30 @@ pub mod fisherman {
         for FishermanAppCrypto
     {
         type RuntimeAppPublic = FishermanId;
-        type GenericSignature = sp_core::sr25519::Signature;
-        type GenericPublic = sp_core::sr25519::Public;
+        type GenericSignature = primitives::sr25519::Signature;
+        type GenericPublic = primitives::sr25519::Public;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn balance_bigger_than_usize() {
+        let zero_b: Balance = 0;
+        let zero_u: usize = 0;
+
+        assert!(zero_b.leading_zeros() >= zero_u.leading_zeros());
+    }
+
+    #[test]
+    fn collator_signature_payload_is_valid() {
+        // if this fails, collator signature verification code has to be updated.
+        let h = Hash::default();
+        assert_eq!(h.as_ref().len(), 32);
+
+        let _payload =
+            collator_signature_payload(&Hash::repeat_byte(1), &5u32.into(), &Hash::repeat_byte(2));
     }
 }

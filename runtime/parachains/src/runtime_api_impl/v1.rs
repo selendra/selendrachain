@@ -21,10 +21,11 @@ use crate::{configuration, dmp, hrmp, inclusion, initializer, paras, scheduler, 
 use frame_support::debug;
 use primitives::v1::{
     CandidateEvent, CommittedCandidateReceipt, CoreIndex, CoreOccupied, CoreState, GroupIndex,
-    GroupRotationInfo, Id as ParaId, InboundDownwardMessage, InboundHrmpMessage, OccupiedCore,
-    OccupiedCoreAssumption, PersistedValidationData, ScheduledCore, SessionIndex, SessionInfo,
-    ValidationCode, ValidationData, ValidatorId, ValidatorIndex,
+    GroupRotationInfo, Hash, Id as ParaId, InboundDownwardMessage, InboundHrmpMessage,
+    OccupiedCore, OccupiedCoreAssumption, PersistedValidationData, ScheduledCore, SessionIndex,
+    SessionInfo, ValidationCode, ValidatorId, ValidatorIndex,
 };
+use sp_runtime::traits::One;
 use sp_std::collections::btree_map::BTreeMap;
 use sp_std::prelude::*;
 
@@ -36,19 +37,25 @@ pub fn validators<T: initializer::Config>() -> Vec<ValidatorId> {
 /// Implementation for the `validator_groups` function of the runtime API.
 pub fn validator_groups<T: initializer::Config>(
 ) -> (Vec<Vec<ValidatorIndex>>, GroupRotationInfo<T::BlockNumber>) {
+    let now = <frame_system::Module<T>>::block_number() + One::one();
+
     let groups = <scheduler::Module<T>>::validator_groups();
-    let rotation_info = <scheduler::Module<T>>::group_rotation_info();
+    let rotation_info = <scheduler::Module<T>>::group_rotation_info(now);
 
     (groups, rotation_info)
 }
 
 /// Implementation for the `availability_cores` function of the runtime API.
-pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::BlockNumber>> {
+pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::Hash, T::BlockNumber>> {
     let cores = <scheduler::Module<T>>::availability_cores();
     let parachains = <paras::Module<T>>::parachains();
     let config = <configuration::Module<T>>::config();
 
-    let rotation_info = <scheduler::Module<T>>::group_rotation_info();
+    let now = <frame_system::Module<T>>::block_number() + One::one();
+    <scheduler::Module<T>>::clear();
+    <scheduler::Module<T>>::schedule(Vec::new(), now);
+
+    let rotation_info = <scheduler::Module<T>>::group_rotation_info(now);
 
     let time_out_at = |backed_in_number, availability_period| {
         let time_out_at = backed_in_number + availability_period;
@@ -97,9 +104,8 @@ pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::BlockNum
                         <inclusion::Module<T>>::pending_availability(para_id)
                             .expect("Occupied core always has pending availability; qed");
 
-                    let backed_in_number = *pending_availability.backed_in_number();
+                    let backed_in_number = pending_availability.backed_in_number().clone();
                     OccupiedCore {
-                        para_id,
                         next_up_on_available: <scheduler::Module<T>>::next_up_on_available(
                             CoreIndex(i as u32),
                         ),
@@ -116,6 +122,8 @@ pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::BlockNum
                             backed_in_number,
                             pending_availability.core_occupied(),
                         ),
+                        candidate_hash: pending_availability.candidate_hash(),
+                        candidate_descriptor: pending_availability.candidate_descriptor().clone(),
                     }
                 }
                 CoreOccupied::Parathread(p) => {
@@ -124,9 +132,8 @@ pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::BlockNum
                         <inclusion::Module<T>>::pending_availability(para_id)
                             .expect("Occupied core always has pending availability; qed");
 
-                    let backed_in_number = *pending_availability.backed_in_number();
+                    let backed_in_number = pending_availability.backed_in_number().clone();
                     OccupiedCore {
-                        para_id,
                         next_up_on_available: <scheduler::Module<T>>::next_up_on_available(
                             CoreIndex(i as u32),
                         ),
@@ -143,6 +150,8 @@ pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::BlockNum
                             backed_in_number,
                             pending_availability.core_occupied(),
                         ),
+                        candidate_hash: pending_availability.candidate_hash(),
+                        candidate_descriptor: pending_availability.candidate_descriptor().clone(),
                     }
                 }
             }),
@@ -154,7 +163,7 @@ pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::BlockNum
     for scheduled in <scheduler::Module<T>>::scheduled() {
         core_states[scheduled.core.0 as usize] = CoreState::Scheduled(ScheduledCore {
             para_id: scheduled.para_id,
-            collator: scheduled.required_collator().cloned(),
+            collator: scheduled.required_collator().map(|c| c.clone()),
         });
     }
 
@@ -186,26 +195,21 @@ where
     }
 }
 
-/// Implementation for the `full_validation_data` function of the runtime API.
-pub fn full_validation_data<T: initializer::Config>(
-    para_id: ParaId,
-    assumption: OccupiedCoreAssumption,
-) -> Option<ValidationData<T::BlockNumber>> {
-    with_assumption::<T, _, _>(para_id, assumption, || {
-        Some(ValidationData {
-            persisted: crate::util::make_persisted_validation_data::<T>(para_id)?,
-            transient: crate::util::make_transient_validation_data::<T>(para_id)?,
-        })
-    })
-}
-
 /// Implementation for the `persisted_validation_data` function of the runtime API.
 pub fn persisted_validation_data<T: initializer::Config>(
     para_id: ParaId,
     assumption: OccupiedCoreAssumption,
 ) -> Option<PersistedValidationData<T::BlockNumber>> {
+    use parity_scale_codec::Decode as _;
+    let relay_parent_number = <frame_system::Module<T>>::block_number();
+    let relay_storage_root = Hash::decode(&mut &sp_io::storage::root()[..])
+        .expect("storage root must decode to the Hash type; qed");
     with_assumption::<T, _, _>(para_id, assumption, || {
-        crate::util::make_persisted_validation_data::<T>(para_id)
+        crate::util::make_persisted_validation_data::<T>(
+            para_id,
+            relay_parent_number,
+            relay_storage_root,
+        )
     })
 }
 
@@ -214,7 +218,7 @@ pub fn check_validation_outputs<T: initializer::Config>(
     para_id: ParaId,
     outputs: primitives::v1::CandidateCommitments,
 ) -> bool {
-    <inclusion::Module<T>>::check_validation_outputs(para_id, outputs)
+    <inclusion::Module<T>>::check_validation_outputs_for_runtime_api(para_id, outputs)
 }
 
 /// Implementation for the `session_index_for_child` function of the runtime API.

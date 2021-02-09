@@ -21,7 +21,7 @@
 //!
 //! ## Parachain WASM
 //!
-//! indracore parachain WASM is in the form of a module which imports a memory
+//! Indracore parachain WASM is in the form of a module which imports a memory
 //! instance and exports a function `validate_block`.
 //!
 //! `validate` accepts as input two `i32` values, representing a pointer/length pair

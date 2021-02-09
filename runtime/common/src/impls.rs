@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Auxillary struct/enums for Indracore runtime.
+//! Auxillary struct/enums for indracore runtime.
 
 use crate::NegativeImbalance;
 use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
@@ -75,5 +75,145 @@ where
             <Treasury<R> as OnUnbalanced<_>>::on_unbalanced(split.0);
             <ToAuthor<R> as OnUnbalanced<_>>::on_unbalanced(split.1);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use frame_support::traits::FindAuthor;
+    use frame_support::{impl_outer_origin, parameter_types, weights::DispatchClass};
+    use frame_system::limits;
+    use primitives::v1::AccountId;
+    use sp_core::H256;
+    use sp_runtime::{
+        testing::Header,
+        traits::{BlakeTwo256, IdentityLookup},
+        ModuleId, Perbill,
+    };
+
+    #[derive(Clone, PartialEq, Eq, Debug)]
+    pub struct Test;
+
+    impl_outer_origin! {
+        pub enum Origin for Test {}
+    }
+
+    parameter_types! {
+        pub const BlockHashCount: u64 = 250;
+        pub BlockWeights: limits::BlockWeights = limits::BlockWeights::builder()
+            .for_class(DispatchClass::all(), |weight| {
+                weight.base_extrinsic = 100;
+            })
+            .for_class(DispatchClass::non_mandatory(), |weight| {
+                weight.max_total = Some(1024);
+            })
+            .build_or_panic();
+        pub BlockLength: limits::BlockLength = limits::BlockLength::max(2 * 1024);
+        pub const AvailableBlockRatio: Perbill = Perbill::one();
+    }
+
+    impl frame_system::Config for Test {
+        type BaseCallFilter = ();
+        type Origin = Origin;
+        type Index = u64;
+        type BlockNumber = u64;
+        type Call = ();
+        type Hash = H256;
+        type Hashing = BlakeTwo256;
+        type AccountId = AccountId;
+        type Lookup = IdentityLookup<Self::AccountId>;
+        type Header = Header;
+        type Event = ();
+        type BlockHashCount = BlockHashCount;
+        type BlockLength = BlockLength;
+        type BlockWeights = BlockWeights;
+        type DbWeight = ();
+        type Version = ();
+        type PalletInfo = ();
+        type AccountData = pallet_balances::AccountData<u64>;
+        type OnNewAccount = ();
+        type OnKilledAccount = ();
+        type SystemWeightInfo = ();
+        type SS58Prefix = ();
+    }
+
+    impl pallet_balances::Config for Test {
+        type Balance = u64;
+        type Event = ();
+        type DustRemoval = ();
+        type ExistentialDeposit = ();
+        type AccountStore = System;
+        type MaxLocks = ();
+        type WeightInfo = ();
+    }
+
+    parameter_types! {
+        pub const TreasuryModuleId: ModuleId = ModuleId(*b"py/trsry");
+    }
+
+    impl pallet_treasury::Config for Test {
+        type Currency = pallet_balances::Module<Test>;
+        type ApproveOrigin = frame_system::EnsureRoot<AccountId>;
+        type RejectOrigin = frame_system::EnsureRoot<AccountId>;
+        type Event = ();
+        type OnSlash = ();
+        type ProposalBond = ();
+        type ProposalBondMinimum = ();
+        type SpendPeriod = ();
+        type Burn = ();
+        type BurnDestination = ();
+        type ModuleId = TreasuryModuleId;
+        type SpendFunds = ();
+        type WeightInfo = ();
+    }
+
+    pub struct OneAuthor;
+    impl FindAuthor<AccountId> for OneAuthor {
+        fn find_author<'a, I>(_: I) -> Option<AccountId>
+        where
+            I: 'a,
+        {
+            Some(Default::default())
+        }
+    }
+    impl pallet_authorship::Config for Test {
+        type FindAuthor = OneAuthor;
+        type UncleGenerations = ();
+        type FilterUncle = ();
+        type EventHandler = ();
+    }
+
+    type Treasury = pallet_treasury::Module<Test>;
+    type Balances = pallet_balances::Module<Test>;
+    type System = frame_system::Module<Test>;
+
+    pub fn new_test_ext() -> sp_io::TestExternalities {
+        let mut t = frame_system::GenesisConfig::default()
+            .build_storage::<Test>()
+            .unwrap();
+        // We use default for brevity, but you can configure as desired if needed.
+        pallet_balances::GenesisConfig::<Test>::default()
+            .assimilate_storage(&mut t)
+            .unwrap();
+        t.into()
+    }
+
+    #[test]
+    fn test_fees_and_tip_split() {
+        new_test_ext().execute_with(|| {
+            let fee = Balances::issue(10);
+            let tip = Balances::issue(20);
+
+            assert_eq!(Balances::free_balance(Treasury::account_id()), 0);
+            assert_eq!(Balances::free_balance(AccountId::default()), 0);
+
+            DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
+
+            // Author gets 100% of tip and 20% of fee = 22
+            assert_eq!(Balances::free_balance(AccountId::default()), 22);
+            // Treasury gets 80% of fee
+            assert_eq!(Balances::free_balance(Treasury::account_id()), 8);
+        });
     }
 }

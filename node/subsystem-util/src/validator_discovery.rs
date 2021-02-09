@@ -176,7 +176,7 @@ impl ConnectionRequests {
     /// be revoked and substituted with the given one.
     pub fn put(&mut self, relay_parent: Hash, request: ConnectionRequest) {
         self.remove(&relay_parent);
-        let token = self.requests.insert(ConnectionRequestForRelayParent {
+        let token = self.requests.push(ConnectionRequestForRelayParent {
             relay_parent,
             request,
         });
@@ -244,5 +244,222 @@ impl stream::Stream for ConnectionRequest {
             _ => {}
         }
         Poll::Pending
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use indracore_primitives::v1::ValidatorPair;
+    use sp_core::{Pair, Public};
+
+    use futures::{executor, poll, SinkExt};
+
+    async fn check_next_is_pending(connection_requests: &mut ConnectionRequests) {
+        let next = connection_requests.next();
+        futures::pin_mut!(next);
+        assert_eq!(poll!(next), Poll::Pending);
+    }
+
+    #[test]
+    fn adding_a_connection_request_works() {
+        let mut connection_requests = ConnectionRequests::default();
+
+        executor::block_on(async move {
+            check_next_is_pending(&mut connection_requests).await;
+
+            let validator_1 = ValidatorPair::generate().0.public();
+            let validator_2 = ValidatorPair::generate().0.public();
+
+            let auth_1 = AuthorityDiscoveryId::from_slice(&[1; 32]);
+            let auth_2 = AuthorityDiscoveryId::from_slice(&[2; 32]);
+
+            let mut validator_map = HashMap::new();
+            validator_map.insert(auth_1.clone(), validator_1.clone());
+            validator_map.insert(auth_2.clone(), validator_2.clone());
+
+            let (mut rq1_tx, rq1_rx) = mpsc::channel(8);
+
+            let peer_id_1 = PeerId::random();
+            let peer_id_2 = PeerId::random();
+
+            let connection_request_1 = ConnectionRequest {
+                validator_map,
+                connections: rq1_rx,
+            };
+
+            let relay_parent_1 = Hash::repeat_byte(1);
+
+            connection_requests.put(relay_parent_1.clone(), connection_request_1);
+
+            rq1_tx.send((auth_1, peer_id_1.clone())).await.unwrap();
+            rq1_tx.send((auth_2, peer_id_2.clone())).await.unwrap();
+
+            let res = connection_requests.next().await;
+            assert_eq!(
+                res,
+                DiscoveredValidator {
+                    relay_parent: relay_parent_1,
+                    validator_id: validator_1,
+                    peer_id: peer_id_1
+                },
+            );
+
+            let res = connection_requests.next().await;
+            assert_eq!(
+                res,
+                DiscoveredValidator {
+                    relay_parent: relay_parent_1,
+                    validator_id: validator_2,
+                    peer_id: peer_id_2
+                },
+            );
+
+            check_next_is_pending(&mut connection_requests).await;
+        });
+    }
+
+    #[test]
+    fn adding_two_connection_requests_works() {
+        let mut connection_requests = ConnectionRequests::default();
+
+        executor::block_on(async move {
+            check_next_is_pending(&mut connection_requests).await;
+
+            let validator_1 = ValidatorPair::generate().0.public();
+            let validator_2 = ValidatorPair::generate().0.public();
+
+            let auth_1 = AuthorityDiscoveryId::from_slice(&[1; 32]);
+            let auth_2 = AuthorityDiscoveryId::from_slice(&[2; 32]);
+
+            let mut validator_map_1 = HashMap::new();
+            let mut validator_map_2 = HashMap::new();
+
+            validator_map_1.insert(auth_1.clone(), validator_1.clone());
+            validator_map_2.insert(auth_2.clone(), validator_2.clone());
+
+            let (mut rq1_tx, rq1_rx) = mpsc::channel(8);
+
+            let (mut rq2_tx, rq2_rx) = mpsc::channel(8);
+
+            let peer_id_1 = PeerId::random();
+            let peer_id_2 = PeerId::random();
+
+            let connection_request_1 = ConnectionRequest {
+                validator_map: validator_map_1,
+                connections: rq1_rx,
+            };
+
+            let connection_request_2 = ConnectionRequest {
+                validator_map: validator_map_2,
+                connections: rq2_rx,
+            };
+
+            let relay_parent_1 = Hash::repeat_byte(1);
+            let relay_parent_2 = Hash::repeat_byte(2);
+
+            connection_requests.put(relay_parent_1.clone(), connection_request_1);
+            connection_requests.put(relay_parent_2.clone(), connection_request_2);
+
+            rq1_tx.send((auth_1, peer_id_1.clone())).await.unwrap();
+            rq2_tx.send((auth_2, peer_id_2.clone())).await.unwrap();
+
+            let res = connection_requests.next().await;
+            assert_eq!(
+                res,
+                DiscoveredValidator {
+                    relay_parent: relay_parent_1,
+                    validator_id: validator_1,
+                    peer_id: peer_id_1
+                },
+            );
+
+            let res = connection_requests.next().await;
+            assert_eq!(
+                res,
+                DiscoveredValidator {
+                    relay_parent: relay_parent_2,
+                    validator_id: validator_2,
+                    peer_id: peer_id_2
+                },
+            );
+
+            check_next_is_pending(&mut connection_requests).await;
+        });
+    }
+
+    #[test]
+    fn replacing_a_connection_request_works() {
+        let mut connection_requests = ConnectionRequests::default();
+
+        executor::block_on(async move {
+            check_next_is_pending(&mut connection_requests).await;
+
+            let validator_1 = ValidatorPair::generate().0.public();
+            let validator_2 = ValidatorPair::generate().0.public();
+
+            let auth_1 = AuthorityDiscoveryId::from_slice(&[1; 32]);
+            let auth_2 = AuthorityDiscoveryId::from_slice(&[2; 32]);
+
+            let mut validator_map_1 = HashMap::new();
+            let mut validator_map_2 = HashMap::new();
+
+            validator_map_1.insert(auth_1.clone(), validator_1.clone());
+            validator_map_2.insert(auth_2.clone(), validator_2.clone());
+
+            let (mut rq1_tx, rq1_rx) = mpsc::channel(8);
+
+            let (mut rq2_tx, rq2_rx) = mpsc::channel(8);
+
+            let peer_id_1 = PeerId::random();
+            let peer_id_2 = PeerId::random();
+
+            let connection_request_1 = ConnectionRequest {
+                validator_map: validator_map_1,
+                connections: rq1_rx,
+            };
+
+            let connection_request_2 = ConnectionRequest {
+                validator_map: validator_map_2,
+                connections: rq2_rx,
+            };
+
+            let relay_parent = Hash::repeat_byte(3);
+
+            connection_requests.put(relay_parent.clone(), connection_request_1);
+
+            rq1_tx
+                .send((auth_1.clone(), peer_id_1.clone()))
+                .await
+                .unwrap();
+
+            let res = connection_requests.next().await;
+            assert_eq!(
+                res,
+                DiscoveredValidator {
+                    relay_parent,
+                    validator_id: validator_1,
+                    peer_id: peer_id_1.clone()
+                }
+            );
+
+            connection_requests.put(relay_parent.clone(), connection_request_2);
+
+            assert!(rq1_tx.send((auth_1, peer_id_1.clone())).await.is_err());
+
+            rq2_tx.send((auth_2, peer_id_2.clone())).await.unwrap();
+
+            let res = connection_requests.next().await;
+            assert_eq!(
+                res,
+                DiscoveredValidator {
+                    relay_parent,
+                    validator_id: validator_2,
+                    peer_id: peer_id_2
+                }
+            );
+
+            check_next_is_pending(&mut connection_requests).await;
+        });
     }
 }

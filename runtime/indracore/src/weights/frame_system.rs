@@ -43,32 +43,32 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> frame_system::WeightInfo for WeightInfo<T> {
     fn remark(_b: u32) -> Weight {
-        1_851_000_u64
+        (1_851_000 as Weight)
     }
     fn set_heap_pages() -> Weight {
-        2_436_000_u64.saturating_add(T::DbWeight::get().writes(1_u64))
+        (2_436_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
     }
     fn set_changes_trie_config() -> Weight {
-        11_436_000_u64
-            .saturating_add(T::DbWeight::get().reads(1_u64))
-            .saturating_add(T::DbWeight::get().writes(2_u64))
+        (11_436_000 as Weight)
+            .saturating_add(T::DbWeight::get().reads(1 as Weight))
+            .saturating_add(T::DbWeight::get().writes(2 as Weight))
     }
     fn set_storage(i: u32) -> Weight {
-        0_u64
-            .saturating_add(813_000_u64.saturating_mul(i as Weight))
-            .saturating_add(T::DbWeight::get().writes(1_u64.saturating_mul(i as Weight)))
+        (0 as Weight)
+            .saturating_add((813_000 as Weight).saturating_mul(i as Weight))
+            .saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(i as Weight)))
     }
     fn kill_storage(i: u32) -> Weight {
-        0_u64
-            .saturating_add(545_000_u64.saturating_mul(i as Weight))
-            .saturating_add(T::DbWeight::get().writes(1_u64.saturating_mul(i as Weight)))
+        (0 as Weight)
+            .saturating_add((545_000 as Weight).saturating_mul(i as Weight))
+            .saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(i as Weight)))
     }
     fn kill_prefix(p: u32) -> Weight {
-        0_u64
-            .saturating_add(869_000_u64.saturating_mul(p as Weight))
-            .saturating_add(T::DbWeight::get().writes(1_u64.saturating_mul(p as Weight)))
+        (0 as Weight)
+            .saturating_add((869_000 as Weight).saturating_mul(p as Weight))
+            .saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(p as Weight)))
     }
     fn suicide() -> Weight {
-        35_460_000_u64
+        (35_460_000 as Weight)
     }
 }

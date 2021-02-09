@@ -30,6 +30,7 @@ pub mod inclusion_inherent;
 pub mod initializer;
 pub mod origin;
 pub mod paras;
+pub mod reward_points;
 pub mod scheduler;
 pub mod session_info;
 pub mod ump;
@@ -37,6 +38,9 @@ pub mod ump;
 pub mod runtime_api_impl;
 
 mod util;
+
+#[cfg(test)]
+mod mock;
 
 pub use origin::{ensure_parachain, Origin};
 

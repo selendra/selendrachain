@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Polkadot CLI library.
+//! Indracore CLI library.
 
 use structopt::StructOpt;
 
@@ -76,6 +76,13 @@ pub struct RunCmd {
     /// elapsed (i.e. until a block at height `pause_block + delay` is imported).
     #[structopt(long = "grandpa-pause", number_of_values(2))]
     pub grandpa_pause: Vec<u32>,
+
+    /// Add the destination address to the jaeger agent.
+    ///
+    /// Must be valid socket address, of format `IP:Port`
+    /// commonly `127.0.0.1:6831`.
+    #[structopt(long)]
+    pub jaeger_agent: Option<std::net::SocketAddr>,
 }
 
 #[allow(missing_docs)]
@@ -83,7 +90,6 @@ pub struct RunCmd {
 pub struct Cli {
     #[structopt(subcommand)]
     pub subcommand: Option<Subcommand>,
-
     #[structopt(flatten)]
     pub run: RunCmd,
 }

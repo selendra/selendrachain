@@ -5,20 +5,22 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
-futures = "0.3.8"
+futures = "0.3.12"
 futures-timer = "3.0.2"
 tracing = "0.1.22"
+
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sc-basic-authorship = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sc-block-builder = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sc-client-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-blockchain = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-consensus = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-inherents = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-runtime = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-transaction-pool = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+
 indracore-node-subsystem = { path = "../../subsystem" }
 indracore-overseer = { path = "../../overseer" }
 indracore-primitives = { path = "../../../primitives" }
-sc-basic-authorship = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
-sc-block-builder = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
-sc-client-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
-sp-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
-sp-blockchain = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
-sp-consensus = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
-sp-inherents = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
-sp-runtime = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
-sp-transaction-pool = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/selendra/substrate", branch = "v2.0.1" }

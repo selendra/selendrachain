@@ -16,12 +16,12 @@
 
 /// Money matters.
 pub mod currency {
-    use primitives::v1::Balance;
+    use primitives::v0::Balance;
 
-    pub const SELS: Balance = 1_000_000_000_000_000_000;
-    pub const DOLLARS: Balance = SELS / 100; // 1_000_000_000_000_000_0
-    pub const CENTS: Balance = DOLLARS / 100; // 1_000_000_000_000_00
-    pub const MILLICENTS: Balance = CENTS / 1_000; // 1_000_000_000_00
+    pub const SELS: Balance = 1_000_000_000_000;
+    pub const DOLLARS: Balance = SELS / 100; // 10_000_000_000
+    pub const CENTS: Balance = DOLLARS / 100; // 100_000_000
+    pub const MILLICENTS: Balance = CENTS / 1_000; // 100_000
 
     pub const fn deposit(items: u32, bytes: u32) -> Balance {
         items as Balance * 20 * DOLLARS + (bytes as Balance) * 100 * MILLICENTS
@@ -30,7 +30,7 @@ pub mod currency {
 
 /// Time and blocks.
 pub mod time {
-    use primitives::v1::{BlockNumber, Moment};
+    use primitives::v0::{BlockNumber, Moment};
     pub const MILLISECS_PER_BLOCK: Moment = 6000;
     pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
     pub const EPOCH_DURATION_IN_BLOCKS: BlockNumber = 4 * HOURS;
@@ -49,7 +49,7 @@ pub mod fee {
     use frame_support::weights::{
         WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
     };
-    use primitives::v1::Balance;
+    use primitives::v0::Balance;
     use runtime_common::ExtrinsicBaseWeight;
     use smallvec::smallvec;
     pub use sp_runtime::Perbill;
@@ -81,5 +81,33 @@ pub mod fee {
                 coeff_integer: p / q,
             }]
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::currency::{CENTS, DOLLARS, MILLICENTS};
+    use super::fee::WeightToFee;
+    use frame_support::weights::WeightToFeePolynomial;
+    use runtime_common::{ExtrinsicBaseWeight, MAXIMUM_BLOCK_WEIGHT};
+
+    #[test]
+    // This function tests that the fee for `MAXIMUM_BLOCK_WEIGHT` of weight is correct
+    fn full_block_fee_is_correct() {
+        // A full block should cost 16 DOLLARS
+        println!("Base: {}", ExtrinsicBaseWeight::get());
+        let x = WeightToFee::calc(&MAXIMUM_BLOCK_WEIGHT);
+        let y = 16 * DOLLARS;
+        assert!(x.max(y) - x.min(y) < MILLICENTS);
+    }
+
+    #[test]
+    // This function tests that the fee for `ExtrinsicBaseWeight` of weight is correct
+    fn extrinsic_base_fee_is_correct() {
+        // `ExtrinsicBaseWeight` should cost 1/10 of a CENT
+        println!("Base: {}", ExtrinsicBaseWeight::get());
+        let x = WeightToFee::calc(&ExtrinsicBaseWeight::get());
+        let y = CENTS / 10;
+        assert!(x.max(y) - x.min(y) < MILLICENTS);
     }
 }

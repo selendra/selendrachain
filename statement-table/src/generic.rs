@@ -242,7 +242,7 @@ impl<C: Context> CandidateData<C> {
                     }
                 })
                 .take(validity_threshold)
-                .map(|(k, v)| (k.clone(), v))
+                .map(|(k, v)| (k.clone(), v.clone()))
                 .collect();
 
             assert!(
@@ -489,7 +489,7 @@ impl<C: Context> Table<C> {
 
                         return Err(Misbehavior::MultipleCandidates(MultipleCandidates {
                             first: (old_candidate, old_sig.clone()),
-                            second: (candidate, signature),
+                            second: (candidate, signature.clone()),
                         }));
                     }
 
@@ -618,7 +618,7 @@ impl<C: Context> Table<C> {
             }
             Entry::Vacant(vacant) => {
                 if let ValidityVote::Invalid(_) = vote {
-                    votes.indicated_bad_by.push(from);
+                    votes.indicated_bad_by.push(from.clone());
                 }
 
                 vacant.insert(vote);
@@ -654,5 +654,508 @@ fn update_includable_count<G: Hash + Eq + Clone>(
 
     if !was_includable && is_includable {
         *map.entry(group_id.clone()).or_insert(0) += 1;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    fn create<C: Context>() -> Table<C> {
+        Table::default()
+    }
+
+    #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+    struct AuthorityId(usize);
+
+    #[derive(Debug, Copy, Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
+    struct GroupId(usize);
+
+    // group, body
+    #[derive(Debug, Copy, Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
+    struct Candidate(usize, usize);
+
+    #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+    struct Signature(usize);
+
+    #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+    struct Digest(usize);
+
+    #[derive(Debug, PartialEq, Eq)]
+    struct TestContext {
+        // v -> parachain group
+        authorities: HashMap<AuthorityId, GroupId>,
+    }
+
+    impl Context for TestContext {
+        type AuthorityId = AuthorityId;
+        type Digest = Digest;
+        type Candidate = Candidate;
+        type GroupId = GroupId;
+        type Signature = Signature;
+
+        fn candidate_digest(candidate: &Candidate) -> Digest {
+            Digest(candidate.1)
+        }
+
+        fn candidate_group(candidate: &Candidate) -> GroupId {
+            GroupId(candidate.0)
+        }
+
+        fn is_member_of(&self, authority: &AuthorityId, group: &GroupId) -> bool {
+            self.authorities
+                .get(authority)
+                .map(|v| v == group)
+                .unwrap_or(false)
+        }
+
+        fn requisite_votes(&self, id: &GroupId) -> usize {
+            let mut total_validity = 0;
+
+            for validity in self.authorities.values() {
+                if validity == id {
+                    total_validity += 1
+                }
+            }
+
+            total_validity / 2 + 1
+        }
+    }
+
+    #[test]
+    fn submitting_two_candidates_is_misbehavior() {
+        let context = TestContext {
+            authorities: {
+                let mut map = HashMap::new();
+                map.insert(AuthorityId(1), GroupId(2));
+                map
+            },
+        };
+
+        let mut table = create();
+        let statement_a = SignedStatement {
+            statement: Statement::Candidate(Candidate(2, 100)),
+            signature: Signature(1),
+            sender: AuthorityId(1),
+        };
+
+        let statement_b = SignedStatement {
+            statement: Statement::Candidate(Candidate(2, 999)),
+            signature: Signature(1),
+            sender: AuthorityId(1),
+        };
+
+        table.import_statement(&context, statement_a);
+        assert!(!table.detected_misbehavior.contains_key(&AuthorityId(1)));
+
+        table.import_statement(&context, statement_b);
+        assert_eq!(
+            table.detected_misbehavior.get(&AuthorityId(1)).unwrap(),
+            &Misbehavior::MultipleCandidates(MultipleCandidates {
+                first: (Candidate(2, 100), Signature(1)),
+                second: (Candidate(2, 999), Signature(1)),
+            })
+        );
+    }
+
+    #[test]
+    fn submitting_candidate_from_wrong_group_is_misbehavior() {
+        let context = TestContext {
+            authorities: {
+                let mut map = HashMap::new();
+                map.insert(AuthorityId(1), GroupId(3));
+                map
+            },
+        };
+
+        let mut table = create();
+        let statement = SignedStatement {
+            statement: Statement::Candidate(Candidate(2, 100)),
+            signature: Signature(1),
+            sender: AuthorityId(1),
+        };
+
+        table.import_statement(&context, statement);
+
+        assert_eq!(
+            table.detected_misbehavior.get(&AuthorityId(1)).unwrap(),
+            &Misbehavior::UnauthorizedStatement(UnauthorizedStatement {
+                statement: SignedStatement {
+                    statement: Statement::Candidate(Candidate(2, 100)),
+                    signature: Signature(1),
+                    sender: AuthorityId(1),
+                },
+            })
+        );
+    }
+
+    #[test]
+    fn unauthorized_votes() {
+        let context = TestContext {
+            authorities: {
+                let mut map = HashMap::new();
+                map.insert(AuthorityId(1), GroupId(2));
+                map.insert(AuthorityId(2), GroupId(3));
+                map
+            },
+        };
+
+        let mut table = create();
+
+        let candidate_a = SignedStatement {
+            statement: Statement::Candidate(Candidate(2, 100)),
+            signature: Signature(1),
+            sender: AuthorityId(1),
+        };
+        let candidate_a_digest = Digest(100);
+
+        table.import_statement(&context, candidate_a);
+        assert!(!table.detected_misbehavior.contains_key(&AuthorityId(1)));
+        assert!(!table.detected_misbehavior.contains_key(&AuthorityId(2)));
+
+        // authority 2 votes for validity on 1's candidate.
+        let bad_validity_vote = SignedStatement {
+            statement: Statement::Valid(candidate_a_digest.clone()),
+            signature: Signature(2),
+            sender: AuthorityId(2),
+        };
+        table.import_statement(&context, bad_validity_vote);
+
+        assert_eq!(
+            table.detected_misbehavior.get(&AuthorityId(2)).unwrap(),
+            &Misbehavior::UnauthorizedStatement(UnauthorizedStatement {
+                statement: SignedStatement {
+                    statement: Statement::Valid(candidate_a_digest),
+                    signature: Signature(2),
+                    sender: AuthorityId(2),
+                },
+            })
+        );
+    }
+
+    #[test]
+    fn validity_double_vote_is_misbehavior() {
+        let context = TestContext {
+            authorities: {
+                let mut map = HashMap::new();
+                map.insert(AuthorityId(1), GroupId(2));
+                map.insert(AuthorityId(2), GroupId(2));
+                map
+            },
+        };
+
+        let mut table = create();
+        let statement = SignedStatement {
+            statement: Statement::Candidate(Candidate(2, 100)),
+            signature: Signature(1),
+            sender: AuthorityId(1),
+        };
+        let candidate_digest = Digest(100);
+
+        table.import_statement(&context, statement);
+        assert!(!table.detected_misbehavior.contains_key(&AuthorityId(1)));
+
+        let valid_statement = SignedStatement {
+            statement: Statement::Valid(candidate_digest.clone()),
+            signature: Signature(2),
+            sender: AuthorityId(2),
+        };
+
+        let invalid_statement = SignedStatement {
+            statement: Statement::Invalid(candidate_digest.clone()),
+            signature: Signature(2),
+            sender: AuthorityId(2),
+        };
+
+        table.import_statement(&context, valid_statement);
+        assert!(!table.detected_misbehavior.contains_key(&AuthorityId(2)));
+
+        table.import_statement(&context, invalid_statement);
+
+        assert_eq!(
+            table.detected_misbehavior.get(&AuthorityId(2)).unwrap(),
+            &Misbehavior::ValidityDoubleVote(ValidityDoubleVote::ValidityAndInvalidity(
+                Candidate(2, 100),
+                Signature(2),
+                Signature(2),
+            ))
+        );
+    }
+
+    #[test]
+    fn candidate_double_signature_is_misbehavior() {
+        let context = TestContext {
+            authorities: {
+                let mut map = HashMap::new();
+                map.insert(AuthorityId(1), GroupId(2));
+                map.insert(AuthorityId(2), GroupId(2));
+                map
+            },
+        };
+
+        let mut table = create();
+        let statement = SignedStatement {
+            statement: Statement::Candidate(Candidate(2, 100)),
+            signature: Signature(1),
+            sender: AuthorityId(1),
+        };
+
+        table.import_statement(&context, statement);
+        assert!(!table.detected_misbehavior.contains_key(&AuthorityId(1)));
+
+        let invalid_statement = SignedStatement {
+            statement: Statement::Candidate(Candidate(2, 100)),
+            signature: Signature(999),
+            sender: AuthorityId(1),
+        };
+
+        table.import_statement(&context, invalid_statement);
+        assert!(table.detected_misbehavior.contains_key(&AuthorityId(1)));
+    }
+
+    #[test]
+    fn validity_invalidity_double_signature_is_misbehavior() {
+        let context = TestContext {
+            authorities: {
+                let mut map = HashMap::new();
+                map.insert(AuthorityId(1), GroupId(2));
+                map.insert(AuthorityId(2), GroupId(2));
+                map.insert(AuthorityId(3), GroupId(2));
+                map
+            },
+        };
+
+        let mut table = create();
+        let statement = SignedStatement {
+            statement: Statement::Candidate(Candidate(2, 100)),
+            signature: Signature(1),
+            sender: AuthorityId(1),
+        };
+
+        table.import_statement(&context, statement);
+        assert!(!table.detected_misbehavior.contains_key(&AuthorityId(1)));
+
+        // insert two validity votes from authority 2 with different signatures
+        {
+            let statement = SignedStatement {
+                statement: Statement::Valid(Digest(100)),
+                signature: Signature(2),
+                sender: AuthorityId(2),
+            };
+
+            table.import_statement(&context, statement);
+            assert!(!table.detected_misbehavior.contains_key(&AuthorityId(2)));
+
+            let invalid_statement = SignedStatement {
+                statement: Statement::Valid(Digest(100)),
+                signature: Signature(222),
+                sender: AuthorityId(2),
+            };
+
+            table.import_statement(&context, invalid_statement);
+            assert!(table.detected_misbehavior.contains_key(&AuthorityId(2)));
+        }
+
+        // insert two invalidity votes from authority 2 with different signatures
+        {
+            let statement = SignedStatement {
+                statement: Statement::Invalid(Digest(100)),
+                signature: Signature(3),
+                sender: AuthorityId(3),
+            };
+
+            table.import_statement(&context, statement);
+            assert!(!table.detected_misbehavior.contains_key(&AuthorityId(3)));
+
+            let invalid_statement = SignedStatement {
+                statement: Statement::Invalid(Digest(100)),
+                signature: Signature(333),
+                sender: AuthorityId(3),
+            };
+
+            table.import_statement(&context, invalid_statement);
+            assert!(table.detected_misbehavior.contains_key(&AuthorityId(3)));
+        }
+    }
+
+    #[test]
+    fn issue_and_vote_is_misbehavior() {
+        let context = TestContext {
+            authorities: {
+                let mut map = HashMap::new();
+                map.insert(AuthorityId(1), GroupId(2));
+                map
+            },
+        };
+
+        let mut table = create();
+        let statement = SignedStatement {
+            statement: Statement::Candidate(Candidate(2, 100)),
+            signature: Signature(1),
+            sender: AuthorityId(1),
+        };
+        let candidate_digest = Digest(100);
+
+        table.import_statement(&context, statement);
+        assert!(!table.detected_misbehavior.contains_key(&AuthorityId(1)));
+
+        let extra_vote = SignedStatement {
+            statement: Statement::Valid(candidate_digest.clone()),
+            signature: Signature(1),
+            sender: AuthorityId(1),
+        };
+
+        table.import_statement(&context, extra_vote);
+        assert_eq!(
+            table.detected_misbehavior.get(&AuthorityId(1)).unwrap(),
+            &Misbehavior::ValidityDoubleVote(ValidityDoubleVote::IssuedAndValidity(
+                (Candidate(2, 100), Signature(1)),
+                (Digest(100), Signature(1)),
+            ))
+        );
+    }
+
+    #[test]
+    fn candidate_can_be_included() {
+        let validity_threshold = 6;
+
+        let mut candidate = CandidateData::<TestContext> {
+            group_id: GroupId(4),
+            candidate: Candidate(4, 12345),
+            validity_votes: HashMap::new(),
+            indicated_bad_by: Vec::new(),
+        };
+
+        assert!(!candidate.can_be_included(validity_threshold));
+
+        for i in 0..validity_threshold {
+            candidate.validity_votes.insert(
+                AuthorityId(i + 100),
+                ValidityVote::Valid(Signature(i + 100)),
+            );
+        }
+
+        assert!(candidate.can_be_included(validity_threshold));
+
+        candidate.indicated_bad_by.push(AuthorityId(1024));
+
+        assert!(candidate.can_be_included(validity_threshold));
+    }
+
+    #[test]
+    fn includability_counter() {
+        let context = TestContext {
+            authorities: {
+                let mut map = HashMap::new();
+                map.insert(AuthorityId(1), GroupId(2));
+                map.insert(AuthorityId(2), GroupId(2));
+                map.insert(AuthorityId(3), GroupId(2));
+                map
+            },
+        };
+
+        // have 2/3 validity guarantors note validity.
+        let mut table = create();
+        let statement = SignedStatement {
+            statement: Statement::Candidate(Candidate(2, 100)),
+            signature: Signature(1),
+            sender: AuthorityId(1),
+        };
+        let candidate_digest = Digest(100);
+
+        table.import_statement(&context, statement);
+
+        assert!(!table.detected_misbehavior.contains_key(&AuthorityId(1)));
+        assert!(!table.candidate_includable(&candidate_digest, &context));
+        assert!(table.includable_count.is_empty());
+
+        let vote = SignedStatement {
+            statement: Statement::Valid(candidate_digest.clone()),
+            signature: Signature(2),
+            sender: AuthorityId(2),
+        };
+
+        table.import_statement(&context, vote);
+        assert!(!table.detected_misbehavior.contains_key(&AuthorityId(2)));
+        assert!(table.candidate_includable(&candidate_digest, &context));
+        assert!(table.includable_count.get(&GroupId(2)).is_some());
+
+        // have the last validity guarantor note invalidity. now it is unincludable.
+        let vote = SignedStatement {
+            statement: Statement::Invalid(candidate_digest.clone()),
+            signature: Signature(3),
+            sender: AuthorityId(3),
+        };
+
+        table.import_statement(&context, vote);
+        assert!(!table.detected_misbehavior.contains_key(&AuthorityId(3)));
+        assert!(table.candidate_includable(&candidate_digest, &context));
+        assert!(table.includable_count.get(&GroupId(2)).is_some());
+    }
+
+    #[test]
+    fn candidate_import_gives_summary() {
+        let context = TestContext {
+            authorities: {
+                let mut map = HashMap::new();
+                map.insert(AuthorityId(1), GroupId(2));
+                map
+            },
+        };
+
+        let mut table = create();
+        let statement = SignedStatement {
+            statement: Statement::Candidate(Candidate(2, 100)),
+            signature: Signature(1),
+            sender: AuthorityId(1),
+        };
+
+        let summary = table
+            .import_statement(&context, statement)
+            .expect("candidate import to give summary");
+
+        assert_eq!(summary.candidate, Digest(100));
+        assert_eq!(summary.group_id, GroupId(2));
+        assert_eq!(summary.validity_votes, 1);
+    }
+
+    #[test]
+    fn candidate_vote_gives_summary() {
+        let context = TestContext {
+            authorities: {
+                let mut map = HashMap::new();
+                map.insert(AuthorityId(1), GroupId(2));
+                map.insert(AuthorityId(2), GroupId(2));
+                map
+            },
+        };
+
+        let mut table = create();
+        let statement = SignedStatement {
+            statement: Statement::Candidate(Candidate(2, 100)),
+            signature: Signature(1),
+            sender: AuthorityId(1),
+        };
+        let candidate_digest = Digest(100);
+
+        table.import_statement(&context, statement);
+        assert!(!table.detected_misbehavior.contains_key(&AuthorityId(1)));
+
+        let vote = SignedStatement {
+            statement: Statement::Valid(candidate_digest.clone()),
+            signature: Signature(2),
+            sender: AuthorityId(2),
+        };
+
+        let summary = table
+            .import_statement(&context, vote)
+            .expect("candidate vote to give summary");
+
+        assert!(!table.detected_misbehavior.contains_key(&AuthorityId(2)));
+
+        assert_eq!(summary.candidate, Digest(100));
+        assert_eq!(summary.group_id, GroupId(2));
+        assert_eq!(summary.validity_votes, 2);
     }
 }

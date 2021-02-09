@@ -1,0 +1,18 @@
+[package]
+name = "indracore-node-jaeger"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+description = "Indracore Jaeger primitives"
+
+[dependencies]
+async-std = "1.8.0"
+mick-jaeger = "0.1.4"
+lazy_static = "1.4"
+parking_lot = "0.11.1"
+thiserror = "1.0.23"
+log = "0.4.13"
+
+sc-network = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+indracore-primitives = { path = "../../primitives" }

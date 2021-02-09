@@ -1,6 +1,6 @@
 [package]
 name = "indracore-cli"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Selendra <info@selendra.org>"]
 description = "Indracore Relay-chain Client Node"
 edition = "2018"
@@ -12,30 +12,30 @@ wasm-opt = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-log = "0.4.11"
-thiserror = "1.0.22"
+log = "0.4.13"
+thiserror = "1.0.23"
 tracing-futures = "0.2.4"
 structopt = { version = "0.3.21", optional = true }
 wasm-bindgen = { version = "0.2.69", optional = true }
 wasm-bindgen-futures = { version = "0.4.19", optional = true }
+futures = "0.3.12"
 
-sc-cli = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", optional = true }
-sc-service = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", optional = true }
-sc-tracing = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
-sp-trie = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", default-features = false }
-frame-benchmarking-cli = { git = "https://github.com/selendra/substrate", branch = "v2.0.1", optional = true }
-browser-utils = { package = "substrate-browser-utils", git = "https://github.com/selendra/substrate", branch = "v2.0.1", optional = true }
+browser-utils = { package = "substrate-browser-utils", git = "https://github.com/selendra/substrate", branch = "v2.0.2", optional = true }
+frame-benchmarking-cli = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", optional = true }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-trie = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
+sc-cli = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", optional = true }
+sc-service = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", optional = true }
 
 service = { package = "indracore-service", path = "../node/service", default-features = false, optional = true }
 indracore-parachain = { path = "../parachain", optional = true }
 
 [build-dependencies]
-substrate-build-script-utils = { git = "https://github.com/selendra/substrate", branch = "v2.0.1" }
+substrate-build-script-utils = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
 
 [features]
 default = [ "wasmtime", "db", "cli", "full-node", "trie-memory-tracker", "indracore-parachain" ]
-wasmtime = [ "sc-cli/wasmtime" ]
+wasmtime = [ "sc-cli/wasmtime", "indracore-parachain/wasmtime" ]
 db = [ "service/db" ]
 cli = [
 	"structopt",
@@ -53,4 +53,3 @@ runtime-benchmarks = [ "service/runtime-benchmarks" ]
 trie-memory-tracker = [ "sp-trie/memory-tracker" ]
 full-node = [ "service/full-node" ]
 real-overseer = [ "service/real-overseer" ]
-
