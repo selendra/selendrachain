@@ -93,14 +93,14 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("indracore"),
     impl_name: create_runtime_str!("selendra-indracore"),
-    authoring_version: 0,
-    spec_version: 28,
-    impl_version: 0,
+    authoring_version: 3,
+    spec_version: 3,
+    impl_version: 1,
     #[cfg(not(feature = "disable-runtime-api"))]
     apis: RUNTIME_API_VERSIONS,
     #[cfg(feature = "disable-runtime-api")]
     apis: version::create_apis_vec![[]],
-    transaction_version: 6,
+    transaction_version: 2,
 };
 
 /// Native version.
