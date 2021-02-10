@@ -38,6 +38,7 @@ use indracore_subsystem::{
     ActiveLeavesUpdate, FromOverseer, OverseerSignal, SpawnedSubsystem, Subsystem,
     SubsystemContext, SubsystemError, SubsystemResult,
 };
+use tracing_futures as _;
 
 use futures::channel::oneshot;
 use futures::prelude::*;

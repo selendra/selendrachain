@@ -29,6 +29,7 @@ use indracore_subsystem::{
     messages::{RuntimeApiMessage, RuntimeApiRequest as Request},
     FromOverseer, OverseerSignal, SpawnedSubsystem, Subsystem, SubsystemContext, SubsystemResult,
 };
+use tracing_futures as _;
 
 use sp_api::ProvideRuntimeApi;
 use sp_core::traits::SpawnNamed;

@@ -26,6 +26,7 @@
 
 use futures::{channel::oneshot, FutureExt, TryFutureExt};
 use parity_scale_codec::{Decode, Encode};
+use tracing_futures as _;
 
 use sp_core::crypto::Public;
 use sp_keystore::{CryptoStore, SyncCryptoStorePtr};

@@ -43,6 +43,7 @@ use indracore_primitives::v1::{
 use sp_keystore::SyncCryptoStorePtr;
 use std::{pin::Pin, sync::Arc};
 use thiserror::Error;
+use tracing_futures as _;
 
 const LOG_TARGET: &'static str = "candidate_selection";
 

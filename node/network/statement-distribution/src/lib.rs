@@ -39,6 +39,7 @@ use indracore_subsystem::{
     SubsystemContext, SubsystemResult,
 };
 use node_primitives::SignedFullStatement;
+use tracing_futures as _;
 
 use futures::channel::{mpsc, oneshot};
 use futures::prelude::*;

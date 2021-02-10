@@ -176,7 +176,7 @@ impl ConnectionRequests {
     /// be revoked and substituted with the given one.
     pub fn put(&mut self, relay_parent: Hash, request: ConnectionRequest) {
         self.remove(&relay_parent);
-        let token = self.requests.push(ConnectionRequestForRelayParent {
+        let token = self.requests.insert(ConnectionRequestForRelayParent {
             relay_parent,
             request,
         });

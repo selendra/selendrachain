@@ -997,8 +997,8 @@ impl frame_support::traits::OnRuntimeUpgrade for PhragmenElectionDepositRuntimeU
 }
 
 impl pallet_sudo::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+    type Event = Event;
+    type Call = Call;
 }
 
 construct_runtime! {
