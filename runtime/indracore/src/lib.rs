@@ -142,6 +142,7 @@ impl Filter<Call> for BaseFilter {
             | Call::Proxy(_)
             | Call::Multisig(_)
             | Call::Bounties(_)
+            | Call::Sudo(_)
             | Call::Tips(_) => true,
         }
     }
@@ -995,6 +996,11 @@ impl frame_support::traits::OnRuntimeUpgrade for PhragmenElectionDepositRuntimeU
     }
 }
 
+impl pallet_sudo::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+}
+
 construct_runtime! {
     pub enum Runtime where
         Block = Block,
@@ -1030,8 +1036,7 @@ construct_runtime! {
         Identity: pallet_identity::{Module, Call, Storage, Event<T>},
         Proxy: pallet_proxy::{Module, Call, Storage, Event<T>},
         Multisig: pallet_multisig::{Module, Call, Storage, Event<T>},
-        
-
+        Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
     }
 }
 

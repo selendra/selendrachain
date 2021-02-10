@@ -63,6 +63,7 @@ pallet-tips = { git = "https://github.com/selendra/substrate", branch = "v2.0.2"
 pallet-treasury = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
 pallet-vesting = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
 pallet-utility = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
+pallet-sudo = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
 
 frame-benchmarking = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false, optional = true }
 frame-system-benchmarking = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false, optional = true }
@@ -143,6 +144,7 @@ std = [
 	"runtime-common/std",
 	"pallet-vesting/std",
 	"pallet-utility/std",
+	"pallet-sudo/std",
 ]
 runtime-benchmarks = [
 	"runtime-common/runtime-benchmarks",
