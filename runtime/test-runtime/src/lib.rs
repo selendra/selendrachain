@@ -462,8 +462,8 @@ impl parachains_hrmp::Config for Runtime {
 }
 
 impl pallet_sudo::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+    type Event = Event;
+    type Call = Call;
 }
 
 impl parachains_scheduler::Config for Runtime {}

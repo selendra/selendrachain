@@ -22,6 +22,7 @@ use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use std::pin::Pin;
 use std::sync::Arc;
+use tracing_futures as _;
 
 use bitvec::vec::BitVec;
 use futures::{

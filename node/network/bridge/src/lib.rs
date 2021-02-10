@@ -21,6 +21,7 @@
 
 use futures::prelude::*;
 use parity_scale_codec::{Decode, Encode};
+use tracing_futures as _;
 
 use indracore_node_network_protocol::{
     peer_set::PeerSet, v1 as protocol_v1, NetworkBridgeEvent, OurView, PeerId, ReputationChange,

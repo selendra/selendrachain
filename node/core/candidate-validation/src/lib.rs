@@ -42,6 +42,7 @@ use indracore_subsystem::{
     FromOverseer, OverseerSignal, SpawnedSubsystem, Subsystem, SubsystemContext, SubsystemError,
     SubsystemResult,
 };
+use tracing_futures as _;
 
 use parity_scale_codec::Encode;
 use sp_core::traits::SpawnNamed;

@@ -602,7 +602,7 @@ async fn handle_from_interaction(
 
             ctx.send_message(AllMessages::NetworkBridge(message)).await;
 
-            let token = state.connecting_validators.push(rx);
+            let token = state.connecting_validators.insert(rx);
 
             state
                 .discovering_validators
