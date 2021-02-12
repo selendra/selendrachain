@@ -3154,6 +3154,7 @@ dependencies = [
  "pallet-offences-benchmarking",
  "pallet-proxy",
  "pallet-randomness-collective-flip",
+ "pallet-recovery",
  "pallet-scheduler",
  "pallet-session",
  "pallet-session-benchmarking",
@@ -5288,6 +5289,21 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "safe-mix",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-recovery"
+version = "2.0.1"
+source = "git+https://github.com/selendra/substrate?branch=v2.0.2#8aafeb81a60650aaffdef46d0cf9360a50e59e6e"
+dependencies = [
+ "enumflags2",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]

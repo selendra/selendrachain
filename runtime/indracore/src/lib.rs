@@ -143,6 +143,7 @@ impl Filter<Call> for BaseFilter {
             | Call::Multisig(_)
             | Call::Bounties(_)
             | Call::Sudo(_)
+            | Call::Recovery(_)
             | Call::Tips(_) => true,
         }
     }
@@ -895,36 +896,42 @@ impl InstanceFilter<Call> for ProxyType {
             ProxyType::NonTransfer => matches!(
                 c,
                 Call::System(..) |
-				Call::Scheduler(..) |
-				Call::Babe(..) |
-				Call::Timestamp(..) |
-				Call::Indices(pallet_indices::Call::claim(..)) |
-				Call::Indices(pallet_indices::Call::free(..)) |
-				Call::Indices(pallet_indices::Call::freeze(..)) |
-				// Specifically omitting Indices `transfer`, `force_transfer`
-				// Specifically omitting the entire Balances pallet
-				Call::Authorship(..) |
-				Call::Staking(..) |
-				Call::Offences(..) |
-				Call::Session(..) |
-				Call::Grandpa(..) |
-				Call::ImOnline(..) |
-				Call::AuthorityDiscovery(..) |
-				Call::Democracy(..) |
-				Call::Council(..) |
-				Call::TechnicalCommittee(..) |
-				Call::ElectionsPhragmen(..) |
-				Call::TechnicalMembership(..) |
-				Call::Treasury(..) |
-				Call::Bounties(..) |
-				Call::Tips(..) |
-				Call::Vesting(pallet_vesting::Call::vest(..)) |
-				Call::Vesting(pallet_vesting::Call::vest_other(..)) |
-				// Specifically omitting Vesting `vested_transfer`, and `force_vested_transfer`
-				Call::Utility(..) |
-				Call::Identity(..) |
-				Call::Proxy(..) |
-				Call::Multisig(..)
+                Call::Scheduler(..) |
+                Call::Babe(..) |
+                Call::Timestamp(..) |
+                Call::Indices(pallet_indices::Call::claim(..)) |
+                Call::Indices(pallet_indices::Call::free(..)) |
+                Call::Indices(pallet_indices::Call::freeze(..)) |
+                // Specifically omitting Indices `transfer`, `force_transfer`
+                // Specifically omitting the entire Balances pallet
+                Call::Authorship(..) |
+                Call::Staking(..) |
+                Call::Offences(..) |
+                Call::Session(..) |
+                Call::Grandpa(..) |
+                Call::ImOnline(..) |
+                Call::AuthorityDiscovery(..) |
+                Call::Democracy(..) |
+                Call::Council(..) |
+                Call::TechnicalCommittee(..) |
+                Call::ElectionsPhragmen(..) |
+                Call::TechnicalMembership(..) |
+                Call::Treasury(..) |
+                Call::Bounties(..) |
+                Call::Tips(..) |
+                Call::Vesting(pallet_vesting::Call::vest(..)) |
+                Call::Vesting(pallet_vesting::Call::vest_other(..)) |
+                // Specifically omitting Vesting `vested_transfer`, and `force_vested_transfer`
+                Call::Utility(..) |
+                Call::Identity(..) |
+                Call::Proxy(..) |
+                Call::Multisig(..) |
+                Call::Recovery(pallet_recovery::Call::as_recovered(..)) |
+                Call::Recovery(pallet_recovery::Call::vouch_recovery(..)) |
+                Call::Recovery(pallet_recovery::Call::claim_recovery(..)) |
+                Call::Recovery(pallet_recovery::Call::close_recovery(..)) |
+                Call::Recovery(pallet_recovery::Call::remove_recovery(..)) |
+                Call::Recovery(pallet_recovery::Call::cancel_recovered(..))
             ),
             ProxyType::Governance => matches!(
                 c,
@@ -975,6 +982,28 @@ impl pallet_proxy::Config for Runtime {
     type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 
+parameter_types! {
+    pub const ConfigDepositBase: Balance = 5 * DOLLARS;
+    pub const FriendDepositFactor: Balance = 50 * CENTS;
+    pub const MaxFriends: u16 = 9;
+    pub const RecoveryDeposit: Balance = 5 * DOLLARS;
+}
+
+impl pallet_recovery::Config for Runtime {
+    type Event = Event;
+    type Call = Call;
+    type Currency = Balances;
+    type ConfigDepositBase = ConfigDepositBase;
+    type FriendDepositFactor = FriendDepositFactor;
+    type MaxFriends = MaxFriends;
+    type RecoveryDeposit = RecoveryDeposit;
+}
+
+impl pallet_sudo::Config for Runtime {
+    type Event = Event;
+    type Call = Call;
+}
+
 // When this is removed, should also remove `OldSessionKeys`.
 pub struct UpgradeSessionKeys;
 impl frame_support::traits::OnRuntimeUpgrade for UpgradeSessionKeys {
@@ -994,11 +1023,6 @@ impl frame_support::traits::OnRuntimeUpgrade for PhragmenElectionDepositRuntimeU
     fn on_runtime_upgrade() -> frame_support::weights::Weight {
         pallet_elections_phragmen::migrations_3_0_0::apply::<Self>(5 * CENTS, DOLLARS)
     }
-}
-
-impl pallet_sudo::Config for Runtime {
-    type Event = Event;
-    type Call = Call;
 }
 
 construct_runtime! {
@@ -1036,6 +1060,7 @@ construct_runtime! {
         Identity: pallet_identity::{Module, Call, Storage, Event<T>},
         Proxy: pallet_proxy::{Module, Call, Storage, Event<T>},
         Multisig: pallet_multisig::{Module, Call, Storage, Event<T>},
+        Recovery: pallet_recovery::{Module, Call, Storage, Event<T>},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
     }
 }
