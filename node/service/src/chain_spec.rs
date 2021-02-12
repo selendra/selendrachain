@@ -159,6 +159,11 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
         pallet_sudo: Some(indracore::SudoConfig {
             key: endowed_accounts[0].clone(),
         }),
+        pallet_contracts: Some(indracore::ContractsConfig {
+            current_schedule: pallet_contracts::Schedule {
+                ..Default::default()
+            },
+        }),
         pallet_treasury: Some(Default::default()),
     }
 }
@@ -330,6 +335,11 @@ pub fn indracore_testnet_genesis(
         pallet_vesting: Some(indracore::VestingConfig { vesting: vec![] }),
         pallet_sudo: Some(indracore::SudoConfig {
             key: endowed_accounts[0].clone(),
+        }),
+        pallet_contracts: Some(indracore::ContractsConfig {
+            current_schedule: pallet_contracts::Schedule {
+                ..Default::default()
+            },
         }),
         pallet_treasury: Some(Default::default()),
     }

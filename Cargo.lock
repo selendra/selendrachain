@@ -3096,6 +3096,7 @@ version = "0.2.0"
 dependencies = [
  "indracore-primitives",
  "jsonrpc-core",
+ "pallet-contracts-rpc",
  "pallet-transaction-payment-rpc",
  "parity-scale-codec",
  "sc-chain-spec",
@@ -3141,6 +3142,9 @@ dependencies = [
  "pallet-balances",
  "pallet-bounties",
  "pallet-collective",
+ "pallet-contracts",
+ "pallet-contracts-primitives",
+ "pallet-contracts-rpc-runtime-api",
  "pallet-democracy",
  "pallet-elections-phragmen",
  "pallet-grandpa",
@@ -3329,6 +3333,8 @@ dependencies = [
  "indracore-statement-distribution",
  "indracore-test-client",
  "pallet-babe",
+ "pallet-contracts",
+ "pallet-contracts-rpc-runtime-api",
  "pallet-im-online",
  "pallet-staking",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -3449,6 +3455,9 @@ dependencies = [
  "pallet-authorship",
  "pallet-babe",
  "pallet-balances",
+ "pallet-contracts",
+ "pallet-contracts-primitives",
+ "pallet-contracts-rpc-runtime-api",
  "pallet-grandpa",
  "pallet-indices",
  "pallet-nicks",
@@ -3508,6 +3517,7 @@ dependencies = [
  "indracore-service",
  "indracore-test-runtime",
  "pallet-balances",
+ "pallet-contracts",
  "pallet-staking",
  "pallet-sudo",
  "pallet-transaction-payment",
@@ -5081,6 +5091,82 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-contracts"
+version = "2.0.1"
+source = "git+https://github.com/selendra/substrate?branch=v2.0.2#ce6d65f00aa6ecda9b5862fba71c760caa33c023"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-contracts-primitives",
+ "pallet-contracts-proc-macro",
+ "parity-scale-codec",
+ "parity-wasm 0.41.0",
+ "pwasm-utils 0.16.0",
+ "rand 0.7.3",
+ "rand_pcg",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-sandbox",
+ "sp-std",
+ "wasmi-validation",
+]
+
+[[package]]
+name = "pallet-contracts-primitives"
+version = "2.0.1"
+source = "git+https://github.com/selendra/substrate?branch=v2.0.2#ce6d65f00aa6ecda9b5862fba71c760caa33c023"
+dependencies = [
+ "bitflags",
+ "parity-scale-codec",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-contracts-proc-macro"
+version = "0.1.0"
+source = "git+https://github.com/selendra/substrate?branch=v2.0.2#ce6d65f00aa6ecda9b5862fba71c760caa33c023"
+dependencies = [
+ "proc-macro2 1.0.24",
+ "quote 1.0.8",
+ "syn 1.0.60",
+]
+
+[[package]]
+name = "pallet-contracts-rpc"
+version = "0.8.1"
+source = "git+https://github.com/selendra/substrate?branch=v2.0.2#ce6d65f00aa6ecda9b5862fba71c760caa33c023"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "pallet-contracts-primitives",
+ "pallet-contracts-rpc-runtime-api",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+]
+
+[[package]]
+name = "pallet-contracts-rpc-runtime-api"
+version = "0.8.1"
+source = "git+https://github.com/selendra/substrate?branch=v2.0.2#ce6d65f00aa6ecda9b5862fba71c760caa33c023"
+dependencies = [
+ "pallet-contracts-primitives",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-democracy"
 version = "2.0.1"
 source = "git+https://github.com/selendra/substrate?branch=v2.0.2#ce6d65f00aa6ecda9b5862fba71c760caa33c023"
@@ -6195,6 +6281,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "pwasm-utils"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c8ac87af529432d3a4f0e2b3bbf08af49f28f09cc73ed7e551161bdaef5f78d"
+dependencies = [
+ "byteorder",
+ "log",
+ "parity-wasm 0.41.0",
+]
+
+[[package]]
 name = "quick-error"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7126,7 +7223,7 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "parity-wasm 0.41.0",
- "pwasm-utils",
+ "pwasm-utils 0.14.0",
  "sc-executor-common",
  "scoped-tls",
  "sp-allocator",
@@ -8522,6 +8619,19 @@ dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.8",
  "syn 1.0.60",
+]
+
+[[package]]
+name = "sp-sandbox"
+version = "0.8.1"
+source = "git+https://github.com/selendra/substrate?branch=v2.0.2#ce6d65f00aa6ecda9b5862fba71c760caa33c023"
+dependencies = [
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-std",
+ "sp-wasm-interface",
+ "wasmi",
 ]
 
 [[package]]

@@ -50,6 +50,9 @@ frame-system-rpc-runtime-api = { git = "https://github.com/selendra/substrate", 
 pallet-timestamp = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
 pallet-sudo = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
 pallet-vesting = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
+pallet-contracts = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
+pallet-contracts-primitives = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
+pallet-contracts-rpc-runtime-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
 
 runtime-common = { package = "indracore-runtime-common", path = "../common", default-features = false }
 primitives = { package = "indracore-primitives", path = "../../primitives", default-features = false }
@@ -114,4 +117,7 @@ std = [
 	"sp-session/std",
 	"pallet-randomness-collective-flip/std",
 	"runtime-common/std",
+	"pallet-contracts/std",
+	"pallet-contracts-primitives/std",
+	"pallet-contracts-rpc-runtime-api/std",
 ]

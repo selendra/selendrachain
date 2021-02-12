@@ -55,6 +55,8 @@ pallet-babe = { git = "https://github.com/selendra/substrate", branch = "v2.0.2"
 pallet-im-online = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
 pallet-staking = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+pallet-contracts = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
+pallet-contracts-rpc-runtime-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
 
 # Substrate Other
 frame-benchmarking = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }

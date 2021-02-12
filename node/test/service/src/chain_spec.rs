@@ -172,6 +172,11 @@ fn indracore_testnet_genesis(
             slash_reward_fraction: Perbill::from_percent(10),
             ..Default::default()
         }),
+        pallet_contracts: Some(runtime::ContractsConfig {
+            current_schedule: pallet_contracts::Schedule {
+                ..Default::default()
+            },
+        }),
         pallet_babe: Some(Default::default()),
         pallet_grandpa: Some(Default::default()),
         pallet_authority_discovery: Some(runtime::AuthorityDiscoveryConfig { keys: vec![] }),

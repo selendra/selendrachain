@@ -102,6 +102,7 @@ where
         + Send
         + Sync
         + 'static,
+    C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber>,
     C::Api: frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
     C::Api: BabeApi<Block>,
@@ -112,6 +113,7 @@ where
     B::State: sc_client_api::StateBackend<sp_runtime::traits::HashFor<Block>>,
 {
     use frame_rpc_system::{FullSystem, SystemApi};
+    use pallet_contracts_rpc::{Contracts, ContractsApi};
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
     use sc_consensus_babe_rpc::BabeRpcHandler;
     use sc_finality_grandpa_rpc::{GrandpaApi, GrandpaRpcHandler};
@@ -139,6 +141,7 @@ where
         finality_provider,
     } = grandpa;
 
+    io.extend_with(ContractsApi::to_delegate(Contracts::new(client.clone())));
     io.extend_with(SystemApi::to_delegate(FullSystem::new(
         client.clone(),
         pool,

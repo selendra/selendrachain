@@ -64,6 +64,9 @@ pallet-treasury = { git = "https://github.com/selendra/substrate", branch = "v2.
 pallet-vesting = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
 pallet-utility = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
 pallet-recovery = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
+pallet-contracts = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
+pallet-contracts-primitives = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
+pallet-contracts-rpc-runtime-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
 pallet-sudo = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false }
 
 frame-benchmarking = { git = "https://github.com/selendra/substrate", branch = "v2.0.2", default-features = false, optional = true }
@@ -147,6 +150,9 @@ std = [
 	"pallet-utility/std",
 	"pallet-recovery/std",
 	"pallet-sudo/std",
+	"pallet-contracts/std",
+	"pallet-contracts-primitives/std",
+	"pallet-contracts-rpc-runtime-api/std",
 ]
 runtime-benchmarks = [
 	"runtime-common/runtime-benchmarks",
@@ -176,6 +182,7 @@ runtime-benchmarks = [
 	"pallet-offences-benchmarking",
 	"pallet-session-benchmarking",
 	"frame-system-benchmarking",
+	"pallet-contracts/runtime-benchmarks",
 	"hex-literal",
 ]
 
