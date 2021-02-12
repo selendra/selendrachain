@@ -72,10 +72,10 @@ impl SubstrateCli for Cli {
 
     fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
         let spec = match id {
-            "indracore-dev" | "dev" | "" => {
+            "indracore-dev" | "dev" => {
                 Box::new(service::chain_spec::indracore_development_config()?)
             }
-            "indracore-local" => Box::new(service::chain_spec::indracore_local_testnet_config()?),
+            "indracore-local" | "" => Box::new(service::chain_spec::indracore_local_testnet_config()?),
             "indracore-staging" => {
                 Box::new(service::chain_spec::indracore_staging_testnet_config()?)
             }
