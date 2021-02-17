@@ -141,6 +141,4 @@ The security policy and procedures can be found in [`docs/SECURITY.md`](docs/SEC
 
 ## License
 
-## License
-
 Indracore is implement from Polkadot under license [GPL 3.0 licensed](LICENSE-GPL3).
