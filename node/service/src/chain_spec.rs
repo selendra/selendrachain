@@ -31,7 +31,7 @@ use sp_runtime::{traits::IdentifyAccount, Perbill};
 use telemetry::TelemetryEndpoints;
 
 const INDRACORE_STAGING_TELEMETRY_URL: &str = "wss://telemetry.indracore.io/submit/";
-const DEFAULT_PROTOCOL_ID: &str = "dot";
+const DEFAULT_PROTOCOL_ID: &str = "sel";
 
 /// Node `ChainSpec` extensions.
 ///
@@ -86,7 +86,7 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
         AuthorityDiscoveryId,
     )> = vec![];
 
-    let endownment: Balance = 2u128.pow(32) * SELS;
+    let endownment: Balance = 31415926535 * SELS;
     const STASH: u128 = 100 * SELS;
 
     indracore::GenesisConfig {
@@ -264,7 +264,7 @@ pub fn indracore_testnet_genesis(
 ) -> indracore::GenesisConfig {
     let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 
-    let endownment: Balance = 2u128.pow(32) * SELS;
+    let endownment: Balance = 31415926535 * SELS;
     const STASH: u128 = 100 * SELS;
 
     indracore::GenesisConfig {
