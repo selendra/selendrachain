@@ -1,1 +1,0 @@
-/home/ayoung/project/indracore/target/release/libsp_npos_elections_compact.so: /home/ayoung/project/indracore/primitives/npos-elections/compact/src/assignment.rs /home/ayoung/project/indracore/primitives/npos-elections/compact/src/codec.rs /home/ayoung/project/indracore/primitives/npos-elections/compact/src/lib.rs build.rs

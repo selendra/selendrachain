@@ -1,1 +1,0 @@
-{"rustc":3948150948982054541,"features":"[\"std\"]","target":7189682961173678299,"profile":4339006351771724982,"path":16366882557334752175,"deps":[[7690245076315529664,"lite_parser",false,14728189116614680633]],"local":[{"CheckDepInfo":{"dep_info":"release/.fingerprint/lite-json-1f6203c3138ddc8c/dep-lib-lite-json"}}],"rustflags":[],"metadata":3337346885601654917,"config":0}

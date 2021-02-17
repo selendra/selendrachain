@@ -1,1 +1,0 @@
-{"rustc":3948150948982054541,"features":"[]","target":550836271531442097,"profile":4339006351771724982,"path":13728642816255749310,"deps":[[14904640541669022803,"universal_hash",false,8145253433393971892]],"local":[{"CheckDepInfo":{"dep_info":"release/.fingerprint/poly1305-f07a6da72ead2785/dep-lib-poly1305"}}],"rustflags":[],"metadata":11414210838606473047,"config":0}
