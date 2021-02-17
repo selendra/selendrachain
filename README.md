@@ -17,7 +17,7 @@ Once the development environment is set up, build the node template. This comman
 Install Rust:
 
 ```
-curl https://sh.rustup.rs -sSf | sh
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 Initialize your Wasm Build environment:
@@ -37,9 +37,9 @@ cargo build --release
 We'll start Alice's substrate node first on default TCP port 30333 with her chain database stored locally at /tmp/alice. The bootnode ID of her node is QmRpheLN4JWdAnY7HGJfWFNbfkQCb6tFf4vvA6hgjMZKrR, which is generated from the --node-key value that we specify below:
 
 ```
-./target/release/node-indracore \
+./target/release/indracore \
   --base-path /tmp/alice \
-  --chain local \
+  --chain indracore-local \
   --alice \
   --port 30333 \
   --ws-port 9944 \
@@ -52,9 +52,9 @@ We'll start Alice's substrate node first on default TCP port 30333 with her chai
 In the second terminal, we'll start Bob's substrate node on a different TCP port of 30334, and with his chain database stored locally at /tmp/bob. We'll specify a value for the --bootnodes option that will connect his node to Alice's bootnode ID on TCP port 30333:
 
 ```
-./target/release/node-indracore \
+./target/release/indracore \
   --base-path /tmp/bob \
-  --chain local \
+  --chain indracore-local \
   --bob \
   --port 30334 \
   --ws-port 9945 \
@@ -69,19 +69,19 @@ In the second terminal, we'll start Bob's substrate node on a different TCP port
 Purge any existing dev chain state:
 
 ```bash
-./target/release/node-indracore purge-chain --dev
+./target/release/indracore purge-chain --dev
 ```
 
 Start a dev chain:
 
 ```bash
-./target/release/node-indracore --dev
+./target/release/indracore --dev
 ```
 
 Or, start a dev chain with detailed logging:
 
 ```bash
-RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/node-indracore -lruntime=debug --dev
+RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/indracore -lruntime=debug --dev
 ```
 
 ### Multi-Node Local Testnet
@@ -92,7 +92,7 @@ If you want to see the multi-node consensus algorithm in action, refer to
 ### Validate on Testnet
 
 ```
-  ./target/release/node-indracore \
+  ./target/release/indracore \
   --base-path <Path to store chian db> \
   --chain ./indraSpecRaw.json \
   --port 30334 \
@@ -130,14 +130,6 @@ by appending your own. A few useful ones are as follow.
 # Check whether the code is compilable
 ./scripts/docker_run.sh cargo check
 ```
-
-## Contributions & Code of Conduct
-
-Please follow the contributions guidelines as outlined in [`docs/CONTRIBUTING.adoc`](docs/CONTRIBUTING.adoc). In all communications and contributions, this project follows the [Contributor Covenant Code of Conduct](docs/CODE_OF_CONDUCT.md).
-
-## Security
-
-The security policy and procedures can be found in [`docs/SECURITY.md`](docs/SECURITY.md).
 
 ## License
 
