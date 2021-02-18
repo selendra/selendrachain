@@ -843,13 +843,13 @@ parameter_types! {
 /// The type used to represent the kinds of proxying allowed.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug)]
 pub enum ProxyType {
-    Any,
-    NonTransfer,
-    Governance,
-    Staking,
+    Any = 0,
+    NonTransfer = 1,
+    Governance = 2,
+    Staking = 3,
     // Skip 4 as it is now removed (was SudoBalances)
-    IdentityJudgement,
-    CancelProxy,
+    IdentityJudgement = 5,
+    CancelProxy = 6,
 }
 
 #[cfg(test)]
@@ -898,35 +898,35 @@ impl InstanceFilter<Call> for ProxyType {
             ProxyType::NonTransfer => matches!(
                 c,
                 Call::System(..) |
-                Call::Scheduler(..) |
-                Call::Babe(..) |
-                Call::Timestamp(..) |
-                Call::Indices(pallet_indices::Call::claim(..)) |
-                Call::Indices(pallet_indices::Call::free(..)) |
-                Call::Indices(pallet_indices::Call::freeze(..)) |
-                // Specifically omitting Indices `transfer`, `force_transfer`
-                // Specifically omitting the entire Balances pallet
-                Call::Authorship(..) |
-                Call::Staking(..) |
-                Call::Offences(..) |
-                Call::Session(..) |
-                Call::Grandpa(..) |
-                Call::ImOnline(..) |
-                Call::AuthorityDiscovery(..) |
-                Call::Democracy(..) |
-                Call::Council(..) |
-                Call::TechnicalCommittee(..) |
-                Call::ElectionsPhragmen(..) |
-                Call::TechnicalMembership(..) |
-                Call::Treasury(..) |
-                Call::Bounties(..) |
-                Call::Tips(..) |
-                Call::Vesting(pallet_vesting::Call::vest(..)) |
-                Call::Vesting(pallet_vesting::Call::vest_other(..)) |
-                // Specifically omitting Vesting `vested_transfer`, and `force_vested_transfer`
-                Call::Utility(..) |
-                Call::Identity(..) |
-                Call::Proxy(..) |
+				Call::Scheduler(..) |
+				Call::Babe(..) |
+				Call::Timestamp(..) |
+				Call::Indices(pallet_indices::Call::claim(..)) |
+				Call::Indices(pallet_indices::Call::free(..)) |
+				Call::Indices(pallet_indices::Call::freeze(..)) |
+				// Specifically omitting Indices `transfer`, `force_transfer`
+				// Specifically omitting the entire Balances pallet
+				Call::Authorship(..) |
+				Call::Staking(..) |
+				Call::Offences(..) |
+				Call::Session(..) |
+				Call::Grandpa(..) |
+				Call::ImOnline(..) |
+				Call::AuthorityDiscovery(..) |
+				Call::Democracy(..) |
+				Call::Council(..) |
+				Call::TechnicalCommittee(..) |
+				Call::ElectionsPhragmen(..) |
+				Call::TechnicalMembership(..) |
+				Call::Treasury(..) |
+				Call::Bounties(..) |
+				Call::Tips(..) |
+				Call::Vesting(pallet_vesting::Call::vest(..)) |
+				Call::Vesting(pallet_vesting::Call::vest_other(..)) |
+				// Specifically omitting Vesting `vested_transfer`, and `force_vested_transfer`
+				Call::Utility(..) |
+				Call::Identity(..) |
+				Call::Proxy(..) |
                 Call::Multisig(..) |
                 Call::Recovery(pallet_recovery::Call::as_recovered(..)) |
                 Call::Recovery(pallet_recovery::Call::vouch_recovery(..)) |
@@ -1079,38 +1079,38 @@ construct_runtime! {
         NodeBlock = primitives::v1::Block,
         UncheckedExtrinsic = UncheckedExtrinsic
     {
-        System: frame_system::{Module, Call, Storage, Config, Event<T>},
-        RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Storage},
-        Scheduler: pallet_scheduler::{Module, Call, Storage, Event<T>},
-        Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
-        Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-        Indices: pallet_indices::{Module, Call, Storage, Config<T>, Event<T>},
-        Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
-        TransactionPayment: pallet_transaction_payment::{Module, Storage},
-        Authorship: pallet_authorship::{Module, Call, Storage},
-        Staking: pallet_staking::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned},
-        Offences: pallet_offences::{Module, Call, Storage, Event},
-        Historical: session_historical::{Module},
-        Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
-        Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event, ValidateUnsigned},
-        ImOnline: pallet_im_online::{Module, Call, Storage, Event<T>, ValidateUnsigned, Config<T>},
-        AuthorityDiscovery: pallet_authority_discovery::{Module, Call, Config},
-        Democracy: pallet_democracy::{Module, Call, Storage, Config, Event<T>},
-        Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
-        TechnicalCommittee: pallet_collective::<Instance2>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
-        ElectionsPhragmen: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
-        TechnicalMembership: pallet_membership::<Instance1>::{Module, Call, Storage, Event<T>, Config<T>},
-        Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
-        Bounties: pallet_bounties::{Module, Call, Storage, Event<T>},
-        Tips: pallet_tips::{Module, Call, Storage, Event<T>},
-        Vesting: pallet_vesting::{Module, Call, Storage, Event<T>, Config<T>},
-        Utility: pallet_utility::{Module, Call, Event},
-        Identity: pallet_identity::{Module, Call, Storage, Event<T>},
-        Proxy: pallet_proxy::{Module, Call, Storage, Event<T>},
-        Multisig: pallet_multisig::{Module, Call, Storage, Event<T>},
-        Recovery: pallet_recovery::{Module, Call, Storage, Event<T>},
-        Contracts: pallet_contracts::{Module, Call, Config<T>, Storage, Event<T>},
-        Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
+        System: frame_system::{Module, Call, Storage, Config, Event<T>} = 0,
+        Scheduler: pallet_scheduler::{Module, Call, Storage, Event<T>} = 1,
+        Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned} = 2,
+        Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent} = 3,
+        Indices: pallet_indices::{Module, Call, Storage, Config<T>, Event<T>} = 4,
+        Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>} = 5,
+        Authorship: pallet_authorship::{Module, Call, Storage} = 6,
+        Staking: pallet_staking::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 7,
+        Offences: pallet_offences::{Module, Call, Storage, Event} = 8,
+        Session: pallet_session::{Module, Call, Storage, Event, Config<T>} = 9,
+        Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>} = 10,
+        Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event, ValidateUnsigned} = 11,
+        ImOnline: pallet_im_online::{Module, Call, Storage, Event<T>, ValidateUnsigned, Config<T>} = 12,
+        AuthorityDiscovery: pallet_authority_discovery::{Module, Call, Config} = 13,
+        Democracy: pallet_democracy::{Module, Call, Storage, Config, Event<T>} = 14,
+        Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>} = 15,
+        TechnicalCommittee: pallet_collective::<Instance2>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>} = 16,
+        ElectionsPhragmen: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>} = 17,
+        TechnicalMembership: pallet_membership::<Instance1>::{Module, Call, Storage, Event<T>, Config<T>} = 18,
+        Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>} = 19,
+        Contracts: pallet_contracts::{Module, Call, Config<T>, Storage, Event<T>} = 20,
+        Vesting: pallet_vesting::{Module, Call, Storage, Event<T>, Config<T>} = 25,
+        Utility: pallet_utility::{Module, Call, Event} = 26,
+        Recovery: pallet_recovery::{Module, Call, Storage, Event<T>} = 27,
+        Identity: pallet_identity::{Module, Call, Storage, Event<T>} = 28,
+        Proxy: pallet_proxy::{Module, Call, Storage, Event<T>} = 29,
+        Multisig: pallet_multisig::{Module, Call, Storage, Event<T>} = 30,
+        RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Storage} = 31,
+        TransactionPayment: pallet_transaction_payment::{Module, Storage} = 32,
+        Historical: session_historical::{Module} = 33,
+        Bounties: pallet_bounties::{Module, Call, Storage, Event<T>} = 34,
+        Tips: pallet_tips::{Module, Call, Storage, Event<T>} = 35,
     }
 }
 
@@ -1394,31 +1394,31 @@ sp_api::impl_runtime_apis! {
     }
 
     impl pallet_contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber>
-        for Runtime
-    {
-        fn call(
-            origin: AccountId,
-            dest: AccountId,
-            value: Balance,
-            gas_limit: u64,
-            input_data: Vec<u8>,
-        ) -> pallet_contracts_primitives::ContractExecResult {
-            Contracts::bare_call(origin, dest, value, gas_limit, input_data)
-        }
-
-        fn get_storage(
-            address: AccountId,
-            key: [u8; 32],
-        ) -> pallet_contracts_primitives::GetStorageResult {
-            Contracts::get_storage(address, key)
-        }
-
-        fn rent_projection(
-            address: AccountId,
-        ) -> pallet_contracts_primitives::RentProjectionResult<BlockNumber> {
-            Contracts::rent_projection(address)
-        }
+    for Runtime
+{
+    fn call(
+        origin: AccountId,
+        dest: AccountId,
+        value: Balance,
+        gas_limit: u64,
+        input_data: Vec<u8>,
+    ) -> pallet_contracts_primitives::ContractExecResult {
+        Contracts::bare_call(origin, dest, value, gas_limit, input_data)
     }
+
+    fn get_storage(
+        address: AccountId,
+        key: [u8; 32],
+    ) -> pallet_contracts_primitives::GetStorageResult {
+        Contracts::get_storage(address, key)
+    }
+
+    fn rent_projection(
+        address: AccountId,
+    ) -> pallet_contracts_primitives::RentProjectionResult<BlockNumber> {
+        Contracts::rent_projection(address)
+    }
+}
 
     #[cfg(feature = "runtime-benchmarks")]
     impl frame_benchmarking::Benchmark<Block> for Runtime {
