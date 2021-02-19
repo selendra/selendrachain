@@ -184,7 +184,15 @@ pub fn indracore_staging_testnet_config() -> Result<IndracoreChainSpec, String> 
                 .expect("Indracore Staging telemetry url is valid; qed"),
         ),
         Some(DEFAULT_PROTOCOL_ID),
-        None,
+        Some(
+            serde_json::from_str(
+                "{
+            \"tokenDecimals\": 8,
+            \"tokenSymbol\": \"SEL\"
+        	}",
+            )
+            .expect("Provided valid json map"),
+        ),
         Default::default(),
     ))
 }
@@ -366,7 +374,15 @@ pub fn indracore_development_config() -> Result<IndracoreChainSpec, String> {
         vec![],
         None,
         Some(DEFAULT_PROTOCOL_ID),
-        None,
+        Some(
+            serde_json::from_str(
+                "{
+            \"tokenDecimals\": 8,
+            \"tokenSymbol\": \"SEL\"
+        	}",
+            )
+            .expect("Provided valid json map"),
+        ),
         Default::default(),
     ))
 }
