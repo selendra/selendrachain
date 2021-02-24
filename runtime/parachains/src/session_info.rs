@@ -20,7 +20,9 @@
 //! See https://w3f.github.io/parachain-implementers-guide/runtime/session_info.html.
 
 use crate::{configuration, paras, scheduler};
-use frame_support::{decl_error, decl_module, decl_storage, weights::Weight};
+use frame_support::{
+    decl_error, decl_module, decl_storage, traits::OneSessionHandler, weights::Weight,
+};
 use primitives::v1::{AssignmentId, AuthorityDiscoveryId, SessionIndex, SessionInfo};
 use sp_std::vec::Vec;
 
@@ -139,9 +141,7 @@ impl<T: Config> sp_runtime::BoundToRuntimeAppPublic for Module<T> {
     type Public = AssignmentId;
 }
 
-impl<T: pallet_session::Config + Config> pallet_session::OneSessionHandler<T::AccountId>
-    for Module<T>
-{
+impl<T: pallet_session::Config + Config> OneSessionHandler<T::AccountId> for Module<T> {
     type Key = AssignmentId;
 
     fn on_genesis_session<'a, I: 'a>(_validators: I)

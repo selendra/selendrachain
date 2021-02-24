@@ -29,7 +29,7 @@ pub use frame_support::weights::constants::{
 };
 use frame_support::{
     parameter_types,
-    traits::Currency,
+    traits::{Currency, OneSessionHandler},
     weights::{constants::WEIGHT_PER_SECOND, DispatchClass, Weight},
 };
 use frame_system::limits;
@@ -134,7 +134,7 @@ impl<T> sp_runtime::BoundToRuntimeAppPublic for ParachainSessionKeyPlaceholder<T
     type Public = ValidatorId;
 }
 
-impl<T: pallet_session::Config> pallet_session::OneSessionHandler<T::AccountId>
+impl<T: pallet_session::Config> OneSessionHandler<T::AccountId>
     for ParachainSessionKeyPlaceholder<T>
 {
     type Key = ValidatorId;
@@ -163,7 +163,7 @@ impl<T> sp_runtime::BoundToRuntimeAppPublic for AssignmentSessionKeyPlaceholder<
     type Public = AssignmentId;
 }
 
-impl<T: pallet_session::Config> pallet_session::OneSessionHandler<T::AccountId>
+impl<T: pallet_session::Config> OneSessionHandler<T::AccountId>
     for AssignmentSessionKeyPlaceholder<T>
 {
     type Key = AssignmentId;

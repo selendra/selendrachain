@@ -255,13 +255,13 @@ impl<T: Config> Module<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use frame_support::traits::OneSessionHandler;
     use frame_support::{
         assert_ok, impl_outer_dispatch, impl_outer_origin, parameter_types,
         traits::{OnFinalize, OnInitialize, Randomness},
     };
     use frame_system::limits;
     use keyring::Sr25519Keyring;
-    use pallet_session::OneSessionHandler;
     use primitives::v1::{
         AuthorityDiscoveryId, Balance, BlockNumber, Header, Signature, ValidatorIndex,
     };
