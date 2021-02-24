@@ -10,7 +10,7 @@ bitvec = { version = "0.17.4", default-features = false, features = ["alloc"] }
 tracing = "0.1.22"
 tracing-futures = "0.2.4"
 thiserror = "1.0.23"
-sp-keystore = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "master" }
 
 indracore-primitives = { path = "../../../primitives" }
 indracore-node-primitives = { path = "../../primitives" }
@@ -23,8 +23,8 @@ statement-table = { package = "indracore-statement-table", path = "../../../stat
 [dev-dependencies]
 futures = { version = "0.3.12", features = ["thread-pool"] }
 assert_matches = "1.4.0"
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
-sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
-sp-keyring = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
-sc-keystore = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-keyring = { git = "https://github.com/selendra/substrate", branch = "master" }
+sc-keystore = { git = "https://github.com/selendra/substrate", branch = "master" }
 indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }

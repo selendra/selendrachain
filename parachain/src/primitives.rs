@@ -37,7 +37,9 @@ use indracore_core_primitives::{Hash, OutboundHrmpMessage};
 pub use indracore_core_primitives::BlockNumber as RelayChainBlockNumber;
 
 /// Parachain head data included in the chain.
-#[derive(PartialEq, Eq, Clone, PartialOrd, Ord, Encode, Decode, RuntimeDebug, derive_more::From)]
+#[derive(
+    PartialEq, Eq, Clone, PartialOrd, Ord, Encode, Decode, RuntimeDebug, derive_more::From,
+)]
 #[cfg_attr(
     feature = "std",
     derive(Serialize, Deserialize, Default, Hash, MallocSizeOf)

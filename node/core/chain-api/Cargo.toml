@@ -8,7 +8,7 @@ edition = "2018"
 futures = "0.3.12"
 tracing = "0.1.22"
 tracing-futures = "0.2.4"
-sp-blockchain = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-blockchain = { git = "https://github.com/selendra/substrate", branch = "master" }
 indracore-primitives = { path = "../../../primitives" }
 indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
 indracore-node-subsystem-util = { path = "../../subsystem-util" }
@@ -17,4 +17,4 @@ indracore-node-subsystem-util = { path = "../../subsystem-util" }
 futures = { version = "0.3.12", features = ["thread-pool"] }
 maplit = "1.0.2"
 indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }

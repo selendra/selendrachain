@@ -1899,17 +1899,17 @@ mod tests {
 
             // Candidate gets backed entirely by other votes.
             assert_matches!(
-				virtual_overseer.recv().await,
-				AllMessages::Provisioner(
-					ProvisionerMessage::ProvisionableData(
-						_,
-						ProvisionableData::BackedCandidate(CandidateReceipt {
-							descriptor,
-							..
-						})
-					)
-				) if descriptor == candidate_a.descriptor
-			);
+                virtual_overseer.recv().await,
+                AllMessages::Provisioner(
+                    ProvisionerMessage::ProvisionableData(
+                        _,
+                        ProvisionableData::BackedCandidate(CandidateReceipt {
+                            descriptor,
+                            ..
+                        })
+                    )
+                ) if descriptor == candidate_a.descriptor
+            );
 
             let (tx, rx) = oneshot::channel();
             let msg = CandidateBackingMessage::GetBackedCandidates(

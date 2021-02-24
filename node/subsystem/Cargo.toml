@@ -22,9 +22,9 @@ parking_lot = "0.11.1"
 pin-project = "1.0.4"
 parity-scale-codec = { version = "1.3.6", default-features = false, features = ["derive"] }
 
-sc-network = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
-substrate-prometheus-endpoint = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
+substrate-prometheus-endpoint = { git = "https://github.com/selendra/substrate", branch = "master" }
 
 indracore-node-primitives = { path = "../primitives" }
 indracore-node-network-protocol = { path = "../network/protocol" }

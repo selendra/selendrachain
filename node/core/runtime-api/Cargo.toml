@@ -11,14 +11,14 @@ tracing-futures = "0.2.4"
 memory-lru = "0.1.0"
 parity-util-mem = { version = "0.8.0", default-features = false }
 
-sp-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-api = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
 
 indracore-primitives = { path = "../../../primitives" }
 indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
 indracore-node-subsystem-util = { path = "../../subsystem-util" }
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
 futures = { version = "0.3.12", features = ["thread-pool"] }
 indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }

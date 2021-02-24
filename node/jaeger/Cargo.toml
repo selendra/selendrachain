@@ -13,6 +13,6 @@ parking_lot = "0.11.1"
 thiserror = "1.0.23"
 log = "0.4.13"
 
-sc-network = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.2" }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
 indracore-primitives = { path = "../../primitives" }
