@@ -39,7 +39,7 @@ use indracore_primitives::v1::{
 };
 use parity_scale_codec::{Decode, Encode};
 use sc_client_api::backend::AuxStore;
-use sp_consensus_slots::SlotNumber;
+use sp_consensus_slots::Slot;
 
 use bitvec::{order::Lsb0 as BitOrderLsb0, vec::BitVec};
 use std::collections::hash_map::Entry;
@@ -93,7 +93,7 @@ pub(crate) struct CandidateEntry {
 pub(crate) struct BlockEntry {
     block_hash: Hash,
     session: SessionIndex,
-    slot: SlotNumber,
+    slot: Slot,
     relay_vrf_story: RelayVRF,
     // The candidates included as-of this block and the index of the core they are
     // leaving. Sorted ascending by core index.

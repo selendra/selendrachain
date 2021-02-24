@@ -88,7 +88,7 @@ fn make_block_entry(block_hash: Hash, candidates: Vec<(CoreIndex, CandidateHash)
     BlockEntry {
         block_hash,
         session: 1,
-        slot: 1,
+        slot: 1.into(),
         relay_vrf_story: RelayVRF([0u8; 32]),
         approved_bitfield: make_bitvec(candidates.len()),
         candidates,

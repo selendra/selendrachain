@@ -16,7 +16,7 @@
 
 //! Types relevant for approval.
 
-pub use sp_consensus_slots::SlotNumber;
+pub use sp_consensus_slots::Slot;
 pub use sp_consensus_vrf::schnorrkel::{VRFOutput, VRFProof};
 
 use indracore_primitives::v1::{
@@ -118,6 +118,6 @@ pub struct BlockApprovalMeta {
     /// The candidates included by the block.
     /// Note that these are not the same as the candidates that appear within the block body.
     pub candidates: Vec<CandidateHash>,
-    /// The consensus slot number of the block.
-    pub slot_number: SlotNumber,
+    /// The consensus slot of the block.
+	pub slot: Slot, 
 }
