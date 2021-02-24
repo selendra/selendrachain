@@ -26,9 +26,7 @@ use futures::{channel::oneshot, FutureExt};
 use parity_scale_codec::{Decode, Encode};
 use tracing_futures as _;
 
-use indracore_node_network_protocol::{
-    v1 as protocol_v1, NetworkBridgeEvent, OurView, PeerId, ReputationChange, View,
-};
+use indracore_node_network_protocol::{v1 as protocol_v1, OurView, PeerId, ReputationChange, View};
 use indracore_node_subsystem_util::metrics::{self, prometheus};
 use indracore_primitives::v1::{Hash, SignedAvailabilityBitfield, SigningContext, ValidatorId};
 use indracore_subsystem::messages::*;

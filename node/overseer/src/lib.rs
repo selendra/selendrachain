@@ -2135,11 +2135,13 @@ mod tests {
     use std::collections::HashMap;
     use std::sync::atomic;
 
-    use indracore_node_network_protocol::{NetworkBridgeEvent, PeerId, ReputationChange};
+    use indracore_node_network_protocol::{PeerId, ReputationChange};
     use indracore_node_primitives::{Collation, CollationGenerationConfig};
     use indracore_node_subsystem_util::metered;
     use indracore_primitives::v1::{BlockData, CandidateHash, CollatorPair, PoV};
-    use indracore_subsystem::{messages::RuntimeApiRequest, JaegerSpan};
+    use indracore_subsystem::{
+        messages::NetworkBridgeEvent, messages::RuntimeApiRequest, JaegerSpan,
+    };
 
     use sp_core::crypto::Pair as _;
 

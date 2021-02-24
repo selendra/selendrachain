@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Availability Recovery Subsystem of Polkadot.
+//! Availability Recovery Subsystem of Indracore.
 
 #![warn(missing_docs)]
 
@@ -34,7 +34,7 @@ use streamunordered::{StreamUnordered, StreamYield};
 
 use indracore_erasure_coding::{branch_hash, branches, obtain_chunks_v1, recovery_threshold};
 use indracore_node_network_protocol::{
-    v1 as protocol_v1, NetworkBridgeEvent, PeerId, ReputationChange as Rep, RequestId,
+    v1 as protocol_v1, PeerId, ReputationChange as Rep, RequestId,
 };
 use indracore_node_subsystem_util::{request_session_info_ctx, Timeout, TimeoutExt};
 use indracore_primitives::v1::{
@@ -44,7 +44,8 @@ use indracore_primitives::v1::{
 use indracore_subsystem::{
     errors::RecoveryError,
     messages::{
-        AllMessages, AvailabilityRecoveryMessage, AvailabilityStoreMessage, NetworkBridgeMessage,
+        AllMessages, AvailabilityRecoveryMessage, AvailabilityStoreMessage, NetworkBridgeEvent,
+        NetworkBridgeMessage,
     },
     ActiveLeavesUpdate, FromOverseer, OverseerSignal, SpawnedSubsystem, Subsystem,
     SubsystemContext, SubsystemError, SubsystemResult,

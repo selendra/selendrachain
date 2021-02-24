@@ -29,8 +29,8 @@ use indracore_node_subsystem_util::TimeoutExt;
 use indracore_primitives::v1::{
     AuthorityDiscoveryId, BlockData, HeadData, PersistedValidationData, PoV,
 };
-use indracore_subsystem::{
-    messages::{RuntimeApiMessage, RuntimeApiRequest},
+use indracore_subsystem::messages::{
+    messages::{NetworkBridgeEvent, RuntimeApiMessage, RuntimeApiRequest},
     JaegerSpan,
 };
 use indracore_subsystem_testhelpers as test_helpers;

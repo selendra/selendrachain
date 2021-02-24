@@ -23,6 +23,8 @@ mod client;
 mod grandpa_support;
 
 use grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider};
+#[cfg(feature = "real-overseer")]
+use indracore_network_bridge::RequestMultiplexer;
 #[cfg(feature = "full-node")]
 use {
     indracore_node_core_av_store::Config as AvailabilityConfig,
@@ -320,6 +322,7 @@ fn real_overseer<Spawner, RuntimeClient>(
     _: AvailabilityConfig,
     _: Arc<sc_network::NetworkService<Block, Hash>>,
     _: AuthorityDiscoveryService,
+    request_multiplexer: (),
     registry: Option<&Registry>,
     spawner: Spawner,
     _: IsCollator,
@@ -341,6 +344,7 @@ fn real_overseer<Spawner, RuntimeClient>(
     availability_config: AvailabilityConfig,
     network_service: Arc<sc_network::NetworkService<Block, Hash>>,
     authority_discovery: AuthorityDiscoveryService,
+    request_multiplexer: RequestMultiplexer,
     registry: Option<&Registry>,
     spawner: Spawner,
     is_collator: IsCollator,
@@ -411,7 +415,11 @@ where
             };
             CollatorProtocolSubsystem::new(side)
         },
-        network_bridge: NetworkBridgeSubsystem::new(network_service, authority_discovery),
+        network_bridge: NetworkBridgeSubsystem::new(
+            network_service,
+            authority_discovery,
+            request_multiplexer,
+        ),
         pov_distribution: PoVDistributionSubsystem::new(Metrics::register(registry)?),
         provisioner: ProvisionerSubsystem::new(spawner.clone(), (), Metrics::register(registry)?),
         runtime_api: RuntimeApiSubsystem::new(
@@ -548,6 +556,18 @@ where
         ),
     );
 
+    #[cfg(feature = "real-overseer")]
+    fn register_request_response(
+        config: &mut sc_network::config::NetworkConfiguration,
+    ) -> RequestMultiplexer {
+        let (multiplexer, configs) = RequestMultiplexer::new();
+        config.request_response_protocols.extend(configs);
+        multiplexer
+    }
+    #[cfg(not(feature = "real-overseer"))]
+    fn register_request_response(_: &mut sc_network::config::NetworkConfiguration) {}
+    let request_multiplexer = register_request_response(&mut config.network);
+
     let (network, network_status_sinks, system_rpc_tx, network_starter) =
         service::build_network(service::BuildNetworkParams {
             config: &config,
@@ -658,6 +678,7 @@ where
             availability_config,
             network.clone(),
             authority_discovery_service,
+            request_multiplexer,
             prometheus_registry.as_ref(),
             spawner,
             is_collator,

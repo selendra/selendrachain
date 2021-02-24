@@ -20,9 +20,7 @@ use super::{Result, LOG_TARGET};
 
 use futures::{select, FutureExt};
 
-use indracore_node_network_protocol::{
-    v1 as protocol_v1, NetworkBridgeEvent, OurView, PeerId, RequestId, View,
-};
+use indracore_node_network_protocol::{v1 as protocol_v1, OurView, PeerId, RequestId, View};
 use indracore_node_subsystem_util::{
     metrics::{self, prometheus},
     request_availability_cores_ctx, request_validator_groups_ctx, request_validators_ctx,
@@ -33,7 +31,7 @@ use indracore_primitives::v1::{
 };
 use indracore_subsystem::{
     jaeger,
-    messages::{AllMessages, CollatorProtocolMessage, NetworkBridgeMessage},
+    messages::{AllMessages, CollatorProtocolMessage, NetworkBridgeEvent, NetworkBridgeMessage},
     FromOverseer, OverseerSignal, PerLeafSpan, SubsystemContext,
 };
 

@@ -24,7 +24,8 @@
 
 use futures::channel::{mpsc, oneshot};
 use indracore_node_network_protocol::{
-    v1 as protocol_v1, NetworkBridgeEvent, PeerId, ReputationChange,
+    request_response::{request::IncomingRequest, v1 as req_res_v1, Requests},
+    v1 as protocol_v1, PeerId, ReputationChange,
 };
 use indracore_node_primitives::{
     approval::{BlockApprovalMeta, IndirectAssignmentCert, IndirectSignedApprovalVote},
@@ -41,6 +42,10 @@ use indracore_primitives::v1::{
 use indracore_statement_table::v1::Misbehavior;
 use std::{collections::btree_map::BTreeMap, sync::Arc};
 use thiserror::Error;
+
+/// Network events as transmitted to other subsystems, wrapped in their message types.
+pub mod network_bridge_event;
+pub use network_bridge_event::NetworkBridgeEvent;
 
 /// Subsystem messages where each message is always bound to a relay parent.
 pub trait BoundToRelayParent {
@@ -218,6 +223,9 @@ pub enum NetworkBridgeMessage {
     /// Send a batch of collation messages.
     SendCollationMessages(Vec<(Vec<PeerId>, protocol_v1::CollationProtocol)>),
 
+    /// Send requests via substrate request/response.
+    SendRequests(Vec<Requests>),
+
     /// Connect to peers who represent the given `validator_ids`.
     ///
     /// Also ask the network to stay connected to these peers at least
@@ -243,6 +251,7 @@ impl NetworkBridgeMessage {
             Self::SendValidationMessages(_) => None,
             Self::SendCollationMessages(_) => None,
             Self::ConnectToValidators { .. } => None,
+            Self::SendRequests { .. } => None,
         }
     }
 }
@@ -252,6 +261,8 @@ impl NetworkBridgeMessage {
 pub enum AvailabilityDistributionMessage {
     /// Event from the network bridge.
     NetworkBridgeUpdateV1(NetworkBridgeEvent<protocol_v1::AvailabilityDistributionMessage>),
+    /// Incoming request for an availability chunk.
+    AvailabilityFetchingRequest(IncomingRequest<req_res_v1::AvailabilityFetchingRequest>),
 }
 
 /// Availability Recovery Message.
@@ -272,6 +283,7 @@ impl AvailabilityDistributionMessage {
     pub fn relay_parent(&self) -> Option<Hash> {
         match self {
             Self::NetworkBridgeUpdateV1(_) => None,
+            Self::AvailabilityFetchingRequest(_) => None,
         }
     }
 }
@@ -708,4 +720,10 @@ pub enum AllMessages {
     ApprovalVoting(ApprovalVotingMessage),
     /// Message for the Approval Distribution subsystem.
     ApprovalDistribution(ApprovalDistributionMessage),
+}
+
+impl From<IncomingRequest<req_res_v1::AvailabilityFetchingRequest>> for AllMessages {
+    fn from(req: IncomingRequest<req_res_v1::AvailabilityFetchingRequest>) -> Self {
+        From::<AvailabilityDistributionMessage>::from(From::from(req))
+    }
 }

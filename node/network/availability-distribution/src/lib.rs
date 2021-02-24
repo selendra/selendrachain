@@ -33,7 +33,7 @@ use sp_keystore::{CryptoStore, SyncCryptoStorePtr};
 
 use indracore_erasure_coding::branch_hash;
 use indracore_node_network_protocol::{
-    v1 as protocol_v1, NetworkBridgeEvent, OurView, PeerId, ReputationChange as Rep, View,
+    v1 as protocol_v1, OurView, PeerId, ReputationChange as Rep, View,
 };
 use indracore_node_subsystem_util::metrics::{self, prometheus};
 use indracore_primitives::v1::{
@@ -42,7 +42,7 @@ use indracore_primitives::v1::{
 };
 use indracore_subsystem::messages::{
     AllMessages, AvailabilityDistributionMessage, AvailabilityStoreMessage, ChainApiMessage,
-    NetworkBridgeMessage, RuntimeApiMessage, RuntimeApiRequest,
+    NetworkBridgeEvent, NetworkBridgeMessage, RuntimeApiMessage, RuntimeApiRequest,
 };
 use indracore_subsystem::{
     errors::{ChainApiError, RuntimeApiError},
@@ -893,6 +893,15 @@ impl AvailabilityDistributionSubsystem {
                             "Failed to handle incoming network messages",
                         );
                     }
+                }
+                FromOverseer::Communication {
+                    msg: AvailabilityDistributionMessage::AvailabilityFetchingRequest(_),
+                } => {
+                    // TODO: Implement issue 2306:
+                    tracing::warn!(
+						target: LOG_TARGET,
+						"To be implemented, see: https://github.com/paritytech/indracore/issues/2306 !",
+					);
                 }
                 FromOverseer::Signal(OverseerSignal::ActiveLeaves(ActiveLeavesUpdate {
                     activated: _,

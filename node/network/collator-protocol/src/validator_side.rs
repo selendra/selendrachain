@@ -26,8 +26,7 @@ use futures::{
 };
 
 use indracore_node_network_protocol::{
-    v1 as protocol_v1, NetworkBridgeEvent, OurView, PeerId, ReputationChange as Rep, RequestId,
-    View,
+    v1 as protocol_v1, OurView, PeerId, ReputationChange as Rep, RequestId, View,
 };
 use indracore_node_subsystem_util::{
     metrics::{self, prometheus},
@@ -37,7 +36,8 @@ use indracore_primitives::v1::{CandidateReceipt, CollatorId, Hash, Id as ParaId,
 use indracore_subsystem::{
     jaeger,
     messages::{
-        AllMessages, CandidateSelectionMessage, CollatorProtocolMessage, NetworkBridgeMessage,
+        AllMessages, CandidateSelectionMessage, CollatorProtocolMessage, NetworkBridgeEvent,
+        NetworkBridgeMessage,
     },
     FromOverseer, JaegerSpan, OverseerSignal, PerLeafSpan, SubsystemContext,
 };

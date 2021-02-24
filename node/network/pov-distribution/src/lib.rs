@@ -23,7 +23,7 @@
 #![warn(missing_docs)]
 
 use indracore_node_network_protocol::{
-    v1 as protocol_v1, NetworkBridgeEvent, OurView, PeerId, ReputationChange as Rep,
+    v1 as protocol_v1, OurView, PeerId, ReputationChange as Rep,
 };
 use indracore_node_subsystem_util::{
     metrics::{self, prometheus},
@@ -34,7 +34,7 @@ use indracore_primitives::v1::{
     CandidateDescriptor, CoreIndex, CoreState, Hash, Id as ParaId, PoV, ValidatorId,
 };
 use indracore_subsystem::{
-    messages::{AllMessages, NetworkBridgeMessage, PoVDistributionMessage},
+    messages::{AllMessages, NetworkBridgeEvent, NetworkBridgeMessage, PoVDistributionMessage},
     ActiveLeavesUpdate, FromOverseer, OverseerSignal, SpawnedSubsystem, Subsystem,
     SubsystemContext, SubsystemError, SubsystemResult,
 };

@@ -21,16 +21,14 @@
 
 use futures::prelude::*;
 use parity_scale_codec::{Decode, Encode};
-use tracing_futures as _;
 
 use indracore_node_network_protocol::{
-    peer_set::PeerSet, v1 as protocol_v1, NetworkBridgeEvent, OurView, PeerId, ReputationChange,
-    View,
+    peer_set::PeerSet, v1 as protocol_v1, OurView, PeerId, ReputationChange, View,
 };
 use indracore_primitives::v1::{BlockNumber, Hash};
 use indracore_subsystem::messages::{
     AllMessages, ApprovalDistributionMessage, AvailabilityDistributionMessage,
-    BitfieldDistributionMessage, CollatorProtocolMessage, NetworkBridgeMessage,
+    BitfieldDistributionMessage, CollatorProtocolMessage, NetworkBridgeEvent, NetworkBridgeMessage,
     PoVDistributionMessage, StatementDistributionMessage,
 };
 use indracore_subsystem::{
@@ -54,13 +52,17 @@ mod validator_discovery;
 /// All requested `NetworkBridgeMessage` user actions  and `NetworkEvent` network messages are
 /// translated to `Action` before being processed by `run_network`.
 mod action;
-use action::Action;
+use action::{AbortReason, Action};
 
 /// Actual interfacing to the network based on the `Network` trait.
 ///
 /// Defines the `Network` trait with an implementation for an `Arc<NetworkService>`.
 mod network;
 use network::{send_message, Network};
+
+/// Request multiplexer for combining the multiple request sources into a single `Stream` of `AllMessages`.
+mod multiplexer;
+pub use multiplexer::RequestMultiplexer;
 
 /// The maximum amount of heads a peer is allowed to have in their view at any time.
 ///
@@ -95,6 +97,7 @@ pub struct NetworkBridge<N, AD> {
     /// `Network` trait implementing type.
     network_service: N,
     authority_discovery_service: AD,
+    request_multiplexer: RequestMultiplexer,
 }
 
 impl<N, AD> NetworkBridge<N, AD> {
@@ -102,10 +105,15 @@ impl<N, AD> NetworkBridge<N, AD> {
     ///
     /// This assumes that the network service has had the notifications protocol for the network
     /// bridge already registered. See [`peers_sets_info`](peers_sets_info).
-    pub fn new(network_service: N, authority_discovery_service: AD) -> Self {
+    pub fn new(
+        network_service: N,
+        authority_discovery_service: AD,
+        request_multiplexer: RequestMultiplexer,
+    ) -> Self {
         NetworkBridge {
             network_service,
             authority_discovery_service,
+            request_multiplexer,
         }
     }
 }
@@ -119,11 +127,7 @@ where
     fn start(self, ctx: Context) -> SpawnedSubsystem {
         // Swallow error because failure is fatal to the node and we log with more precision
         // within `run_network`.
-        let Self {
-            network_service,
-            authority_discovery_service,
-        } = self;
-        let future = run_network(network_service, authority_discovery_service, ctx)
+        let future = run_network(self, ctx)
             .map_err(|e| SubsystemError::with_origin("network-bridge", e))
             .boxed();
         SpawnedSubsystem {
@@ -139,17 +143,16 @@ struct PeerData {
 }
 
 /// Main driver, processing network events and messages from other subsystems.
-#[tracing::instrument(skip(network_service, authority_discovery_service, ctx), fields(subsystem = LOG_TARGET))]
+#[tracing::instrument(skip(bridge, ctx), fields(subsystem = LOG_TARGET))]
 async fn run_network<N, AD>(
-    mut network_service: N,
-    mut authority_discovery_service: AD,
+    mut bridge: NetworkBridge<N, AD>,
     mut ctx: impl SubsystemContext<Message = NetworkBridgeMessage>,
 ) -> SubsystemResult<()>
 where
     N: Network + validator_discovery::Network,
     AD: validator_discovery::AuthorityDiscovery,
 {
-    let mut event_stream = network_service.event_stream().fuse();
+    let mut event_stream = bridge.network_service.event_stream().fuse();
 
     // Most recent heads are at the back.
     let mut live_heads: Vec<(Hash, Arc<JaegerSpan>)> = Vec::with_capacity(MAX_VIEW_HEADS);
@@ -165,22 +168,55 @@ where
         let action = {
             let subsystem_next = ctx.recv().fuse();
             let mut net_event_next = event_stream.next().fuse();
+            let mut req_res_event_next = bridge.request_multiplexer.next().fuse();
             futures::pin_mut!(subsystem_next);
 
             futures::select! {
                 subsystem_msg = subsystem_next => Action::from(subsystem_msg),
                 net_event = net_event_next => Action::from(net_event),
+                req_res_event = req_res_event_next  => Action::from(req_res_event),
             }
         };
 
         match action {
             Action::Nop => {}
-            Action::Abort => return Ok(()),
+            Action::Abort(reason) => match reason {
+                AbortReason::SubsystemError(err) => {
+                    tracing::warn!(
+                        target: LOG_TARGET,
+                        err = ?err,
+                        "Shutting down Network Bridge due to error"
+                    );
+                    return Err(SubsystemError::Context(format!(
+                        "Received SubsystemError from overseer: {:?}",
+                        err
+                    )));
+                }
+                AbortReason::EventStreamConcluded => {
+                    tracing::info!(
+                        target: LOG_TARGET,
+                        "Shutting down Network Bridge: underlying request stream concluded"
+                    );
+                    return Err(SubsystemError::Context(
+                        "Incoming network event stream concluded.".to_string(),
+                    ));
+                }
+                AbortReason::RequestStreamConcluded => {
+                    tracing::info!(
+                        target: LOG_TARGET,
+                        "Shutting down Network Bridge: underlying request stream concluded"
+                    );
+                    return Err(SubsystemError::Context(
+                        "Incoming network request stream concluded".to_string(),
+                    ));
+                }
+                AbortReason::OverseerConcluded => return Ok(()),
+            },
 
             Action::SendValidationMessages(msgs) => {
                 for (peers, msg) in msgs {
                     send_message(
-                        &mut network_service,
+                        &mut bridge.network_service,
                         peers,
                         PeerSet::Validation,
                         WireMessage::ProtocolMessage(msg),
@@ -192,12 +228,18 @@ where
             Action::SendCollationMessages(msgs) => {
                 for (peers, msg) in msgs {
                     send_message(
-                        &mut network_service,
+                        &mut bridge.network_service,
                         peers,
                         PeerSet::Collation,
                         WireMessage::ProtocolMessage(msg),
                     )
                     .await?
+                }
+            }
+
+            Action::SendRequests(reqs) => {
+                for req in reqs {
+                    bridge.network_service.start_request(req);
                 }
             }
 
@@ -209,15 +251,22 @@ where
                     .on_request(
                         validator_ids,
                         connected,
-                        network_service,
-                        authority_discovery_service,
+                        bridge.network_service,
+                        bridge.authority_discovery_service,
                     )
                     .await;
-                network_service = ns;
-                authority_discovery_service = ads;
+                bridge.network_service = ns;
+                bridge.authority_discovery_service = ads;
             }
 
-            Action::ReportPeer(peer, rep) => network_service.report_peer(peer, rep).await?,
+            Action::ReportPeer(peer, rep) => {
+                tracing::debug!(
+                    target: LOG_TARGET,
+                    peer = ?peer,
+                    "Peer sent us an invalid request",
+                );
+                bridge.network_service.report_peer(peer, rep).await?
+            }
 
             Action::ActiveLeaves(ActiveLeavesUpdate {
                 activated,
@@ -227,7 +276,7 @@ where
                 live_heads.retain(|h| !deactivated.contains(&h.0));
 
                 update_our_view(
-                    &mut network_service,
+                    &mut bridge.network_service,
                     &mut ctx,
                     &live_heads,
                     &mut local_view,
@@ -255,7 +304,7 @@ where
                 };
 
                 validator_discovery
-                    .on_peer_connected(&peer, &mut authority_discovery_service)
+                    .on_peer_connected(&peer, &mut bridge.authority_discovery_service)
                     .await;
 
                 match peer_map.entry(peer.clone()) {
@@ -323,7 +372,7 @@ where
                         peer.clone(),
                         &mut validation_peers,
                         v_messages,
-                        &mut network_service,
+                        &mut bridge.network_service,
                     )
                     .await?;
 
@@ -335,13 +384,14 @@ where
                         peer.clone(),
                         &mut collation_peers,
                         c_messages,
-                        &mut network_service,
+                        &mut bridge.network_service,
                     )
                     .await?;
 
                     dispatch_collation_events_to_all(events, &mut ctx).await;
                 }
             }
+            Action::SendMessage(msg) => ctx.send_message(msg).await,
         }
     }
 }
@@ -563,7 +613,7 @@ mod tests {
     use sc_network::Event as NetworkEvent;
 
     use indracore_node_network_protocol::view;
-    use indracore_node_network_protocol::ObservedRole;
+    use indracore_node_network_protocol::{request_response::request::Requests, ObservedRole};
     use indracore_node_subsystem_test_helpers::{
         SingleItemSink, SingleItemStream, TestSubsystemContextHandle,
     };
@@ -573,6 +623,7 @@ mod tests {
         ApprovalDistributionMessage, BitfieldDistributionMessage, StatementDistributionMessage,
     };
     use indracore_subsystem::{ActiveLeavesUpdate, FromOverseer, OverseerSignal};
+    use sc_network::config::RequestResponseConfig;
     use sc_network::Multiaddr;
     use sp_keyring::Sr25519Keyring;
 
@@ -582,6 +633,7 @@ mod tests {
     struct TestNetwork {
         net_events: Arc<Mutex<Option<SingleItemStream<NetworkEvent>>>>,
         action_tx: metered::UnboundedMeteredSender<NetworkAction>,
+        _req_configs: Vec<RequestResponseConfig>,
     }
 
     struct TestAuthorityDiscovery;
@@ -593,7 +645,9 @@ mod tests {
         net_tx: SingleItemSink<NetworkEvent>,
     }
 
-    fn new_test_network() -> (TestNetwork, TestNetworkHandle, TestAuthorityDiscovery) {
+    fn new_test_network(
+        req_configs: Vec<RequestResponseConfig>,
+    ) -> (TestNetwork, TestNetworkHandle, TestAuthorityDiscovery) {
         let (net_tx, net_rx) = indracore_node_subsystem_test_helpers::single_item_sink();
         let (action_tx, action_rx) = metered::unbounded("test_action");
 
@@ -601,6 +655,7 @@ mod tests {
             TestNetwork {
                 net_events: Arc::new(Mutex::new(Some(net_rx))),
                 action_tx,
+                _req_configs: req_configs,
             },
             TestNetworkHandle { action_rx, net_tx },
             TestAuthorityDiscovery,
@@ -621,6 +676,8 @@ mod tests {
         ) -> Pin<Box<dyn Sink<NetworkAction, Error = SubsystemError> + Send + 'a>> {
             Box::pin((&mut self.action_tx).sink_map_err(Into::into))
         }
+
+        fn start_request(&self, _: Requests) {}
     }
 
     #[async_trait]
@@ -725,11 +782,18 @@ mod tests {
 
     fn test_harness<T: Future<Output = ()>>(test: impl FnOnce(TestHarness) -> T) {
         let pool = sp_core::testing::TaskExecutor::new();
-        let (network, network_handle, discovery) = new_test_network();
+        let (request_multiplexer, req_configs) = RequestMultiplexer::new();
+        let (network, network_handle, discovery) = new_test_network(req_configs);
         let (context, virtual_overseer) =
             indracore_node_subsystem_test_helpers::make_subsystem_context(pool);
 
-        let network_bridge = run_network(network, discovery, context)
+        let bridge = NetworkBridge {
+            network_service: network,
+            authority_discovery_service: discovery,
+            request_multiplexer,
+        };
+
+        let network_bridge = run_network(bridge, context)
             .map_err(|_| panic!("subsystem execution failed"))
             .map(|_| ());
 

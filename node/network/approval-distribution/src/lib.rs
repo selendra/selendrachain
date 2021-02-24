@@ -24,16 +24,14 @@
 mod tests;
 
 use futures::{channel::oneshot, FutureExt as _};
-use indracore_node_network_protocol::{
-    v1 as protocol_v1, NetworkBridgeEvent, PeerId, ReputationChange as Rep, View,
-};
+use indracore_node_network_protocol::{v1 as protocol_v1, PeerId, ReputationChange as Rep, View};
 use indracore_node_primitives::approval::{
     AssignmentCert, BlockApprovalMeta, IndirectAssignmentCert, IndirectSignedApprovalVote,
 };
 use indracore_node_subsystem::{
     messages::{
         AllMessages, ApprovalCheckResult, ApprovalDistributionMessage, ApprovalVotingMessage,
-        AssignmentCheckResult, NetworkBridgeMessage,
+        AssignmentCheckResult, NetworkBridgeEvent, NetworkBridgeMessage,
     },
     ActiveLeavesUpdate, FromOverseer, OverseerSignal, SpawnedSubsystem, Subsystem,
     SubsystemContext,
