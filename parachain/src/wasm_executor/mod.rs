@@ -67,7 +67,7 @@ const MAX_VALIDATION_RESULT_HEADER_MEM: usize = MAX_CODE_MEM + 1024; // 16.001 M
 /// of specially crafted code that take enourmous amounts of time and memory to compile.
 ///
 /// At the same time, since PVF validates self-contained candidates, validation workers don't require
-/// extensive communication with indracore host, therefore there should be no observable performance penalty
+/// extensive communication with  host, therefore there should be no observable performance penalty
 /// coming from inter process communication.
 ///
 /// All of the above should give a sense why isolation is crucial for a typical use-case.
@@ -169,6 +169,33 @@ pub enum InternalError {
     WasmWorker(String),
 }
 
+/// A cache of executors for different parachain Wasm instances.
+///
+/// This should be reused across candidate validation instances.
+pub struct ExecutorCache(sc_executor::WasmExecutor);
+
+impl Default for ExecutorCache {
+    fn default() -> Self {
+        ExecutorCache(sc_executor::WasmExecutor::new(
+            #[cfg(all(
+                feature = "wasmtime",
+                not(any(target_os = "android", target_os = "unknown"))
+            ))]
+            sc_executor::WasmExecutionMethod::Compiled,
+            #[cfg(any(
+                not(feature = "wasmtime"),
+                target_os = "android",
+                target_os = "unknown"
+            ))]
+            sc_executor::WasmExecutionMethod::Interpreted,
+            // TODO: Make sure we don't use more than 1GB
+            Some(1024),
+            HostFunctions::host_functions(),
+            8,
+        ))
+    }
+}
+
 /// Validate a candidate under the given validation code.
 ///
 /// This will fail if the validation code is not a proper parachain validation module.
@@ -179,9 +206,12 @@ pub fn validate_candidate(
     spawner: impl SpawnNamed + 'static,
 ) -> Result<ValidationResult, ValidationError> {
     match isolation_strategy {
-        IsolationStrategy::InProcess => {
-            validate_candidate_internal(validation_code, &params.encode(), spawner)
-        }
+        IsolationStrategy::InProcess => validate_candidate_internal(
+            &ExecutorCache::default(),
+            validation_code,
+            &params.encode(),
+            spawner,
+        ),
         #[cfg(not(any(target_os = "android", target_os = "unknown")))]
         IsolationStrategy::ExternalProcessSelfHost(pool) => {
             pool.validate_candidate(validation_code, params)
@@ -201,27 +231,12 @@ type HostFunctions = sp_io::SubstrateHostFunctions;
 ///
 /// This will fail if the validation code is not a proper parachain validation module.
 pub fn validate_candidate_internal(
+    executor: &ExecutorCache,
     validation_code: &[u8],
     encoded_call_data: &[u8],
     spawner: impl SpawnNamed + 'static,
 ) -> Result<ValidationResult, ValidationError> {
-    let executor = sc_executor::WasmExecutor::new(
-        #[cfg(all(
-            feature = "wasmtime",
-            not(any(target_os = "android", target_os = "unknown"))
-        ))]
-        sc_executor::WasmExecutionMethod::Compiled,
-        #[cfg(any(
-            not(feature = "wasmtime"),
-            target_os = "android",
-            target_os = "unknown"
-        ))]
-        sc_executor::WasmExecutionMethod::Interpreted,
-        // TODO: Make sure we don't use more than 1GB
-        Some(1024),
-        HostFunctions::host_functions(),
-        8,
-    );
+    let executor = &executor.0;
 
     let mut extensions = Extensions::new();
     extensions.register(sp_core::traits::TaskExecutorExt::new(spawner));
@@ -229,10 +244,17 @@ pub fn validate_candidate_internal(
 
     let mut ext = ValidationExternalities(extensions);
 
+    // Expensive, but not more-so than recompiling the wasm module.
+    // And we need this hash to access the `sc_executor` cache.
+    let code_hash = {
+        use _core_primitives::{BlakeTwo256, HashT};
+        BlakeTwo256::hash(validation_code)
+    };
+
     let res = executor
         .call_in_wasm(
             validation_code,
-            None,
+            Some(code_hash.as_bytes().to_vec()),
             "validate_block",
             encoded_call_data,
             &mut ext,

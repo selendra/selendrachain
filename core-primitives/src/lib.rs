@@ -25,9 +25,11 @@ use parity_scale_codec::{Decode, Encode};
 use parity_util_mem::MallocSizeOf;
 use sp_runtime::{
     generic,
-    traits::{BlakeTwo256, IdentifyAccount, Verify},
+    traits::{IdentifyAccount, Verify},
     MultiSignature,
 };
+
+pub use sp_runtime::traits::{BlakeTwo256, Hash as HashT};
 
 /// The block number type used by Indracore.
 /// 32-bits will allow for 136 years of blocks assuming 1 block per second.
