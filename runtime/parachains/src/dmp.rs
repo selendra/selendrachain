@@ -231,6 +231,7 @@ mod tests {
     };
     use frame_support::traits::{OnFinalize, OnInitialize};
     use frame_support::StorageValue;
+    use hex_literal::hex;
     use parity_scale_codec::Encode;
     use primitives::v1::BlockNumber;
 
@@ -267,6 +268,25 @@ mod tests {
         msg: DownwardMessage,
     ) -> Result<(), QueueDownwardMessageError> {
         Dmp::queue_downward_message(&Configuration::config(), para_id, msg)
+    }
+
+    #[test]
+    fn dmp_mqc_head_fixture() {
+        let a = ParaId::from(2000);
+
+        new_test_ext(default_genesis_config()).execute_with(|| {
+            run_to_block(2, None);
+            assert!(Dmp::dmq_mqc_head(a).is_zero());
+            queue_downward_message(a, vec![1, 2, 3]).unwrap();
+
+            run_to_block(3, None);
+            queue_downward_message(a, vec![4, 5, 6]).unwrap();
+
+            assert_eq!(
+                Dmp::dmq_mqc_head(a),
+                hex!["88dc00db8cc9d22aa62b87807705831f164387dfa49f80a8600ed1cbe1704b6b"].into(),
+            );
+        });
     }
 
     #[test]

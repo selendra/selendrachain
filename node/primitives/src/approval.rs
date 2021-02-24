@@ -119,5 +119,5 @@ pub struct BlockApprovalMeta {
     /// Note that these are not the same as the candidates that appear within the block body.
     pub candidates: Vec<CandidateHash>,
     /// The consensus slot of the block.
-	pub slot: Slot, 
+    pub slot: Slot,
 }
