@@ -135,16 +135,16 @@ impl Decode for BEBlockNumber {
 #[derive(Debug, Encode, Decode)]
 enum State {
     /// Candidate data was first observed at the given time but is not available in any block.
-    #[codec(index = "0")]
+    #[codec(index = 0)]
     Unavailable(BETimestamp),
     /// The candidate was first observed at the given time and was included in the given list of unfinalized blocks, which may be
     /// empty. The timestamp here is not used for pruning. Either one of these blocks will be finalized or the state will regress to
     /// `State::Unavailable`, in which case the same timestamp will be reused. Blocks are sorted ascending first by block number and
     /// then hash.
-    #[codec(index = "1")]
+    #[codec(index = 1)]
     Unfinalized(BETimestamp, Vec<(BEBlockNumber, Hash)>),
     /// Candidate data has appeared in a finalized block and did so at the given time.
-    #[codec(index = "2")]
+    #[codec(index = 2)]
     Finalized(BETimestamp),
 }
 

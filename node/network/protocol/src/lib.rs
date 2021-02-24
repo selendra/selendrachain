@@ -304,7 +304,7 @@ pub mod v1 {
     #[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
     pub enum AvailabilityDistributionMessage {
         /// An erasure chunk for a given candidate hash.
-        #[codec(index = "0")]
+        #[codec(index = 0)]
         Chunk(CandidateHash, ErasureChunk),
     }
 
@@ -322,7 +322,7 @@ pub mod v1 {
     #[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
     pub enum BitfieldDistributionMessage {
         /// A signed availability bitfield for a given relay-parent hash.
-        #[codec(index = "0")]
+        #[codec(index = 0)]
         Bitfield(Hash, SignedAvailabilityBitfield),
     }
 
@@ -331,11 +331,11 @@ pub mod v1 {
     pub enum PoVDistributionMessage {
         /// Notification that we are awaiting the given PoVs (by hash) against a
         /// specific relay-parent hash.
-        #[codec(index = "0")]
+        #[codec(index = 0)]
         Awaiting(Hash, Vec<Hash>),
         /// Notification of an awaited PoV, in a given relay-parent context.
         /// (relay_parent, pov_hash, compressed_pov)
-        #[codec(index = "1")]
+        #[codec(index = 1)]
         SendPoV(Hash, Hash, CompressedPoV),
     }
 
@@ -343,7 +343,7 @@ pub mod v1 {
     #[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
     pub enum StatementDistributionMessage {
         /// A signed full statement under a given relay-parent.
-        #[codec(index = "0")]
+        #[codec(index = 0)]
         Statement(Hash, SignedFullStatement),
     }
 
@@ -353,10 +353,10 @@ pub mod v1 {
         /// Assignments for candidates in recent, unfinalized blocks.
         ///
         /// Actually checking the assignment may yield a different result.
-        #[codec(index = "0")]
+        #[codec(index = 0)]
         Assignments(Vec<(IndirectAssignmentCert, CandidateIndex)>),
         /// Approvals for candidates in some recent, unfinalized block.
-        #[codec(index = "1")]
+        #[codec(index = 1)]
         Approvals(Vec<IndirectSignedApprovalVote>),
     }
 
@@ -428,17 +428,17 @@ pub mod v1 {
     #[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
     pub enum CollatorProtocolMessage {
         /// Declare the intent to advertise collations under a collator ID.
-        #[codec(index = "0")]
+        #[codec(index = 0)]
         Declare(CollatorId),
         /// Advertise a collation to a validator. Can only be sent once the peer has declared
         /// that they are a collator with given ID.
-        #[codec(index = "1")]
+        #[codec(index = 1)]
         AdvertiseCollation(Hash, ParaId),
         /// Request the advertised collation at that relay-parent.
-        #[codec(index = "2")]
+        #[codec(index = 2)]
         RequestCollation(RequestId, Hash, ParaId),
         /// A requested collation.
-        #[codec(index = "3")]
+        #[codec(index = 3)]
         Collation(RequestId, CandidateReceipt, CompressedPoV),
     }
 
@@ -446,22 +446,22 @@ pub mod v1 {
     #[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
     pub enum ValidationProtocol {
         /// Availability distribution messages
-        #[codec(index = "0")]
+        #[codec(index = 0)]
         AvailabilityDistribution(AvailabilityDistributionMessage),
         /// Bitfield distribution messages
-        #[codec(index = "1")]
+        #[codec(index = 1)]
         BitfieldDistribution(BitfieldDistributionMessage),
         /// PoV Distribution messages
-        #[codec(index = "2")]
+        #[codec(index = 2)]
         PoVDistribution(PoVDistributionMessage),
         /// Statement distribution messages
-        #[codec(index = "3")]
+        #[codec(index = 3)]
         StatementDistribution(StatementDistributionMessage),
         /// Availability recovery messages
-        #[codec(index = "4")]
+        #[codec(index = 4)]
         AvailabilityRecovery(AvailabilityRecoveryMessage),
         /// Approval distribution messages
-        #[codec(index = "5")]
+        #[codec(index = 5)]
         ApprovalDistribution(ApprovalDistributionMessage),
     }
 
@@ -491,7 +491,7 @@ pub mod v1 {
     #[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
     pub enum CollationProtocol {
         /// Collator protocol messages
-        #[codec(index = "0")]
+        #[codec(index = 0)]
         CollatorProtocol(CollatorProtocolMessage),
     }
 
