@@ -205,6 +205,15 @@ impl sc_client_api::BlockBackend<Block> for Client {
             Self::Indracore(client) => client.block_hash(number),
         }
     }
+
+    fn extrinsic(
+        &self,
+        id: &<Block as BlockT>::Hash,
+    ) -> sp_blockchain::Result<Option<<Block as BlockT>::Extrinsic>> {
+        match self {
+            Self::Indracore(client) => client.extrinsic(id),
+        }
+    }
 }
 
 impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
