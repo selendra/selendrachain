@@ -28,7 +28,7 @@ use indracore_node_network_protocol::{
 };
 use indracore_node_primitives::{
     approval::{BlockApprovalMeta, IndirectAssignmentCert, IndirectSignedApprovalVote},
-    CollationGenerationConfig, MisbehaviorReport, SignedFullStatement, ValidationResult,
+    CollationGenerationConfig, SignedFullStatement, ValidationResult,
 };
 use indracore_primitives::v1::{
     AuthorityDiscoveryId, AvailableData, BackedCandidate, BlockNumber, CandidateDescriptor,
@@ -38,6 +38,7 @@ use indracore_primitives::v1::{
     OccupiedCoreAssumption, PersistedValidationData, PoV, SessionIndex, SessionInfo,
     SignedAvailabilityBitfield, ValidationCode, ValidatorId, ValidatorIndex, ValidatorSignature,
 };
+use indracore_statement_table::v1::Misbehavior;
 use std::{collections::btree_map::BTreeMap, sync::Arc};
 use thiserror::Error;
 
@@ -524,7 +525,7 @@ pub enum ProvisionableData {
     /// The Candidate Backing subsystem believes that this candidate is valid, pending availability.
     BackedCandidate(CandidateReceipt),
     /// Misbehavior reports are self-contained proofs of validator misbehavior.
-    MisbehaviorReport(Hash, MisbehaviorReport),
+    MisbehaviorReport(Hash, ValidatorIndex, Misbehavior),
     /// Disputes trigger a broad dispute resolution process.
     Dispute(Hash, ValidatorSignature),
 }
