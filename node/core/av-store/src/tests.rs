@@ -22,8 +22,8 @@ use futures::{channel::oneshot, executor, future, Future};
 use indracore_node_subsystem_test_helpers as test_helpers;
 use indracore_node_subsystem_util::TimeoutExt;
 use indracore_primitives::v1::{
-    AvailableData, BlockData, CandidateDescriptor, CandidateHash, CandidateReceipt, HeadData,
-    Header, Id as ParaId, PersistedValidationData, PoV, ValidatorId,
+    AvailableData, BlockData, CandidateDescriptor, CandidateHash, CandidateReceipt, CoreIndex,
+    GroupIndex, HeadData, Header, Id as ParaId, PersistedValidationData, PoV, ValidatorId,
 };
 use indracore_subsystem::{
     errors::RuntimeApiError, messages::AllMessages, ActiveLeavesUpdate, JaegerSpan,
@@ -211,6 +211,15 @@ fn with_tx(db: &Arc<impl KeyValueDB>, f: impl FnOnce(&mut DBTransaction)) {
     let mut tx = DBTransaction::new();
     f(&mut tx);
     db.write(tx).unwrap();
+}
+
+fn candidate_included(receipt: CandidateReceipt) -> CandidateEvent {
+    CandidateEvent::CandidateIncluded(
+        receipt,
+        HeadData::default(),
+        CoreIndex::default(),
+        GroupIndex::default(),
+    )
 }
 
 #[test]
@@ -652,10 +661,7 @@ fn stored_data_kept_until_finalized() {
                 &mut virtual_overseer,
                 parent,
                 block_number,
-                vec![CandidateEvent::CandidateIncluded(
-                    candidate,
-                    HeadData::default(),
-                )],
+                vec![candidate_included(candidate)],
                 (0..n_validators)
                     .map(|_| Sr25519Keyring::Alice.public().into())
                     .collect(),
@@ -829,10 +835,7 @@ fn forkfullness_works() {
                 &mut virtual_overseer,
                 parent_1,
                 block_number_1,
-                vec![CandidateEvent::CandidateIncluded(
-                    candidate_1,
-                    HeadData::default(),
-                )],
+                vec![candidate_included(candidate_1)],
                 validators.clone(),
             )
             .await;
@@ -841,10 +844,7 @@ fn forkfullness_works() {
                 &mut virtual_overseer,
                 parent_2,
                 block_number_2,
-                vec![CandidateEvent::CandidateIncluded(
-                    candidate_2,
-                    HeadData::default(),
-                )],
+                vec![candidate_included(candidate_2)],
                 validators.clone(),
             )
             .await;

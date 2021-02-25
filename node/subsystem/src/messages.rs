@@ -30,7 +30,7 @@ use indracore_node_network_protocol::{
 };
 use indracore_node_primitives::{
     approval::{BlockApprovalMeta, IndirectAssignmentCert, IndirectSignedApprovalVote},
-    CollationGenerationConfig, SignedFullStatement, ValidationResult,
+    BabeEpoch, CollationGenerationConfig, SignedFullStatement, ValidationResult,
 };
 use indracore_primitives::v1::{
     AuthorityDiscoveryId, AvailableData, BackedCandidate, BlockNumber, CandidateDescriptor,
@@ -490,6 +490,8 @@ pub enum RuntimeApiRequest {
         ParaId,
         RuntimeApiSender<BTreeMap<ParaId, Vec<InboundHrmpMessage<BlockNumber>>>>,
     ),
+    /// Get information about the BABE epoch the block was included in.
+    CurrentBabeEpoch(RuntimeApiSender<BabeEpoch>),
 }
 
 /// A message to the Runtime API subsystem.
@@ -647,6 +649,7 @@ pub enum ApprovalVotingMessage {
     /// Should not be sent unless the block hash is known.
     CheckAndImportAssignment(
         IndirectAssignmentCert,
+        CandidateIndex,
         oneshot::Sender<AssignmentCheckResult>,
     ),
     /// Check if the approval vote is valid and can be accepted by our view of the

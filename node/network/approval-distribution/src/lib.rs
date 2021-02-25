@@ -341,7 +341,11 @@ impl State {
             let (tx, rx) = oneshot::channel();
 
             ctx.send_message(AllMessages::ApprovalVoting(
-                ApprovalVotingMessage::CheckAndImportAssignment(assignment.clone(), tx),
+                ApprovalVotingMessage::CheckAndImportAssignment(
+                    assignment.clone(),
+                    claimed_candidate_index,
+                    tx,
+                ),
             ))
             .await;
 

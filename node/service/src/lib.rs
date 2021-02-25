@@ -27,6 +27,7 @@ use grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider};
 use indracore_network_bridge::RequestMultiplexer;
 #[cfg(feature = "full-node")]
 use {
+    babe_primitives::BabeApi,
     indracore_node_core_av_store::Config as AvailabilityConfig,
     indracore_node_core_av_store::Error as AvailabilityError,
     indracore_node_core_proposer::ProposerFactory,
@@ -189,7 +190,7 @@ fn new_partial<RuntimeApi, Executor>(
                 babe::BabeLink<Block>,
             ),
             grandpa::SharedVoterState,
-            Option<telemetry::TelemetrySpan>,
+            u64, // slot-duration
         ),
     >,
     Error,
@@ -205,7 +206,7 @@ where
 
     let inherent_data_providers = inherents::InherentDataProviders::new();
 
-    let (client, backend, keystore_container, task_manager, telemetry_span) =
+    let (client, backend, keystore_container, task_manager) =
         service::new_full_parts::<Block, RuntimeApi, Executor>(&config)?;
     let client = Arc::new(client);
 
@@ -232,11 +233,9 @@ where
 
     let justification_import = grandpa_block_import.clone();
 
-    let (block_import, babe_link) = babe::block_import(
-        babe::Config::get_or_compute(&*client)?,
-        grandpa_block_import,
-        client.clone(),
-    )?;
+    let babe_config = babe::Config::get_or_compute(&*client)?;
+    let (block_import, babe_link) =
+        babe::block_import(babe_config.clone(), grandpa_block_import, client.clone())?;
 
     let import_queue = babe::import_queue(
         babe_link.clone(),
@@ -261,8 +260,8 @@ where
     let import_setup = (block_import.clone(), grandpa_link, babe_link.clone());
     let rpc_setup = shared_voter_state.clone();
 
-    let babe_config = babe_link.config().clone();
     let shared_epoch_changes = babe_link.epoch_changes().clone();
+    let slot_duration = babe_config.slot_duration();
 
     let rpc_extensions_builder = {
         let client = client.clone();
@@ -309,7 +308,7 @@ where
             rpc_extensions_builder,
             import_setup,
             rpc_setup,
-            telemetry_span,
+            slot_duration,
         ),
     })
 }
@@ -327,6 +326,7 @@ fn real_overseer<Spawner, RuntimeClient>(
     spawner: Spawner,
     _: IsCollator,
     _: IsolationStrategy,
+    _: u64,
 ) -> Result<(Overseer<Spawner>, OverseerHandler), Error>
 where
     RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
@@ -349,10 +349,11 @@ fn real_overseer<Spawner, RuntimeClient>(
     spawner: Spawner,
     is_collator: IsCollator,
     isolation_strategy: IsolationStrategy,
+    _slot_duration: u64, // TODO [now]: instantiate approval voting.
 ) -> Result<(Overseer<Spawner>, OverseerHandler), Error>
 where
     RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-    RuntimeClient::Api: ParachainHost<Block>,
+    RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block>,
     Spawner: 'static + SpawnNamed + Clone + Unpin,
 {
     use indracore_node_subsystem_util::metrics::Metrics;
@@ -514,7 +515,7 @@ where
         import_queue,
         transaction_pool,
         inherent_data_providers,
-        other: (rpc_extensions_builder, import_setup, rpc_setup, telemetry_span),
+        other: (rpc_extensions_builder, import_setup, rpc_setup, slot_duration),
     } = new_partial::<RuntimeApi, Executor>(&mut config, jaeger_agent)?;
 
     let prometheus_registry = config.prometheus_registry().cloned();
@@ -609,7 +610,6 @@ where
             remote_blockchain: None,
             network_status_sinks: network_status_sinks.clone(),
             system_rpc_tx,
-            telemetry_span,
         })?;
 
     let (block_import, link_half, babe_link) = import_setup;
@@ -683,6 +683,7 @@ where
             spawner,
             is_collator,
             isolation_strategy,
+            slot_duration,
         )?;
         let overseer_handler_clone = overseer_handler.clone();
 
@@ -843,7 +844,7 @@ where
     set_prometheus_registry(&mut config)?;
     use sc_client_api::backend::RemoteBackend;
 
-    let (client, backend, keystore_container, mut task_manager, on_demand, telemetry_span) =
+    let (client, backend, keystore_container, mut task_manager, on_demand) =
         service::new_light_parts::<Block, Runtime, Dispatch>(&config)?;
 
     let select_chain = sc_consensus::LongestChain::new(backend.clone());
@@ -928,7 +929,6 @@ where
             network,
             network_status_sinks,
             system_rpc_tx,
-            telemetry_span,
         })?;
 
     network_starter.start_network();
