@@ -378,10 +378,10 @@ pub mod v1 {
     }
 
     impl std::fmt::Debug for CompressedPoV {
-    	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-			write!(f, "CompressedPoV({} bytes)", self.0.len())
-		}
-	}
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "CompressedPoV({} bytes)", self.0.len())
+        }
+    }
 
     /// Network messages used by the collator protocol subsystem
     #[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
