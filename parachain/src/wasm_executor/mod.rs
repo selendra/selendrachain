@@ -30,7 +30,7 @@ use sp_externalities::Extensions;
 use sp_wasm_interface::HostFunctions as _;
 use std::{
     any::{Any, TypeId},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 #[cfg(not(any(target_os = "android", target_os = "unknown")))]
@@ -67,7 +67,7 @@ const MAX_VALIDATION_RESULT_HEADER_MEM: usize = MAX_CODE_MEM + 1024; // 16.001 M
 /// of specially crafted code that take enourmous amounts of time and memory to compile.
 ///
 /// At the same time, since PVF validates self-contained candidates, validation workers don't require
-/// extensive communication with  host, therefore there should be no observable performance penalty
+/// extensive communication with indracore host, therefore there should be no observable performance penalty
 /// coming from inter process communication.
 ///
 /// All of the above should give a sense why isolation is crucial for a typical use-case.
@@ -82,7 +82,10 @@ pub enum IsolationStrategy {
     /// The validation worker is ran using the process' executable and the subcommand `validation-worker` is passed
     /// following by the address of the shared memory.
     #[cfg(not(any(target_os = "android", target_os = "unknown")))]
-    ExternalProcessSelfHost(ValidationPool),
+    ExternalProcessSelfHost {
+        pool: ValidationPool,
+        cache_base_path: Option<String>,
+    },
     /// The validation worker is ran using the command provided and the argument provided. The address of the shared
     /// memory is added at the end of the arguments.
     #[cfg(not(any(target_os = "android", target_os = "unknown")))]
@@ -97,16 +100,16 @@ pub enum IsolationStrategy {
     },
 }
 
-impl Default for IsolationStrategy {
-    fn default() -> Self {
-        #[cfg(not(any(target_os = "android", target_os = "unknown")))]
-        {
-            Self::ExternalProcessSelfHost(ValidationPool::new())
-        }
+impl IsolationStrategy {
+    #[cfg(not(any(target_os = "android", target_os = "unknown")))]
+    pub fn external_process_with_caching(cache_base_path: Option<&Path>) -> Self {
+        // Convert cache path to string here so that we don't have to do that each time we launch
+        // validation worker.
+        let cache_base_path = cache_base_path.map(|path| path.display().to_string());
 
-        #[cfg(any(target_os = "android", target_os = "unknown"))]
-        {
-            Self::InProcess
+        Self::ExternalProcessSelfHost {
+            pool: ValidationPool::new(),
+            cache_base_path,
         }
     }
 }
@@ -174,8 +177,12 @@ pub enum InternalError {
 /// This should be reused across candidate validation instances.
 pub struct ExecutorCache(sc_executor::WasmExecutor);
 
-impl Default for ExecutorCache {
-    fn default() -> Self {
+impl ExecutorCache {
+    /// Returns a new instance of an executor cache.
+    ///
+    /// `cache_base_path` allows to specify a directory where the executor is allowed to store files
+    /// for caching, e.g. compilation artifacts.
+    pub fn new(cache_base_path: Option<PathBuf>) -> ExecutorCache {
         ExecutorCache(sc_executor::WasmExecutor::new(
             #[cfg(all(
                 feature = "wasmtime",
@@ -192,6 +199,7 @@ impl Default for ExecutorCache {
             Some(1024),
             HostFunctions::host_functions(),
             8,
+            cache_base_path,
         ))
     }
 }
@@ -207,15 +215,16 @@ pub fn validate_candidate(
 ) -> Result<ValidationResult, ValidationError> {
     match isolation_strategy {
         IsolationStrategy::InProcess => validate_candidate_internal(
-            &ExecutorCache::default(),
+            &ExecutorCache::new(None),
             validation_code,
             &params.encode(),
             spawner,
         ),
         #[cfg(not(any(target_os = "android", target_os = "unknown")))]
-        IsolationStrategy::ExternalProcessSelfHost(pool) => {
-            pool.validate_candidate(validation_code, params)
-        }
+        IsolationStrategy::ExternalProcessSelfHost {
+            pool,
+            cache_base_path,
+        } => pool.validate_candidate(validation_code, params, cache_base_path.as_deref()),
         #[cfg(not(any(target_os = "android", target_os = "unknown")))]
         IsolationStrategy::ExternalProcessCustomHost { pool, binary, args } => {
             let args: Vec<&str> = args.iter().map(|x| x.as_str()).collect();
@@ -247,7 +256,7 @@ pub fn validate_candidate_internal(
     // Expensive, but not more-so than recompiling the wasm module.
     // And we need this hash to access the `sc_executor` cache.
     let code_hash = {
-        use _core_primitives::{BlakeTwo256, HashT};
+        use indracore_core_primitives::{BlakeTwo256, HashT};
         BlakeTwo256::hash(validation_code)
     };
 
