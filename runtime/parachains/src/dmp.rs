@@ -227,9 +227,7 @@ impl<T: Config> Module<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mock::{
-        new_test_ext, Configuration, Dmp, GenesisConfig as MockGenesisConfig, System,
-    };
+    use crate::mock::{new_test_ext, Configuration, Dmp, MockGenesisConfig, System};
     use frame_support::traits::{OnFinalize, OnInitialize};
     use frame_support::StorageValue;
     use hex_literal::hex;

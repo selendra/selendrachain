@@ -923,8 +923,7 @@ mod tests {
     use crate::configuration::HostConfiguration;
     use crate::initializer::SessionChangeNotification;
     use crate::mock::{
-        new_test_ext, Configuration, GenesisConfig as MockGenesisConfig, Inclusion, Paras, System,
-        Test,
+        new_test_ext, Configuration, Inclusion, MockGenesisConfig, Paras, System, Test,
     };
     use crate::paras::ParaGenesisArgs;
     use crate::scheduler::AssignmentKind;

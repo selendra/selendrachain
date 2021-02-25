@@ -255,9 +255,10 @@ impl<T: Config> Module<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::paras_registrar;
     use frame_support::traits::OneSessionHandler;
     use frame_support::{
-        assert_ok, impl_outer_dispatch, impl_outer_origin, parameter_types,
+        assert_ok, parameter_types,
         traits::{OnFinalize, OnInitialize, Randomness},
     };
     use frame_system::limits;
@@ -277,19 +278,25 @@ mod tests {
         Perbill,
     };
 
-    impl_outer_origin! {
-        pub enum Origin for Test {
-            runtime_parachains,
-        }
-    }
+    type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+    type Block = frame_system::mocking::MockBlock<Test>;
 
-    impl_outer_dispatch! {
-        pub enum Call for Test where origin: Origin {
-            paras::Parachains,
-            registrar::Registrar,
-            staking::Staking,
+    frame_support::construct_runtime!(
+        pub enum Test where
+            Block = Block,
+            NodeBlock = Block,
+            UncheckedExtrinsic = UncheckedExtrinsic,
+        {
+            System: frame_system::{Module, Call, Config, Storage, Event<T>},
+            Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
+            Parachains: paras::{Module, Origin, Call, Storage, Config<T>},
+            Inclusion: inclusion::{Module, Call, Storage, Event<T>},
+            Registrar: paras_registrar::{Module, Call, Storage},
+             Staking: pallet_staking::{Module, Call, Config<T>, Storage, Event<T>, ValidateUnsigned},
+            Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
+            Initializer: initializer::{Module, Call, Storage},
         }
-    }
+    );
 
     pallet_staking_reward_curve::build! {
         const REWARD_CURVE: PiecewiseLinear<'static> = curve!(
@@ -302,8 +309,6 @@ mod tests {
         );
     }
 
-    #[derive(Clone, Eq, PartialEq)]
-    pub struct Test;
     const NORMAL_RATIO: Perbill = Perbill::from_percent(75);
     parameter_types! {
         pub const BlockHashCount: u32 = 250;
@@ -324,13 +329,13 @@ mod tests {
         type AccountId = u64;
         type Lookup = IdentityLookup<u64>;
         type Header = Header;
-        type Event = ();
+        type Event = Event;
         type BlockHashCount = BlockHashCount;
         type DbWeight = ();
         type BlockWeights = BlockWeights;
         type BlockLength = BlockLength;
         type Version = ();
-        type PalletInfo = ();
+        type PalletInfo = PalletInfo;
         type AccountData = pallet_balances::AccountData<u128>;
         type OnNewAccount = ();
         type OnKilledAccount = ();
@@ -353,7 +358,7 @@ mod tests {
     impl pallet_balances::Config for Test {
         type Balance = u128;
         type DustRemoval = ();
-        type Event = ();
+        type Event = Event;
         type ExistentialDeposit = ExistentialDeposit;
         type AccountStore = System;
         type MaxLocks = ();
@@ -382,7 +387,7 @@ mod tests {
         type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
         type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
         type SessionHandler = pallet_session::TestSessionHandler;
-        type Event = ();
+        type Event = Event;
         type ValidatorId = u64;
         type ValidatorIdOf = ();
         type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
@@ -403,7 +408,7 @@ mod tests {
     impl pallet_staking::Config for Test {
         type RewardRemainder = ();
         type CurrencyToVote = frame_support::traits::SaturatingCurrencyToVote;
-        type Event = ();
+        type Event = Event;
         type Currency = pallet_balances::Module<Test>;
         type Slash = ();
         type Reward = ();
@@ -490,7 +495,7 @@ mod tests {
     }
 
     impl inclusion::Config for Test {
-        type Event = ();
+        type Event = Event;
         type RewardValidators = TestRewardValidators;
     }
 
@@ -550,15 +555,6 @@ mod tests {
         type Currency = pallet_balances::Module<Test>;
         type ParathreadDeposit = ParathreadDeposit;
     }
-
-    type Balances = pallet_balances::Module<Test>;
-    type Parachains = paras::Module<Test>;
-    type Inclusion = inclusion::Module<Test>;
-    type System = frame_system::Module<Test>;
-    type Registrar = Module<Test>;
-    type Session = pallet_session::Module<Test>;
-    type Staking = pallet_staking::Module<Test>;
-    type Initializer = initializer::Module<Test>;
 
     fn new_test_ext() -> TestExternalities {
         let mut t = frame_system::GenesisConfig::default()

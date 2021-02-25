@@ -785,9 +785,7 @@ mod tests {
 
     use crate::configuration::HostConfiguration;
     use crate::initializer::SessionChangeNotification;
-    use crate::mock::{
-        new_test_ext, Configuration, GenesisConfig as MockGenesisConfig, Paras, Scheduler, System,
-    };
+    use crate::mock::{new_test_ext, Configuration, MockGenesisConfig, Paras, Scheduler, System};
     use crate::paras::ParaGenesisArgs;
 
     fn run_to_block(

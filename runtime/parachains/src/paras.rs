@@ -835,7 +835,7 @@ mod tests {
     use primitives::v1::BlockNumber;
 
     use crate::configuration::HostConfiguration;
-    use crate::mock::{new_test_ext, GenesisConfig as MockGenesisConfig, Paras, System};
+    use crate::mock::{new_test_ext, MockGenesisConfig, Paras, System};
 
     fn run_to_block(to: BlockNumber, new_session: Option<Vec<BlockNumber>>) {
         while System::block_number() < to {

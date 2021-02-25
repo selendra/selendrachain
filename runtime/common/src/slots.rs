@@ -990,8 +990,9 @@ mod tests {
     use super::*;
     use std::{cell::RefCell, collections::HashMap};
 
+    use crate::slots;
     use frame_support::{
-        assert_noop, assert_ok, impl_outer_origin, parameter_types,
+        assert_noop, assert_ok, parameter_types,
         traits::{OnFinalize, OnInitialize},
     };
     use pallet_balances;
@@ -999,15 +1000,22 @@ mod tests {
     use sp_core::H256;
     use sp_runtime::traits::{BlakeTwo256, Hash, IdentityLookup};
 
-    impl_outer_origin! {
-        pub enum Origin for Test {}
-    }
+    type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+    type Block = frame_system::mocking::MockBlock<Test>;
 
-    // For testing the module, we construct most of a mock runtime. This means
-    // first constructing a configuration type (`Test`) which `impl`s each of the
-    // configuration traits of modules we want to use.
-    #[derive(Clone, Eq, PartialEq)]
-    pub struct Test;
+    frame_support::construct_runtime!(
+        pub enum Test where
+            Block = Block,
+            NodeBlock = Block,
+            UncheckedExtrinsic = UncheckedExtrinsic,
+        {
+            System: frame_system::{Module, Call, Config, Storage, Event<T>},
+            Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
+            Slots: slots::{Module, Call, Storage, Event<T>},
+             RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
+        }
+    );
+
     parameter_types! {
         pub const BlockHashCount: u32 = 250;
     }
@@ -1017,7 +1025,7 @@ mod tests {
         type BlockLength = ();
         type DbWeight = ();
         type Origin = Origin;
-        type Call = ();
+        type Call = Call;
         type Index = u64;
         type BlockNumber = BlockNumber;
         type Hash = H256;
@@ -1025,10 +1033,10 @@ mod tests {
         type AccountId = u64;
         type Lookup = IdentityLookup<Self::AccountId>;
         type Header = Header;
-        type Event = ();
+        type Event = Event;
         type BlockHashCount = BlockHashCount;
         type Version = ();
-        type PalletInfo = ();
+        type PalletInfo = PalletInfo;
         type AccountData = pallet_balances::AccountData<u64>;
         type OnNewAccount = ();
         type OnKilledAccount = ();
@@ -1042,7 +1050,7 @@ mod tests {
 
     impl pallet_balances::Config for Test {
         type Balance = u64;
-        type Event = ();
+        type Event = Event;
         type DustRemoval = ();
         type ExistentialDeposit = ExistentialDeposit;
         type AccountStore = System;
@@ -1115,18 +1123,13 @@ mod tests {
     }
 
     impl Config for Test {
-        type Event = ();
+        type Event = Event;
         type Currency = Balances;
         type Parachains = TestParachains;
         type LeasePeriod = LeasePeriod;
         type EndingPeriod = EndingPeriod;
         type Randomness = RandomnessCollectiveFlip;
     }
-
-    type System = frame_system::Module<Test>;
-    type Balances = pallet_balances::Module<Test>;
-    type Slots = Module<Test>;
-    type RandomnessCollectiveFlip = pallet_randomness_collective_flip::Module<Test>;
 
     // This function basically just builds a genesis storage key/value store according to
     // our desired mock up.

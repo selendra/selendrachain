@@ -167,8 +167,7 @@ mod tests {
     use crate::configuration::HostConfiguration;
     use crate::initializer::SessionChangeNotification;
     use crate::mock::{
-        new_test_ext, Configuration, GenesisConfig as MockGenesisConfig, Origin, SessionInfo,
-        System,
+        new_test_ext, Configuration, MockGenesisConfig, Origin, SessionInfo, System,
     };
     use frame_support::traits::{OnFinalize, OnInitialize};
     use primitives::v1::BlockNumber;

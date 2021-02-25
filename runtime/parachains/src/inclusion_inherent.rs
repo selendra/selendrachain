@@ -226,7 +226,7 @@ impl<T: Config> ProvideInherent for Module<T> {
 mod tests {
     use super::*;
 
-    use crate::mock::{new_test_ext, GenesisConfig as MockGenesisConfig, System, Test};
+    use crate::mock::{new_test_ext, MockGenesisConfig, System, Test};
 
     mod limit_backed_candidates {
         use super::*;
@@ -280,7 +280,7 @@ mod tests {
     mod inclusion_inherent_weight {
         use super::*;
 
-        use crate::mock::{new_test_ext, GenesisConfig as MockGenesisConfig, System, Test};
+        use crate::mock::{new_test_ext, MockGenesisConfig, System, Test};
 
         use frame_support::traits::UnfilteredDispatchable;
 
