@@ -286,6 +286,7 @@ async fn distribute_collation(
     connect_to_validators(
         ctx,
         relay_parent,
+        id,
         state,
         current_validators
             .union(&next_validators)
@@ -392,14 +393,21 @@ async fn declare(
 async fn connect_to_validators(
     ctx: &mut impl SubsystemContext<Message = CollatorProtocolMessage>,
     relay_parent: Hash,
+    para_id: ParaId,
     state: &mut State,
     validators: Vec<ValidatorId>,
 ) -> Result<()> {
-    let request =
-        validator_discovery::connect_to_validators(ctx, relay_parent, validatorsPeerSet::Collation)
-            .await?;
+    let request = validator_discovery::connect_to_validators(
+        ctx,
+        relay_parent,
+        validators,
+        PeerSet::Collation,
+    )
+    .await?;
 
-    state.connection_requests.put(relay_parent, request);
+    state
+        .connection_requests
+        .put(relay_parent, para_id, request);
 
     Ok(())
 }
@@ -719,7 +727,7 @@ async fn handle_our_view_change(state: &mut State, view: OurView) -> Result<()> 
     for removed in state.view.difference(&view) {
         state.collations.remove(removed);
         state.our_validators_groups.remove(removed);
-        state.connection_requests.remove(removed);
+        state.connection_requests.remove_all(removed);
         state.span_per_relay_parent.remove(removed);
     }
 

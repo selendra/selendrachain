@@ -206,7 +206,7 @@ async fn handle_signal(
             }
 
             for relay_parent in deactivated {
-                state.connection_requests.remove(&relay_parent);
+                state.connection_requests.remove_all(&relay_parent);
                 state.relay_parent_state.remove(&relay_parent);
             }
 
@@ -329,13 +329,14 @@ async fn connect_to_relevant_validators(
     relay_parent: Hash,
     descriptor: &CandidateDescriptor,
 ) {
+    let para_id = descriptor.para_id;
     if let Ok(Some(relevant_validators)) =
-        determine_relevant_validators(ctx, relay_parent, descriptor.para_id).await
+        determine_relevant_validators(ctx, relay_parent, para_id).await
     {
         // We only need one connection request per (relay_parent, para_id)
         // so here we take this shortcut to avoid calling `connect_to_validators`
         // more than once.
-        if !connection_requests.contains_request(&relay_parent) {
+        if !connection_requests.contains_request(&relay_parent, para_id) {
             tracing::debug!(target: LOG_TARGET, validators=?relevant_validators, "connecting to validators");
             match validator_discovery::connect_to_validators(
                 ctx,
@@ -346,7 +347,7 @@ async fn connect_to_relevant_validators(
             .await
             {
                 Ok(new_connection_request) => {
-                    connection_requests.put(relay_parent, new_connection_request);
+                    connection_requests.put(relay_parent, para_id, new_connection_request);
                 }
                 Err(e) => {
                     tracing::debug!(
