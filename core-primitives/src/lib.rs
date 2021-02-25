@@ -64,7 +64,7 @@ pub type Hash = sp_core::H256;
 /// This type is produced by [`CandidateReceipt::hash`].
 ///
 /// This type makes it easy to enforce that a hash is a candidate hash on the type level.
-#[derive(Clone, Copy, Encode, Decode, Hash, Eq, PartialEq, Debug, Default)]
+#[derive(Clone, Copy, Encode, Decode, Hash, Eq, PartialEq, Default)]
 #[cfg_attr(feature = "std", derive(MallocSizeOf))]
 pub struct CandidateHash(pub Hash);
 
@@ -72,6 +72,12 @@ pub struct CandidateHash(pub Hash);
 impl std::fmt::Display for CandidateHash {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl sp_std::fmt::Debug for CandidateHash {
+    fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
+        write!(f, "{:?}", self.0)
     }
 }
 
