@@ -17,18 +17,20 @@
 //! All peersets and protocols used for parachains.
 
 use sc_network::config::{NonDefaultSetConfig, SetConfig};
-use std::borrow::Cow;
+use std::{
+    borrow::Cow,
+    ops::{Index, IndexMut},
+};
 use strum::{EnumIter, IntoEnumIterator};
 
 /// The peer-sets and thus the protocols which are used for the network.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter)]
-#[repr(usize)]
 pub enum PeerSet {
     /// The validation peer-set is responsible for all messages related to candidate validation and
     /// communication among validators.
-    Validation = 0,
+    Validation,
     /// The collation peer-set is used for validator<>collator communication.
-    Collation = 1,
+    Collation,
 }
 
 impl PeerSet {
@@ -38,8 +40,7 @@ impl PeerSet {
     /// network service.
     pub fn get_info(self) -> NonDefaultSetConfig {
         let protocol = self.into_protocol_name();
-        // TODO: lower this limit after https://github.com/paritytech/polkadot/issues/2283 is
-        // done and collations use request-response protocols
+        // TODO: lower this limit after is done and collations use request-response protocols
         let max_notification_size = 16 * 1024 * 1024;
 
         match self {
@@ -69,8 +70,8 @@ impl PeerSet {
     /// Get the protocol name associated with each peer set as static str.
     pub const fn get_protocol_name_static(self) -> &'static str {
         match self {
-            PeerSet::Validation => "/polkadot/validation/1",
-            PeerSet::Collation => "/polkadot/collation/1",
+            PeerSet::Validation => "/indracore/validation/1",
+            PeerSet::Collation => "/indracore/collation/1",
         }
     }
 
@@ -85,6 +86,32 @@ impl PeerSet {
             n if n == &PeerSet::Validation.into_protocol_name() => Some(PeerSet::Validation),
             n if n == &PeerSet::Collation.into_protocol_name() => Some(PeerSet::Collation),
             _ => None,
+        }
+    }
+}
+
+/// A small and nifty collection that allows to store data pertaining to each peer set.
+#[derive(Debug, Default)]
+pub struct PerPeerSet<T> {
+    validation: T,
+    collation: T,
+}
+
+impl<T> Index<PeerSet> for PerPeerSet<T> {
+    type Output = T;
+    fn index(&self, index: PeerSet) -> &T {
+        match index {
+            PeerSet::Validation => &self.validation,
+            PeerSet::Collation => &self.collation,
+        }
+    }
+}
+
+impl<T> IndexMut<PeerSet> for PerPeerSet<T> {
+    fn index_mut(&mut self, index: PeerSet) -> &mut T {
+        match index {
+            PeerSet::Validation => &mut self.validation,
+            PeerSet::Collation => &mut self.collation,
         }
     }
 }
