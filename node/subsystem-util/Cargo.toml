@@ -27,6 +27,7 @@ indracore-node-primitives = { path = "../primitives" }
 indracore-node-subsystem = { path = "../subsystem" }
 indracore-node-jaeger = { path = "../jaeger" }
 indracore-primitives = { path = "../../primitives" }
+indracore-node-network-protocol = { path = "../network/protocol" }
 metered-channel = { path = "../metered-channel"}
 
 [dev-dependencies]

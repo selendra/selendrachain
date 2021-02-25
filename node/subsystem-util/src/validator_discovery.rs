@@ -28,6 +28,7 @@ use futures::{
 use streamunordered::{StreamUnordered, StreamYield};
 
 use crate::Error;
+use indracore_node_network_protocol::peer_set::PeerSet;
 use indracore_node_subsystem::{
     errors::RuntimeApiError,
     messages::{AllMessages, NetworkBridgeMessage},
@@ -41,18 +42,20 @@ pub async fn connect_to_validators<Context: SubsystemContext>(
     ctx: &mut Context,
     relay_parent: Hash,
     validators: Vec<ValidatorId>,
+    peer_set: PeerSet,
 ) -> Result<ConnectionRequest, Error> {
     let current_index = crate::request_session_index_for_child_ctx(relay_parent, ctx)
         .await?
         .await??;
-    connect_to_past_session_validators(ctx, relay_parent, validators, current_index).await
+    connect_to_validators_in_session(ctx, relay_parent, validators, peer_set, current_index).await
 }
 
-/// Utility function to make it easier to connect to validators in the past sessions.
-pub async fn connect_to_past_session_validators<Context: SubsystemContext>(
+/// Utility function to make it easier to connect to validators in the given session.
+pub async fn connect_to_validators_in_session<Context: SubsystemContext>(
     ctx: &mut Context,
     relay_parent: Hash,
     validators: Vec<ValidatorId>,
+    peer_set: PeerSet,
     session_index: SessionIndex,
 ) -> Result<ConnectionRequest, Error> {
     let session_info = crate::request_session_info_ctx(relay_parent, session_index, ctx)
@@ -69,6 +72,14 @@ pub async fn connect_to_past_session_validators<Context: SubsystemContext>(
             .into())
         }
     };
+
+    tracing::trace!(
+        target: "network_bridge",
+        validators = ?validators,
+        discovery_keys = ?discovery_keys,
+        session_index,
+        "Trying to serve the validator discovery request",
+    );
 
     let id_to_index = session_validators
         .iter()
@@ -96,7 +107,7 @@ pub async fn connect_to_past_session_validators<Context: SubsystemContext>(
         .filter_map(|(k, v)| v.map(|v| (v, k)))
         .collect::<HashMap<AuthorityDiscoveryId, ValidatorId>>();
 
-    let connections = connect_to_authorities(ctx, authorities).await;
+    let connections = connect_to_authorities(ctx, authorities, peer_set).await;
 
     Ok(ConnectionRequest {
         validator_map,
@@ -107,14 +118,16 @@ pub async fn connect_to_past_session_validators<Context: SubsystemContext>(
 async fn connect_to_authorities<Context: SubsystemContext>(
     ctx: &mut Context,
     validator_ids: Vec<AuthorityDiscoveryId>,
+    peer_set: PeerSet,
 ) -> mpsc::Receiver<(AuthorityDiscoveryId, PeerId)> {
-    const PEERS_CAPACITY: usize = 8;
+    const PEERS_CAPACITY: usize = 32;
 
     let (connected, connected_rx) = mpsc::channel(PEERS_CAPACITY);
 
     ctx.send_message(AllMessages::NetworkBridge(
         NetworkBridgeMessage::ConnectToValidators {
             validator_ids,
+            peer_set,
             connected,
         },
     ))
@@ -176,7 +189,7 @@ impl ConnectionRequests {
     /// be revoked and substituted with the given one.
     pub fn put(&mut self, relay_parent: Hash, request: ConnectionRequest) {
         self.remove(&relay_parent);
-        let token = self.requests.insert(ConnectionRequestForRelayParent {
+        let token = self.requests.push(ConnectionRequestForRelayParent {
             relay_parent,
             request,
         });

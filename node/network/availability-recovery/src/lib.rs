@@ -34,7 +34,7 @@ use streamunordered::{StreamUnordered, StreamYield};
 
 use indracore_erasure_coding::{branch_hash, branches, obtain_chunks_v1, recovery_threshold};
 use indracore_node_network_protocol::{
-    v1 as protocol_v1, PeerId, ReputationChange as Rep, RequestId,
+    peer_set::PeerSet, v1 as protocol_v1, PeerId, ReputationChange as Rep, RequestId,
 };
 use indracore_node_subsystem_util::{request_session_info_ctx, Timeout, TimeoutExt};
 use indracore_primitives::v1::{
@@ -598,6 +598,7 @@ async fn handle_from_interaction(
 
             let message = NetworkBridgeMessage::ConnectToValidators {
                 validator_ids: vec![id.clone()],
+                peer_set: PeerSet::Validation,
                 connected: tx,
             };
 

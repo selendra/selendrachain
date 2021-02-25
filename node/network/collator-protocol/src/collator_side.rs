@@ -20,7 +20,9 @@ use super::{Result, LOG_TARGET};
 
 use futures::{select, FutureExt};
 
-use indracore_node_network_protocol::{v1 as protocol_v1, OurView, PeerId, RequestId, View};
+use indracore_node_network_protocol::{
+    peer_set::PeerSet, v1 as protocol_v1, OurView, PeerId, RequestId, View,
+};
 use indracore_node_subsystem_util::{
     metrics::{self, prometheus},
     request_availability_cores_ctx, request_validator_groups_ctx, request_validators_ctx,
@@ -393,7 +395,9 @@ async fn connect_to_validators(
     state: &mut State,
     validators: Vec<ValidatorId>,
 ) -> Result<()> {
-    let request = validator_discovery::connect_to_validators(ctx, relay_parent, validators).await?;
+    let request =
+        validator_discovery::connect_to_validators(ctx, relay_parent, validatorsPeerSet::Collation)
+            .await?;
 
     state.connection_requests.put(relay_parent, request);
 

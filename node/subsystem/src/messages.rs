@@ -24,6 +24,7 @@
 
 use futures::channel::{mpsc, oneshot};
 use indracore_node_network_protocol::{
+    peer_set::PeerSet,
     request_response::{request::IncomingRequest, v1 as req_res_v1, Requests},
     v1 as protocol_v1, PeerId, ReputationChange,
 };
@@ -234,6 +235,8 @@ pub enum NetworkBridgeMessage {
     ConnectToValidators {
         /// Ids of the validators to connect to.
         validator_ids: Vec<AuthorityDiscoveryId>,
+        /// The underlying protocol to use for this request.
+        peer_set: PeerSet,
         /// Response sender by which the issuer can learn the `PeerId`s of
         /// the validators as they are connected.
         /// The response is sent immediately for already connected peers.
