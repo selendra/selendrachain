@@ -30,6 +30,7 @@ sc-executor = { git = "https://github.com/selendra/substrate", branch = "master"
 sc-finality-grandpa-warp-sync = { git = "https://github.com/selendra/substrate", branch = "master", optional = true }
 sc-network = { git = "https://github.com/selendra/substrate", branch = "master" }
 sc-transaction-pool = { git = "https://github.com/selendra/substrate", branch = "master" }
+sc-keystore = { git = "https://github.com/selendra/substrate", branch = "master" }
 
 # Substrate Primitives
 babe-primitives = { package = "sp-consensus-babe", git = "https://github.com/selendra/substrate", branch = "master" }
@@ -95,6 +96,7 @@ indracore-node-core-runtime-api = { path = "../core/runtime-api", optional = tru
 indracore-pov-distribution = { path = "../network/pov-distribution", optional = true }
 indracore-statement-distribution = { path = "../network/statement-distribution", optional = true }
 indracore-approval-distribution = { path = "../network/approval-distribution", optional = true }
+indracore-node-core-approval-voting = { path = "../core/approval-voting", optional = true }
 
 [dev-dependencies]
 indracore-test-client = { path = "../test/client" }
@@ -129,4 +131,5 @@ real-overseer = [
 	"indracore-pov-distribution",
 	"indracore-statement-distribution",
 	"indracore-approval-distribution",
+	"indracore-node-core-approval-voting",
 ]

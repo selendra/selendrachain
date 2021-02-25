@@ -22,21 +22,21 @@ pub mod chain_spec;
 mod client;
 mod grandpa_support;
 
-use grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider};
 #[cfg(feature = "real-overseer")]
 use indracore_network_bridge::RequestMultiplexer;
 #[cfg(feature = "full-node")]
 use {
     babe_primitives::BabeApi,
+    grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider},
     indracore_node_core_av_store::Config as AvailabilityConfig,
     indracore_node_core_av_store::Error as AvailabilityError,
     indracore_node_core_proposer::ProposerFactory,
     indracore_overseer::{AllSubsystems, BlockInfo, Overseer, OverseerHandler},
     indracore_primitives::v1::ParachainHost,
     sc_authority_discovery::Service as AuthorityDiscoveryService,
-    sc_client_api::ExecutorProvider,
+    sc_client_api::{AuxStore, ExecutorProvider},
+    sc_keystore::LocalKeystore,
     sp_blockchain::HeaderBackend,
-    sp_keystore::SyncCryptoStorePtr,
     sp_trie::PrefixedMemoryDB,
     std::convert::TryInto,
     std::time::Duration,
@@ -316,7 +316,7 @@ where
 #[cfg(all(feature = "full-node", not(feature = "real-overseer")))]
 fn real_overseer<Spawner, RuntimeClient>(
     leaves: impl IntoIterator<Item = BlockInfo>,
-    _: SyncCryptoStorePtr,
+    _: Arc<LocalKeystore>,
     _: Arc<RuntimeClient>,
     _: AvailabilityConfig,
     _: Arc<sc_network::NetworkService<Block, Hash>>,
@@ -329,8 +329,8 @@ fn real_overseer<Spawner, RuntimeClient>(
     _: u64,
 ) -> Result<(Overseer<Spawner>, OverseerHandler), Error>
 where
-    RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-    RuntimeClient::Api: ParachainHost<Block>,
+    RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore,
+    RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block>,
     Spawner: 'static + SpawnNamed + Clone + Unpin,
 {
     Overseer::new(leaves, AllSubsystems::<()>::dummy(), registry, spawner).map_err(|e| e.into())
@@ -339,7 +339,7 @@ where
 #[cfg(all(feature = "full-node", feature = "real-overseer"))]
 fn real_overseer<Spawner, RuntimeClient>(
     leaves: impl IntoIterator<Item = BlockInfo>,
-    keystore: SyncCryptoStorePtr,
+    keystore: Arc<LocalKeystore>,
     runtime_client: Arc<RuntimeClient>,
     availability_config: AvailabilityConfig,
     network_service: Arc<sc_network::NetworkService<Block, Hash>>,
@@ -349,10 +349,10 @@ fn real_overseer<Spawner, RuntimeClient>(
     spawner: Spawner,
     is_collator: IsCollator,
     isolation_strategy: IsolationStrategy,
-    _slot_duration: u64, // TODO [now]: instantiate approval voting.
+    slot_duration: u64,
 ) -> Result<(Overseer<Spawner>, OverseerHandler), Error>
 where
-    RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
+    RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore,
     RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block>,
     Spawner: 'static + SpawnNamed + Clone + Unpin,
 {
@@ -365,6 +365,7 @@ where
     use indracore_collator_protocol::{CollatorProtocolSubsystem, ProtocolSide};
     use indracore_network_bridge::NetworkBridge as NetworkBridgeSubsystem;
     use indracore_node_collation_generation::CollationGenerationSubsystem;
+    use indracore_node_core_approval_voting::ApprovalVotingSubsystem;
     use indracore_node_core_av_store::AvailabilityStoreSubsystem;
     use indracore_node_core_backing::CandidateBackingSubsystem;
     use indracore_node_core_bitfield_signing::BitfieldSigningSubsystem;
@@ -424,12 +425,17 @@ where
         pov_distribution: PoVDistributionSubsystem::new(Metrics::register(registry)?),
         provisioner: ProvisionerSubsystem::new(spawner.clone(), (), Metrics::register(registry)?),
         runtime_api: RuntimeApiSubsystem::new(
-            runtime_client,
+            runtime_client.clone(),
             Metrics::register(registry)?,
             spawner.clone(),
         ),
         statement_distribution: StatementDistributionSubsystem::new(Metrics::register(registry)?),
         approval_distribution: ApprovalDistributionSubsystem::new(Metrics::register(registry)?),
+        approval_voting: ApprovalVotingSubsystem::new(
+            keystore.clone(),
+            slot_duration,
+            runtime_client.clone(),
+        ),
     };
 
     Overseer::new(leaves, all_subsystems, registry, spawner).map_err(|e| e.into())
@@ -502,7 +508,11 @@ where
     let role = config.role.clone();
     let force_authoring = config.force_authoring;
     let backoff_authoring_blocks =
-        Some(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default());
+        Some(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging {
+            #[cfg(feature = "real-overseer")]
+            unfinalized_slack: 100,
+            ..Default::default()
+        });
     let disable_grandpa = config.disable_grandpa;
     let name = config.network.node_name.clone();
 
@@ -670,10 +680,18 @@ where
 
     // we'd say let overseer_handler = authority_discovery_service.map(|authority_discovery_service|, ...),
     // but in that case we couldn't use ? to propagate errors
-    let overseer_handler = if let Some(authority_discovery_service) = authority_discovery_service {
+    let local_keystore = keystore_container.local_keystore();
+    if local_keystore.is_none() {
+        tracing::info!("Cannot run as validator without local keystore.");
+    }
+
+    let maybe_params =
+        local_keystore.and_then(move |k| authority_discovery_service.map(|a| (a, k)));
+
+    let overseer_handler = if let Some((authority_discovery_service, keystore)) = maybe_params {
         let (overseer, overseer_handler) = real_overseer(
             leaves,
-            keystore_container.sync_keystore(),
+            keystore,
             overseer_client.clone(),
             availability_config,
             network.clone(),
@@ -779,6 +797,17 @@ where
         // add a custom voting rule to temporarily stop voting for new blocks
         // after the given pause block is finalized and restarting after the
         // given delay.
+        let builder = grandpa::VotingRulesBuilder::default();
+
+        let builder = if let Some(ref overseer) = overseer_handler {
+            builder.add(grandpa_support::ApprovalCheckingDiagnostic::new(
+                overseer.clone(),
+                prometheus_registry.as_ref(),
+            )?)
+        } else {
+            builder
+        };
+
         let voting_rule = match grandpa_pause {
             Some((block, delay)) => {
                 info!(
@@ -789,11 +818,11 @@ where
                     delay,
                 );
 
-                grandpa::VotingRulesBuilder::default()
+                builder
                     .add(grandpa_support::PauseAfterBlockFor(block, delay))
                     .build()
             }
-            None => grandpa::VotingRulesBuilder::default().build(),
+            None => builder.build(),
         };
 
         let grandpa_config = grandpa::GrandpaParams {

@@ -186,7 +186,7 @@ impl DBReader for TestStore {
 fn blank_state() -> State<TestStore> {
     State {
         session_window: import::RollingSessionWindow::default(),
-        keystore: LocalKeystore::in_memory(),
+        keystore: Arc::new(LocalKeystore::in_memory()),
         slot_duration_millis: SLOT_DURATION_MILLIS,
         db: TestStore::default(),
         clock: Box::new(MockClock::default()),
@@ -1529,7 +1529,7 @@ fn approved_ancestor_all_approved() {
             handle_approved_ancestor(&mut ctx, &state.db, block_hash_4, 0)
                 .await
                 .unwrap(),
-            Some(block_hash_4),
+            Some((block_hash_4, 4)),
         )
     });
 
@@ -1606,7 +1606,7 @@ fn approved_ancestor_missing_approval() {
             handle_approved_ancestor(&mut ctx, &state.db, block_hash_4, 0)
                 .await
                 .unwrap(),
-            Some(block_hash_2),
+            Some((block_hash_2, 2)),
         )
     });
 
