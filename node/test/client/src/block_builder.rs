@@ -20,7 +20,11 @@ use indracore_test_runtime::{GetLastTimestamp, UncheckedExtrinsic};
 use parity_scale_codec::{Decode, Encode};
 use sc_block_builder::{BlockBuilder, BlockBuilderProvider};
 use sp_api::ProvideRuntimeApi;
-use sp_runtime::generic::BlockId;
+use sp_consensus_babe::{
+    digests::{PreDigest, SecondaryPlainPreDigest},
+    BABE_ENGINE_ID,
+};
+use sp_runtime::{generic::BlockId, Digest, DigestItem};
 use sp_state_machine::BasicExternalities;
 
 /// An extension for the test client to init a Indracore specific block builder.
@@ -52,11 +56,6 @@ impl InitIndracoreBlockBuilder for Client {
         &self,
         at: &BlockId<Block>,
     ) -> BlockBuilder<Block, Client, FullBackend> {
-        let mut block_builder = self
-            .new_block_at(at, Default::default(), false)
-            .expect("Creates new block builder for test runtime");
-
-        let mut inherent_data = sp_inherents::InherentData::new();
         let last_timestamp = self
             .runtime_api()
             .get_last_timestamp(&at)
@@ -67,6 +66,29 @@ impl InitIndracoreBlockBuilder for Client {
             .execute_with(|| indracore_test_runtime::MinimumPeriod::get());
 
         let timestamp = last_timestamp + minimum_period;
+
+        // `SlotDuration` is a storage parameter type that requires externalities to access the value.
+        let slot_duration = BasicExternalities::new_empty()
+            .execute_with(|| indracore_test_runtime::SlotDuration::get());
+
+        let slot = (timestamp / slot_duration).into();
+
+        let digest = Digest {
+            logs: vec![DigestItem::PreRuntime(
+                BABE_ENGINE_ID,
+                PreDigest::SecondaryPlain(SecondaryPlainPreDigest {
+                    slot,
+                    authority_index: 42,
+                })
+                .encode(),
+            )],
+        };
+
+        let mut block_builder = self
+            .new_block_at(at, digest, false)
+            .expect("Creates new block builder for test runtime");
+
+        let mut inherent_data = sp_inherents::InherentData::new();
 
         inherent_data
             .put_data(sp_timestamp::INHERENT_IDENTIFIER, &timestamp)
