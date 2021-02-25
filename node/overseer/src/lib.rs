@@ -2136,7 +2136,7 @@ mod tests {
     use std::sync::atomic;
 
     use indracore_node_network_protocol::{PeerId, ReputationChange};
-    use indracore_node_primitives::{Collation, CollationGenerationConfig};
+    use indracore_node_primitives::{CollationGenerationConfig, CollationResult};
     use indracore_node_subsystem_util::metered;
     use indracore_primitives::v1::{BlockData, CandidateHash, CollatorPair, PoV};
     use indracore_subsystem::{
@@ -2817,7 +2817,7 @@ mod tests {
     struct TestCollator;
 
     impl Future for TestCollator {
-        type Output = Option<Collation>;
+        type Output = Option<CollationResult>;
 
         fn poll(self: Pin<&mut Self>, _cx: &mut futures::task::Context) -> Poll<Self::Output> {
             panic!("at the Disco")

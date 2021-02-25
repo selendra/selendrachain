@@ -14,6 +14,7 @@ sp-keystore = { git = "https://github.com/selendra/substrate", branch = "master"
 
 indracore-primitives = { path = "../../../primitives" }
 indracore-node-subsystem = { path = "../../subsystem" }
+indracore-node-primitives = { path = "../../primitives" }
 indracore-node-subsystem-util = { path = "../../subsystem-util" }
 
 [dev-dependencies]

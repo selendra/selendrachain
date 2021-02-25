@@ -18,18 +18,20 @@ use std::collections::{HashMap, HashSet};
 
 use super::{Result, LOG_TARGET};
 
-use futures::{select, FutureExt};
+use futures::{channel::oneshot, select, FutureExt};
 
 use indracore_node_network_protocol::{
     peer_set::PeerSet, v1 as protocol_v1, OurView, PeerId, RequestId, View,
 };
+use indracore_node_primitives::{SignedFullStatement, Statement};
 use indracore_node_subsystem_util::{
     metrics::{self, prometheus},
     request_availability_cores_ctx, request_validator_groups_ctx, request_validators_ctx,
     validator_discovery,
 };
 use indracore_primitives::v1::{
-    CandidateReceipt, CollatorId, CoreIndex, CoreState, Hash, Id as ParaId, PoV, ValidatorId,
+    CandidateHash, CandidateReceipt, CollatorId, CoreIndex, CoreState, Hash, Id as ParaId, PoV,
+    ValidatorId,
 };
 use indracore_subsystem::{
     jaeger,
@@ -195,6 +197,9 @@ struct State {
     /// We will keep up to one local collation per relay-parent.
     collations: HashMap<Hash, (CandidateReceipt, PoV)>,
 
+    /// The result senders per collation.
+    collation_result_senders: HashMap<CandidateHash, oneshot::Sender<SignedFullStatement>>,
+
     /// Our validator groups per active leaf.
     our_validators_groups: HashMap<Hash, ValidatorGroup>,
 
@@ -233,6 +238,7 @@ async fn distribute_collation(
     id: ParaId,
     receipt: CandidateReceipt,
     pov: PoV,
+    result_sender: Option<oneshot::Sender<SignedFullStatement>>,
 ) -> Result<()> {
     let relay_parent = receipt.descriptor.relay_parent;
 
@@ -298,6 +304,12 @@ async fn distribute_collation(
     state
         .our_validators_groups
         .insert(relay_parent, current_validators.into());
+
+    if let Some(result_sender) = result_sender {
+        state
+            .collation_result_senders
+            .insert(receipt.hash(), result_sender);
+    }
 
     state.collations.insert(relay_parent, (receipt, pov));
 
@@ -471,7 +483,7 @@ async fn process_msg(
         CollateOn(id) => {
             state.collating_on = Some(id);
         }
-        DistributeCollation(receipt, pov) => {
+        DistributeCollation(receipt, pov, result_sender) => {
             let _span1 = state
                 .span_per_relay_parent
                 .get(&receipt.descriptor.relay_parent)
@@ -489,7 +501,7 @@ async fn process_msg(
                     );
                 }
                 Some(id) => {
-                    distribute_collation(ctx, state, id, receipt, pov).await?;
+                    distribute_collation(ctx, state, id, receipt, pov, result_sender).await?;
                 }
                 None => {
                     tracing::warn!(
@@ -517,6 +529,12 @@ async fn process_msg(
                 target: LOG_TARGET,
                 "NoteGoodCollation message is not expected on the collator side of the protocol",
             );
+        }
+        NotifyCollationSeconded(_, _) => {
+            tracing::warn!(
+				target: LOG_TARGET,
+				"NotifyCollationSeconded message is not expected on the collator side of the protocol",
+			);
         }
         NetworkBridgeUpdateV1(event) => {
             if let Err(e) = handle_network_msg(ctx, state, event).await {
@@ -634,6 +652,20 @@ async fn handle_incoming_peer_message(
                 "Collation message is not expected on the collator side of the protocol",
             );
         }
+        CollationSeconded(statement) => {
+            if !matches!(statement.payload(), Statement::Seconded(_)) {
+                tracing::warn!(
+                    target: LOG_TARGET,
+                    statement = ?statement,
+                    "Collation seconded message received with none-seconded statement.",
+                );
+            } else if let Some(sender) = state
+                .collation_result_senders
+                .remove(&statement.payload().candidate_hash())
+            {
+                let _ = sender.send(statement);
+            }
+        }
     }
 
     Ok(())
@@ -725,7 +757,9 @@ async fn handle_network_msg(
 #[tracing::instrument(level = "trace", skip(state), fields(subsystem = LOG_TARGET))]
 async fn handle_our_view_change(state: &mut State, view: OurView) -> Result<()> {
     for removed in state.view.difference(&view) {
-        state.collations.remove(removed);
+        if let Some((receipt, _)) = state.collations.remove(removed) {
+            state.collation_result_senders.remove(&receipt.hash());
+        }
         state.our_validators_groups.remove(removed);
         state.connection_requests.remove_all(removed);
         state.span_per_relay_parent.remove(removed);
@@ -1110,7 +1144,11 @@ mod tests {
 
         overseer_send(
             virtual_overseer,
-            CollatorProtocolMessage::DistributeCollation(candidate.clone(), pov_block.clone()),
+            CollatorProtocolMessage::DistributeCollation(
+                candidate.clone(),
+                pov_block.clone(),
+                None,
+            ),
         )
         .await;
 

@@ -13,6 +13,7 @@ thiserror = "1.0.23"
 indracore-primitives = { path = "../../../primitives" }
 indracore-node-network-protocol = { path = "../../network/protocol" }
 indracore-node-subsystem-util = { path = "../../subsystem-util" }
+indracore-node-primitives = { path = "../../primitives" }
 indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
 
 [dev-dependencies]
