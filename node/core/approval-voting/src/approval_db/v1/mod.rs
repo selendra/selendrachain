@@ -30,7 +30,7 @@ use std::collections::hash_map::Entry;
 use std::collections::{BTreeMap, HashMap};
 
 #[cfg(test)]
-mod tests;
+pub mod tests;
 
 // slot_duration * 2 + DelayTranche gives the number of delay tranches since the
 // unix epoch.
