@@ -26,13 +26,7 @@ where
     R: pallet_balances::Config + pallet_authorship::Config,
     <R as frame_system::Config>::AccountId: From<primitives::v1::AccountId>,
     <R as frame_system::Config>::AccountId: Into<primitives::v1::AccountId>,
-    <R as frame_system::Config>::Event: From<
-        pallet_balances::RawEvent<
-            <R as frame_system::Config>::AccountId,
-            <R as pallet_balances::Config>::Balance,
-            pallet_balances::DefaultInstance,
-        >,
-    >,
+    <R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
 {
     fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
         let numeric_amount = amount.peek();
@@ -41,7 +35,7 @@ where
             &<pallet_authorship::Module<R>>::author(),
             amount,
         );
-        <frame_system::Module<R>>::deposit_event(pallet_balances::RawEvent::Deposit(
+        <frame_system::Module<R>>::deposit_event(pallet_balances::Event::Deposit(
             author,
             numeric_amount,
         ));
@@ -55,13 +49,7 @@ where
     pallet_treasury::Module<R>: OnUnbalanced<NegativeImbalance<R>>,
     <R as frame_system::Config>::AccountId: From<primitives::v1::AccountId>,
     <R as frame_system::Config>::AccountId: Into<primitives::v1::AccountId>,
-    <R as frame_system::Config>::Event: From<
-        pallet_balances::RawEvent<
-            <R as frame_system::Config>::AccountId,
-            <R as pallet_balances::Config>::Balance,
-            pallet_balances::DefaultInstance,
-        >,
-    >,
+    <R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
 {
     fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
         if let Some(fees) = fees_then_tips.next() {
