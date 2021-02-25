@@ -960,7 +960,7 @@ impl InstanceFilter<Call> for ProxyType {
                 Call::Identity(pallet_identity::Call::provide_judgement(..)) | Call::Utility(..)
             ),
             ProxyType::CancelProxy => {
-                matches!(c, Call::Proxy(pallet_proxy::Call::remove_announcement(..)))
+                matches!(c, Call::Proxy(pallet_proxy::Call::reject_announcement(..)))
             }
         }
     }
