@@ -34,7 +34,7 @@ use streamunordered::{StreamUnordered, StreamYield};
 
 use indracore_erasure_coding::{branch_hash, branches, obtain_chunks_v1, recovery_threshold};
 use indracore_node_network_protocol::{
-    peer_set::PeerSet, v1 as protocol_v1, PeerId, ReputationChange as Rep, RequestId,
+    peer_set::PeerSet, v1 as protocol_v1, PeerId, RequestId, UnifiedReputationChange as Rep,
 };
 use indracore_node_subsystem_util::{request_session_info_ctx, Timeout, TimeoutExt};
 use indracore_primitives::v1::{
@@ -57,8 +57,8 @@ mod tests;
 
 const LOG_TARGET: &str = "availability_recovery";
 
-const COST_MERKLE_PROOF_INVALID: Rep = Rep::new(-100, "Merkle proof was invalid");
-const COST_UNEXPECTED_CHUNK: Rep = Rep::new(-100, "Peer has sent an unexpected chunk");
+const COST_MERKLE_PROOF_INVALID: Rep = Rep::CostMinor("Merkle proof was invalid");
+const COST_UNEXPECTED_CHUNK: Rep = Rep::CostMinor("Peer has sent an unexpected chunk");
 
 // How many parallel requests interaction should have going at once.
 const N_PARALLEL: usize = 50;
@@ -604,7 +604,7 @@ async fn handle_from_interaction(
 
             ctx.send_message(AllMessages::NetworkBridge(message)).await;
 
-            let token = state.connecting_validators.insert(rx);
+            let token = state.connecting_validators.push(rx);
 
             state
                 .discovering_validators

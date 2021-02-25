@@ -26,7 +26,7 @@ use futures::{
 };
 
 use indracore_node_network_protocol::{
-    v1 as protocol_v1, OurView, PeerId, ReputationChange as Rep, RequestId, View,
+    v1 as protocol_v1, OurView, PeerId, RequestId, UnifiedReputationChange as Rep, View,
 };
 use indracore_node_primitives::{SignedFullStatement, Statement};
 use indracore_node_subsystem_util::{
@@ -45,10 +45,11 @@ use indracore_subsystem::{
 
 use super::{modify_reputation, Result, LOG_TARGET};
 
-const COST_UNEXPECTED_MESSAGE: Rep = Rep::new(-10, "An unexpected message");
-const COST_REQUEST_TIMED_OUT: Rep = Rep::new(-20, "A collation request has timed out");
-const COST_REPORT_BAD: Rep = Rep::new(-50, "A collator was reported by another subsystem");
-const BENEFIT_NOTIFY_GOOD: Rep = Rep::new(50, "A collator was noted good by another subsystem");
+const COST_UNEXPECTED_MESSAGE: Rep = Rep::CostMinor("An unexpected message");
+const COST_REQUEST_TIMED_OUT: Rep = Rep::CostMinor("A collation request has timed out");
+const COST_REPORT_BAD: Rep = Rep::CostMajor("A collator was reported by another subsystem");
+const BENEFIT_NOTIFY_GOOD: Rep =
+    Rep::BenefitMinor("A collator was noted good by another subsystem");
 
 #[derive(Clone, Default)]
 pub struct Metrics(Option<MetricsInner>);

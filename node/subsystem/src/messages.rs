@@ -26,7 +26,7 @@ use futures::channel::{mpsc, oneshot};
 use indracore_node_network_protocol::{
     peer_set::PeerSet,
     request_response::{request::IncomingRequest, v1 as req_res_v1, Requests},
-    v1 as protocol_v1, PeerId, ReputationChange,
+    v1 as protocol_v1, PeerId, UnifiedReputationChange,
 };
 use indracore_node_primitives::{
     approval::{BlockApprovalMeta, IndirectAssignmentCert, IndirectSignedApprovalVote},
@@ -226,7 +226,7 @@ impl CollatorProtocolMessage {
 #[derive(Debug)]
 pub enum NetworkBridgeMessage {
     /// Report a peer for their actions.
-    ReportPeer(PeerId, ReputationChange),
+    ReportPeer(PeerId, UnifiedReputationChange),
 
     /// Send a message to one or more peers on the validation peer-set.
     SendValidationMessage(Vec<PeerId>, protocol_v1::ValidationProtocol),
@@ -562,7 +562,7 @@ pub enum ProvisionableData {
 
 /// This data needs to make its way from the provisioner into the InherentData.
 ///
-/// There, it is used to construct the InclusionInherent.
+/// There, it is used to construct the ParaInherent.
 pub type ProvisionerInherentData = (Vec<SignedAvailabilityBitfield>, Vec<BackedCandidate>);
 
 /// Message to the Provisioner.
@@ -577,7 +577,7 @@ pub enum ProvisionerMessage {
     /// associated with a particular potential block hash.
     ///
     /// This is expected to be used by a proposer, to inject that information into the InherentData
-    /// where it can be assembled into the InclusionInherent.
+    /// where it can be assembled into the ParaInherent.
     RequestInherentData(Hash, oneshot::Sender<ProvisionerInherentData>),
     /// This data should become part of a relay chain block
     ProvisionableData(Hash, ProvisionableData),

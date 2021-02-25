@@ -25,9 +25,12 @@ use std::{collections::HashMap, fmt};
 
 #[doc(hidden)]
 pub use indracore_node_jaeger::JaegerSpan;
-pub use sc_network::{PeerId, ReputationChange};
+pub use sc_network::PeerId;
 #[doc(hidden)]
 pub use std::sync::Arc;
+
+mod reputation;
+pub use self::reputation::{ReputationChange, UnifiedReputationChange};
 
 /// Peer-sets and protocols used for parachains.
 pub mod peer_set;

@@ -2228,7 +2228,7 @@ mod tests {
     use std::collections::HashMap;
     use std::sync::atomic;
 
-    use indracore_node_network_protocol::{PeerId, ReputationChange};
+    use indracore_node_network_protocol::{PeerId, UnifiedReputationChange};
     use indracore_node_primitives::{CollationGenerationConfig, CollationResult};
     use indracore_node_subsystem_util::metered;
     use indracore_primitives::v1::{BlockData, CandidateHash, CollatorPair, PoV};
@@ -2968,7 +2968,10 @@ mod tests {
     }
 
     fn test_network_bridge_msg() -> NetworkBridgeMessage {
-        NetworkBridgeMessage::ReportPeer(PeerId::random(), ReputationChange::new(42, ""))
+        NetworkBridgeMessage::ReportPeer(
+            PeerId::random(),
+            UnifiedReputationChange::BenefitMinor(""),
+        )
     }
 
     fn test_approval_distribution_msg() -> ApprovalDistributionMessage {

@@ -14,7 +14,7 @@ indexmap = "1.6.1"
 
 sp-staking = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
 
-node-primitives = { package = "indracore-node-primitives", path = "../../primitives" }
+indracore-node-primitives = { path = "../../primitives" }
 indracore-primitives = { path = "../../../primitives" }
 indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
 indracore-node-subsystem-util = { path = "../../subsystem-util" }

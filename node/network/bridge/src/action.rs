@@ -18,7 +18,7 @@
 use futures::channel::mpsc;
 
 use indracore_node_network_protocol::{
-    peer_set::PeerSet, v1 as protocol_v1, PeerId, ReputationChange,
+    peer_set::PeerSet, v1 as protocol_v1, PeerId, UnifiedReputationChange,
 };
 use indracore_primitives::v1::{AuthorityDiscoveryId, BlockNumber};
 use indracore_subsystem::messages::{AllMessages, NetworkBridgeMessage};
@@ -55,7 +55,7 @@ pub(crate) enum Action {
     },
 
     /// Report a peer to the network implementation (decreasing/increasing its reputation).
-    ReportPeer(PeerId, ReputationChange),
+    ReportPeer(PeerId, UnifiedReputationChange),
 
     /// A subsystem updates us on the relay chain leaves we consider active.
     ///

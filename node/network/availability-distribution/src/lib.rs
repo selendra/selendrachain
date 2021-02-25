@@ -32,7 +32,7 @@ use sp_keystore::{CryptoStore, SyncCryptoStorePtr};
 
 use indracore_erasure_coding::branch_hash;
 use indracore_node_network_protocol::{
-    v1 as protocol_v1, OurView, PeerId, ReputationChange as Rep, View,
+    v1 as protocol_v1, OurView, PeerId, UnifiedReputationChange as Rep, View,
 };
 use indracore_node_subsystem_util::metrics::{self, prometheus};
 use indracore_primitives::v1::{
@@ -95,11 +95,12 @@ enum Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-const COST_MERKLE_PROOF_INVALID: Rep = Rep::new(-100, "Merkle proof was invalid");
-const COST_NOT_A_LIVE_CANDIDATE: Rep = Rep::new(-51, "Candidate is not live");
-const COST_PEER_DUPLICATE_MESSAGE: Rep = Rep::new(-500, "Peer sent identical messages");
-const BENEFIT_VALID_MESSAGE_FIRST: Rep = Rep::new(15, "Valid message with new information");
-const BENEFIT_VALID_MESSAGE: Rep = Rep::new(10, "Valid message");
+const COST_MERKLE_PROOF_INVALID: Rep = Rep::CostMinor("Merkle proof was invalid");
+const COST_NOT_A_LIVE_CANDIDATE: Rep = Rep::CostMinor("Candidate is not live");
+const COST_PEER_DUPLICATE_MESSAGE: Rep = Rep::CostMajorRepeated("Peer sent identical messages");
+const BENEFIT_VALID_MESSAGE_FIRST: Rep =
+    Rep::BenefitMinorFirst("Valid message with new information");
+const BENEFIT_VALID_MESSAGE: Rep = Rep::BenefitMinor("Valid message");
 
 /// Checked signed availability bitfield that is distributed
 /// to other peers.
@@ -896,11 +897,8 @@ impl AvailabilityDistributionSubsystem {
                 FromOverseer::Communication {
                     msg: AvailabilityDistributionMessage::AvailabilityFetchingRequest(_),
                 } => {
-                    // TODO: Implement issue 2306:
-                    tracing::warn!(
-						target: LOG_TARGET,
-						"To be implemented, see: https://github.com/paritytech/indracore/issues/2306 !",
-					);
+                    // TODO: Implement:
+                    tracing::warn!(target: LOG_TARGET, "To be implemented",);
                 }
                 FromOverseer::Signal(OverseerSignal::ActiveLeaves(ActiveLeavesUpdate {
                     activated: _,
