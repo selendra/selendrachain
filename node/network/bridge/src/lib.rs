@@ -319,21 +319,47 @@ where
                                 dispatch_validation_events_to_all(
                                     vec![
                                         NetworkBridgeEvent::PeerConnected(peer.clone(), role),
-                                        NetworkBridgeEvent::PeerViewChange(peer, View::default()),
+                                        NetworkBridgeEvent::PeerViewChange(
+                                            peer.clone(),
+                                            View::default(),
+                                        ),
                                     ],
                                     &mut ctx,
                                 )
-                                .await
+                                .await;
+
+                                send_message(
+                                    &mut bridge.network_service,
+                                    vec![peer],
+                                    PeerSet::Validation,
+                                    WireMessage::<protocol_v1::ValidationProtocol>::ViewUpdate(
+                                        local_view.clone(),
+                                    ),
+                                )
+                                .await?;
                             }
                             PeerSet::Collation => {
                                 dispatch_collation_events_to_all(
                                     vec![
                                         NetworkBridgeEvent::PeerConnected(peer.clone(), role),
-                                        NetworkBridgeEvent::PeerViewChange(peer, View::default()),
+                                        NetworkBridgeEvent::PeerViewChange(
+                                            peer.clone(),
+                                            View::default(),
+                                        ),
                                     ],
                                     &mut ctx,
                                 )
-                                .await
+                                .await;
+
+                                send_message(
+                                    &mut bridge.network_service,
+                                    vec![peer],
+                                    PeerSet::Collation,
+                                    WireMessage::<protocol_v1::CollationProtocol>::ViewUpdate(
+                                        local_view.clone(),
+                                    ),
+                                )
+                                .await?;
                             }
                         }
                     }
@@ -861,6 +887,53 @@ mod tests {
     }
 
     #[test]
+    fn send_our_view_upon_connection() {
+        test_harness(|test_harness| async move {
+            let TestHarness {
+                mut network_handle,
+                mut virtual_overseer,
+            } = test_harness;
+
+            let peer = PeerId::random();
+
+            let head = Hash::repeat_byte(1);
+            virtual_overseer
+                .send(FromOverseer::Signal(OverseerSignal::ActiveLeaves(
+                    ActiveLeavesUpdate::start_work(head, Arc::new(JaegerSpan::Disabled)),
+                )))
+                .await;
+
+            network_handle
+                .connect_peer(peer.clone(), PeerSet::Validation, ObservedRole::Full)
+                .await;
+            network_handle
+                .connect_peer(peer.clone(), PeerSet::Collation, ObservedRole::Full)
+                .await;
+
+            let view = view![head];
+            let actions = network_handle.next_network_actions(2).await;
+            assert_network_actions_contains(
+                &actions,
+                &NetworkAction::WriteNotification(
+                    peer.clone(),
+                    PeerSet::Validation,
+                    WireMessage::<protocol_v1::ValidationProtocol>::ViewUpdate(view.clone())
+                        .encode(),
+                ),
+            );
+            assert_network_actions_contains(
+                &actions,
+                &NetworkAction::WriteNotification(
+                    peer.clone(),
+                    PeerSet::Collation,
+                    WireMessage::<protocol_v1::CollationProtocol>::ViewUpdate(view.clone())
+                        .encode(),
+                ),
+            );
+        });
+    }
+
+    #[test]
     fn sends_view_updates_to_peers() {
         test_harness(|test_harness| async move {
             let TestHarness {
@@ -886,7 +959,7 @@ mod tests {
                 )))
                 .await;
 
-            let actions = network_handle.next_network_actions(2).await;
+            let actions = network_handle.next_network_actions(4).await;
             let wire_message =
                 WireMessage::<protocol_v1::ValidationProtocol>::ViewUpdate(view![hash_a]).encode();
 
@@ -953,7 +1026,7 @@ mod tests {
                 )))
                 .await;
 
-            let actions = network_handle.next_network_actions(2).await;
+            let actions = network_handle.next_network_actions(4).await;
             let wire_message = WireMessage::<protocol_v1::ValidationProtocol>::ViewUpdate(View {
                 heads: vec![hash_a],
                 finalized_number: 5,
@@ -1164,7 +1237,7 @@ mod tests {
                 )))
                 .await;
 
-            let actions = network_handle.next_network_actions(1).await;
+            let actions = network_handle.next_network_actions(3).await;
             let wire_message =
                 WireMessage::<protocol_v1::ValidationProtocol>::ViewUpdate(view![hash_a]).encode();
 
@@ -1243,7 +1316,7 @@ mod tests {
                 )
                 .await;
 
-            let actions = network_handle.next_network_actions(1).await;
+            let actions = network_handle.next_network_actions(3).await;
             assert_network_actions_contains(
                 &actions,
                 &NetworkAction::ReputationChange(peer_a.clone(), UNCONNECTED_PEERSET_COST),
@@ -1382,7 +1455,7 @@ mod tests {
                 )))
                 .await;
 
-            let actions = network_handle.next_network_actions(1).await;
+            let actions = network_handle.next_network_actions(2).await;
             let wire_message = WireMessage::<protocol_v1::ValidationProtocol>::ViewUpdate(View {
                 heads: vec![hash_b],
                 finalized_number: 1,
@@ -1437,7 +1510,7 @@ mod tests {
                 )
                 .await;
 
-            let actions = network_handle.next_network_actions(1).await;
+            let actions = network_handle.next_network_actions(2).await;
             assert_network_actions_contains(
                 &actions,
                 &NetworkAction::ReputationChange(peer_a.clone(), MALFORMED_VIEW_COST),
@@ -1489,6 +1562,11 @@ mod tests {
                     &mut virtual_overseer,
                 )
                 .await;
+            }
+
+            // consume peer view changes
+            {
+                let _peer_view_changes = network_handle.next_network_actions(2).await;
             }
 
             // send a validation protocol message.
