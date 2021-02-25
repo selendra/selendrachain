@@ -38,7 +38,6 @@ use indracore_subsystem::{
 };
 use sp_blockchain::HeaderBackend;
 use std::sync::Arc;
-use tracing_futures as _;
 
 use futures::prelude::*;
 

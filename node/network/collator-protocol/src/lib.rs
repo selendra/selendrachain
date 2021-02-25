@@ -23,7 +23,6 @@
 use futures::{channel::oneshot, FutureExt, TryFutureExt};
 use std::time::Duration;
 use thiserror::Error;
-use tracing_futures as _;
 
 use indracore_node_network_protocol::{PeerId, ReputationChange as Rep};
 use indracore_node_subsystem_util::{self as util, metrics::prometheus};

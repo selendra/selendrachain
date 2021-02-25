@@ -44,7 +44,7 @@ use indracore_node_subsystem_util::{
 use indracore_primitives::v1::{AvailabilityBitfield, CoreState, Hash, ValidatorIndex};
 use sp_keystore::{Error as KeystoreError, SyncCryptoStorePtr};
 use std::{iter::FromIterator, pin::Pin, sync::Arc, time::Duration};
-use tracing_futures as _;
+
 use wasm_timer::{Delay, Instant};
 
 /// Delay between starting a bitfield signing job and its attempting to create a bitfield.

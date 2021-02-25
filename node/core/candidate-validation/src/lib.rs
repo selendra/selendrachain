@@ -42,7 +42,6 @@ use indracore_subsystem::{
     FromOverseer, OverseerSignal, SpawnedSubsystem, Subsystem, SubsystemContext, SubsystemError,
     SubsystemResult,
 };
-use tracing_futures as _;
 
 use parity_scale_codec::Encode;
 use sp_core::traits::SpawnNamed;
@@ -450,10 +449,10 @@ fn validate_candidate_exhaustive<B: ValidationBackend, S: SpawnNamed + 'static>(
         Err(ValidationError::InvalidCandidate(WasmInvalidCandidate::Timeout)) => {
             Ok(ValidationResult::Invalid(InvalidCandidate::Timeout))
         }
-        Err(ValidationError::InvalidCandidate(WasmInvalidCandidate::ParamsTooLarge(l))) => Ok(
+        Err(ValidationError::InvalidCandidate(WasmInvalidCandidate::ParamsTooLarge(l, _))) => Ok(
             ValidationResult::Invalid(InvalidCandidate::ParamsTooLarge(l as u64)),
         ),
-        Err(ValidationError::InvalidCandidate(WasmInvalidCandidate::CodeTooLarge(l))) => Ok(
+        Err(ValidationError::InvalidCandidate(WasmInvalidCandidate::CodeTooLarge(l, _))) => Ok(
             ValidationResult::Invalid(InvalidCandidate::CodeTooLarge(l as u64)),
         ),
         Err(ValidationError::InvalidCandidate(WasmInvalidCandidate::BadReturn)) => {

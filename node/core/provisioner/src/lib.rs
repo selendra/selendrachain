@@ -44,7 +44,6 @@ use indracore_primitives::v1::{
 };
 use std::{collections::BTreeMap, pin::Pin, sync::Arc};
 use thiserror::Error;
-use tracing_futures as _;
 
 /// How long to wait before proposing.
 const PRE_PROPOSE_TIMEOUT: std::time::Duration = core::time::Duration::from_millis(2000);
