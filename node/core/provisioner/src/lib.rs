@@ -460,7 +460,7 @@ async fn select_candidates(
         )
         .await
         .map_err(|err| Error::GetBackedCandidatesSend(err))?;
-    let candidates = rx
+    let mut candidates = rx
         .await
         .map_err(|err| Error::CanceledBackedCandidates(err))?;
 
@@ -484,6 +484,20 @@ async fn select_candidates(
     if candidates.len() != backed_idx {
         Err(Error::BackedCandidateOrderingProblem)?;
     }
+
+    // keep only one candidate with validation code.
+    let mut with_validation_code = false;
+    candidates.retain(|c| {
+        if c.candidate.commitments.new_validation_code.is_some() {
+            if with_validation_code {
+                return false;
+            }
+
+            with_validation_code = true;
+        }
+
+        true
+    });
 
     Ok(candidates)
 }

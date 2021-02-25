@@ -1,22 +1,6 @@
-// Copyright 2020 Parity Technologies (UK) Ltd.
-// This file is part of Polkadot.
-
-// Polkadot is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Polkadot is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
-
 use super::*;
 use bitvec::bitvec;
-use indracore_primitives::v1::{OccupiedCore, ScheduledCore};
+use polkadot_primitives::v1::{OccupiedCore, ScheduledCore};
 
 pub fn occupied_core(para_id: u32) -> CoreState {
     CoreState::Occupied(OccupiedCore {
@@ -60,7 +44,7 @@ mod select_availability_bitfields {
     use super::super::*;
     use super::{default_bitvec, occupied_core};
     use futures::executor::block_on;
-    use indracore_primitives::v1::{SigningContext, ValidatorId, ValidatorIndex};
+    use polkadot_primitives::v1::{SigningContext, ValidatorId, ValidatorIndex};
     use sp_application_crypto::AppKey;
     use sp_keystore::{testing::KeyStore, CryptoStore, SyncCryptoStorePtr};
     use std::sync::Arc;
@@ -217,13 +201,13 @@ mod select_candidates {
     use super::super::*;
     use super::{build_occupied_core, default_bitvec, occupied_core, scheduled_core};
     use futures_timer::Delay;
-    use indracore_node_subsystem::messages::{
+    use polkadot_node_subsystem::messages::{
         AllMessages, RuntimeApiMessage,
         RuntimeApiRequest::{
             AvailabilityCores, PersistedValidationData as PersistedValidationDataReq,
         },
     };
-    use indracore_primitives::v1::{
+    use polkadot_primitives::v1::{
         BlockNumber, CandidateCommitments, CandidateDescriptor, CommittedCandidateReceipt,
         PersistedValidationData,
     };
@@ -444,6 +428,72 @@ mod select_candidates {
                     descriptor: c.descriptor.clone(),
                     ..Default::default()
                 },
+                validity_votes: Vec::new(),
+                validator_indices: default_bitvec(n_cores),
+            })
+            .collect();
+
+        test_harness(
+            |r| mock_overseer(r, expected_backed),
+            |mut tx: mpsc::Sender<FromJobCommand>| async move {
+                let result =
+                    select_candidates(&mock_cores, &[], &candidates, Default::default(), &mut tx)
+                        .await
+                        .unwrap();
+
+                result.into_iter().for_each(|c| {
+                    assert!(
+                        expected_candidates
+                            .iter()
+                            .any(|c2| c.candidate.corresponds_to(c2)),
+                        "Failed to find candidate: {:?}",
+                        c,
+                    )
+                });
+            },
+        )
+    }
+
+    #[test]
+    fn selects_max_one_code_upgrade() {
+        let mock_cores = mock_availability_cores();
+        let n_cores = mock_cores.len();
+
+        let empty_hash = PersistedValidationData::<BlockNumber>::default().hash();
+
+        // why those particular indices? see the comments on mock_availability_cores()
+        // the first candidate with code is included out of [1, 4, 7, 8, 10].
+        let cores = [1, 7, 10];
+        let cores_with_code = [1, 4, 8];
+
+        let committed_receipts: Vec<_> = (0..mock_cores.len())
+            .map(|i| CommittedCandidateReceipt {
+                descriptor: CandidateDescriptor {
+                    para_id: i.into(),
+                    persisted_validation_data_hash: empty_hash,
+                    ..Default::default()
+                },
+                commitments: CandidateCommitments {
+                    new_validation_code: if cores_with_code.contains(&i) {
+                        Some(vec![].into())
+                    } else {
+                        None
+                    },
+                    ..Default::default()
+                },
+                ..Default::default()
+            })
+            .collect();
+
+        let candidates: Vec<_> = committed_receipts.iter().map(|r| r.to_plain()).collect();
+
+        let expected_candidates: Vec<_> =
+            cores.iter().map(|&idx| candidates[idx].clone()).collect();
+
+        let expected_backed: Vec<_> = cores
+            .iter()
+            .map(|&idx| BackedCandidate {
+                candidate: committed_receipts[idx].clone(),
                 validity_votes: Vec::new(),
                 validator_indices: default_bitvec(n_cores),
             })
