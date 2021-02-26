@@ -65,6 +65,8 @@ mod select_availability_bitfields {
             &public.into(),
         )
         .await
+        .ok()
+        .flatten()
         .expect("Should be signed")
     }
 

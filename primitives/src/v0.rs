@@ -916,19 +916,24 @@ impl<Payload: EncodeAs<RealPayload>, RealPayload: Encode> Signed<Payload, RealPa
         context: &SigningContext<H>,
         validator_index: ValidatorIndex,
         key: &ValidatorId,
-    ) -> Result<Self, KeystoreError> {
+    ) -> Result<Option<Self>, KeystoreError> {
         let data = Self::payload_data(&payload, context);
-        let signature: ValidatorSignature =
-            CryptoStore::sign_with(&**keystore, ValidatorId::ID, &key.into(), &data)
-                .await?
+        let signature =
+            CryptoStore::sign_with(&**keystore, ValidatorId::ID, &key.into(), &data).await?;
+
+        let signature = match signature {
+            Some(sig) => sig
                 .try_into()
-                .map_err(|_| KeystoreError::KeyNotSupported(ValidatorId::ID))?;
-        Ok(Self {
+                .map_err(|_| KeystoreError::KeyNotSupported(ValidatorId::ID))?,
+            None => return Ok(None),
+        };
+
+        Ok(Some(Self {
             payload,
             validator_index,
             signature,
             real_payload: std::marker::PhantomData,
-        })
+        }))
     }
 
     /// Validate the payload given the context and public key.

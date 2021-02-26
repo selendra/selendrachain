@@ -238,15 +238,14 @@ pub(crate) fn compute_assignments(
             .assignment_keys
             .iter()
             .enumerate()
-            .filter_map(|(i, p)| match keystore.key_pair(p) {
-                Ok(pair) => Some((i as ValidatorIndex, pair)),
-                Err(sc_keystore::Error::PairNotFound(_)) => None,
+            .find_map(|(i, p)| match keystore.key_pair(p) {
+                Ok(Some(pair)) => Some((i as ValidatorIndex, pair)),
+                Ok(None) => None,
                 Err(e) => {
                     tracing::warn!(target: LOG_TARGET, "Encountered keystore error: {:?}", e);
                     None
                 }
-            })
-            .next();
+            });
 
         match key {
             None => return Default::default(),

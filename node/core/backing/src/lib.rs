@@ -937,7 +937,8 @@ impl CandidateBackingJob {
             .as_ref()?
             .sign(self.keystore.clone(), statement)
             .await
-            .ok()?;
+            .ok()
+            .flatten()?;
         self.metrics.on_statement_signed();
         Some(signed)
     }
@@ -1703,6 +1704,8 @@ mod tests {
                 &public2.into(),
             )
             .await
+            .ok()
+            .flatten()
             .expect("should be signed");
 
             let signed_b = SignedFullStatement::sign(
@@ -1713,6 +1716,8 @@ mod tests {
                 &public1.into(),
             )
             .await
+            .ok()
+            .flatten()
             .expect("should be signed");
 
             let statement =
@@ -1863,6 +1868,8 @@ mod tests {
                 &public2.into(),
             )
             .await
+            .ok()
+            .flatten()
             .expect("should be signed");
 
             let signed_b = SignedFullStatement::sign(
@@ -1873,6 +1880,8 @@ mod tests {
                 &public1.into(),
             )
             .await
+            .ok()
+            .flatten()
             .expect("should be signed");
 
             let signed_c = SignedFullStatement::sign(
@@ -1883,6 +1892,8 @@ mod tests {
                 &public3.into(),
             )
             .await
+            .ok()
+            .flatten()
             .expect("should be signed");
 
             let statement =
@@ -2038,6 +2049,8 @@ mod tests {
                 &public2.into(),
             )
             .await
+            .ok()
+            .flatten()
             .expect("should be signed");
 
             let signed_b = SignedFullStatement::sign(
@@ -2048,6 +2061,8 @@ mod tests {
                 &public2.into(),
             )
             .await
+            .ok()
+            .flatten()
             .expect("should be signed");
 
             let signed_c = SignedFullStatement::sign(
@@ -2058,6 +2073,8 @@ mod tests {
                 &public0.into(),
             )
             .await
+            .ok()
+            .flatten()
             .expect("should be signed");
 
             let statement =
@@ -2397,6 +2414,8 @@ mod tests {
                 &validator2.into(),
             )
             .await
+            .ok()
+            .flatten()
             .expect("should be signed");
 
             // Send in a `Statement` with a candidate.
@@ -2547,6 +2566,8 @@ mod tests {
                 &public2.into(),
             )
             .await
+            .ok()
+            .flatten()
             .expect("should be signed");
 
             // Send in a `Statement` with a candidate.
@@ -2706,6 +2727,8 @@ mod tests {
                 &public2.into(),
             )
             .await
+            .ok()
+            .flatten()
             .expect("should be signed");
 
             let statement =

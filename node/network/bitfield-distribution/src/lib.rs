@@ -907,6 +907,8 @@ mod test {
             0,
             &malicious.into(),
         ))
+        .ok()
+        .flatten()
         .expect("should be signed");
 
         let msg = BitfieldGossipMessage {
@@ -973,6 +975,8 @@ mod test {
             42,
             &validator,
         ))
+        .ok()
+        .flatten()
         .expect("should be signed");
 
         let msg = BitfieldGossipMessage {
@@ -1031,6 +1035,8 @@ mod test {
             0,
             &validator,
         ))
+        .ok()
+        .flatten()
         .expect("should be signed");
 
         let msg = BitfieldGossipMessage {
@@ -1138,6 +1144,8 @@ mod test {
             0,
             &validator,
         ))
+        .ok()
+        .flatten()
         .expect("should be signed");
 
         state.peer_views.insert(peer_b.clone(), view![hash]);
@@ -1241,6 +1249,8 @@ mod test {
             0,
             &validator,
         ))
+        .ok()
+        .flatten()
         .expect("should be signed");
 
         let msg = BitfieldGossipMessage {
@@ -1394,6 +1404,8 @@ mod test {
             0,
             &validator,
         ))
+        .ok()
+        .flatten()
         .expect("should be signed");
 
         state.peer_views.insert(peer_b.clone(), view![hash]);

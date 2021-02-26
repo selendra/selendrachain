@@ -1048,6 +1048,7 @@ mod tests {
             )
             .await
             .unwrap()
+            .unwrap()
             .signature()
             .clone();
 
@@ -1152,6 +1153,7 @@ mod tests {
             &key.public().into(),
         )
         .await
+        .unwrap()
         .unwrap()
     }
 

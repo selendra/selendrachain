@@ -1169,6 +1169,8 @@ mod tests {
             0,
             &alice_public.into(),
         ))
+        .ok()
+        .flatten()
         .expect("should be signed");
         let noted = head_data.note_statement(a_seconded_val_0.clone());
 
@@ -1188,6 +1190,8 @@ mod tests {
                 0,
                 &alice_public.into(),
             ))
+            .ok()
+            .flatten()
             .expect("should be signed"),
         );
 
@@ -1202,6 +1206,8 @@ mod tests {
                 0,
                 &alice_public.into(),
             ))
+            .ok()
+            .flatten()
             .expect("should be signed"),
         );
 
@@ -1216,6 +1222,8 @@ mod tests {
                 1,
                 &bob_public.into(),
             ))
+            .ok()
+            .flatten()
             .expect("should be signed"),
         );
 
@@ -1230,6 +1238,8 @@ mod tests {
                 1,
                 &bob_public.into(),
             ))
+            .ok()
+            .flatten()
             .expect("should be signed"),
         );
 
@@ -1460,6 +1470,8 @@ mod tests {
                     0,
                     &alice_public.into(),
                 ))
+                .ok()
+                .flatten()
                 .expect("should be signed"),
             );
 
@@ -1473,6 +1485,8 @@ mod tests {
                     1,
                     &bob_public.into(),
                 ))
+                .ok()
+                .flatten()
                 .expect("should be signed"),
             );
 
@@ -1486,6 +1500,8 @@ mod tests {
                     2,
                     &charlie_public.into(),
                 ))
+                .ok()
+                .flatten()
                 .expect("should be signed"),
             );
 
@@ -1633,6 +1649,8 @@ mod tests {
                     &alice_public.into(),
                 )
                 .await
+                .ok()
+                .flatten()
                 .expect("should be signed");
 
                 StoredStatement {
@@ -1825,6 +1843,8 @@ mod tests {
                     &alice_public.into(),
                 )
                 .await
+                .ok()
+                .flatten()
                 .expect("should be signed")
             };
 
