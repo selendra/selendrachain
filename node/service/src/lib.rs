@@ -28,6 +28,7 @@ use indracore_network_bridge::RequestMultiplexer;
 use {
     babe_primitives::BabeApi,
     grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider},
+    indracore_node_core_approval_voting::Config as ApprovalVotingConfig,
     indracore_node_core_av_store::Config as AvailabilityConfig,
     indracore_node_core_av_store::Error as AvailabilityError,
     indracore_node_core_proposer::ProposerFactory,
@@ -118,6 +119,10 @@ pub enum Error {
 
     #[error("Authorities require the real overseer implementation")]
     AuthoritiesRequireRealOverseer,
+
+    #[cfg(feature = "full-node")]
+    #[error("Creating a custom database is required for validators")]
+    DatabasePathRequired,
 }
 
 // If we're using prometheus, use a registry with a prefix of `indracore`.
@@ -326,7 +331,7 @@ fn real_overseer<Spawner, RuntimeClient>(
     spawner: Spawner,
     _: IsCollator,
     _: IsolationStrategy,
-    _: u64,
+    _: ApprovalVotingConfig,
 ) -> Result<(Overseer<Spawner>, OverseerHandler), Error>
 where
     RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore,
@@ -349,7 +354,7 @@ fn real_overseer<Spawner, RuntimeClient>(
     spawner: Spawner,
     is_collator: IsCollator,
     isolation_strategy: IsolationStrategy,
-    slot_duration: u64,
+    approval_voting_config: ApprovalVotingConfig,
 ) -> Result<(Overseer<Spawner>, OverseerHandler), Error>
 where
     RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore,
@@ -380,7 +385,7 @@ where
     use indracore_node_core_approval_voting::ApprovalVotingSubsystem;
 
     #[cfg(not(feature = "approval-checking"))]
-    let _ = slot_duration; // silence.
+    let _ = approval_voting_config; // silence.
 
     let all_subsystems = AllSubsystems {
         availability_distribution: AvailabilityDistributionSubsystem::new(
@@ -437,11 +442,10 @@ where
         statement_distribution: StatementDistributionSubsystem::new(Metrics::register(registry)?),
         approval_distribution: ApprovalDistributionSubsystem::new(Metrics::register(registry)?),
         #[cfg(feature = "approval-checking")]
-        approval_voting: ApprovalVotingSubsystem::new(
+        approval_voting: ApprovalVotingSubsystem::with_config(
+            approval_voting_config,
             keystore.clone(),
-            slot_duration,
-            runtime_client.clone(),
-        ),
+        )?,
         #[cfg(not(feature = "approval-checking"))]
         approval_voting: indracore_subsystem::DummySubsystem,
     };
@@ -614,6 +618,17 @@ where
         .try_into()
         .map_err(Error::Availability)?;
 
+    let approval_voting_config = ApprovalVotingConfig {
+        path: config
+            .database
+            .path()
+            .ok_or(Error::DatabasePathRequired)?
+            .join("parachains")
+            .join("approval-voting"),
+        slot_duration_millis: slot_duration,
+        cache_size: None, // default is fine.
+    };
+
     let telemetry_span = TelemetrySpan::new();
     let _telemetry_span_entered = telemetry_span.enter();
 
@@ -713,7 +728,7 @@ where
             spawner,
             is_collator,
             isolation_strategy,
-            slot_duration,
+            approval_voting_config,
         )?;
         let overseer_handler_clone = overseer_handler.clone();
 

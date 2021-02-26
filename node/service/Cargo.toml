@@ -107,7 +107,8 @@ default = ["db", "full-node"]
 db = ["service/db"]
 full-node = [
 	"indracore-node-core-av-store",
-	"sc-finality-grandpa-warp-sync"
+	"sc-finality-grandpa-warp-sync",
+	"indracore-node-core-approval-voting",
 ]
 
 runtime-benchmarks = [
@@ -131,7 +132,6 @@ real-overseer = [
 	"indracore-pov-distribution",
 	"indracore-statement-distribution",
 	"indracore-approval-distribution",
-	"indracore-node-core-approval-voting",
 ]
 
 approval-checking = [

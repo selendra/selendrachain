@@ -41,7 +41,7 @@ use indracore_subsystem::{
     },
     SubsystemContext, SubsystemError, SubsystemResult,
 };
-use sc_client_api::backend::AuxStore;
+use kvdb::KeyValueDB;
 use sc_keystore::LocalKeystore;
 use sp_consensus_slots::Slot;
 
@@ -565,7 +565,7 @@ pub struct BlockImportedCandidates {
 pub(crate) async fn handle_new_head(
     ctx: &mut impl SubsystemContext,
     state: &mut State<impl DBReader>,
-    db_writer: &impl AuxStore,
+    db_writer: &dyn KeyValueDB,
     head: Hash,
     finalized_number: &Option<BlockNumber>,
 ) -> SubsystemResult<Vec<BlockImportedCandidates>> {
@@ -1637,7 +1637,7 @@ mod tests {
             .into(),
         );
 
-        let db_writer = crate::approval_db::v1::tests::TestStore::default();
+        let db_writer = kvdb_memorydb::create(1);
 
         let test_fut = {
             Box::pin(async move {

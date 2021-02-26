@@ -21,13 +21,14 @@ use indracore_primitives::v1::{
     BlockNumber, CandidateHash, CandidateReceipt, CoreIndex, GroupIndex, Hash, SessionIndex,
     ValidatorIndex,
 };
+use kvdb::{DBTransaction, KeyValueDB};
 use parity_scale_codec::{Decode, Encode};
-use sc_client_api::backend::AuxStore;
 use sp_consensus_slots::Slot;
 
 use bitvec::{order::Lsb0 as BitOrderLsb0, vec::BitVec};
 use std::collections::hash_map::Entry;
 use std::collections::{BTreeMap, HashMap};
+use std::sync::Arc;
 
 #[cfg(test)]
 pub mod tests;
@@ -38,6 +39,9 @@ pub mod tests;
 pub struct Tick(u64);
 
 pub type Bitfield = BitVec<BitOrderLsb0, u8>;
+
+const NUM_COLUMNS: u32 = 1;
+const DATA_COL: u32 = 0;
 
 const STORED_BLOCKS_KEY: &[u8] = b"Approvals_StoredBlocks";
 
@@ -103,6 +107,36 @@ pub struct BlockEntry {
     pub children: Vec<Hash>,
 }
 
+/// Clear the given directory and create a RocksDB instance there.
+pub fn clear_and_recreate(
+    path: &std::path::Path,
+    cache_size: usize,
+) -> std::io::Result<Arc<dyn KeyValueDB>> {
+    use kvdb_rocksdb::{Database as RocksDB, DatabaseConfig};
+
+    tracing::info!("Recreating approval-checking DB at {:?}", path);
+
+    if let Err(e) = std::fs::remove_dir_all(path) {
+        if e.kind() != std::io::ErrorKind::NotFound {
+            return Err(e);
+        }
+    }
+    std::fs::create_dir_all(path)?;
+
+    let mut db_config = DatabaseConfig::with_columns(NUM_COLUMNS);
+
+    db_config.memory_budget.insert(DATA_COL, cache_size);
+
+    let path = path.to_str().ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("Non-UTF-8 database path {:?}", path),
+        )
+    })?;
+
+    Ok(Arc::new(RocksDB::open(&db_config, path)?))
+}
+
 /// A range from earliest..last block number stored within the DB.
 #[derive(Encode, Decode, Debug, Clone, PartialEq)]
 pub struct StoredBlockRange(BlockNumber, BlockNumber);
@@ -119,13 +153,25 @@ impl From<Tick> for crate::Tick {
     }
 }
 
+/// Errors while accessing things from the DB.
+#[derive(Debug, derive_more::From, derive_more::Display)]
+pub enum Error {
+    Io(std::io::Error),
+    InvalidDecoding(parity_scale_codec::Error),
+}
+
+impl std::error::Error for Error {}
+
+/// Result alias for DB errors.
+pub type Result<T> = std::result::Result<T, Error>;
+
 /// Canonicalize some particular block, pruning everything before it and
 /// pruning any competing branches at the same height.
 pub(crate) fn canonicalize(
-    store: &impl AuxStore,
+    store: &dyn KeyValueDB,
     canon_number: BlockNumber,
     canon_hash: Hash,
-) -> sp_blockchain::Result<()> {
+) -> Result<()> {
     let range = match load_stored_blocks(store)? {
         None => return Ok(()),
         Some(range) => {
@@ -137,8 +183,7 @@ pub(crate) fn canonicalize(
         }
     };
 
-    let mut deleted_height_keys = Vec::new();
-    let mut deleted_block_keys = Vec::new();
+    let mut transaction = DBTransaction::new();
 
     // Storing all candidates in memory is potentially heavy, but should be fine
     // as long as finality doesn't stall for a long while. We could optimize this
@@ -150,15 +195,15 @@ pub(crate) fn canonicalize(
 
     let visit_and_remove_block_entry =
         |block_hash: Hash,
-         deleted_block_keys: &mut Vec<_>,
+         transaction: &mut DBTransaction,
          visited_candidates: &mut HashMap<CandidateHash, CandidateEntry>|
-         -> sp_blockchain::Result<Vec<Hash>> {
+         -> Result<Vec<Hash>> {
             let block_entry = match load_block_entry(store, &block_hash)? {
                 None => return Ok(Vec::new()),
                 Some(b) => b,
             };
 
-            deleted_block_keys.push(block_entry_key(&block_hash));
+            transaction.delete(DATA_COL, &block_entry_key(&block_hash)[..]);
             for &(_, ref candidate_hash) in &block_entry.candidates {
                 let candidate = match visited_candidates.entry(*candidate_hash) {
                     Entry::Occupied(e) => e.into_mut(),
@@ -179,18 +224,17 @@ pub(crate) fn canonicalize(
     // First visit everything before the height.
     for i in range.0..canon_number {
         let at_height = load_blocks_at_height(store, i)?;
-        deleted_height_keys.push(blocks_at_height_key(i));
+        transaction.delete(DATA_COL, &blocks_at_height_key(i)[..]);
 
         for b in at_height {
-            let _ =
-                visit_and_remove_block_entry(b, &mut deleted_block_keys, &mut visited_candidates)?;
+            let _ = visit_and_remove_block_entry(b, &mut transaction, &mut visited_candidates)?;
         }
     }
 
     // Then visit everything at the height.
     let pruned_branches = {
         let at_height = load_blocks_at_height(store, canon_number)?;
-        deleted_height_keys.push(blocks_at_height_key(canon_number));
+        transaction.delete(DATA_COL, &blocks_at_height_key(canon_number));
 
         // Note that while there may be branches descending from blocks at earlier heights,
         // we have already covered them by removing everything at earlier heights.
@@ -198,7 +242,7 @@ pub(crate) fn canonicalize(
 
         for b in at_height {
             let children =
-                visit_and_remove_block_entry(b, &mut deleted_block_keys, &mut visited_candidates)?;
+                visit_and_remove_block_entry(b, &mut transaction, &mut visited_candidates)?;
 
             if b != canon_hash {
                 pruned_branches.extend(children);
@@ -217,7 +261,7 @@ pub(crate) fn canonicalize(
         while let Some((height, next_child)) = frontier.pop() {
             let children = visit_and_remove_block_entry(
                 next_child,
-                &mut deleted_block_keys,
+                &mut transaction,
                 &mut visited_candidates,
             )?;
 
@@ -237,119 +281,42 @@ pub(crate) fn canonicalize(
     }
 
     // Update all `CandidateEntry`s, deleting all those which now have empty `block_assignments`.
-    let (written_candidates, deleted_candidates) = {
-        let mut written = Vec::new();
-        let mut deleted = Vec::new();
-
-        for (candidate_hash, candidate) in visited_candidates {
-            if candidate.block_assignments.is_empty() {
-                deleted.push(candidate_entry_key(&candidate_hash));
-            } else {
-                written.push((candidate_entry_key(&candidate_hash), candidate.encode()));
-            }
+    for (candidate_hash, candidate) in visited_candidates {
+        if candidate.block_assignments.is_empty() {
+            transaction.delete(DATA_COL, &candidate_entry_key(&candidate_hash)[..]);
+        } else {
+            transaction.put_vec(
+                DATA_COL,
+                &candidate_entry_key(&candidate_hash)[..],
+                candidate.encode(),
+            );
         }
-
-        (written, deleted)
-    };
+    }
 
     // Update all blocks-at-height keys, deleting all those which now have empty `block_assignments`.
-    let written_at_height = {
-        visited_heights
-            .into_iter()
-            .filter_map(|(h, at)| {
-                if at.is_empty() {
-                    deleted_height_keys.push(blocks_at_height_key(h));
-                    None
-                } else {
-                    Some((blocks_at_height_key(h), at.encode()))
-                }
-            })
-            .collect::<Vec<_>>()
-    };
+    for (h, at) in visited_heights {
+        if at.is_empty() {
+            transaction.delete(DATA_COL, &blocks_at_height_key(h)[..]);
+        } else {
+            transaction.put_vec(DATA_COL, &blocks_at_height_key(h), at.encode());
+        }
+    }
 
     // due to the fork pruning, this range actually might go too far above where our actual highest block is,
     // if a relatively short fork is canonicalized.
     let new_range =
         StoredBlockRange(canon_number + 1, std::cmp::max(range.1, canon_number + 2)).encode();
 
-    // Because aux-store requires &&[u8], we have to collect.
-
-    let inserted_keys: Vec<_> = std::iter::once((&STORED_BLOCKS_KEY[..], &new_range[..]))
-        .chain(
-            written_candidates
-                .iter()
-                .map(|&(ref k, ref v)| (&k[..], &v[..])),
-        )
-        .chain(
-            written_at_height
-                .iter()
-                .map(|&(ref k, ref v)| (&k[..], &v[..])),
-        )
-        .collect();
-
-    let deleted_keys: Vec<_> = deleted_block_keys
-        .iter()
-        .map(|k| &k[..])
-        .chain(deleted_height_keys.iter().map(|k| &k[..]))
-        .chain(deleted_candidates.iter().map(|k| &k[..]))
-        .collect();
+    transaction.put_vec(DATA_COL, &STORED_BLOCKS_KEY[..], new_range);
 
     // Update the values on-disk.
-    store.insert_aux(inserted_keys.iter(), deleted_keys.iter())?;
-
-    Ok(())
+    store.write(transaction).map_err(Into::into)
 }
 
-/// Clear the aux store of everything.
-pub(crate) fn clear(store: &impl AuxStore) -> sp_blockchain::Result<()> {
-    let range = match load_stored_blocks(store)? {
-        None => return Ok(()),
-        Some(range) => range,
-    };
-
-    let mut visited_height_keys = Vec::new();
-    let mut visited_block_keys = Vec::new();
-    let mut visited_candidate_keys = Vec::new();
-
-    for i in range.0..range.1 {
-        let at_height = load_blocks_at_height(store, i)?;
-
-        visited_height_keys.push(blocks_at_height_key(i));
-
-        for block_hash in at_height {
-            let block_entry = match load_block_entry(store, &block_hash)? {
-                None => continue,
-                Some(e) => e,
-            };
-
-            visited_block_keys.push(block_entry_key(&block_hash));
-
-            for &(_, candidate_hash) in &block_entry.candidates {
-                visited_candidate_keys.push(candidate_entry_key(&candidate_hash));
-            }
-        }
-    }
-
-    // unfortunately demands a `collect` because aux store wants `&&[u8]` for some reason.
-    let visited_keys_borrowed = visited_height_keys
-        .iter()
-        .map(|x| &x[..])
-        .chain(visited_block_keys.iter().map(|x| &x[..]))
-        .chain(visited_candidate_keys.iter().map(|x| &x[..]))
-        .chain(std::iter::once(&STORED_BLOCKS_KEY[..]))
-        .collect::<Vec<_>>();
-
-    store.insert_aux(&[], &visited_keys_borrowed)?;
-
-    Ok(())
-}
-
-fn load_decode<D: Decode>(store: &impl AuxStore, key: &[u8]) -> sp_blockchain::Result<Option<D>> {
-    match store.get_aux(key)? {
+fn load_decode<D: Decode>(store: &dyn KeyValueDB, key: &[u8]) -> Result<Option<D>> {
+    match store.get(DATA_COL, key)? {
         None => Ok(None),
-        Some(raw) => D::decode(&mut &raw[..]).map(Some).map_err(|e| {
-            sp_blockchain::Error::Storage(format!("Failed to decode item in approvals DB: {:?}", e))
-        }),
+        Some(raw) => D::decode(&mut &raw[..]).map(Some).map_err(Into::into),
     }
 }
 
@@ -373,16 +340,18 @@ pub(crate) struct NewCandidateInfo {
 /// `None` for any of the candidates referenced by the block entry. In these cases,
 /// no information about new candidates will be referred to by this function.
 pub(crate) fn add_block_entry(
-    store: &impl AuxStore,
+    store: &dyn KeyValueDB,
     parent_hash: Hash,
     number: BlockNumber,
     entry: BlockEntry,
     n_validators: usize,
     candidate_info: impl Fn(&CandidateHash) -> Option<NewCandidateInfo>,
-) -> sp_blockchain::Result<Vec<(CandidateHash, CandidateEntry)>> {
+) -> Result<Vec<(CandidateHash, CandidateEntry)>> {
+    let mut transaction = DBTransaction::new();
     let session = entry.session;
 
-    let new_block_range = {
+    // Update the stored block range.
+    {
         let new_range = match load_stored_blocks(store)? {
             None => Some(StoredBlockRange(number, number + 1)),
             Some(range) => {
@@ -394,10 +363,11 @@ pub(crate) fn add_block_entry(
             }
         };
 
-        new_range.map(|n| (STORED_BLOCKS_KEY, n.encode()))
+        new_range.map(|n| transaction.put_vec(DATA_COL, &STORED_BLOCKS_KEY[..], n.encode()))
     };
 
-    let updated_blocks_at = {
+    // Update the blocks at height meta key.
+    {
         let mut blocks_at_height = load_blocks_at_height(store, number)?;
         if blocks_at_height.contains(&entry.block_hash) {
             // seems we already have a block entry for this block. nothing to do here.
@@ -405,98 +375,72 @@ pub(crate) fn add_block_entry(
         }
 
         blocks_at_height.push(entry.block_hash);
-        (blocks_at_height_key(number), blocks_at_height.encode())
+        transaction.put_vec(
+            DATA_COL,
+            &blocks_at_height_key(number)[..],
+            blocks_at_height.encode(),
+        )
     };
 
     let mut candidate_entries = Vec::with_capacity(entry.candidates.len());
 
-    let candidate_entry_updates =
-        {
-            let mut updated_entries = Vec::with_capacity(entry.candidates.len());
-            for &(_, ref candidate_hash) in &entry.candidates {
-                let NewCandidateInfo {
-                    candidate,
-                    backing_group,
-                    our_assignment,
-                } = match candidate_info(candidate_hash) {
-                    None => return Ok(Vec::new()),
-                    Some(info) => info,
-                };
+    // read and write all updated entries.
+    {
+        for &(_, ref candidate_hash) in &entry.candidates {
+            let NewCandidateInfo {
+                candidate,
+                backing_group,
+                our_assignment,
+            } = match candidate_info(candidate_hash) {
+                None => return Ok(Vec::new()),
+                Some(info) => info,
+            };
 
-                let mut candidate_entry = load_candidate_entry(store, &candidate_hash)?
-                    .unwrap_or_else(move || CandidateEntry {
+            let mut candidate_entry =
+                load_candidate_entry(store, &candidate_hash)?.unwrap_or_else(move || {
+                    CandidateEntry {
                         candidate,
                         session,
                         block_assignments: BTreeMap::new(),
                         approvals: bitvec::bitvec![BitOrderLsb0, u8; 0; n_validators],
-                    });
+                    }
+                });
 
-                candidate_entry.block_assignments.insert(
-                    entry.block_hash,
-                    ApprovalEntry {
-                        tranches: Vec::new(),
-                        backing_group,
-                        our_assignment,
-                        assignments: bitvec::bitvec![BitOrderLsb0, u8; 0; n_validators],
-                        approved: false,
-                    },
-                );
+            candidate_entry.block_assignments.insert(
+                entry.block_hash,
+                ApprovalEntry {
+                    tranches: Vec::new(),
+                    backing_group,
+                    our_assignment,
+                    assignments: bitvec::bitvec![BitOrderLsb0, u8; 0; n_validators],
+                    approved: false,
+                },
+            );
 
-                updated_entries.push((
-                    candidate_entry_key(&candidate_hash),
-                    candidate_entry.encode(),
-                ));
+            transaction.put_vec(
+                DATA_COL,
+                &candidate_entry_key(&candidate_hash)[..],
+                candidate_entry.encode(),
+            );
 
-                candidate_entries.push((*candidate_hash, candidate_entry));
-            }
-
-            updated_entries
-        };
-
-    let updated_parent = {
-        load_block_entry(store, &parent_hash)?.map(|mut e| {
-            e.children.push(entry.block_hash);
-            (block_entry_key(&parent_hash), e.encode())
-        })
+            candidate_entries.push((*candidate_hash, candidate_entry));
+        }
     };
 
-    let write_block_entry = (block_entry_key(&entry.block_hash), entry.encode());
+    // Update the child index for the parent.
+    load_block_entry(store, &parent_hash)?.map(|mut e| {
+        e.children.push(entry.block_hash);
+        transaction.put_vec(DATA_COL, &block_entry_key(&parent_hash)[..], e.encode())
+    });
 
-    // write:
-    //   - new block range
-    //   - updated blocks-at item
-    //   - fresh and updated candidate entries
-    //   - the parent block entry.
-    //   - the block entry itself
+    // Put the new block entry in.
+    transaction.put_vec(
+        DATA_COL,
+        &block_entry_key(&entry.block_hash)[..],
+        entry.encode(),
+    );
 
-    // Unfortunately have to collect because aux-store demands &(&[u8], &[u8]).
-    let all_keys_and_values: Vec<_> = new_block_range
-        .as_ref()
-        .into_iter()
-        .map(|&(ref k, ref v)| (&k[..], &v[..]))
-        .chain(std::iter::once((
-            &updated_blocks_at.0[..],
-            &updated_blocks_at.1[..],
-        )))
-        .chain(
-            candidate_entry_updates
-                .iter()
-                .map(|&(ref k, ref v)| (&k[..], &v[..])),
-        )
-        .chain(std::iter::once((
-            &write_block_entry.0[..],
-            &write_block_entry.1[..],
-        )))
-        .chain(
-            updated_parent
-                .as_ref()
-                .into_iter()
-                .map(|&(ref k, ref v)| (&k[..], &v[..])),
-        )
-        .collect();
-
-    store.insert_aux(&all_keys_and_values, &[])?;
-
+    store.write(transaction)?;
     Ok(candidate_entries)
 }
 
@@ -523,69 +467,57 @@ impl Transaction {
     }
 
     /// Write the contents of the transaction, atomically, to the DB.
-    pub(crate) fn write(self, db: &impl AuxStore) -> sp_blockchain::Result<()> {
+    pub(crate) fn write(self, db: &dyn KeyValueDB) -> Result<()> {
         if self.block_entries.is_empty() && self.candidate_entries.is_empty() {
             return Ok(());
         }
 
-        let blocks: Vec<_> = self
-            .block_entries
-            .into_iter()
-            .map(|(hash, entry)| {
-                let k = block_entry_key(&hash);
-                let v = entry.encode();
+        let mut db_transaction = DBTransaction::new();
 
-                (k, v)
-            })
-            .collect();
+        for (hash, entry) in self.block_entries {
+            let k = block_entry_key(&hash);
+            let v = entry.encode();
 
-        let candidates: Vec<_> = self
-            .candidate_entries
-            .into_iter()
-            .map(|(hash, entry)| {
-                let k = candidate_entry_key(&hash);
-                let v = entry.encode();
+            db_transaction.put_vec(DATA_COL, &k, v);
+        }
 
-                (k, v)
-            })
-            .collect();
+        for (hash, entry) in self.candidate_entries {
+            let k = candidate_entry_key(&hash);
+            let v = entry.encode();
 
-        let kv = blocks
-            .iter()
-            .map(|(k, v)| (&k[..], &v[..]))
-            .chain(candidates.iter().map(|(k, v)| (&k[..], &v[..])))
-            .collect::<Vec<_>>();
+            db_transaction.put_vec(DATA_COL, &k, v);
+        }
 
-        db.insert_aux(&kv, &[])
+        db.write(db_transaction).map_err(Into::into)
     }
 }
 
 /// Load the stored-blocks key from the state.
-fn load_stored_blocks(store: &impl AuxStore) -> sp_blockchain::Result<Option<StoredBlockRange>> {
+fn load_stored_blocks(store: &dyn KeyValueDB) -> Result<Option<StoredBlockRange>> {
     load_decode(store, STORED_BLOCKS_KEY)
 }
 
 /// Load a blocks-at-height entry for a given block number.
 pub(crate) fn load_blocks_at_height(
-    store: &impl AuxStore,
+    store: &dyn KeyValueDB,
     block_number: BlockNumber,
-) -> sp_blockchain::Result<Vec<Hash>> {
+) -> Result<Vec<Hash>> {
     load_decode(store, &blocks_at_height_key(block_number)).map(|x| x.unwrap_or_default())
 }
 
 /// Load a block entry from the aux store.
 pub(crate) fn load_block_entry(
-    store: &impl AuxStore,
+    store: &dyn KeyValueDB,
     block_hash: &Hash,
-) -> sp_blockchain::Result<Option<BlockEntry>> {
+) -> Result<Option<BlockEntry>> {
     load_decode(store, &block_entry_key(block_hash))
 }
 
 /// Load a candidate entry from the aux store.
 pub(crate) fn load_candidate_entry(
-    store: &impl AuxStore,
+    store: &dyn KeyValueDB,
     candidate_hash: &CandidateHash,
-) -> sp_blockchain::Result<Option<CandidateEntry>> {
+) -> Result<Option<CandidateEntry>> {
     load_decode(store, &candidate_entry_key(candidate_hash))
 }
 
