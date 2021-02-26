@@ -248,8 +248,8 @@ pub mod v1 {
         SignedFullStatement,
     };
     use indracore_primitives::v1::{
-        CandidateHash, CandidateIndex, CandidateReceipt, CollatorId, ErasureChunk, Hash,
-        Id as ParaId, PoV, SignedAvailabilityBitfield, ValidatorIndex,
+        AvailableData, CandidateHash, CandidateIndex, CandidateReceipt, CollatorId, ErasureChunk,
+        Hash, Id as ParaId, PoV, SignedAvailabilityBitfield, ValidatorIndex,
     };
     use parity_scale_codec::{Decode, Encode};
     use std::convert::TryFrom;
@@ -270,6 +270,11 @@ pub mod v1 {
         /// Respond with chunk for a given candidate hash and validator index.
         /// The response may be `None` if the requestee does not have the chunk.
         Chunk(RequestId, Option<ErasureChunk>),
+        /// Request full data for a given candidate hash.
+        RequestFullData(RequestId, CandidateHash),
+        /// Respond with full data for a given candidate hash.
+        /// The response may be `None` if the requestee does not have the data.
+        FullData(RequestId, Option<AvailableData>),
     }
 
     /// Network messages used by the bitfield distribution subsystem.
