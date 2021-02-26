@@ -939,13 +939,13 @@ impl<T: Config> Module<T> {
 
         let notification_bytes = {
             use parity_scale_codec::Encode as _;
-            use xcm::v0::Xcm;
+            use xcm::{v0::Xcm, VersionedXcm};
 
-            Xcm::HrmpNewChannelOpenRequest {
+            VersionedXcm::from(Xcm::HrmpNewChannelOpenRequest {
                 sender: u32::from(origin),
                 max_capacity: proposed_max_capacity,
                 max_message_size: proposed_max_message_size,
-            }
+            })
             .encode()
         };
         if let Err(dmp::QueueDownwardMessageError::ExceedsMaxMessageSize) =
@@ -1004,11 +1004,11 @@ impl<T: Config> Module<T> {
 
         let notification_bytes = {
             use parity_scale_codec::Encode as _;
-            use xcm::v0::Xcm;
+            use xcm::{v0::Xcm, VersionedXcm};
 
-            Xcm::HrmpChannelAccepted {
+            VersionedXcm::from(Xcm::HrmpChannelAccepted {
                 recipient: u32::from(origin),
-            }
+            })
             .encode()
         };
         if let Err(dmp::QueueDownwardMessageError::ExceedsMaxMessageSize) =
@@ -1047,13 +1047,13 @@ impl<T: Config> Module<T> {
         let config = <configuration::Module<T>>::config();
         let notification_bytes = {
             use parity_scale_codec::Encode as _;
-            use xcm::v0::Xcm;
+            use xcm::{v0::Xcm, VersionedXcm};
 
-            Xcm::HrmpChannelClosing {
+            VersionedXcm::from(Xcm::HrmpChannelClosing {
                 initiator: u32::from(origin),
                 sender: u32::from(channel_id.sender),
                 recipient: u32::from(channel_id.recipient),
-            }
+            })
             .encode()
         };
         let opposite_party = if origin == channel_id.sender {
