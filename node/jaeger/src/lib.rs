@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Polkadot Jaeger related primitives
+//! Indracore Jaeger related primitives
 //!
-//! Provides primitives used by Polkadot for interfacing with Jaeger.
+//! Provides primitives used by Indracore for interfacing with Jaeger.
 //!
 //! # Integration
 //!
@@ -44,9 +44,11 @@
 //!  docker.io/jaegertracing/all-in-one:1.21
 //! ```
 
-use indracore_primitives::v1::{CandidateHash, Hash, PoV};
-use parking_lot::RwLock;
+use indracore_primitives::v1::{CandidateHash, Hash, PoV, ValidatorIndex};
+use sc_network::PeerId;
 use sp_core::traits::SpawnNamed;
+
+use parking_lot::RwLock;
 use std::{result, sync::Arc};
 
 /// A description of an error causing the chain API request to be unservable.
@@ -140,7 +142,7 @@ impl PerLeafSpan {
     /// Takes the `leaf_span` that is created by the overseer per leaf and a name for a child span.
     /// Both will be stored in this object, while the child span is implicitly accessible by using the
     /// [`Deref`](std::ops::Deref) implementation.
-    pub fn new(leaf_span: Arc<JaegerSpan>, name: impl Into<String>) -> Self {
+    pub fn new(leaf_span: Arc<JaegerSpan>, name: &'static str) -> Self {
         let span = leaf_span.child(name);
 
         Self { span, leaf_span }
@@ -161,6 +163,84 @@ impl std::ops::Deref for PerLeafSpan {
     }
 }
 
+/// A helper to annotate the stage with a numerical value
+/// to ease the life of the tooling team creating viable
+/// statistical metrics for which stage of the inclusion
+/// pipeline drops a significant amount of candidates,
+/// statistically speaking.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+#[non_exhaustive]
+pub enum Stage {
+    Backing = 1,
+    Availability = 2,
+    // TODO expand this
+}
+
+/// Builder pattern for children and root spans to unify
+/// information annotations.
+pub struct SpanBuilder {
+    span: JaegerSpan,
+}
+
+impl SpanBuilder {
+    /// Attach a peer id to the span.
+    #[inline(always)]
+    pub fn with_peer_id(mut self, peer: &PeerId) -> Self {
+        self.span.add_string_tag("peer-id", &peer.to_base58());
+        self
+    }
+    /// Attach a candidate hash to the span.
+    #[inline(always)]
+    pub fn with_candidate(mut self, candidate_hash: &CandidateHash) -> Self {
+        self.span
+            .add_string_tag("candidate-hash", &format!("{:?}", candidate_hash.0));
+        self
+    }
+    /// Attach a candidate stage.
+    /// Should always come with a `CandidateHash`.
+    #[inline(always)]
+    pub fn with_candidate_stage(mut self, stage: Stage) -> Self {
+        self.span
+            .add_string_tag("candidate-stage", &format!("{}", stage as u8));
+        self
+    }
+
+    #[inline(always)]
+    pub fn with_validator_index(mut self, validator: ValidatorIndex) -> Self {
+        self.span
+            .add_string_tag("validator-index", &validator.to_string());
+        self
+    }
+
+    #[inline(always)]
+    pub fn with_chunk_index(mut self, chunk_index: u32) -> Self {
+        self.span
+            .add_string_tag("chunk-index", &format!("{}", chunk_index));
+        self
+    }
+
+    #[inline(always)]
+    pub fn with_relay_parent(mut self, relay_parent: &Hash) -> Self {
+        self.span
+            .add_string_tag("relay-parent", &format!("{:?}", relay_parent));
+        self
+    }
+
+    #[inline(always)]
+    pub fn with_claimed_validator_index(mut self, claimed_validator_index: ValidatorIndex) -> Self {
+        self.span
+            .add_string_tag("claimed-validator", &claimed_validator_index.to_string());
+        self
+    }
+
+    /// Complete construction.
+    #[inline(always)]
+    pub fn build(self) -> JaegerSpan {
+        self.span
+    }
+}
+
 /// A wrapper type for a span.
 ///
 /// Handles running with and without jaeger.
@@ -173,11 +253,34 @@ pub enum JaegerSpan {
 
 impl JaegerSpan {
     /// Derive a child span from `self`.
-    pub fn child(&self, name: impl Into<String>) -> Self {
+    pub fn child(&self, name: &'static str) -> Self {
         match self {
             Self::Enabled(inner) => Self::Enabled(inner.child(name)),
             Self::Disabled => Self::Disabled,
         }
+    }
+
+    pub fn child_builder(&self, name: &'static str) -> SpanBuilder {
+        SpanBuilder {
+            span: self.child(name),
+        }
+    }
+
+    /// Derive a child span from `self` but add a candidate annotation.
+    /// A shortcut for
+    ///
+    /// ```rust,no_run
+    /// # use indracore_primitives::v1::CandidateHash;
+    /// # use indracore_node_jaeger::candidate_hash_span;
+    /// # let hash = CandidateHash::default();
+    /// # let span = candidate_hash_span(&hash, "foo");
+    /// let _span = span.child_builder("name").with_candidate(&hash).build();
+    /// ```
+    #[inline(always)]
+    pub fn child_with_candidate(&self, name: &'static str, candidate_hash: &CandidateHash) -> Self {
+        self.child_builder(name)
+            .with_candidate(candidate_hash)
+            .build()
     }
 
     /// Add an additional tag to the span.
@@ -221,11 +324,8 @@ impl From<mick_jaeger::Span> for JaegerSpan {
     }
 }
 
-/// Shortcut for [`candidate_hash_span`] with the hash of the `Candidate` block.
-pub fn candidate_hash_span(
-    candidate_hash: &CandidateHash,
-    span_name: impl Into<String>,
-) -> JaegerSpan {
+/// Shortcut for [`hash_span`] with the hash of the `Candidate` block.
+pub fn candidate_hash_span(candidate_hash: &CandidateHash, span_name: &'static str) -> JaegerSpan {
     let mut span: JaegerSpan = INSTANCE
         .read_recursive()
         .span(|| candidate_hash.0, span_name)
@@ -237,7 +337,7 @@ pub fn candidate_hash_span(
 
 /// Shortcut for [`hash_span`] with the hash of the `PoV`.
 #[inline(always)]
-pub fn pov_span(pov: &PoV, span_name: impl Into<String>) -> JaegerSpan {
+pub fn pov_span(pov: &PoV, span_name: &'static str) -> JaegerSpan {
     INSTANCE
         .read_recursive()
         .span(|| pov.hash(), span_name)
@@ -249,7 +349,7 @@ pub fn pov_span(pov: &PoV, span_name: impl Into<String>) -> JaegerSpan {
 ///
 /// This span automatically has the `relay-parent` tag set.
 #[inline(always)]
-pub fn hash_span(hash: &Hash, span_name: impl Into<String>) -> JaegerSpan {
+pub fn hash_span(hash: &Hash, span_name: &'static str) -> JaegerSpan {
     let mut span: JaegerSpan = INSTANCE.read_recursive().span(|| *hash, span_name).into();
     span.add_string_tag("relay-parent", &format!("{:?}", hash));
     span
@@ -320,7 +420,7 @@ impl Jaeger {
         Ok(())
     }
 
-    fn span<F>(&self, lazy_hash: F, span_name: impl Into<String>) -> Option<mick_jaeger::Span>
+    fn span<F>(&self, lazy_hash: F, span_name: &'static str) -> Option<mick_jaeger::Span>
     where
         F: Fn() -> Hash,
     {

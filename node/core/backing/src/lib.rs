@@ -306,7 +306,9 @@ async fn make_pov_available(
     };
 
     {
-        let _span = span.as_ref().map(|s| s.child("erasure-coding"));
+        let _span = span
+            .as_ref()
+            .map(|s| s.child_with_candidate("erasure-coding", &candidate_hash));
 
         let chunks = erasure_coding::obtain_chunks_v1(n_validators, &available_data)?;
 
@@ -319,7 +321,10 @@ async fn make_pov_available(
     }
 
     {
-        let _span = span.as_ref().map(|s| s.child("store-data"));
+        let _span = span
+            .as_ref()
+            .map(|s| s.child_with_candidate("store-data", &candidate_hash));
+
         store_available_data(
             tx_from,
             validator_index,
@@ -946,11 +951,10 @@ impl CandidateBackingJob {
     ) -> Option<&JaegerSpan> {
         if !self.backed.contains(&hash) {
             // only add if we don't consider this backed.
-            let span = self.unbacked_candidates.entry(hash).or_insert_with(|| {
-                let mut span = parent_span.child("unbacked-candidate");
-                span.add_string_tag("candidate-hash", &format!("{:?}", hash.0));
-                span
-            });
+            let span = self
+                .unbacked_candidates
+                .entry(hash)
+                .or_insert_with(|| parent_span.child_with_candidate("unbacked-candidate", &hash));
             Some(span)
         } else {
             None
@@ -963,7 +967,7 @@ impl CandidateBackingJob {
         hash: CandidateHash,
     ) -> Option<JaegerSpan> {
         self.insert_or_get_unbacked_span(parent_span, hash)
-            .map(|span| span.child("validation"))
+            .map(|span| span.child_with_candidate("validation", &hash))
     }
 
     fn get_unbacked_statement_child(
@@ -974,9 +978,10 @@ impl CandidateBackingJob {
     ) -> Option<JaegerSpan> {
         self.insert_or_get_unbacked_span(parent_span, hash)
             .map(|span| {
-                let mut span = span.child("import-statement");
-                span.add_string_tag("validator-index", &format!("{}", validator));
-                span
+                span.child_builder("import-statement")
+                    .with_candidate(&hash)
+                    .with_validator_index(validator)
+                    .build()
             })
     }
 
