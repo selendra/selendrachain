@@ -83,6 +83,8 @@ decl_error! {
         ParathreadsRegistrationDisabled,
         /// The validation code provided doesn't start with the Wasm file magic string.
         DefinitelyNotWasm,
+        /// Cannot deregister para
+        CannotDeregister,
     }
 }
 
@@ -108,22 +110,18 @@ decl_module! {
 
             ensure!(!Paras::contains_key(id), Error::<T>::ParaAlreadyExists);
 
-            let outgoing = <paras::Module<T>>::outgoing_paras();
-
-            ensure!(outgoing.binary_search(&id).is_err(), Error::<T>::ParaAlreadyExists);
-
-            <T as Config>::Currency::reserve(&who, T::ParathreadDeposit::get())?;
-            <Debtors<T>>::insert(id, who);
-
-            Paras::insert(id, false);
-
             let genesis = ParaGenesisArgs {
                 genesis_head,
                 validation_code,
                 parachain: false,
             };
+            ensure!(paras::Module::<T>::can_schedule_para_initialize(&id, &genesis), Error::<T>::ParaAlreadyExists);
+            <T as Config>::Currency::reserve(&who, T::ParathreadDeposit::get())?;
 
-            runtime_parachains::schedule_para_initialize::<T>(id, genesis);
+            <Debtors<T>>::insert(id, who);
+            Paras::insert(id, false);
+            // Checked this shouldn't fail above.
+            let _ = runtime_parachains::schedule_para_initialize::<T>(id, genesis);
 
             Ok(())
         }
@@ -141,14 +139,16 @@ decl_module! {
 
             ensure!(ParathreadsRegistrationEnabled::get(), Error::<T>::ParathreadsRegistrationDisabled);
 
-            let is_parachain = Paras::take(id).ok_or(Error::<T>::InvalidChainId)?;
+            let is_parachain = Paras::get(id).ok_or(Error::<T>::InvalidChainId)?;
 
             ensure!(!is_parachain, Error::<T>::InvalidThreadId);
 
+            runtime_parachains::schedule_para_cleanup::<T>(id).map_err(|_| Error::<T>::CannotDeregister)?;
+
             let debtor = <Debtors<T>>::take(id);
             let _ = <T as Config>::Currency::unreserve(&debtor, T::ParathreadDeposit::get());
-
-            runtime_parachains::schedule_para_cleanup::<T>(id);
+            Paras::remove(&id);
+            PendingSwap::remove(&id);
 
             Ok(())
         }
@@ -170,7 +170,6 @@ decl_module! {
 
             Ok(())
         }
-
 
         /// Swap a parachain with another parachain or parathread. The origin must be a `Parachain`.
         /// The swap will happen only if there is already an opposite swap pending. If there is not,
@@ -220,33 +219,29 @@ impl<T: Config> Module<T> {
             Error::<T>::DefinitelyNotWasm
         );
 
-        let outgoing = <paras::Module<T>>::outgoing_paras();
-
-        ensure!(
-            outgoing.binary_search(&id).is_err(),
-            Error::<T>::ParaAlreadyExists
-        );
-
-        Paras::insert(id, true);
-
         let genesis = ParaGenesisArgs {
             genesis_head,
             validation_code,
             parachain: true,
         };
 
-        runtime_parachains::schedule_para_initialize::<T>(id, genesis);
+        runtime_parachains::schedule_para_initialize::<T>(id, genesis)
+            .map_err(|_| Error::<T>::ParaAlreadyExists)?;
 
+        Paras::insert(id, true);
         Ok(())
     }
 
     /// Deregister a parachain with the given ID. Must be called by root.
     pub fn deregister_parachain(id: ParaId) -> DispatchResult {
-        let is_parachain = Paras::take(id).ok_or(Error::<T>::InvalidChainId)?;
+        let is_parachain = Paras::get(id).ok_or(Error::<T>::InvalidChainId)?;
 
         ensure!(is_parachain, Error::<T>::InvalidChainId);
 
-        runtime_parachains::schedule_para_cleanup::<T>(id);
+        runtime_parachains::schedule_para_cleanup::<T>(id)
+            .map_err(|_| Error::<T>::CannotDeregister)?;
+        Paras::remove(&id);
+        PendingSwap::remove(&id);
 
         Ok(())
     }
@@ -258,7 +253,7 @@ mod tests {
     use crate::paras_registrar;
     use frame_support::traits::OneSessionHandler;
     use frame_support::{
-        assert_ok, parameter_types,
+        assert_noop, assert_ok, parameter_types,
         traits::{OnFinalize, OnInitialize, Randomness},
     };
     use frame_system::limits;
@@ -267,7 +262,8 @@ mod tests {
         AuthorityDiscoveryId, Balance, BlockNumber, Header, Signature, ValidatorIndex,
     };
     use runtime_parachains::{
-        configuration, dmp, hrmp, inclusion, initializer, scheduler, session_info, ump,
+        configuration, dmp, hrmp, inclusion, initializer, scheduler, session_info, shared, ump,
+        ParaLifecycle,
     };
     use sp_core::H256;
     use sp_io::TestExternalities;
@@ -313,7 +309,7 @@ mod tests {
     parameter_types! {
         pub const BlockHashCount: u32 = 250;
         pub BlockWeights: limits::BlockWeights =
-            limits::BlockWeights::with_sensible_defaults(4 * 1024 * 1024, NORMAL_RATIO);
+            frame_system::limits::BlockWeights::simple_max(1024);
         pub BlockLength: limits::BlockLength =
             limits::BlockLength::max_with_normal_ratio(4 * 1024 * 1024, NORMAL_RATIO);
     }
@@ -375,7 +371,7 @@ mod tests {
     }
 
     parameter_types! {
-        pub const Period: BlockNumber = 1;
+        pub const Period: BlockNumber = 3;
         pub const Offset: BlockNumber = 0;
         pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(17);
         pub const RewardCurve: &'static PiecewiseLinear<'static> = &REWARD_CURVE;
@@ -436,6 +432,8 @@ mod tests {
         type MinimumPeriod = MinimumPeriod;
         type WeightInfo = ();
     }
+
+    impl shared::Config for Test {}
 
     impl dmp::Config for Test {}
 
@@ -607,13 +605,14 @@ mod tests {
                 Initializer::on_finalize(System::block_number());
             }
             // Session change every 3 blocks.
-            if (b + 1) % 3 == 0 {
+            if (b + 1) % Period::get() == 0 {
                 println!("New session at {}", System::block_number());
                 Initializer::on_new_session(false, Vec::new().into_iter(), Vec::new().into_iter());
             }
             System::set_block_number(b + 1);
             println!("Initializing {}", System::block_number());
             System::on_initialize(System::block_number());
+            Session::on_initialize(System::block_number());
             Initializer::on_initialize(System::block_number());
         }
     }
@@ -657,7 +656,7 @@ mod tests {
             );
             assert_eq!(Balances::reserved_balance(3u64), ParathreadDeposit::get());
 
-            run_to_block(3);
+            run_to_block(10);
 
             assert_ok!(Registrar::deregister_parachain(2u32.into()));
 
@@ -708,12 +707,14 @@ mod tests {
                 2u32.into()
             ));
 
+            run_to_block(15);
+
             // Deregister a parathread that was originally a parachain
             assert_ok!(Registrar::deregister_parathread(
                 runtime_parachains::Origin::Parachain(2u32.into()).into()
             ));
 
-            run_to_block(12);
+            run_to_block(21);
 
             // Funds are correctly returned
             assert_eq!(Balances::free_balance(1), initial_1_balance);
@@ -732,21 +733,35 @@ mod tests {
                 WASM_MAGIC.to_vec().into(),
             ));
 
-            run_to_block(4);
+            // 2 session changes to fully onboard.
+            run_to_block(12);
+
+            assert_eq!(
+                Parachains::lifecycle(1u32.into()),
+                Some(ParaLifecycle::Parachain)
+            );
 
             assert_ok!(Registrar::deregister_parachain(1u32.into()));
-            run_to_block(5);
+            run_to_block(13);
 
-            assert!(Registrar::register_parachain(
-                1u32.into(),
-                vec![1; 3].into(),
-                WASM_MAGIC.to_vec().into(),
-            )
-            .is_err());
+            assert_eq!(
+                Parachains::lifecycle(1u32.into()),
+                Some(ParaLifecycle::OffboardingParachain)
+            );
 
-            // The session will be changed on the 6th block, as part of finalization. The change
-            // will be observed on the 7th.
-            run_to_block(7);
+            assert_noop!(
+                Registrar::register_parachain(
+                    1u32.into(),
+                    vec![1; 3].into(),
+                    WASM_MAGIC.to_vec().into(),
+                ),
+                Error::<Test>::ParaAlreadyExists
+            );
+
+            // Need 2 session changes to see the effect, which takes place by block 13.
+            run_to_block(18);
+
+            assert!(Parachains::lifecycle(1u32.into()).is_none());
             assert_ok!(Registrar::register_parachain(
                 1u32.into(),
                 vec![1; 3].into(),

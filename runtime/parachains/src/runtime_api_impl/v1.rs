@@ -11,13 +11,18 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
+// You should have received a copy of the GNU General Public License
+// along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
+
 //! A module exporting runtime API implementation functions for all runtime APIs using v1
 //! primitives.
 //!
 //! Runtimes implementing the v1 runtime API are recommended to forward directly to these
 //! functions.
 
-use crate::{configuration, dmp, hrmp, inclusion, initializer, paras, scheduler, session_info};
+use crate::{
+    configuration, dmp, hrmp, inclusion, initializer, paras, scheduler, session_info, shared,
+};
 use frame_support::debug;
 use primitives::v1::{
     CandidateEvent, CommittedCandidateReceipt, CoreIndex, CoreOccupied, CoreState, GroupIndex,
@@ -230,7 +235,7 @@ pub fn session_index_for_child<T: initializer::Config>() -> SessionIndex {
     //
     // Incidentally, this is also the rationale for why it is OK to query validators or
     // occupied cores or etc. and expect the correct response "for child".
-    <inclusion::Module<T>>::session_index()
+    <shared::Module<T>>::session_index()
 }
 
 /// Implementation for the `validation_code` function of the runtime API.

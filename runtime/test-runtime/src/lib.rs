@@ -35,6 +35,7 @@ use indracore_runtime_parachains::paras as parachains_paras;
 use indracore_runtime_parachains::runtime_api_impl::v1 as runtime_impl;
 use indracore_runtime_parachains::scheduler as parachains_scheduler;
 use indracore_runtime_parachains::session_info as parachains_session_info;
+use indracore_runtime_parachains::shared as parachains_shared;
 use indracore_runtime_parachains::ump as parachains_ump;
 
 use authority_discovery_primitives::AuthorityId as AuthorityDiscoveryId;
@@ -430,6 +431,8 @@ impl pallet_vesting::Config for Runtime {
     type MinVestedTransfer = MinVestedTransfer;
     type WeightInfo = ();
 }
+
+impl parachains_shared::Config for Runtime {}
 
 impl parachains_configuration::Config for Runtime {}
 
