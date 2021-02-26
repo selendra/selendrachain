@@ -2940,6 +2940,7 @@ mod tests {
         AvailabilityRecoveryMessage::RecoverAvailableData(
             Default::default(),
             Default::default(),
+            None,
             sender,
         )
     }

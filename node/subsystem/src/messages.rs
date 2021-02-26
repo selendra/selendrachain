@@ -39,6 +39,7 @@ use indracore_primitives::v1::{
     Header as BlockHeader, Id as ParaId, InboundDownwardMessage, InboundHrmpMessage,
     OccupiedCoreAssumption, PersistedValidationData, PoV, SessionIndex, SessionInfo,
     SignedAvailabilityBitfield, ValidationCode, ValidatorId, ValidatorIndex, ValidatorSignature,
+    GroupIndex
 };
 use indracore_statement_table::v1::Misbehavior;
 use std::{collections::btree_map::BTreeMap, sync::Arc};
@@ -291,6 +292,7 @@ pub enum AvailabilityRecoveryMessage {
     RecoverAvailableData(
         CandidateReceipt,
         SessionIndex,
+        Option<GroupIndex>, // Optional backing group to request from first.
         oneshot::Sender<Result<AvailableData, crate::errors::RecoveryError>>,
     ),
     /// Event from the network bridge.
