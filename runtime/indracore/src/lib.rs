@@ -42,7 +42,7 @@ use pallet_session::historical as session_historical;
 use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
 use parity_scale_codec::{Decode, Encode};
 use primitives::v1::{
-    AccountId, AccountIndex, AssignmentId, Balance, BlockNumber, CandidateEvent,
+    AccountId, AccountIndex, Balance, BlockNumber, CandidateEvent,
     CommittedCandidateReceipt, CoreState, GroupRotationInfo, Hash, Id, InboundDownwardMessage,
     InboundHrmpMessage, Moment, Nonce, OccupiedCoreAssumption, PersistedValidationData,
     SessionInfo, Signature, ValidationCode, ValidatorId, ValidatorIndex,
@@ -297,16 +297,6 @@ impl pallet_authorship::Config for Runtime {
 }
 
 impl_opaque_keys! {
-    pub struct OldSessionKeys {
-        pub grandpa: Grandpa,
-        pub babe: Babe,
-        pub im_online: ImOnline,
-        pub para_validator: ParachainSessionKeyPlaceholder<Runtime>,
-        pub authority_discovery: AuthorityDiscovery,
-    }
-}
-
-impl_opaque_keys! {
     pub struct SessionKeys {
         pub grandpa: Grandpa,
         pub babe: Babe,
@@ -314,25 +304,6 @@ impl_opaque_keys! {
         pub para_validator: ParachainSessionKeyPlaceholder<Runtime>,
         pub para_assignment: AssignmentSessionKeyPlaceholder<Runtime>,
         pub authority_discovery: AuthorityDiscovery,
-    }
-}
-
-fn transform_session_keys(v: AccountId, old: OldSessionKeys) -> SessionKeys {
-    SessionKeys {
-        grandpa: old.grandpa,
-        babe: old.babe,
-        im_online: old.im_online,
-        para_validator: old.para_validator,
-        para_assignment: {
-            // We need to produce a dummy value that's unique for the validator.
-            let mut id = AssignmentId::default();
-            let id_raw: &mut [u8] = id.as_mut();
-            id_raw.copy_from_slice(v.as_ref());
-            id_raw[0..4].copy_from_slice(b"asgn");
-
-            id
-        },
-        authority_discovery: old.authority_discovery,
     }
 }
 
@@ -1058,26 +1029,12 @@ impl pallet_sudo::Config for Runtime {
     type Call = Call;
 }
 
-// When this is removed, should also remove `OldSessionKeys`.
-pub struct UpgradeSessionKeys;
-impl frame_support::traits::OnRuntimeUpgrade for UpgradeSessionKeys {
-    fn on_runtime_upgrade() -> frame_support::weights::Weight {
-        Session::upgrade_keys::<OldSessionKeys, _>(transform_session_keys);
-        Perbill::from_percent(50) * BlockWeights::get().max_block
-    }
-}
-
-pub struct PhragmenElectionDepositRuntimeUpgrade;
-impl pallet_elections_phragmen::migrations_3_0_0::V2ToV3 for PhragmenElectionDepositRuntimeUpgrade {
-    type AccountId = AccountId;
-    type Balance = Balance;
-    type Module = ElectionsPhragmen;
-}
-impl frame_support::traits::OnRuntimeUpgrade for PhragmenElectionDepositRuntimeUpgrade {
-    fn on_runtime_upgrade() -> frame_support::weights::Weight {
-        pallet_elections_phragmen::migrations_3_0_0::apply::<Self>(5 * CENTS, DOLLARS)
-    }
-}
+pub struct CustomOnRuntimeUpgrade;
+impl frame_support::traits::OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		0
+	}
+} 
 
 construct_runtime! {
     pub enum Runtime where
@@ -1151,7 +1108,7 @@ pub type Executive = frame_executive::Executive<
     frame_system::ChainContext<Runtime>,
     Runtime,
     AllModules,
-    (UpgradeSessionKeys, PhragmenElectionDepositRuntimeUpgrade),
+    (),
 >;
 /// The payload being signed in transactions.
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
