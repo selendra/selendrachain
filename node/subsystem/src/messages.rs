@@ -35,11 +35,10 @@ use indracore_node_primitives::{
 use indracore_primitives::v1::{
     AuthorityDiscoveryId, AvailableData, BackedCandidate, BlockNumber, CandidateDescriptor,
     CandidateEvent, CandidateHash, CandidateIndex, CandidateReceipt, CollatorId,
-    CommittedCandidateReceipt, CoreState, ErasureChunk, GroupRotationInfo, Hash,
+    CommittedCandidateReceipt, CoreState, ErasureChunk, GroupIndex, GroupRotationInfo, Hash,
     Header as BlockHeader, Id as ParaId, InboundDownwardMessage, InboundHrmpMessage,
     OccupiedCoreAssumption, PersistedValidationData, PoV, SessionIndex, SessionInfo,
     SignedAvailabilityBitfield, ValidationCode, ValidatorId, ValidatorIndex, ValidatorSignature,
-    GroupIndex
 };
 use indracore_statement_table::v1::Misbehavior;
 use std::{collections::btree_map::BTreeMap, sync::Arc};

@@ -365,7 +365,6 @@ where
     use indracore_collator_protocol::{CollatorProtocolSubsystem, ProtocolSide};
     use indracore_network_bridge::NetworkBridge as NetworkBridgeSubsystem;
     use indracore_node_collation_generation::CollationGenerationSubsystem;
-    use indracore_node_core_approval_voting::ApprovalVotingSubsystem;
     use indracore_node_core_av_store::AvailabilityStoreSubsystem;
     use indracore_node_core_backing::CandidateBackingSubsystem;
     use indracore_node_core_bitfield_signing::BitfieldSigningSubsystem;
@@ -376,6 +375,12 @@ where
     use indracore_node_core_runtime_api::RuntimeApiSubsystem;
     use indracore_pov_distribution::PoVDistribution as PoVDistributionSubsystem;
     use indracore_statement_distribution::StatementDistribution as StatementDistributionSubsystem;
+
+    #[cfg(feature = "approval-checking")]
+    use indracore_node_core_approval_voting::ApprovalVotingSubsystem;
+
+    #[cfg(not(feature = "approval-checking"))]
+    let _ = slot_duration; // silence.
 
     let all_subsystems = AllSubsystems {
         availability_distribution: AvailabilityDistributionSubsystem::new(
@@ -431,11 +436,14 @@ where
         ),
         statement_distribution: StatementDistributionSubsystem::new(Metrics::register(registry)?),
         approval_distribution: ApprovalDistributionSubsystem::new(Metrics::register(registry)?),
+        #[cfg(feature = "approval-checking")]
         approval_voting: ApprovalVotingSubsystem::new(
             keystore.clone(),
             slot_duration,
             runtime_client.clone(),
         ),
+        #[cfg(not(feature = "approval-checking"))]
+        approval_voting: indracore_subsystem::DummySubsystem,
     };
 
     Overseer::new(leaves, all_subsystems, registry, spawner).map_err(|e| e.into())
@@ -803,6 +811,7 @@ where
         // given delay.
         let builder = grandpa::VotingRulesBuilder::default();
 
+        #[cfg(feature = "approval-checking")]
         let builder = if let Some(ref overseer) = overseer_handler {
             builder.add(grandpa_support::ApprovalCheckingDiagnostic::new(
                 overseer.clone(),

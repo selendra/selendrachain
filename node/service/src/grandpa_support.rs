@@ -18,19 +18,20 @@
 
 use std::sync::Arc;
 
-use indracore_primitives::v1::{
-    Block as IndracoreBlock, BlockNumber, Hash, Header as IndracoreHeader,
-};
-use indracore_subsystem::messages::ApprovalVotingMessage;
+use indracore_primitives::v1::Hash;
 
 use sp_runtime::generic::BlockId;
 use sp_runtime::traits::Header as _;
 use sp_runtime::traits::{Block as BlockT, NumberFor};
 
-use indracore_overseer::OverseerHandler;
-use prometheus_endpoint::{self, Registry};
-
-use futures::channel::oneshot;
+#[cfg(feature = "approval-checking")]
+use {
+    futures::channel::oneshot,
+    indracore_overseer::OverseerHandler,
+    indracore_primitives::v1::{Block as IndracoreBlock, BlockNumber, Header as IndracoreHeader},
+    indracore_subsystem::messages::ApprovalVotingMessage,
+    prometheus_endpoint::{self, Registry},
+};
 
 /// A custom GRANDPA voting rule that acts as a diagnostic for the approval
 /// voting subsystem's desired votes.
@@ -38,14 +39,14 @@ use futures::channel::oneshot;
 /// The practical effect of this voting rule is to implement a fixed delay of
 /// blocks and to issue a prometheus metric on the lag behind the head that
 /// approval checking would indicate.
-#[cfg(feature = "full-node")]
+#[cfg(feature = "approval-checking")]
 #[derive(Clone)]
 pub(crate) struct ApprovalCheckingDiagnostic {
     checking_lag: Option<prometheus_endpoint::Histogram>,
     overseer: OverseerHandler,
 }
 
-#[cfg(feature = "full-node")]
+#[cfg(feature = "approval-checking")]
 impl ApprovalCheckingDiagnostic {
     /// Create a new approval checking diagnostic voting rule.
     pub fn new(
@@ -71,7 +72,7 @@ impl ApprovalCheckingDiagnostic {
     }
 }
 
-#[cfg(feature = "full-node")]
+#[cfg(feature = "approval-checking")]
 impl<B> grandpa::VotingRule<IndracoreBlock, B> for ApprovalCheckingDiagnostic
 where
     B: sp_blockchain::HeaderBackend<IndracoreBlock>,
