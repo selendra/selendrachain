@@ -24,7 +24,7 @@ use parity_scale_codec::{Decode, Encode};
 use std::{collections::HashMap, fmt};
 
 #[doc(hidden)]
-pub use indracore_node_jaeger::JaegerSpan;
+pub use indracore_node_jaeger as jaeger;
 pub use sc_network::PeerId;
 #[doc(hidden)]
 pub use std::sync::Arc;
@@ -117,17 +117,17 @@ macro_rules! impl_try_from {
 
 /// Specialized wrapper around [`View`].
 ///
-/// Besides the access to the view itself, it also gives access to the [`JaegerSpan`] per leave/head.
+/// Besides the access to the view itself, it also gives access to the [`jaeger::Span`] per leave/head.
 #[derive(Debug, Clone, Default)]
 pub struct OurView {
     view: View,
-    span_per_head: HashMap<Hash, Arc<JaegerSpan>>,
+    span_per_head: HashMap<Hash, Arc<jaeger::Span>>,
 }
 
 impl OurView {
     /// Creates a new instance.
     pub fn new(
-        heads: impl IntoIterator<Item = (Hash, Arc<JaegerSpan>)>,
+        heads: impl IntoIterator<Item = (Hash, Arc<jaeger::Span>)>,
         finalized_number: BlockNumber,
     ) -> Self {
         let state_per_head = heads.into_iter().collect::<HashMap<_, _>>();
@@ -144,7 +144,7 @@ impl OurView {
     /// Returns the span per head map.
     ///
     /// For each head there exists one span in this map.
-    pub fn span_per_head(&self) -> &HashMap<Hash, Arc<JaegerSpan>> {
+    pub fn span_per_head(&self) -> &HashMap<Hash, Arc<jaeger::Span>> {
         &self.span_per_head
     }
 }
@@ -163,7 +163,7 @@ impl std::ops::Deref for OurView {
     }
 }
 
-/// Construct a new [`OurView`] with the given chain heads, finalized number 0 and disabled [`JaegerSpan`]'s.
+/// Construct a new [`OurView`] with the given chain heads, finalized number 0 and disabled [`jaeger::Span`]'s.
 ///
 /// NOTE: Use for tests only.
 ///
@@ -178,7 +178,7 @@ impl std::ops::Deref for OurView {
 macro_rules! our_view {
 	( $( $hash:expr ),* $(,)? ) => {
 		$crate::OurView::new(
-			vec![ $( $hash.clone() ),* ].into_iter().map(|h| (h, $crate::Arc::new($crate::JaegerSpan::Disabled))),
+			vec![ $( $hash.clone() ),* ].into_iter().map(|h| (h, $crate::Arc::new($crate::jaeger::Span::Disabled))),
 			0,
 		)
 	};

@@ -27,11 +27,12 @@ use futures::{
 use futures_timer::Delay;
 use indracore_node_subsystem::{
     errors::{ChainApiError, RuntimeApiError},
+    jaeger,
     messages::{
         AllMessages, CandidateBackingMessage, ChainApiMessage, ProvisionableData,
         ProvisionerInherentData, ProvisionerMessage,
     },
-    JaegerSpan, PerLeafSpan,
+    PerLeafSpan,
 };
 use indracore_node_subsystem_util::{
     self as util, delegated_subsystem,
@@ -145,7 +146,7 @@ impl JobTrait for ProvisioningJob {
     #[tracing::instrument(skip(span, _run_args, metrics, receiver, sender), fields(subsystem = LOG_TARGET))]
     fn run(
         relay_parent: Hash,
-        span: Arc<JaegerSpan>,
+        span: Arc<jaeger::Span>,
         _run_args: Self::RunArgs,
         metrics: Self::Metrics,
         receiver: mpsc::Receiver<ProvisionerMessage>,

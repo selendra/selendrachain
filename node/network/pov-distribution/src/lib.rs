@@ -34,6 +34,7 @@ use indracore_primitives::v1::{
     CandidateDescriptor, CoreIndex, CoreState, Hash, Id as ParaId, PoV, ValidatorId,
 };
 use indracore_subsystem::{
+    jaeger,
     messages::{AllMessages, NetworkBridgeEvent, NetworkBridgeMessage, PoVDistributionMessage},
     ActiveLeavesUpdate, FromOverseer, OverseerSignal, SpawnedSubsystem, Subsystem,
     SubsystemContext, SubsystemError, SubsystemResult,
@@ -161,7 +162,12 @@ async fn handle_signal(
         }) => {
             let _timer = state.metrics.time_handle_signal();
 
-            for (relay_parent, _span) in activated {
+            for (relay_parent, span) in activated {
+                let _span = span
+                    .child_builder("pov-dist")
+                    .with_stage(jaeger::Stage::PoVDistribution)
+                    .build();
+
                 match request_validators_ctx(relay_parent, ctx).await {
                     Ok(vals_rx) => {
                         let n_validators = match vals_rx.await? {

@@ -34,7 +34,7 @@ use indracore_node_subsystem::{
         AllMessages, AvailabilityStoreMessage, BitfieldDistributionMessage, BitfieldSigningMessage,
         RuntimeApiMessage, RuntimeApiRequest,
     },
-    JaegerSpan, PerLeafSpan,
+    PerLeafSpan,
 };
 use indracore_node_subsystem_util::{
     self as util,
@@ -44,7 +44,6 @@ use indracore_node_subsystem_util::{
 use indracore_primitives::v1::{AvailabilityBitfield, CoreState, Hash, ValidatorIndex};
 use sp_keystore::{Error as KeystoreError, SyncCryptoStorePtr};
 use std::{iter::FromIterator, pin::Pin, sync::Arc, time::Duration};
-
 use wasm_timer::{Delay, Instant};
 
 /// Delay between starting a bitfield signing job and its attempting to create a bitfield.
@@ -85,7 +84,7 @@ async fn get_core_availability(
     core: CoreState,
     validator_idx: ValidatorIndex,
     sender: &Mutex<&mut mpsc::Sender<FromJobCommand>>,
-    span: &jaeger::JaegerSpan,
+    span: &jaeger::Span,
 ) -> Result<bool, Error> {
     if let CoreState::Occupied(core) = core {
         let _span = span.child("query-chunk-availability");
@@ -149,7 +148,7 @@ async fn get_availability_cores(
 #[tracing::instrument(level = "trace", skip(sender, span), fields(subsystem = LOG_TARGET))]
 async fn construct_availability_bitfield(
     relay_parent: Hash,
-    span: &jaeger::JaegerSpan,
+    span: &jaeger::Span,
     validator_idx: ValidatorIndex,
     sender: &mut mpsc::Sender<FromJobCommand>,
 ) -> Result<AvailabilityBitfield, Error> {
@@ -235,7 +234,7 @@ impl JobTrait for BitfieldSigningJob {
     #[tracing::instrument(skip(span, keystore, metrics, _receiver, sender), fields(subsystem = LOG_TARGET))]
     fn run(
         relay_parent: Hash,
-        span: Arc<JaegerSpan>,
+        span: Arc<jaeger::Span>,
         keystore: Self::RunArgs,
         metrics: Self::Metrics,
         _receiver: mpsc::Receiver<BitfieldSigningMessage>,
@@ -339,7 +338,7 @@ mod tests {
 
             let future = construct_availability_bitfield(
                 relay_parent,
-                &jaeger::JaegerSpan::Disabled,
+                &jaeger::Span::Disabled,
                 validator_index,
                 &mut sender,
             )

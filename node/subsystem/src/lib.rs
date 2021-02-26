@@ -37,8 +37,8 @@ use crate::messages::AllMessages;
 pub mod errors;
 pub mod messages;
 
-pub use indracore_node_jaeger as jaeger;
 pub use jaeger::*;
+pub use indracore_node_jaeger as jaeger;
 
 /// How many slots are stack-reserved for active leaves updates
 ///
@@ -51,18 +51,18 @@ const ACTIVE_LEAVES_SMALLVEC_CAPACITY: usize = 8;
 /// Note that the activated and deactivated fields indicate deltas, not complete sets.
 #[derive(Clone, Default)]
 pub struct ActiveLeavesUpdate {
-    /// New relay chain block hashes of interest and their associated [`JaegerSpan`].
+    /// New relay chain block hashes of interest and their associated [`jaeger::Span`].
     ///
     /// NOTE: Each span should only be kept active as long as the leaf is considered active and should be dropped
     /// when the leaf is deactivated.
-    pub activated: SmallVec<[(Hash, Arc<JaegerSpan>); ACTIVE_LEAVES_SMALLVEC_CAPACITY]>,
+    pub activated: SmallVec<[(Hash, Arc<jaeger::Span>); ACTIVE_LEAVES_SMALLVEC_CAPACITY]>,
     /// Relay chain block hashes no longer of interest.
     pub deactivated: SmallVec<[Hash; ACTIVE_LEAVES_SMALLVEC_CAPACITY]>,
 }
 
 impl ActiveLeavesUpdate {
     /// Create a ActiveLeavesUpdate with a single activated hash
-    pub fn start_work(hash: Hash, span: Arc<JaegerSpan>) -> Self {
+    pub fn start_work(hash: Hash, span: Arc<jaeger::Span>) -> Self {
         Self {
             activated: [(hash, span)][..].into(),
             ..Default::default()
@@ -103,7 +103,7 @@ impl PartialEq for ActiveLeavesUpdate {
 
 impl fmt::Debug for ActiveLeavesUpdate {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        struct Activated<'a>(&'a [(Hash, Arc<JaegerSpan>)]);
+        struct Activated<'a>(&'a [(Hash, Arc<jaeger::Span>)]);
         impl fmt::Debug for Activated<'_> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 f.debug_list().entries(self.0.iter().map(|e| e.0)).finish()

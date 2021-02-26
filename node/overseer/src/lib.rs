@@ -94,8 +94,8 @@ use indracore_subsystem::messages::{
     PoVDistributionMessage, ProvisionerMessage, RuntimeApiMessage, StatementDistributionMessage,
 };
 pub use indracore_subsystem::{
-    jaeger, ActiveLeavesUpdate, DummySubsystem, FromOverseer, JaegerSpan, OverseerSignal,
-    SpawnedSubsystem, Subsystem, SubsystemContext, SubsystemError, SubsystemResult,
+    jaeger, ActiveLeavesUpdate, DummySubsystem, FromOverseer, OverseerSignal, SpawnedSubsystem,
+    Subsystem, SubsystemContext, SubsystemError, SubsystemResult,
 };
 
 // A capacity of bounded channels inside the overseer.
@@ -607,8 +607,8 @@ pub struct Overseer<S> {
     /// External listeners waiting for a hash to be in the active-leave set.
     activation_external_listeners: HashMap<Hash, Vec<oneshot::Sender<SubsystemResult<()>>>>,
 
-    /// Stores the [`JaegerSpan`] per active leaf.
-    span_per_active_leaf: HashMap<Hash, Arc<JaegerSpan>>,
+    /// Stores the [`jaeger::Span`] per active leaf.
+    span_per_active_leaf: HashMap<Hash, Arc<jaeger::Span>>,
 
     /// A set of leaves that `Overseer` starts working with.
     ///
@@ -2113,7 +2113,7 @@ where
     }
 
     #[tracing::instrument(level = "trace", skip(self), fields(subsystem = LOG_TARGET))]
-    fn on_head_activated(&mut self, hash: &Hash, parent_hash: Option<Hash>) -> Arc<JaegerSpan> {
+    fn on_head_activated(&mut self, hash: &Hash, parent_hash: Option<Hash>) -> Arc<jaeger::Span> {
         self.metrics.on_head_activated();
         if let Some(listeners) = self.activation_external_listeners.remove(hash) {
             for listener in listeners {
@@ -2232,9 +2232,7 @@ mod tests {
     use indracore_node_primitives::{CollationGenerationConfig, CollationResult};
     use indracore_node_subsystem_util::metered;
     use indracore_primitives::v1::{BlockData, CandidateHash, CollatorPair, PoV};
-    use indracore_subsystem::{
-        messages::NetworkBridgeEvent, messages::RuntimeApiRequest, JaegerSpan,
-    };
+    use indracore_subsystem::{jaeger, messages::NetworkBridgeEvent, messages::RuntimeApiRequest};
 
     use sp_core::crypto::Pair as _;
 
@@ -2598,16 +2596,16 @@ mod tests {
             let expected_heartbeats = vec![
                 OverseerSignal::ActiveLeaves(ActiveLeavesUpdate::start_work(
                     first_block_hash,
-                    Arc::new(JaegerSpan::Disabled),
+                    Arc::new(jaeger::Span::Disabled),
                 )),
                 OverseerSignal::ActiveLeaves(ActiveLeavesUpdate {
-                    activated: [(second_block_hash, Arc::new(JaegerSpan::Disabled))]
+                    activated: [(second_block_hash, Arc::new(jaeger::Span::Disabled))]
                         .as_ref()
                         .into(),
                     deactivated: [first_block_hash].as_ref().into(),
                 }),
                 OverseerSignal::ActiveLeaves(ActiveLeavesUpdate {
-                    activated: [(third_block_hash, Arc::new(JaegerSpan::Disabled))]
+                    activated: [(third_block_hash, Arc::new(jaeger::Span::Disabled))]
                         .as_ref()
                         .into(),
                     deactivated: [second_block_hash].as_ref().into(),
@@ -2700,8 +2698,8 @@ mod tests {
             let expected_heartbeats = vec![
                 OverseerSignal::ActiveLeaves(ActiveLeavesUpdate {
                     activated: [
-                        (first_block_hash, Arc::new(JaegerSpan::Disabled)),
-                        (second_block_hash, Arc::new(JaegerSpan::Disabled)),
+                        (first_block_hash, Arc::new(jaeger::Span::Disabled)),
+                        (second_block_hash, Arc::new(jaeger::Span::Disabled)),
                     ]
                     .as_ref()
                     .into(),
@@ -2787,7 +2785,7 @@ mod tests {
 
             let expected_heartbeats = vec![
                 OverseerSignal::ActiveLeaves(ActiveLeavesUpdate {
-                    activated: [(imported_block.hash, Arc::new(JaegerSpan::Disabled))]
+                    activated: [(imported_block.hash, Arc::new(jaeger::Span::Disabled))]
                         .as_ref()
                         .into(),
                     ..Default::default()

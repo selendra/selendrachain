@@ -32,8 +32,8 @@ use indracore_node_subsystem_util::metrics::{self, prometheus};
 use indracore_primitives::v1::{Hash, SignedAvailabilityBitfield, SigningContext, ValidatorId};
 use indracore_subsystem::messages::*;
 use indracore_subsystem::{
-    ActiveLeavesUpdate, FromOverseer, OverseerSignal, PerLeafSpan, SpawnedSubsystem, Subsystem,
-    SubsystemContext, SubsystemResult,
+    jaeger, ActiveLeavesUpdate, FromOverseer, OverseerSignal, PerLeafSpan, SpawnedSubsystem,
+    Subsystem, SubsystemContext, SubsystemResult,
 };
 use std::collections::{HashMap, HashSet};
 
@@ -414,6 +414,7 @@ async fn process_incoming_peer_message<Context>(
         .child_builder("msg-received")
         .with_peer_id(&origin)
         .with_claimed_validator_index(message.signed_availability.validator_index())
+        .with_stage(jaeger::Stage::BitfieldDistribution)
         .build();
 
     let validator_set = &job_data.validator_set;
@@ -782,7 +783,7 @@ mod test {
     use indracore_node_subsystem_test_helpers::make_subsystem_context;
     use indracore_node_subsystem_util::TimeoutExt;
     use indracore_primitives::v1::{AvailabilityBitfield, Signed};
-    use indracore_subsystem::JaegerSpan;
+    use indracore_subsystem::jaeger;
     use maplit::hashmap;
     use sp_application_crypto::AppKey;
     use sp_keystore::testing::KeyStore;
@@ -819,7 +820,7 @@ mod test {
                         },
                         message_received_from_peer: hashmap!{},
                         message_sent_to_peer: hashmap!{},
-                        span: PerLeafSpan::new(Arc::new(JaegerSpan::Disabled), "test"),
+                        span: PerLeafSpan::new(Arc::new(jaeger::Span::Disabled), "test"),
                     },
             },
             peer_views: peers
@@ -862,7 +863,7 @@ mod test {
                         one_per_validator: hashmap! {},
                         message_received_from_peer: hashmap! {},
                         message_sent_to_peer: hashmap! {},
-                        span: PerLeafSpan::new(Arc::new(JaegerSpan::Disabled), "test"),
+                        span: PerLeafSpan::new(Arc::new(jaeger::Span::Disabled), "test"),
                     },
                 )
             })

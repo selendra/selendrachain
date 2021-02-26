@@ -32,6 +32,7 @@ use indracore_primitives::v1::{
     ValidatorSignature,
 };
 use indracore_subsystem::{
+    jaeger,
     messages::{
         AllMessages, CandidateBackingMessage, NetworkBridgeEvent, NetworkBridgeMessage,
         RuntimeApiMessage, RuntimeApiRequest, StatementDistributionMessage,
@@ -541,7 +542,10 @@ async fn circulate_statement_and_dependents(
 
     let _span = active_head
         .span
-        .child_with_candidate("circulate-statement", &statement.payload().candidate_hash());
+        .child_builder("circulate-statement")
+        .with_candidate(&statement.payload().candidate_hash())
+        .with_stage(jaeger::Stage::StatementDistribution)
+        .build();
 
     // First circulate the statement directly to all peers needing it.
     // The borrow of `active_head` needs to encompass only this (Rust) statement.
@@ -555,10 +559,12 @@ async fn circulate_statement_and_dependents(
         }
     };
 
+    let _span = _span.child("send-to-peers");
     // Now send dependent statements to all peers needing them, if any.
     if let Some((candidate_hash, peers_needing_dependents)) = outputs {
         for peer in peers_needing_dependents {
             if let Some(peer_data) = peers.get_mut(&peer) {
+                let _span_loop = _span.child_builder("to-peer").with_peer_id(&peer).build();
                 // defensive: the peer data should always be some because the iterator
                 // of peers is derived from the set of peers.
                 send_statements_about(
@@ -1092,7 +1098,7 @@ mod tests {
     use indracore_node_network_protocol::{our_view, view, ObservedRole};
     use indracore_node_primitives::Statement;
     use indracore_primitives::v1::CommittedCandidateReceipt;
-    use indracore_subsystem::JaegerSpan;
+    use indracore_subsystem::jaeger;
     use sc_keystore::LocalKeystore;
     use sp_application_crypto::AppKey;
     use sp_keyring::Sr25519Keyring;
@@ -1138,7 +1144,7 @@ mod tests {
         let mut head_data = ActiveHeadData::new(
             validators,
             session_index,
-            PerLeafSpan::new(Arc::new(JaegerSpan::Disabled), "test"),
+            PerLeafSpan::new(Arc::new(jaeger::Span::Disabled), "test"),
         );
 
         let keystore: SyncCryptoStorePtr = Arc::new(LocalKeystore::in_memory());
@@ -1443,7 +1449,7 @@ mod tests {
             let mut data = ActiveHeadData::new(
                 validators,
                 session_index,
-                PerLeafSpan::new(Arc::new(JaegerSpan::Disabled), "test"),
+                PerLeafSpan::new(Arc::new(jaeger::Span::Disabled), "test"),
             );
 
             let noted = data.note_statement(
@@ -1725,7 +1731,7 @@ mod tests {
             handle
                 .send(FromOverseer::Signal(OverseerSignal::ActiveLeaves(
                     ActiveLeavesUpdate {
-                        activated: vec![(hash_a, Arc::new(JaegerSpan::Disabled))].into(),
+                        activated: vec![(hash_a, Arc::new(jaeger::Span::Disabled))].into(),
                         deactivated: vec![].into(),
                     },
                 )))

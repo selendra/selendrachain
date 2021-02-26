@@ -35,12 +35,12 @@ use indracore_node_subsystem_util::{
 };
 use indracore_primitives::v1::{CandidateReceipt, CollatorId, Hash, Id as ParaId, PoV};
 use indracore_subsystem::{
-    jaeger,
+    jaeger, jaeger,
     messages::{
         AllMessages, CandidateSelectionMessage, CollatorProtocolMessage, NetworkBridgeEvent,
         NetworkBridgeMessage,
     },
-    FromOverseer, JaegerSpan, OverseerSignal, PerLeafSpan, SubsystemContext,
+    FromOverseer, OverseerSignal, PerLeafSpan, SubsystemContext,
 };
 
 use super::{modify_reputation, Result, LOG_TARGET};
@@ -608,7 +608,7 @@ async fn remove_relay_parent(state: &mut State, relay_parent: Hash) -> Result<()
 async fn handle_our_view_change(state: &mut State, view: OurView) -> Result<()> {
     let old_view = std::mem::replace(&mut state.view, view);
 
-    let added: HashMap<Hash, Arc<JaegerSpan>> = state
+    let added: HashMap<Hash, Arc<jaeger::Span>> = state
         .view
         .span_per_head()
         .iter()

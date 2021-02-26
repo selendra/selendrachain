@@ -59,7 +59,7 @@ fn make_per_candidate() -> PerCandidate {
         validators: Vec::new(),
         validator_index: None,
         descriptor: Default::default(),
-        span: jaeger::JaegerSpan::Disabled,
+        span: jaeger::Span::Disabled,
     }
 }
 
@@ -1130,7 +1130,7 @@ fn clean_up_receipts_cache_unions_ancestors_and_view() {
         PerRelayParent {
             ancestors: vec![hash_b],
             live_candidates: HashSet::new(),
-            span: PerLeafSpan::new(Arc::new(jaeger::JaegerSpan::Disabled), "test"),
+            span: PerLeafSpan::new(Arc::new(jaeger::Span::Disabled), "test"),
         },
     );
 
@@ -1139,7 +1139,7 @@ fn clean_up_receipts_cache_unions_ancestors_and_view() {
         PerRelayParent {
             ancestors: Vec::new(),
             live_candidates: HashSet::new(),
-            span: PerLeafSpan::new(Arc::new(jaeger::JaegerSpan::Disabled), "test"),
+            span: PerLeafSpan::new(Arc::new(jaeger::Span::Disabled), "test"),
         },
     );
 
@@ -1166,7 +1166,7 @@ fn remove_relay_parent_only_removes_per_candidate_if_final() {
         PerRelayParent {
             ancestors: vec![],
             live_candidates: std::iter::once(candidate_hash_a).collect(),
-            span: PerLeafSpan::new(Arc::new(jaeger::JaegerSpan::Disabled), "test"),
+            span: PerLeafSpan::new(Arc::new(jaeger::Span::Disabled), "test"),
         },
     );
 
@@ -1175,7 +1175,7 @@ fn remove_relay_parent_only_removes_per_candidate_if_final() {
         PerRelayParent {
             ancestors: vec![],
             live_candidates: std::iter::once(candidate_hash_a).collect(),
-            span: PerLeafSpan::new(Arc::new(jaeger::JaegerSpan::Disabled), "test"),
+            span: PerLeafSpan::new(Arc::new(jaeger::Span::Disabled), "test"),
         },
     );
 
@@ -1238,7 +1238,7 @@ fn add_relay_parent_includes_all_live_candidates() {
         None,
         candidates,
         vec![ancestor_a],
-        PerLeafSpan::new(Arc::new(jaeger::JaegerSpan::Disabled), "test"),
+        PerLeafSpan::new(Arc::new(jaeger::Span::Disabled), "test"),
     );
 
     assert!(state

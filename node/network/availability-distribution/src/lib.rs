@@ -45,7 +45,7 @@ use indracore_subsystem::messages::{
 };
 use indracore_subsystem::{
     errors::{ChainApiError, RuntimeApiError},
-    jaeger, ActiveLeavesUpdate, FromOverseer, OverseerSignal, PerLeafSpan, SpawnedSubsystem,
+    jaeger, ActiveLeavesUpdate, FromOverseer, OverseerSignal, PerLeafSpan, SpawnedSubsystem, Stage,
     Subsystem, SubsystemContext, SubsystemError,
 };
 use std::collections::hash_map::Entry;
@@ -167,7 +167,7 @@ struct PerCandidate {
     live_in: HashSet<Hash>,
 
     /// A Jaeger span relating to this candidate.
-    span: jaeger::JaegerSpan,
+    span: jaeger::Span,
 }
 
 impl PerCandidate {
@@ -193,7 +193,7 @@ impl PerCandidate {
     fn drop_span_after_own_availability(&mut self) {
         if let Some(validator_index) = self.validator_index {
             if self.message_vault.contains_key(&validator_index) {
-                self.span = jaeger::JaegerSpan::Disabled;
+                self.span = jaeger::Span::Disabled;
             }
         }
     }
@@ -259,7 +259,7 @@ impl ProtocolState {
                             span: if validator_index.is_some() {
                                 jaeger::candidate_hash_span(&receipt_hash, "pending-availability")
                             } else {
-                                jaeger::JaegerSpan::Disabled
+                                jaeger::Span::Disabled
                             },
                         })
                     } else {
@@ -275,7 +275,10 @@ impl ProtocolState {
             // Create some span that will make it able to switch between the candidate and relay parent span.
             let span = per_relay_parent
                 .span
-                .child_with_candidate("live-candidate", &receipt_hash);
+                .child_builder("live-candidate")
+                .with_candidate(&receipt_hash)
+                .with_stage(Stage::AvailabilityDistribution)
+                .build();
             candidate_entry.span.add_follows_from(&span);
             candidate_entry.live_in.insert(relay_parent);
         }

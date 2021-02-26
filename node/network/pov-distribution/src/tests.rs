@@ -33,7 +33,7 @@ use indracore_primitives::v1::{
 };
 use indracore_subsystem::{
     messages::{RuntimeApiMessage, RuntimeApiRequest},
-    JaegerSpan,
+    Jaeger,
 };
 
 fn make_pov(data: Vec<u8>) -> PoV {
@@ -272,7 +272,7 @@ fn ask_validators_for_povs() {
         overseer_signal(
             &mut virtual_overseer,
             OverseerSignal::ActiveLeaves(ActiveLeavesUpdate {
-                activated: [(test_state.relay_parent, Arc::new(JaegerSpan::Disabled))][..].into(),
+                activated: [(test_state.relay_parent, Arc::new(jaeger::Span::Disabled))][..].into(),
                 deactivated: [][..].into(),
             }),
         )
@@ -444,7 +444,7 @@ fn ask_validators_for_povs() {
         overseer_signal(
             &mut virtual_overseer,
             OverseerSignal::ActiveLeaves(ActiveLeavesUpdate {
-                activated: [(next_leaf, Arc::new(JaegerSpan::Disabled))][..].into(),
+                activated: [(next_leaf, Arc::new(jaeger::Span::Disabled))][..].into(),
                 deactivated: [current.clone()][..].into(),
             }),
         )
