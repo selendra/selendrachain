@@ -2549,7 +2549,7 @@ dependencies = [
 
 [[package]]
 name = "indracore"
-version = "0.2.0"
+version = "0.3.0-dev"
 dependencies = [
  "assert_cmd",
  "color-eyre",
@@ -2656,7 +2656,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-cli"
-version = "0.2.0"
+version = "0.3.0-dev"
 dependencies = [
  "frame-benchmarking-cli",
  "futures 0.3.13",
@@ -2699,7 +2699,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-core-primitives"
-version = "0.2.0"
+version = "0.3.0-dev"
 dependencies = [
  "parity-scale-codec",
  "parity-util-mem",
@@ -2710,7 +2710,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-erasure-coding"
-version = "0.2.0"
+version = "0.3.0-dev"
 dependencies = [
  "indracore-primitives",
  "parity-scale-codec",
@@ -3115,7 +3115,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-parachain"
-version = "0.2.0"
+version = "0.3.0-dev"
 dependencies = [
  "derive_more",
  "futures 0.3.13",
@@ -3160,7 +3160,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-primitives"
-version = "0.2.0"
+version = "0.3.0-dev"
 dependencies = [
  "bitvec",
  "frame-system",
@@ -3189,7 +3189,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-rpc"
-version = "0.2.0"
+version = "0.3.0-dev"
 dependencies = [
  "indracore-primitives",
  "jsonrpc-core",
@@ -3219,7 +3219,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-runtime"
-version = "0.2.0"
+version = "0.3.0-dev"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -3302,7 +3302,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-runtime-common"
-version = "0.2.0"
+version = "0.3.0-dev"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -3399,7 +3399,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-service"
-version = "0.2.0"
+version = "0.3.0-dev"
 dependencies = [
  "env_logger 0.8.3",
  "frame-benchmarking",
@@ -3506,7 +3506,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-statement-table"
-version = "0.2.0"
+version = "0.3.0-dev"
 dependencies = [
  "indracore-primitives",
  "parity-scale-codec",
@@ -3515,7 +3515,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-test-client"
-version = "0.2.0"
+version = "0.3.0-dev"
 dependencies = [
  "indracore-node-subsystem",
  "indracore-primitives",
@@ -3540,7 +3540,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-test-runtime"
-version = "0.2.0"
+version = "0.3.0-dev"
 dependencies = [
  "bitvec",
  "frame-executive",
@@ -3603,7 +3603,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-test-service"
-version = "0.2.0"
+version = "0.3.0-dev"
 dependencies = [
  "frame-benchmarking",
  "frame-system",
