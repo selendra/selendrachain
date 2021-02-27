@@ -361,7 +361,7 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
     type OnChainAccuracy = Perbill;
     type CompactSolution = pallet_staking::CompactAssignments;
     type Fallback = Fallback;
-    type WeightInfo = pallet_election_provider_multi_phase::weights::SubstrateWeight<Runtime>;
+    type WeightInfo = weights::pallet_election_provider_multi_phase::WeightInfo<Runtime>;
     type BenchmarkingConfig = ();
 }
 
@@ -1490,6 +1490,7 @@ sp_api::impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_utility, Utility);
             add_benchmark!(params, batches, pallet_vesting, Vesting);
             add_benchmark!(params, batches, pallet_contracts, Contracts);
+            add_benchmark!(params, batches, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
