@@ -429,10 +429,7 @@ fn construct_view(
     live_heads: impl DoubleEndedIterator<Item = Hash>,
     finalized_number: BlockNumber,
 ) -> View {
-    View {
-        heads: live_heads.rev().take(MAX_VIEW_HEADS).collect(),
-        finalized_number,
-    }
+    View::new(live_heads.rev().take(MAX_VIEW_HEADS), finalized_number)
 }
 
 #[tracing::instrument(level = "trace", skip(net, ctx, validation_peers, collation_peers), fields(subsystem = LOG_TARGET))]
@@ -447,8 +444,9 @@ async fn update_our_view(
 ) -> SubsystemResult<()> {
     let new_view = construct_view(live_heads.iter().map(|v| v.0), finalized_number);
 
-    // We only want to send a view update when the heads changed, not when only the finalized block changed.
-    if local_view.heads == new_view.heads {
+    // We only want to send a view update when the heads changed.
+    // A change in finalized block number only is _not_ sufficient.
+    if local_view.check_heads_eq(&new_view) {
         return Ok(());
     }
 
@@ -500,13 +498,13 @@ async fn handle_peer_messages<M>(
     for message in messages {
         outgoing_messages.push(match message {
             WireMessage::ViewUpdate(new_view) => {
-                if new_view.heads.len() > MAX_VIEW_HEADS
+                if new_view.len() > MAX_VIEW_HEADS
                     || new_view.finalized_number < peer_data.view.finalized_number
                 {
                     net.report_peer(peer.clone(), MALFORMED_VIEW_COST).await?;
 
                     continue;
-                } else if new_view.heads.is_empty() {
+                } else if new_view.is_empty() {
                     net.report_peer(peer.clone(), EMPTY_VIEW_COST).await?;
 
                     continue;
@@ -1030,10 +1028,9 @@ mod tests {
                 .await;
 
             let actions = network_handle.next_network_actions(4).await;
-            let wire_message = WireMessage::<protocol_v1::ValidationProtocol>::ViewUpdate(View {
-                heads: vec![hash_a],
-                finalized_number: 5,
-            })
+            let wire_message = WireMessage::<protocol_v1::ValidationProtocol>::ViewUpdate(
+                View::new(vec![hash_a], 5),
+            )
             .encode();
 
             assert_network_actions_contains(
@@ -1459,10 +1456,9 @@ mod tests {
                 .await;
 
             let actions = network_handle.next_network_actions(2).await;
-            let wire_message = WireMessage::<protocol_v1::ValidationProtocol>::ViewUpdate(View {
-                heads: vec![hash_b],
-                finalized_number: 1,
-            })
+            let wire_message = WireMessage::<protocol_v1::ValidationProtocol>::ViewUpdate(
+                View::new(vec![hash_b], 1),
+            )
             .encode();
 
             assert_network_actions_contains(
@@ -1493,10 +1489,10 @@ mod tests {
                 .peer_message(
                     peer_a.clone(),
                     PeerSet::Validation,
-                    WireMessage::<protocol_v1::ValidationProtocol>::ViewUpdate(View {
-                        heads: vec![Hash::repeat_byte(0x01)],
-                        finalized_number: 1,
-                    })
+                    WireMessage::<protocol_v1::ValidationProtocol>::ViewUpdate(View::new(
+                        vec![Hash::repeat_byte(0x01)],
+                        1,
+                    ))
                     .encode(),
                 )
                 .await;
@@ -1505,10 +1501,10 @@ mod tests {
                 .peer_message(
                     peer_a.clone(),
                     PeerSet::Validation,
-                    WireMessage::<protocol_v1::ValidationProtocol>::ViewUpdate(View {
-                        heads: vec![],
-                        finalized_number: 0,
-                    })
+                    WireMessage::<protocol_v1::ValidationProtocol>::ViewUpdate(View::new(
+                        vec![],
+                        0,
+                    ))
                     .encode(),
                 )
                 .await;

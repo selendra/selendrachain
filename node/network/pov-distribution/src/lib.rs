@@ -741,7 +741,7 @@ async fn handle_network_update(
                     .retain(|relay_parent, _| view.contains(&relay_parent));
 
                 // introduce things from the new view.
-                for relay_parent in view.heads.iter() {
+                for relay_parent in view.iter() {
                     if let Entry::Vacant(entry) = peer_state.awaited.entry(*relay_parent) {
                         entry.insert(HashSet::new());
 

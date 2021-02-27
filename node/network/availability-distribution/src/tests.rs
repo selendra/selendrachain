@@ -37,7 +37,7 @@ use std::{sync::Arc, time::Duration};
 macro_rules! view {
 	( $( $hash:expr ),* $(,)? ) => {
 		// Finalized number unimportant for availability distribution.
-		View { heads: vec![ $( $hash.clone() ),* ], finalized_number: 0 }
+		View::new(vec![ $( $hash.clone() ),* ], 0)
 	};
 }
 

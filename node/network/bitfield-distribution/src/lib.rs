@@ -852,7 +852,6 @@ mod test {
             .expect("generating sr25519 key not to fail");
 
         state.per_relay_parent = view
-            .heads
             .iter()
             .map(|relay_parent| {
                 (

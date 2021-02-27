@@ -192,11 +192,8 @@ impl State {
                 .push(meta.hash);
         }
         for (peer_id, view) in self.peer_views.iter() {
-            let intersection = view.heads.iter().filter(|h| new_hashes.contains(h));
-            let view_intersection = View {
-                heads: intersection.cloned().collect(),
-                finalized_number: view.finalized_number,
-            };
+            let intersection = view.iter().filter(|h| new_hashes.contains(h));
+            let view_intersection = View::new(intersection.cloned(), view.finalized_number);
             Self::unify_with_peer(&mut self.blocks, ctx, peer_id.clone(), view_intersection).await;
         }
     }
@@ -371,7 +368,6 @@ impl State {
                 AssignmentCheckResult::AcceptedDuplicate => {
                     // "duplicate" assignments aren't necessarily equal.
                     // There is more than one way each validator can be assigned to each core.
-
                     if let Some(peer_knowledge) = entry.known_by.get_mut(&peer_id) {
                         peer_knowledge.known_messages.insert(fingerprint);
                     }
@@ -636,7 +632,7 @@ impl State {
         let mut to_send = HashSet::new();
 
         let view_finalized_number = view.finalized_number;
-        for head in view.heads.into_iter() {
+        for head in view.into_iter() {
             let mut block = head;
             let interesting_blocks = std::iter::from_fn(|| {
                 // step 2.
