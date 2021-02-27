@@ -18,8 +18,6 @@
 
 use std::sync::Arc;
 
-use indracore_primitives::v1::Hash;
-
 use sp_runtime::generic::BlockId;
 use sp_runtime::traits::Header as _;
 use sp_runtime::traits::{Block as BlockT, NumberFor};

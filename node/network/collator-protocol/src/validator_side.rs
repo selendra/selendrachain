@@ -35,7 +35,7 @@ use indracore_node_subsystem_util::{
 };
 use indracore_primitives::v1::{CandidateReceipt, CollatorId, Hash, Id as ParaId, PoV};
 use indracore_subsystem::{
-    jaeger, jaeger,
+    jaeger,
     messages::{
         AllMessages, CandidateSelectionMessage, CollatorProtocolMessage, NetworkBridgeEvent,
         NetworkBridgeMessage,

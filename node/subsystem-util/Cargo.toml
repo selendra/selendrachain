@@ -15,7 +15,7 @@ pin-project = "1.0.4"
 streamunordered = "0.5.1"
 thiserror = "1.0.23"
 tracing = "0.1.22"
-tracing-futures = "0.2.4"
+
 
 sc-network = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
 sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }

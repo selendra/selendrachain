@@ -8,7 +8,7 @@ edition = "2018"
 [dependencies]
 futures = "0.3.12"
 tracing = "0.1.22"
-tracing-futures = "0.2.4"
+
 arrayvec = "0.5.2"
 indexmap = "1.6.1"
 

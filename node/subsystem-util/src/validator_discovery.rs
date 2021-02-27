@@ -200,7 +200,7 @@ impl ConnectionRequests {
         self.remove(&relay_parent, para_id);
         let token = self
             .requests
-            .push(ConnectionRequestForRelayParentAndParaId {
+            .insert(ConnectionRequestForRelayParentAndParaId {
                 relay_parent,
                 para_id,
                 request,
