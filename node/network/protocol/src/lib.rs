@@ -498,6 +498,11 @@ pub mod v1 {
         ApprovalDistribution,
         ApprovalDistributionMessage
     );
+    impl_try_from!(
+        ValidationProtocol,
+        AvailabilityRecovery,
+        AvailabilityRecoveryMessage
+    );
 
     /// All network messages on the collation peer-set.
     #[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]

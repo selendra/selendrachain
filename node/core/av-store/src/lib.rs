@@ -662,6 +662,12 @@ async fn process_block_activated(
 
     subsystem.db.write(tx)?;
 
+    tracing::debug!(
+        target: LOG_TARGET,
+        "Stored data and chunks for candidate={}",
+        candidate_hash,
+    );
+
     Ok(())
 }
 

@@ -243,17 +243,14 @@ impl<T: Config> Module<T> {
     /// Process a set of incoming bitfields. Return a vec of cores freed by candidates
     /// becoming available.
     pub(crate) fn process_bitfields(
+        expected_bits: usize,
         signed_bitfields: SignedAvailabilityBitfields,
         core_lookup: impl Fn(CoreIndex) -> Option<ParaId>,
     ) -> Result<Vec<CoreIndex>, DispatchError> {
         let validators = Validators::get();
         let session_index = shared::Module::<T>::session_index();
-        let config = <configuration::Module<T>>::config();
-        let parachains = <paras::Module<T>>::parachains();
 
-        let n_bits = parachains.len() + config.parathread_cores as usize;
-
-        let mut assigned_paras_record: Vec<_> = (0..n_bits)
+        let mut assigned_paras_record: Vec<_> = (0..expected_bits)
             .map(|bit_index| core_lookup(CoreIndex::from(bit_index as u32)))
             .map(|core_para| core_para.map(|p| (p, PendingAvailability::<T>::get(&p))))
             .collect();
@@ -261,7 +258,7 @@ impl<T: Config> Module<T> {
         // do sanity checks on the bitfields:
         // 1. no more than one bitfield per validator
         // 2. bitfields are ascending by validator index.
-        // 3. each bitfield has exactly `n_bits`
+        // 3. each bitfield has exactly `expected_bits`
         // 4. signature is valid.
         {
             let occupied_bitmask: BitVec<BitOrderLsb0, u8> = assigned_paras_record
@@ -282,7 +279,7 @@ impl<T: Config> Module<T> {
 
             for signed_bitfield in &signed_bitfields {
                 ensure!(
-                    signed_bitfield.payload().0.len() == n_bits,
+                    signed_bitfield.payload().0.len() == expected_bits,
                     Error::<T>::WrongBitfieldSize,
                 );
 
@@ -349,7 +346,7 @@ impl<T: Config> Module<T> {
 
         let threshold = availability_threshold(validators.len());
 
-        let mut freed_cores = Vec::with_capacity(n_bits);
+        let mut freed_cores = Vec::with_capacity(expected_bits);
         for (para_id, pending_availability) in assigned_paras_record
             .into_iter()
             .filter_map(|x| x)
@@ -1112,10 +1109,12 @@ mod tests {
         }
     }
 
-    fn default_bitfield() -> AvailabilityBitfield {
-        let n_bits = Paras::parachains().len() + Configuration::config().parathread_cores as usize;
+    fn expected_bits() -> usize {
+        Paras::parachains().len() + Configuration::config().parathread_cores as usize
+    }
 
-        AvailabilityBitfield(bitvec::bitvec![BitOrderLsb0, u8; 0; n_bits])
+    fn default_bitfield() -> AvailabilityBitfield {
+        AvailabilityBitfield(bitvec::bitvec![BitOrderLsb0, u8; 0; expected_bits()])
     }
 
     fn default_availability_votes() -> BitVec<BitOrderLsb0, u8> {
@@ -1291,7 +1290,8 @@ mod tests {
                 core if core == CoreIndex::from(0) => Some(chain_a),
                 core if core == CoreIndex::from(1) => Some(chain_b),
                 core if core == CoreIndex::from(2) => Some(thread_a),
-                _ => panic!("Core out of bounds for 2 parachains and 1 parathread core."),
+                core if core == CoreIndex::from(3) => None, // for the expected_cores() + 1 test below.
+                _ => panic!("out of bounds for testing"),
             };
 
             // wrong number of bits.
@@ -1306,7 +1306,29 @@ mod tests {
                     &signing_context,
                 ));
 
-                assert!(Inclusion::process_bitfields(vec![signed], &core_lookup,).is_err());
+                assert!(
+                    Inclusion::process_bitfields(expected_bits(), vec![signed], &core_lookup,)
+                        .is_err()
+                );
+            }
+
+            // wrong number of bits: other way around.
+            {
+                let bare_bitfield = default_bitfield();
+                let signed = block_on(sign_bitfield(
+                    &keystore,
+                    &validators[0],
+                    0,
+                    bare_bitfield,
+                    &signing_context,
+                ));
+
+                assert!(Inclusion::process_bitfields(
+                    expected_bits() + 1,
+                    vec![signed],
+                    &core_lookup,
+                )
+                .is_err());
             }
 
             // duplicate.
@@ -1320,10 +1342,12 @@ mod tests {
                     &signing_context,
                 ));
 
-                assert!(
-                    Inclusion::process_bitfields(vec![signed.clone(), signed], &core_lookup,)
-                        .is_err()
-                );
+                assert!(Inclusion::process_bitfields(
+                    expected_bits(),
+                    vec![signed.clone(), signed],
+                    &core_lookup,
+                )
+                .is_err());
             }
 
             // out of order.
@@ -1345,9 +1369,12 @@ mod tests {
                     &signing_context,
                 ));
 
-                assert!(
-                    Inclusion::process_bitfields(vec![signed_1, signed_0], &core_lookup,).is_err()
-                );
+                assert!(Inclusion::process_bitfields(
+                    expected_bits(),
+                    vec![signed_1, signed_0],
+                    &core_lookup,
+                )
+                .is_err());
             }
 
             // non-pending bit set.
@@ -1362,7 +1389,10 @@ mod tests {
                     &signing_context,
                 ));
 
-                assert!(Inclusion::process_bitfields(vec![signed], &core_lookup,).is_err());
+                assert!(
+                    Inclusion::process_bitfields(expected_bits(), vec![signed], &core_lookup,)
+                        .is_err()
+                );
             }
 
             // empty bitfield signed: always OK, but kind of useless.
@@ -1376,7 +1406,10 @@ mod tests {
                     &signing_context,
                 ));
 
-                assert!(Inclusion::process_bitfields(vec![signed], &core_lookup,).is_ok());
+                assert!(
+                    Inclusion::process_bitfields(expected_bits(), vec![signed], &core_lookup,)
+                        .is_ok()
+                );
             }
 
             // bitfield signed with pending bit signed.
@@ -1410,7 +1443,10 @@ mod tests {
                     &signing_context,
                 ));
 
-                assert!(Inclusion::process_bitfields(vec![signed], &core_lookup,).is_ok());
+                assert!(
+                    Inclusion::process_bitfields(expected_bits(), vec![signed], &core_lookup,)
+                        .is_ok()
+                );
 
                 <PendingAvailability<Test>>::remove(chain_a);
                 PendingAvailabilityCommitments::remove(chain_a);
@@ -1448,7 +1484,7 @@ mod tests {
 
                 // no core is freed
                 assert_eq!(
-                    Inclusion::process_bitfields(vec![signed], &core_lookup,),
+                    Inclusion::process_bitfields(expected_bits(), vec![signed], &core_lookup,),
                     Ok(vec![]),
                 );
             }
@@ -1585,7 +1621,10 @@ mod tests {
                 })
                 .collect();
 
-            assert!(Inclusion::process_bitfields(signed_bitfields, &core_lookup,).is_ok());
+            assert!(
+                Inclusion::process_bitfields(expected_bits(), signed_bitfields, &core_lookup,)
+                    .is_ok()
+            );
 
             // chain A had 4 signing off, which is >= threshold.
             // chain B has 3 signing off, which is < threshold.

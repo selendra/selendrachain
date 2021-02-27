@@ -452,7 +452,7 @@ impl parachains_inclusion::Config for Runtime {
 impl parachains_inclusion_inherent::Config for Runtime {}
 
 impl parachains_initializer::Config for Runtime {
-    type Randomness = RandomnessCollectiveFlip;
+    type Randomness = Babe;
 }
 
 impl parachains_session_info::Config for Runtime {}
@@ -771,7 +771,7 @@ sp_api::impl_runtime_apis! {
                 c: PRIMARY_PROBABILITY,
                 genesis_authorities: Babe::authorities(),
                 randomness: Babe::randomness(),
-                allowed_slots: babe_primitives::AllowedSlots::PrimaryAndSecondaryPlainSlots,
+                allowed_slots: babe_primitives::AllowedSlots::PrimaryAndSecondaryVRFSlots,
             }
         }
 

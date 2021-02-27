@@ -28,8 +28,8 @@ use indracore_node_network_protocol::{
 use indracore_primitives::v1::{BlockNumber, Hash};
 use indracore_subsystem::messages::{
     AllMessages, ApprovalDistributionMessage, AvailabilityDistributionMessage,
-    BitfieldDistributionMessage, CollatorProtocolMessage, NetworkBridgeEvent, NetworkBridgeMessage,
-    PoVDistributionMessage, StatementDistributionMessage,
+    AvailabilityRecoveryMessage, BitfieldDistributionMessage, CollatorProtocolMessage,
+    NetworkBridgeEvent, NetworkBridgeMessage, PoVDistributionMessage, StatementDistributionMessage,
 };
 use indracore_subsystem::{
     jaeger, ActiveLeavesUpdate, SpawnedSubsystem, Subsystem, SubsystemContext, SubsystemError,
@@ -574,7 +574,7 @@ async fn dispatch_validation_events_to_all<I>(
     I::IntoIter: Send,
 {
     let messages_for = |event: NetworkBridgeEvent<protocol_v1::ValidationProtocol>| {
-        let a = std::iter::once(event.focus().ok().map(|m| {
+        let av_d = std::iter::once(event.focus().ok().map(|m| {
             AllMessages::AvailabilityDistribution(
                 AvailabilityDistributionMessage::NetworkBridgeUpdateV1(m),
             )
@@ -598,7 +598,16 @@ async fn dispatch_validation_events_to_all<I>(
             AllMessages::ApprovalDistribution(ApprovalDistributionMessage::NetworkBridgeUpdateV1(m))
         }));
 
-        a.chain(b).chain(p).chain(s).chain(ap).filter_map(|x| x)
+        let av_r = std::iter::once(event.focus().ok().map(|m| {
+            AllMessages::AvailabilityRecovery(AvailabilityRecoveryMessage::NetworkBridgeUpdateV1(m))
+        }));
+
+        av_d.chain(b)
+            .chain(p)
+            .chain(s)
+            .chain(ap)
+            .chain(av_r)
+            .filter_map(|x| x)
     };
 
     ctx.send_messages(events.into_iter().flat_map(messages_for))
@@ -871,6 +880,13 @@ mod tests {
             virtual_overseer.recv().await,
             AllMessages::ApprovalDistribution(
                 ApprovalDistributionMessage::NetworkBridgeUpdateV1(e)
+            ) if e == event.focus().expect("could not focus message")
+        );
+
+        assert_matches!(
+            virtual_overseer.recv().await,
+            AllMessages::AvailabilityRecovery(
+                AvailabilityRecoveryMessage::NetworkBridgeUpdateV1(e)
             ) if e == event.focus().expect("could not focus message")
         );
     }

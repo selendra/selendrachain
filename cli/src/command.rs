@@ -231,7 +231,7 @@ pub fn run() -> Result<()> {
                 #[cfg(not(any(target_os = "android", feature = "browser")))]
                 indracore_parachain::wasm_executor::run_worker(
                     &cmd.mem_id,
-                    cmd.cache_base_path.clone(),
+                    Some(cmd.cache_base_path.clone()),
                 )?;
                 Ok(())
             }

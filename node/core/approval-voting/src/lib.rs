@@ -52,7 +52,6 @@ use futures::prelude::*;
 
 use std::collections::btree_map::Entry;
 use std::collections::{BTreeMap, HashMap};
-use std::ops::{Bound as RangeBound, RangeBounds};
 use std::sync::Arc;
 
 use approval_checking::RequiredTranches;
@@ -87,6 +86,9 @@ pub struct Config {
 
 /// The approval voting subsystem.
 pub struct ApprovalVotingSubsystem {
+    /// LocalKeystore is needed for assignment keys, but not necessarily approval keys.
+    ///
+    /// We do a lot of VRF signing and need the keys to have low latency.
     keystore: Arc<LocalKeystore>,
     slot_duration_millis: u64,
     db: Arc<dyn KeyValueDB>,
@@ -195,28 +197,31 @@ impl Wakeups {
             .push((block_hash, candidate_hash));
     }
 
-    // drains all wakeups within the given range.
-    // panics if the given range is empty.
-    //
-    // only looks at the end bound of the range.
-    fn drain<'a, R: RangeBounds<Tick>>(
-        &'a mut self,
-        range: R,
-    ) -> impl Iterator<Item = (Hash, CandidateHash)> + 'a {
-        let reverse = &mut self.reverse_wakeups;
+    // Returns the next wakeup. this future never returns if there are no wakeups.
+    async fn next(&mut self, clock: &(dyn Clock + Sync)) -> (Hash, CandidateHash) {
+        match self.first() {
+            None => future::pending().await,
+            Some(tick) => {
+                clock.wait(tick).await;
+                match self.wakeups.entry(tick) {
+                    Entry::Vacant(_) => {
+                        panic!("entry is known to exist since `first` was `Some`; qed")
+                    }
+                    Entry::Occupied(mut entry) => {
+                        let (hash, candidate_hash) = entry.get_mut().pop()
+							.expect("empty entries are removed here and in `schedule`; no other mutation of this map; qed");
 
-        // BTreeMap has no `drain` method :(
-        let after = match range.end_bound() {
-            RangeBound::Unbounded => BTreeMap::new(),
-            RangeBound::Included(last) => self.wakeups.split_off(&(last + 1)),
-            RangeBound::Excluded(last) => self.wakeups.split_off(&last),
-        };
-        let prev = std::mem::replace(&mut self.wakeups, after);
-        prev.into_iter()
-            .flat_map(|(_, wakeup)| wakeup)
-            .inspect(move |&(ref b, ref c)| {
-                let _ = reverse.remove(&(*b, *c));
-            })
+                        if entry.get().is_empty() {
+                            let _ = entry.remove();
+                        }
+
+                        self.reverse_wakeups.remove(&(hash, candidate_hash));
+
+                        (hash, candidate_hash)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -326,26 +331,13 @@ where
     let db_writer = &*subsystem.db;
 
     loop {
-        let wait_til_next_tick = match wakeups.first() {
-            None => future::Either::Left(future::pending()),
-            Some(tick) => future::Either::Right(state.clock.wait(tick).map(move |()| tick)),
-        };
-        futures::pin_mut!(wait_til_next_tick);
-
         let actions = futures::select! {
-            tick_wakeup = wait_til_next_tick.fuse() => {
-                let woken = wakeups.drain(..=tick_wakeup).collect::<Vec<_>>();
-
-                let mut actions = Vec::new();
-                for (woken_block, woken_candidate) in woken {
-                    actions.extend(process_wakeup(
-                        &mut state,
-                        woken_block,
-                        woken_candidate,
-                    )?);
-                }
-
-                actions
+            (woken_block, woken_candidate) = wakeups.next(&*state.clock).fuse() => {
+                process_wakeup(
+                    &mut state,
+                    woken_block,
+                    woken_candidate,
+                )?
             }
             next_msg = ctx.recv().fuse() => {
                 handle_from_overseer(
@@ -465,19 +457,36 @@ async fn handle_from_overseer(
                     Ok(block_imported_candidates) => {
                         // Schedule wakeups for all imported candidates.
                         for block_batch in block_imported_candidates {
+                            tracing::debug!(
+                                target: LOG_TARGET,
+                                "Imported new block {} with {} included candidates",
+                                block_batch.block_hash,
+                                block_batch.imported_candidates.len(),
+                            );
+
                             for (c_hash, c_entry) in block_batch.imported_candidates {
                                 let our_tranche = c_entry
                                     .approval_entry(&block_batch.block_hash)
                                     .and_then(|a| a.our_assignment().map(|a| a.tranche()));
 
                                 if let Some(our_tranche) = our_tranche {
+                                    let tick = our_tranche as Tick + block_batch.block_tick;
+                                    tracing::trace!(
+										target: LOG_TARGET,
+										"Scheduling first wakeup at tranche {} for candidate {} in block ({}, tick={})",
+										our_tranche,
+										c_hash,
+										block_batch.block_hash,
+										block_batch.block_tick,
+									);
+
                                     // Our first wakeup will just be the tranche of our assignment,
                                     // if any. This will likely be superseded by incoming assignments
                                     // and approvals which trigger rescheduling.
                                     actions.push(Action::ScheduleWakeup {
                                         block_hash: block_batch.block_hash,
                                         candidate_hash: c_hash,
-                                        tick: our_tranche as Tick + block_batch.block_tick,
+                                        tick,
                                     });
                                 }
                             }
@@ -569,6 +578,10 @@ async fn handle_approved_ancestor(
     target: Hash,
     lower_bound: BlockNumber,
 ) -> SubsystemResult<Option<(Hash, BlockNumber)>> {
+    const MAX_TRACING_WINDOW: usize = 200;
+
+    use bitvec::{order::Lsb0, vec::BitVec};
+
     let mut all_approved_max = None;
 
     let target_number = {
@@ -612,15 +625,29 @@ async fn handle_approved_ancestor(
         Vec::new()
     };
 
+    let mut bits: BitVec<Lsb0, u8> = Default::default();
     for (i, block_hash) in std::iter::once(target).chain(ancestry).enumerate() {
         // Block entries should be present as the assumption is that
         // nothing here is finalized. If we encounter any missing block
         // entries we can fail.
         let entry = match db.load_block_entry(&block_hash)? {
-            None => return Ok(None),
+            None => {
+                tracing::trace! {
+                    target: LOG_TARGET,
+                    "Chain between ({}, {}) and {} not fully known. Forcing vote on {}",
+                    target,
+                    target_number,
+                    lower_bound,
+                    lower_bound,
+                }
+                return Ok(None);
+            }
             Some(b) => b,
         };
 
+        // even if traversing millions of blocks this is fairly cheap and always dwarfed by the
+        // disk lookups.
+        bits.push(entry.is_fully_approved());
         if entry.is_fully_approved() {
             if all_approved_max.is_none() {
                 // First iteration of the loop is target, i = 0. After that,
@@ -631,6 +658,34 @@ async fn handle_approved_ancestor(
             all_approved_max = None;
         }
     }
+
+    tracing::trace!(
+        target: LOG_TARGET,
+        "approved blocks {}-[{}]-{}",
+        target_number,
+        {
+            // formatting to divide bits by groups of 10.
+            // when comparing logs on multiple machines where the exact vote
+            // targets may differ, this grouping is useful.
+            let mut s = String::with_capacity(bits.len());
+            for (i, bit) in bits.iter().enumerate().take(MAX_TRACING_WINDOW) {
+                s.push(if *bit { '1' } else { '0' });
+                if (target_number - i as u32) % 10 == 0 && i != bits.len() - 1 {
+                    s.push(' ');
+                }
+            }
+
+            s
+        },
+        if bits.len() > MAX_TRACING_WINDOW {
+            format!(
+                "{}... (truncated due to large window)",
+                target_number - MAX_TRACING_WINDOW as u32 + 1,
+            )
+        } else {
+            format!("{}", lower_bound + 1)
+        },
+    );
 
     Ok(all_approved_max)
 }
@@ -655,11 +710,8 @@ fn schedule_wakeup_action(
     block_tick: Tick,
     required_tranches: RequiredTranches,
 ) -> Option<Action> {
-    if approval_entry.is_approved() {
-        return None;
-    }
-
-    match required_tranches {
+    let maybe_action = match required_tranches {
+        _ if approval_entry.is_approved() => None,
         RequiredTranches::All => None,
         RequiredTranches::Exact { next_no_show, .. } => {
             next_no_show.map(|tick| Action::ScheduleWakeup {
@@ -706,7 +758,28 @@ fn schedule_wakeup_action(
                 }
             })
         }
+    };
+
+    match maybe_action {
+        Some(Action::ScheduleWakeup { ref tick, .. }) => tracing::debug!(
+            target: LOG_TARGET,
+            "Scheduling next wakeup at {} for candidate {} under block ({}, tick={})",
+            tick,
+            candidate_hash,
+            block_hash,
+            block_tick,
+        ),
+        None => tracing::debug!(
+            target: LOG_TARGET,
+            "No wakeup needed for candidate {} under block ({}, tick={})",
+            candidate_hash,
+            block_hash,
+            block_tick,
+        ),
+        Some(_) => {} // unreachable
     }
+
+    maybe_action
 }
 
 fn check_and_import_assignment(
@@ -795,6 +868,16 @@ fn check_and_import_assignment(
         if is_duplicate {
             AssignmentCheckResult::AcceptedDuplicate
         } else {
+            tracing::trace!(
+                target: LOG_TARGET,
+                "Imported assignment from validator {} on candidate {:?}",
+                assignment.validator,
+                (
+                    assigned_candidate_hash,
+                    candidate_entry.candidate_receipt().descriptor.para_id
+                ),
+            );
+
             AssignmentCheckResult::Accepted
         }
     };
@@ -893,6 +976,16 @@ fn check_and_import_approval<T>(
 
     // importing the approval can be heavy as it may trigger acceptance for a series of blocks.
     let t = with_response(ApprovalCheckResult::Accepted);
+
+    tracing::trace!(
+        target: LOG_TARGET,
+        "Importing approval vote from validator {:?} on candidate {:?}",
+        (approval.validator, &pubkey),
+        (
+            approved_candidate_hash,
+            candidate_entry.candidate_receipt().descriptor.para_id
+        ),
+    );
 
     let actions = import_checked_approval(
         state,
@@ -1013,6 +1106,13 @@ fn check_and_apply_full_approval(
         );
 
         if now_approved {
+            tracing::trace!(
+                target: LOG_TARGET,
+                "Candidate approved {} under block {}",
+                candidate_hash,
+                block_hash,
+            );
+
             newly_approved.push(*block_hash);
             block_entry.mark_approved_by_hash(&candidate_hash);
 
@@ -1111,6 +1211,14 @@ fn process_wakeup(
         .clock
         .tranche_now(state.slot_duration_millis, block_entry.slot());
 
+    tracing::debug!(
+        target: LOG_TARGET,
+        "Processing wakeup at tranche {} for candidate {} under block {}",
+        tranche_now,
+        candidate_hash,
+        relay_block,
+    );
+
     let (should_trigger, backing_group) = {
         let approval_entry = match candidate_entry.approval_entry(&relay_block) {
             Some(e) => e,
@@ -1168,6 +1276,16 @@ fn process_wakeup(
             .position(|(_, h)| &candidate_hash == h);
 
         if let Some(i) = index_in_candidate {
+            tracing::debug!(
+                target: LOG_TARGET,
+                "Launching approval work for candidate {:?} in block {}",
+                (
+                    &candidate_hash,
+                    candidate_entry.candidate_receipt().descriptor.para_id
+                ),
+                relay_block,
+            );
+
             // sanity: should always be present.
             actions.push(Action::LaunchApproval {
                 indirect_cert,
@@ -1219,6 +1337,14 @@ async fn launch_approval(
     let (code_tx, code_rx) = oneshot::channel();
     let (context_num_tx, context_num_rx) = oneshot::channel();
 
+    let candidate_hash = candidate.hash();
+
+    tracing::debug!(
+        target: LOG_TARGET,
+        "Recovering data for candidate {:?}",
+        (candidate_hash, candidate.descriptor.para_id),
+    );
+
     ctx.send_message(
         AvailabilityRecoveryMessage::RecoverAvailableData(
             candidate.clone(),
@@ -1262,10 +1388,21 @@ async fn launch_approval(
             Err(_) => return,
             Ok(Ok(a)) => a,
             Ok(Err(RecoveryError::Unavailable)) => {
+                tracing::warn!(
+                    target: LOG_TARGET,
+                    "Data unavailable for candidate {:?}",
+                    (candidate_hash, candidate.descriptor.para_id),
+                );
                 // do nothing. we'll just be a no-show and that'll cause others to rise up.
                 return;
             }
             Ok(Err(RecoveryError::Invalid)) => {
+                tracing::warn!(
+                    target: LOG_TARGET,
+                    "Data recovery invalid for candidate {:?}",
+                    (candidate_hash, candidate.descriptor.para_id),
+                );
+
                 // TODO: dispute. Either the merkle trie is bad or the erasure root is.
                 return;
             }
@@ -1291,6 +1428,7 @@ async fn launch_approval(
 
         let (val_tx, val_rx) = oneshot::channel();
 
+        let para_id = candidate.descriptor.para_id;
         let _ = background_tx
             .send(BackgroundRequest::CandidateValidation(
                 available_data.validation_data,
@@ -1307,6 +1445,12 @@ async fn launch_approval(
                 // Validation checked out. Issue an approval command. If the underlying service is unreachable,
                 // then there isn't anything we can do.
 
+                tracing::debug!(
+                    target: LOG_TARGET,
+                    "Candidate Valid {:?}",
+                    (candidate_hash, para_id),
+                );
+
                 let _ = background_tx
                     .send(BackgroundRequest::ApprovalVote(ApprovalVoteRequest {
                         validator_index,
@@ -1316,6 +1460,12 @@ async fn launch_approval(
                     .await;
             }
             Ok(Ok(ValidationResult::Invalid(_))) => {
+                tracing::warn!(
+                    target: LOG_TARGET,
+                    "Detected invalid candidate as an approval checker {:?}",
+                    (candidate_hash, para_id),
+                );
+
                 // TODO: issue dispute, but not for timeouts.
             }
             Ok(Err(_)) => return, // internal error.
@@ -1417,6 +1567,12 @@ async fn issue_approval(
             return Ok(Vec::new());
         }
     };
+
+    tracing::debug!(
+        target: LOG_TARGET,
+        "Issuing approval vote for candidate {:?}",
+        candidate_hash,
+    );
 
     let actions = import_checked_approval(
         state,
