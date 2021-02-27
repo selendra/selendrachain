@@ -134,6 +134,10 @@ real-overseer = [
 	"indracore-approval-distribution",
 ]
 
+try-runtime = [
+	"indracore-runtime/try-runtime",
+]
+
 approval-checking = [
 	"real-overseer"
 ]
