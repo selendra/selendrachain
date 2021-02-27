@@ -489,6 +489,7 @@ parameter_types! {
     pub const MaxValueSize: u32 = 16_384;
     pub const DeletionQueueDepth: u32 = 1024;
     pub const DeletionWeightLimit: Weight = 500_000_000_000;
+    pub const MaxCodeSize: u32 = 128 * 1024;
 }
 
 impl pallet_contracts::Config for Runtime {
@@ -511,6 +512,7 @@ impl pallet_contracts::Config for Runtime {
     type ChainExtension = ();
     type DeletionQueueDepth = DeletionQueueDepth;
     type DeletionWeightLimit = DeletionWeightLimit;
+    type MaxCodeSize = MaxCodeSize;
 }
 
 impl parachains_scheduler::Config for Runtime {}

@@ -35,7 +35,7 @@ use frame_support::{
     RuntimeDebug,
 };
 use frame_system::{EnsureOneOf, EnsureRoot};
-use pallet_contracts::WeightInfo;
+use pallet_contracts::weights::WeightInfo;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId};
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_session::historical as session_historical;
@@ -1037,6 +1037,7 @@ parameter_types! {
             <Runtime as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(1) -
             <Runtime as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(0)
         )) / 5) as u32;
+    pub MaxCodeSize: u32 = 128 * 1024;
 }
 
 impl pallet_contracts::Config for Runtime {
@@ -1059,6 +1060,7 @@ impl pallet_contracts::Config for Runtime {
     type ChainExtension = ();
     type DeletionQueueDepth = DeletionQueueDepth;
     type DeletionWeightLimit = DeletionWeightLimit;
+    type MaxCodeSize = MaxCodeSize;
 }
 
 impl pallet_sudo::Config for Runtime {
