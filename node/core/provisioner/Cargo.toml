@@ -17,5 +17,5 @@ indracore-node-subsystem = { path = "../../subsystem" }
 indracore-node-subsystem-util = { path = "../../subsystem-util" }
 
 [dev-dependencies]
-sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "master" }
-sp-keystore = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }

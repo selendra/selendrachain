@@ -11,8 +11,8 @@ tracing-futures = "0.2.4"
 thiserror = "1.0.23"
 parity-scale-codec = { version = "2.0.0", features = ["std"]  }
 
-sp-core = { git = "https://github.com/selendra/substrate", branch = "master", features = ["std"]  }
-sp-keystore = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", features = ["std"]  }
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
 
 indracore-primitives = { path = "../../../primitives" }
 indracore-erasure-coding = { path = "../../../erasure-coding" }
@@ -26,9 +26,9 @@ indracore-node-subsystem-util = { path = "../../subsystem-util" }
 assert_matches = "1.4.0"
 maplit = "1.0"
 indracore-subsystem-testhelpers = { package = "indracore-node-subsystem-test-helpers", path = "../../subsystem-test-helpers" }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "master", features = ["std"] }
-sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "master" }
-sp-keyring = { git = "https://github.com/selendra/substrate", branch = "master" }
-sp-tracing = { git = "https://github.com/selendra/substrate", branch = "master" }
-sc-keystore = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", features = ["std"] }
+sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+sp-keyring = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+sp-tracing = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+sc-keystore = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
 
