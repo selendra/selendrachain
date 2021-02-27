@@ -146,6 +146,7 @@ impl Filter<Call> for BaseFilter {
             | Call::Sudo(_)
             | Call::Recovery(_)
             | Call::Contracts(_)
+            | Call::ElectionProviderMultiPhase(_)
             | Call::Tips(_) => true,
         }
     }
@@ -329,6 +330,41 @@ impl pallet_session::historical::Config for Runtime {
     type FullIdentificationOf = pallet_staking::ExposureOf<Runtime>;
 }
 
+parameter_types! {
+    // no signed phase for now, just unsigned.
+    pub const SignedPhase: u32 = 0;
+    // NOTE: length of unsigned phase is, for now, different than `ElectionLookahead` to make sure
+    // that we won't run OCW threads at the same time with staking.
+    pub const UnsignedPhase: u32 = ElectionLookahead::get() / 2;
+
+    // fallback: no need to do on-chain phragmen while we re on a dry-run.
+    pub const Fallback: pallet_election_provider_multi_phase::FallbackStrategy =
+        pallet_election_provider_multi_phase::FallbackStrategy::Nothing;
+
+    pub SolutionImprovementThreshold: Perbill = Perbill::from_rational_approximation(1u32, 10_000);
+
+    // miner configs
+    pub MultiPhaseUnsignedPriority: TransactionPriority = StakingUnsignedPriority::get() - 1u64;
+    pub const MinerMaxIterations: u32 = 10;
+}
+
+impl pallet_election_provider_multi_phase::Config for Runtime {
+    type Event = Event;
+    type Currency = Balances;
+    type SignedPhase = SignedPhase;
+    type UnsignedPhase = UnsignedPhase;
+    type SolutionImprovementThreshold = MinSolutionScoreBump;
+    type MinerMaxIterations = MinerMaxIterations;
+    type MinerMaxWeight = OffchainSolutionWeightLimit; // For now use the one from staking.
+    type MinerTxPriority = MultiPhaseUnsignedPriority;
+    type DataProvider = Staking;
+    type OnChainAccuracy = Perbill;
+    type CompactSolution = pallet_staking::CompactAssignments;
+    type Fallback = Fallback;
+    type WeightInfo = pallet_election_provider_multi_phase::weights::SubstrateWeight<Runtime>;
+    type BenchmarkingConfig = ();
+}
+
 // TODO #6469: This shouldn't be static, but a lazily cached value, not built unless needed, and
 // re-built in case input parameters have changed. The `ideal_stake` should be determined by the
 // amount of parachain slots being bid on: this should be around `(75 - 25.min(slots / 4))%`.
@@ -390,6 +426,7 @@ impl pallet_staking::Config for Runtime {
     // The unsigned solution weight targeted by the OCW. We set it to the maximum possible value of
     // a single extrinsic.
     type OffchainSolutionWeightLimit = OffchainSolutionWeightLimit;
+    type ElectionProvider = ElectionProviderMultiPhase;
     type WeightInfo = weights::pallet_staking::WeightInfo<Runtime>;
 }
 
@@ -1074,6 +1111,7 @@ construct_runtime! {
         Historical: session_historical::{Module} = 33,
         Bounties: pallet_bounties::{Module, Call, Storage, Event<T>} = 34,
         Tips: pallet_tips::{Module, Call, Storage, Event<T>} = 35,
+        ElectionProviderMultiPhase: pallet_election_provider_multi_phase::{Module, Call, Storage, Event<T>, ValidateUnsigned} = 36,
     }
 }
 

@@ -68,6 +68,7 @@ pallet-contracts = { git = "https://github.com/selendra/substrate", branch = "ma
 pallet-contracts-primitives = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
 pallet-contracts-rpc-runtime-api = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
 pallet-sudo = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
+pallet-election-provider-multi-phase = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
 
 frame-benchmarking = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false, optional = true }
 frame-system-benchmarking = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false, optional = true }
@@ -133,6 +134,7 @@ std = [
 	"pallet-scheduler/std",
 	"pallet-session/std",
 	"pallet-staking/std",
+	"pallet-election-provider-multi-phase/std",
 	"frame-system/std",
 	"frame-system-rpc-runtime-api/std",
 	"pallet-timestamp/std",
