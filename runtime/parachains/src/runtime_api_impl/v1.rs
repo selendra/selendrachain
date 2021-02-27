@@ -25,10 +25,10 @@ use crate::{
 };
 use frame_support::debug;
 use primitives::v1::{
-    CandidateEvent, CommittedCandidateReceipt, CoreIndex, CoreOccupied, CoreState, GroupIndex,
-    GroupRotationInfo, Hash, Id as ParaId, InboundDownwardMessage, InboundHrmpMessage,
-    OccupiedCore, OccupiedCoreAssumption, PersistedValidationData, ScheduledCore, SessionIndex,
-    SessionInfo, ValidationCode, ValidatorId, ValidatorIndex,
+    AuthorityDiscoveryId, CandidateEvent, CommittedCandidateReceipt, CoreIndex, CoreOccupied,
+    CoreState, GroupIndex, GroupRotationInfo, Hash, Id as ParaId, InboundDownwardMessage,
+    InboundHrmpMessage, OccupiedCore, OccupiedCoreAssumption, PersistedValidationData,
+    ScheduledCore, SessionIndex, SessionInfo, ValidationCode, ValidatorId, ValidatorIndex,
 };
 use sp_runtime::traits::One;
 use sp_std::collections::btree_map::BTreeMap;
@@ -236,6 +236,28 @@ pub fn session_index_for_child<T: initializer::Config>() -> SessionIndex {
     // Incidentally, this is also the rationale for why it is OK to query validators or
     // occupied cores or etc. and expect the correct response "for child".
     <shared::Module<T>>::session_index()
+}
+
+/// Implementation for the `AuthorityDiscoveryApi::authorities()` function of the runtime API.
+/// It is a heavy call, but currently only used for authority discovery, so it is fine.
+/// Gets next, current and some historical authority ids using session_info module.
+pub fn relevant_authority_ids<T: initializer::Config + pallet_authority_discovery::Config>(
+) -> Vec<AuthorityDiscoveryId> {
+    let current_session_index = session_index_for_child::<T>();
+    let earliest_stored_session = <session_info::Module<T>>::earliest_stored_session();
+    let mut authority_ids = <pallet_authority_discovery::Module<T>>::next_authorities();
+
+    for session_index in earliest_stored_session..=current_session_index {
+        let info = <session_info::Module<T>>::session_info(session_index);
+        if let Some(mut info) = info {
+            authority_ids.append(&mut info.discovery_keys);
+        }
+    }
+
+    authority_ids.sort();
+    authority_ids.dedup();
+
+    authority_ids
 }
 
 /// Implementation for the `validation_code` function of the runtime API.
