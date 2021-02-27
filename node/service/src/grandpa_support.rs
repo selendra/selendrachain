@@ -24,7 +24,7 @@ use sp_runtime::generic::BlockId;
 use sp_runtime::traits::Header as _;
 use sp_runtime::traits::{Block as BlockT, NumberFor};
 
-#[cfg(feature = "approval-checking")]
+#[cfg(feature = "real-overseer")]
 use {
     futures::channel::oneshot,
     indracore_overseer::OverseerHandler,
@@ -39,14 +39,14 @@ use {
 /// The practical effect of this voting rule is to implement a fixed delay of
 /// blocks and to issue a prometheus metric on the lag behind the head that
 /// approval checking would indicate.
-#[cfg(feature = "approval-checking")]
+#[cfg(feature = "real-overseer")]
 #[derive(Clone)]
 pub(crate) struct ApprovalCheckingDiagnostic {
     checking_lag: Option<prometheus_endpoint::Histogram>,
     overseer: OverseerHandler,
 }
 
-#[cfg(feature = "approval-checking")]
+#[cfg(feature = "real-overseer")]
 impl ApprovalCheckingDiagnostic {
     /// Create a new approval checking diagnostic voting rule.
     pub fn new(
@@ -72,7 +72,7 @@ impl ApprovalCheckingDiagnostic {
     }
 }
 
-#[cfg(feature = "approval-checking")]
+#[cfg(feature = "real-overseer")]
 impl<B> grandpa::VotingRule<IndracoreBlock, B> for ApprovalCheckingDiagnostic
 where
     B: sp_blockchain::HeaderBackend<IndracoreBlock>,

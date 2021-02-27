@@ -137,7 +137,3 @@ real-overseer = [
 try-runtime = [
 	"indracore-runtime/try-runtime",
 ]
-
-approval-checking = [
-	"real-overseer"
-]
