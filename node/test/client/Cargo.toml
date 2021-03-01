@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
 
-# Polkadot dependencies
+# Indracore dependencies
 indracore-test-runtime = { path = "../../../runtime/test-runtime" }
 indracore-test-service = { path = "../service" }
 indracore-primitives = { path = "../../../primitives" }
