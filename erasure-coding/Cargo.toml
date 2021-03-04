@@ -1,6 +1,6 @@
 [package]
 name = "indracore-erasure-coding"
-version = "0.3.0-dev"
+version = "0.3.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 

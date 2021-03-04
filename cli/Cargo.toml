@@ -1,6 +1,6 @@
 [package]
 name = "indracore-cli"
-version = "0.3.0-dev"
+version = "0.3.0"
 authors = ["Selendra <info@selendra.org>"]
 description = "Indracore Relay-chain Client Node"
 edition = "2018"
