@@ -133,7 +133,6 @@ by appending your own. A few useful ones are as follow.
 
 ### Run Benchmarks
 ```bash
-$ cd indracore 
 $ cargo run --release --features=runtime-benchmarks -- benchmark --chain=indracore-dev --steps=50 --repeat=20 --pallet=<frame_system> --extrinsic=* --execution=wasm --wasm-execution=compiled --heap-pages=4096 --header=./file_header.txt --output=./runtime/indracore/src/weights/
 
 ```
