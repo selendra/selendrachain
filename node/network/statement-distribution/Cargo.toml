@@ -8,18 +8,15 @@ edition = "2018"
 [dependencies]
 futures = "0.3.12"
 tracing = "0.1.22"
-
-arrayvec = "0.5.2"
-indexmap = "1.6.1"
-
-sp-staking = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
-
-indracore-node-primitives = { path = "../../primitives" }
+tracing-futures = "0.2.4"
 indracore-primitives = { path = "../../../primitives" }
+sp-staking = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
+indracore-node-primitives = { path = "../../primitives" }
 indracore-node-subsystem-util = { path = "../../subsystem-util" }
 indracore-node-network-protocol = { path = "../../network/protocol" }
-
+arrayvec = "0.5.2"
+indexmap = "1.6.1"
 
 [dev-dependencies]
 indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }

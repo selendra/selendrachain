@@ -513,7 +513,6 @@ mod tests {
 
     sp_api::mock_impl_runtime_apis! {
         impl ParachainHost<Block> for MockRuntimeApi {
-
             fn validators(&self) -> Vec<ValidatorId> {
                 self.validators.clone()
             }

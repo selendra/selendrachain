@@ -24,10 +24,10 @@ use sp_std::prelude::*;
 use application_crypto::KeyTypeId;
 use inherents::InherentIdentifier;
 use primitives::RuntimeDebug;
+use runtime_primitives::traits::AppVerify;
 use sp_arithmetic::traits::{BaseArithmetic, Saturating};
-use sp_runtime::traits::AppVerify;
 
-pub use sp_runtime::traits::{BlakeTwo256, Hash as HashT};
+pub use runtime_primitives::traits::{BlakeTwo256, Hash as HashT};
 
 // Export some core primitives.
 pub use indracore_core_primitives::v1::{

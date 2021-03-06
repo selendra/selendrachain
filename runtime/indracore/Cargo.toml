@@ -14,8 +14,6 @@ serde = { version = "1.0.123", default-features = false }
 serde_derive = { version = "1.0.117", optional = true }
 static_assertions = "1.1.0"
 smallvec = "1.6.1"
-hex-literal = { version = "0.3.1", optional = true }
-
 
 authority-discovery-primitives = { package = "sp-authority-discovery", git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 babe-primitives = { package = "sp-consensus-babe", git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
@@ -42,6 +40,8 @@ pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/selendr
 pallet-collective = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-democracy = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-elections-phragmen = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
+pallet-election-provider-multi-phase = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
+frame-executive = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-grandpa = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-identity = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-im-online = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
@@ -54,29 +54,28 @@ pallet-proxy = { git = "https://github.com/selendra/substrate", branch = "v2.0.3
 pallet-randomness-collective-flip = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-scheduler = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-session = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
+frame-support = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-staking = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-staking-reward-curve = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+frame-system = {git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
+frame-system-rpc-runtime-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-timestamp = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-tips = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-treasury = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-vesting = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-utility = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
-pallet-recovery = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
+pallet-sudo = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-contracts = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-contracts-primitives = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 pallet-contracts-rpc-runtime-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
-pallet-sudo = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
-pallet-election-provider-multi-phase = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
+pallet-recovery = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
+
+frame-benchmarking = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false, optional = true }
+frame-try-runtime = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false, optional = true }
+frame-system-benchmarking = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false, optional = true }
 pallet-offences-benchmarking = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false, optional = true }
 pallet-session-benchmarking = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false, optional = true }
-
-frame-support = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
-frame-system = {git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
-frame-system-rpc-runtime-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
-frame-executive = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
-frame-try-runtime = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false, optional = true }
-frame-benchmarking = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false, optional = true }
-frame-system-benchmarking = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false, optional = true }
+hex-literal = { version = "0.3.1", optional = true }
 
 runtime-common = { package = "indracore-runtime-common", path = "../common", default-features = false }
 primitives = { package = "indracore-primitives", path = "../../primitives", default-features = false }
@@ -120,6 +119,7 @@ std = [
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-collective/std",
 	"pallet-elections-phragmen/std",
+	"pallet-election-provider-multi-phase/std",
 	"pallet-democracy/std",
 	"frame-executive/std",
 	"pallet-grandpa/std",
@@ -136,7 +136,6 @@ std = [
 	"pallet-scheduler/std",
 	"pallet-session/std",
 	"pallet-staking/std",
-	"pallet-election-provider-multi-phase/std",
 	"frame-system/std",
 	"frame-system-rpc-runtime-api/std",
 	"pallet-timestamp/std",
@@ -153,25 +152,24 @@ std = [
 	"runtime-common/std",
 	"pallet-vesting/std",
 	"pallet-utility/std",
-	"pallet-recovery/std",
 	"pallet-sudo/std",
 	"pallet-contracts/std",
 	"pallet-contracts-primitives/std",
 	"pallet-contracts-rpc-runtime-api/std",
+	"pallet-recovery/std",
 ]
 runtime-benchmarks = [
-	"hex-literal",
 	"runtime-common/runtime-benchmarks",
 	"frame-benchmarking",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
-	"frame-system-benchmarking",
 	"sp-runtime/runtime-benchmarks",
 	"pallet-babe/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
 	"pallet-democracy/runtime-benchmarks",
 	"pallet-elections-phragmen/runtime-benchmarks",
+	"pallet-election-provider-multi-phase/runtime-benchmarks",
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-identity/runtime-benchmarks",
 	"pallet-im-online/runtime-benchmarks",
@@ -188,15 +186,14 @@ runtime-benchmarks = [
 	"pallet-vesting/runtime-benchmarks",
 	"pallet-offences-benchmarking",
 	"pallet-session-benchmarking",
-	"pallet-election-provider-multi-phase/runtime-benchmarks",
+	"frame-system-benchmarking",
+	"hex-literal",
 	"pallet-contracts/runtime-benchmarks",
 ]
-
 try-runtime = [
 	"frame-executive/try-runtime",
 	"frame-try-runtime",
 ]
-
 # When enabled, the runtime api will not be build.
 #
 # This is required by Cumulus to access certain types of the

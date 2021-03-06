@@ -307,7 +307,7 @@ pub struct ValidationParams {
 
 /// The result of parachain validation.
 // TODO: balance uploads
-#[derive(PartialEq, Eq, Encode, Clone)]
+#[derive(PartialEq, Eq, Clone, Encode)]
 #[cfg_attr(feature = "std", derive(Debug, Decode))]
 pub struct ValidationResult {
     /// New head data that should be included in the relay chain state.

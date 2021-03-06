@@ -32,8 +32,8 @@ use indracore_primitives::v1::{
     SessionIndex, SessionInfo, ValidatorIndex,
 };
 use indracore_subsystem::{
+    jaeger,
     messages::{RuntimeApiMessage, RuntimeApiRequest},
-    Jaeger,
 };
 
 fn make_pov(data: Vec<u8>) -> PoV {

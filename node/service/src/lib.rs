@@ -58,7 +58,7 @@ use telemetry::{TelemetryConnectionNotifier, TelemetrySpan};
 pub use self::client::{
     AbstractClient, Client, ClientHandle, ExecuteWithClient, RuntimeApiCollection,
 };
-pub use chain_spec::IndracoreChainSpec;
+pub use chain_spec::{IndracoreChainSpec, RelaychainChainSpec};
 pub use consensus_common::{
     block_validation::Chain, BlockImport, Proposal, RecordProof, SelectChain,
 };
@@ -79,11 +79,19 @@ pub use sp_runtime::traits::{
 };
 
 pub use indracore_runtime;
+pub use relaychain_runtime;
 
 native_executor_instance!(
     pub IndracoreExecutor,
     indracore_runtime::api::dispatch,
     indracore_runtime::native_version,
+    frame_benchmarking::benchmarking::HostFunctions,
+);
+
+native_executor_instance!(
+    pub RelaychainExecutor,
+    relaychain_runtime::api::dispatch,
+    relaychain_runtime::native_version,
     frame_benchmarking::benchmarking::HostFunctions,
 );
 
@@ -123,6 +131,18 @@ pub enum Error {
     #[cfg(feature = "full-node")]
     #[error("Creating a custom database is required for validators")]
     DatabasePathRequired,
+}
+
+/// Can be called for a `Configuration` to check if it is a configuration for the `` network.
+pub trait IdentifyVariant {
+    /// Returns if this is a configuration for the `Relaychain` network.
+    fn is_relaychain(&self) -> bool;
+}
+
+impl IdentifyVariant for Box<dyn ChainSpec> {
+    fn is_relaychain(&self) -> bool {
+        self.id().starts_with("relaychain") || self.id().starts_with("rco")
+    }
 }
 
 // If we're using prometheus, use a registry with a prefix of `indracore`.
@@ -528,6 +548,7 @@ where
             unfinalized_slack: 100,
             ..Default::default()
         });
+
     let disable_grandpa = config.disable_grandpa;
     let name = config.network.node_name.clone();
 
@@ -581,7 +602,6 @@ where
             backend.clone(),
         ),
     );
-
     #[cfg(feature = "real-overseer")]
     fn register_request_response(
         config: &mut sc_network::config::NetworkConfiguration,
@@ -1012,19 +1032,38 @@ pub fn new_chain_ops(
     Error,
 > {
     config.keystore = service::config::KeystoreConfig::InMemory;
-    let service::PartialComponents {
-        client,
-        backend,
-        import_queue,
-        task_manager,
-        ..
-    } = new_partial::<indracore_runtime::RuntimeApi, IndracoreExecutor>(config, jaeger_agent)?;
-    Ok((
-        Arc::new(Client::Indracore(client)),
-        backend,
-        import_queue,
-        task_manager,
-    ))
+    if config.chain_spec.is_relaychain() {
+        let service::PartialComponents {
+            client,
+            backend,
+            import_queue,
+            task_manager,
+            ..
+        } = new_partial::<relaychain_runtime::RuntimeApi, RelaychainExecutor>(
+            config,
+            jaeger_agent,
+        )?;
+        Ok((
+            Arc::new(Client::Relaychain(client)),
+            backend,
+            import_queue,
+            task_manager,
+        ))
+    } else {
+        let service::PartialComponents {
+            client,
+            backend,
+            import_queue,
+            task_manager,
+            ..
+        } = new_partial::<indracore_runtime::RuntimeApi, IndracoreExecutor>(config, jaeger_agent)?;
+        Ok((
+            Arc::new(Client::Indracore(client)),
+            backend,
+            import_queue,
+            task_manager,
+        ))
+    }
 }
 
 /// Build a new light node.
@@ -1038,7 +1077,11 @@ pub fn build_light(
     ),
     Error,
 > {
-    new_light::<indracore_runtime::RuntimeApi, IndracoreExecutor>(config)
+    if config.chain_spec.is_relaychain() {
+        new_light::<relaychain_runtime::RuntimeApi, RelaychainExecutor>(config)
+    } else {
+        new_light::<indracore_runtime::RuntimeApi, IndracoreExecutor>(config)
+    }
 }
 
 #[cfg(feature = "full-node")]
@@ -1061,12 +1104,23 @@ pub fn build_full(
         }
     };
 
-    new_full::<indracore_runtime::RuntimeApi, IndracoreExecutor>(
-        config,
-        is_collator,
-        grandpa_pause,
-        jaeger_agent,
-        isolation_strategy,
-    )
-    .map(|full| full.with_client(Client::Indracore))
+    if config.chain_spec.is_relaychain() {
+        new_full::<relaychain_runtime::RuntimeApi, RelaychainExecutor>(
+            config,
+            is_collator,
+            grandpa_pause,
+            jaeger_agent,
+            isolation_strategy,
+        )
+        .map(|full| full.with_client(Client::Relaychain))
+    } else {
+        new_full::<indracore_runtime::RuntimeApi, IndracoreExecutor>(
+            config,
+            is_collator,
+            grandpa_pause,
+            jaeger_agent,
+            isolation_strategy,
+        )
+        .map(|full| full.with_client(Client::Indracore))
+    }
 }

@@ -5,17 +5,17 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
-strum = "0.20.0"
 async-trait = "0.1.42"
 futures = "0.3.12"
 tracing = "0.1.22"
+tracing-futures = "0.2.4"
+indracore-primitives = { path = "../../../primitives" }
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
-
 sc-authority-discovery = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
 sc-network = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
-indracore-primitives = { path = "../../../primitives" }
 indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
 indracore-node-network-protocol = { path = "../protocol" }
+strum = "0.20.0"
 
 [dev-dependencies]
 assert_matches = "1.4.0"

@@ -137,17 +137,17 @@ impl Filter<Call> for BaseFilter {
             | Call::Grandpa(_)
             | Call::ImOnline(_)
             | Call::AuthorityDiscovery(_)
+            | Call::Contracts(_)
             | Call::Utility(_)
             | Call::Vesting(_)
             | Call::Identity(_)
             | Call::Proxy(_)
             | Call::Multisig(_)
-            | Call::Bounties(_)
             | Call::Sudo(_)
+            | Call::Bounties(_)
+            | Call::Tips(_)
             | Call::Recovery(_)
-            | Call::Contracts(_)
-            | Call::ElectionProviderMultiPhase(_)
-            | Call::Tips(_) => true,
+            | Call::ElectionProviderMultiPhase(_) => true,
         }
     }
 }
@@ -160,7 +160,7 @@ type MoreThanHalfCouncil = EnsureOneOf<
 
 parameter_types! {
     pub const Version: RuntimeVersion = VERSION;
-    pub const SS58Prefix: u8 = 1;
+    pub const SS58Prefix: u8 = 42;
 }
 
 impl frame_system::Config for Runtime {
@@ -361,8 +361,8 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
     type OnChainAccuracy = Perbill;
     type CompactSolution = pallet_staking::CompactAssignments;
     type Fallback = Fallback;
-    type WeightInfo = weights::pallet_election_provider_multi_phase::WeightInfo<Runtime>;
     type BenchmarkingConfig = ();
+    type WeightInfo = weights::pallet_election_provider_multi_phase::WeightInfo<Runtime>;
 }
 
 // TODO #6469: This shouldn't be static, but a lazily cached value, not built unless needed, and
@@ -1002,7 +1002,7 @@ parameter_types! {
     pub const ConfigDepositBase: Balance = 5 * DOLLARS;
     pub const FriendDepositFactor: Balance = 50 * CENTS;
     pub const MaxFriends: u16 = 9;
-    pub const RecoveryDeposit: Balance = 5 * DOLLARS;
+    pub const RecoveryDeposit: Balance = 50 * SELS;
 }
 
 impl pallet_recovery::Config for Runtime {
@@ -1037,7 +1037,7 @@ parameter_types! {
             <Runtime as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(1) -
             <Runtime as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(0)
         )) / 5) as u32;
-    pub MaxCodeSize: u32 = 128 * 1024;
+    pub MaxCodeSize: u32 = 10 * 10 * 1024;
 }
 
 impl pallet_contracts::Config for Runtime {
@@ -1476,6 +1476,7 @@ sp_api::impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_collective, Council);
             add_benchmark!(params, batches, pallet_democracy, Democracy);
             add_benchmark!(params, batches, pallet_elections_phragmen, ElectionsPhragmen);
+            add_benchmark!(params, batches, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
             add_benchmark!(params, batches, pallet_identity, Identity);
             add_benchmark!(params, batches, pallet_im_online, ImOnline);
             add_benchmark!(params, batches, pallet_indices, Indices);
@@ -1492,7 +1493,6 @@ sp_api::impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_utility, Utility);
             add_benchmark!(params, batches, pallet_vesting, Vesting);
             add_benchmark!(params, batches, pallet_contracts, Contracts);
-            add_benchmark!(params, batches, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

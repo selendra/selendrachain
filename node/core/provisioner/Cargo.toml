@@ -8,13 +8,12 @@ edition = "2018"
 bitvec = { version = "0.20.1", default-features = false, features = ["alloc"] }
 futures = "0.3.12"
 tracing = "0.1.22"
-
+tracing-futures = "0.2.4"
 thiserror = "1.0.23"
-futures-timer = "3.0.2"
-
 indracore-primitives = { path = "../../../primitives" }
 indracore-node-subsystem = { path = "../../subsystem" }
 indracore-node-subsystem-util = { path = "../../subsystem-util" }
+futures-timer = "3.0.2"
 
 [dev-dependencies]
 sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }

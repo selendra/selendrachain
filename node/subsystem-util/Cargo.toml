@@ -15,20 +15,20 @@ pin-project = "1.0.4"
 streamunordered = "0.5.1"
 thiserror = "1.0.23"
 tracing = "0.1.22"
+tracing-futures = "0.2.4"
 
+indracore-node-primitives = { path = "../primitives" }
+indracore-node-subsystem = { path = "../subsystem" }
+indracore-node-jaeger = { path = "../jaeger" }
+indracore-node-network-protocol = { path = "../network/protocol" }
+indracore-primitives = { path = "../../primitives" }
+metered-channel = { path = "../metered-channel"}
 
 sc-network = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
 sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
 sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
 sp-keystore = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
 substrate-prometheus-endpoint = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
-
-indracore-node-primitives = { path = "../primitives" }
-indracore-node-subsystem = { path = "../subsystem" }
-indracore-node-jaeger = { path = "../jaeger" }
-indracore-primitives = { path = "../../primitives" }
-indracore-node-network-protocol = { path = "../network/protocol" }
-metered-channel = { path = "../metered-channel"}
 
 [dev-dependencies]
 assert_matches = "1.4.0"

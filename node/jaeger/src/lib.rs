@@ -182,6 +182,7 @@ pub enum Stage {
     // Expand as needed, numbers should be ascending according to the stage
     // through the inclusion pipeline, or according to the descriptions
     // in [the path of a para chain block]
+    // (https://polkadot.network/the-path-of-a-parachain-block/)
 }
 
 /// Builder pattern for children and root spans to unify

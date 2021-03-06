@@ -1,6 +1,22 @@
+// Copyright 2020 Parity Technologies (UK) Ltd.
+// This file is part of Polkadot.
+
+// Polkadot is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Polkadot is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
+
 use super::*;
 use bitvec::bitvec;
-use polkadot_primitives::v1::{OccupiedCore, ScheduledCore};
+use indracore_primitives::v1::{OccupiedCore, ScheduledCore};
 
 pub fn occupied_core(para_id: u32) -> CoreState {
     CoreState::Occupied(OccupiedCore {
@@ -44,7 +60,7 @@ mod select_availability_bitfields {
     use super::super::*;
     use super::{default_bitvec, occupied_core};
     use futures::executor::block_on;
-    use polkadot_primitives::v1::{SigningContext, ValidatorId, ValidatorIndex};
+    use indracore_primitives::v1::{SigningContext, ValidatorId, ValidatorIndex};
     use sp_application_crypto::AppKey;
     use sp_keystore::{testing::KeyStore, CryptoStore, SyncCryptoStorePtr};
     use std::sync::Arc;
@@ -203,13 +219,13 @@ mod select_candidates {
     use super::super::*;
     use super::{build_occupied_core, default_bitvec, occupied_core, scheduled_core};
     use futures_timer::Delay;
-    use polkadot_node_subsystem::messages::{
+    use indracore_node_subsystem::messages::{
         AllMessages, RuntimeApiMessage,
         RuntimeApiRequest::{
             AvailabilityCores, PersistedValidationData as PersistedValidationDataReq,
         },
     };
-    use polkadot_primitives::v1::{
+    use indracore_primitives::v1::{
         BlockNumber, CandidateCommitments, CandidateDescriptor, CommittedCandidateReceipt,
         PersistedValidationData,
     };

@@ -34,13 +34,13 @@ use application_crypto::AppKey;
 use application_crypto::KeyTypeId;
 use inherents::InherentIdentifier;
 use primitives::RuntimeDebug;
+use runtime_primitives::traits::{AppVerify, Block as BlockT};
 #[cfg(feature = "std")]
 use sp_keystore::{CryptoStore, Error as KeystoreError, SyncCryptoStorePtr};
-use sp_runtime::traits::{AppVerify, Block as BlockT};
 
 pub use indracore_core_primitives::*;
 pub use parity_scale_codec::Compact;
-pub use sp_runtime::traits::{BlakeTwo256, Hash as HashT, IdentifyAccount, Verify};
+pub use runtime_primitives::traits::{BlakeTwo256, Hash as HashT, IdentifyAccount, Verify};
 
 pub use indracore_parachain::primitives::{
     BlockData, HeadData, Id, UpwardMessage, ValidationCode, LOWEST_USER_ID,

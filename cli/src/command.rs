@@ -17,6 +17,7 @@
 use crate::cli::{Cli, Subcommand};
 use futures::future::TryFutureExt;
 use sc_cli::{Role, RuntimeVersion, SubstrateCli};
+use service::{self, IdentifyVariant};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -41,6 +42,13 @@ impl std::convert::From<String> for Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
+fn get_exec_name() -> Option<String> {
+    std::env::current_exe()
+        .ok()
+        .and_then(|pb| pb.file_name().map(|s| s.to_os_string()))
+        .and_then(|s| s.into_string().ok())
+}
+
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
         "Selendra Indracore".into()
@@ -59,7 +67,7 @@ impl SubstrateCli for Cli {
     }
 
     fn support_url() -> String {
-        "https://github.com/paritytech/indracore/issues/new".into()
+        "https://github.com/selendra/indracore/issues/new".into()
     }
 
     fn copyright_start_year() -> i32 {
@@ -71,32 +79,65 @@ impl SubstrateCli for Cli {
     }
 
     fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-        let spec = match id {
+        let id = if id == "" {
+            let n = get_exec_name().unwrap_or_default();
+            ["indracore", "relaychain"]
+                .iter()
+                .cloned()
+                .find(|&chain| n.starts_with(chain))
+                .unwrap_or("indracore")
+        } else {
+            id
+        };
+        Ok(match id {
             "indracore-dev" | "dev" => {
                 Box::new(service::chain_spec::indracore_development_config()?)
             }
-            "indracore-local" | "" => {
-                Box::new(service::chain_spec::indracore_local_testnet_config()?)
-            }
+            "indracore-local" => Box::new(service::chain_spec::indracore_local_testnet_config()?),
             "indracore-staging" => {
                 Box::new(service::chain_spec::indracore_staging_testnet_config()?)
             }
             "indracore" => Box::new(service::chain_spec::indracore_config()?),
-            path => Box::new(service::IndracoreChainSpec::from_json_file(
-                std::path::PathBuf::from(path),
-            )?),
-        };
-        Ok(spec)
+            "relaychain-staging" => {
+                Box::new(service::chain_spec::relaychain_staging_testnet_config()?)
+            }
+            "relaychain-local" => Box::new(service::chain_spec::relaychain_local_testnet_config()?),
+            "relaychain" => Box::new(service::chain_spec::relaychain_config()?),
+            path => {
+                let path = std::path::PathBuf::from(path);
+
+                let starts_with = |prefix: &str| {
+                    path.file_name()
+                        .map(|f| f.to_str().map(|s| s.starts_with(&prefix)))
+                        .flatten()
+                        .unwrap_or(false)
+                };
+
+                // When `force_*` is given or the file name starts with the name of one of the known chains,
+                // we use the chain spec for the specific chain.
+                if self.run.force_relaychain || starts_with("relaychain") {
+                    Box::new(service::RelaychainChainSpec::from_json_file(path)?)
+                } else {
+                    Box::new(service::IndracoreChainSpec::from_json_file(path)?)
+                }
+            }
+        })
     }
 
-    fn native_runtime_version(_spec: &Box<dyn service::ChainSpec>) -> &'static RuntimeVersion {
-        &service::indracore_runtime::VERSION
+    fn native_runtime_version(spec: &Box<dyn service::ChainSpec>) -> &'static RuntimeVersion {
+        if spec.is_relaychain() {
+            &service::relaychain_runtime::VERSION
+        } else {
+            &service::indracore_runtime::VERSION
+        }
     }
 }
 
 fn set_default_ss58_version(_spec: &Box<dyn service::ChainSpec>) {
     use sp_core::crypto::Ss58AddressFormat;
-    let ss58_version = Ss58AddressFormat::SubstraTeeAccount;
+
+    let ss58_version = Ss58AddressFormat::SubstrateAccount;
+
     sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 
@@ -116,7 +157,6 @@ pub fn run() -> Result<()> {
             } else {
                 Some((cli.run.grandpa_pause[0], cli.run.grandpa_pause[1]))
             };
-
             let jaeger_agent = cli.run.jaeger_agent;
 
             runner.run_node_until_exit(move |config| async move {
@@ -248,7 +288,6 @@ pub fn run() -> Result<()> {
             })?)
         }
         Some(Subcommand::Key(cmd)) => Ok(cmd.run(&cli)?),
-
         #[cfg(feature = "try-runtime")]
         Some(Subcommand::TryRuntime(cmd)) => {
             let runner = cli.create_runner(cmd)?;

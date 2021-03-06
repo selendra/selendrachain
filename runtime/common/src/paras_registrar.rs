@@ -430,6 +430,7 @@ mod tests {
         type MaxIterations = ();
         type MinSolutionScoreBump = ();
         type OffchainSolutionWeightLimit = ();
+        type ElectionProvider = sp_election_providers::onchain::OnChainSequentialPhragmen<Self>;
         type WeightInfo = ();
     }
 

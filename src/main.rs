@@ -14,26 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Indracore CLI library.
+//! Indracore CLI
 
 #![warn(missing_docs)]
 
-#[cfg(feature = "browser")]
-mod browser;
-#[cfg(feature = "cli")]
-mod cli;
-#[cfg(feature = "cli")]
-mod command;
+use color_eyre::eyre;
 
-pub use service::{
-    self, Block, CoreApi, IdentifyVariant, ProvideRuntimeApi, RuntimeApiCollection, TFullClient,
-};
-
-#[cfg(feature = "cli")]
-pub use cli::*;
-
-#[cfg(feature = "cli")]
-pub use command::*;
-
-#[cfg(feature = "cli")]
-pub use sc_cli::{Error, Result};
+fn main() -> eyre::Result<()> {
+    color_eyre::install()?;
+    cli::run()?;
+    Ok(())
+}

@@ -142,6 +142,7 @@ mod tests {
                         assert!(tx.meter().queue_count() > 0usize);
                         Delay::new(Duration::from_millis(20)).await;
                     }
+                    ()
                 },
                 async move {
                     while let Some(msg) = rx.next().await {

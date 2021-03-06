@@ -46,7 +46,7 @@ pub enum Subcommand {
     #[structopt(name = "validation-worker", setting = structopt::clap::AppSettings::Hidden)]
     ValidationWorker(ValidationWorkerCommand),
 
-    /// The custom benchmark subcommmand benchmarking runtime pallets.
+    /// The custom benchmark subcommand benchmarking runtime pallets.
     #[structopt(name = "benchmark", about = "Benchmark runtime pallets.")]
     Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 
@@ -61,7 +61,7 @@ pub enum Subcommand {
 #[allow(missing_docs)]
 #[derive(Debug, StructOpt)]
 pub struct ValidationWorkerCommand {
-    /// The path that the executor can use for it's caching purposes.
+    /// The path that the executor can use for its caching purposes.
     pub cache_base_path: std::path::PathBuf,
 
     #[allow(missing_docs)]
@@ -74,6 +74,10 @@ pub struct RunCmd {
     #[allow(missing_docs)]
     #[structopt(flatten)]
     pub base: sc_cli::RunCmd,
+
+    /// Force using Relaychain native runtime.
+    #[structopt(long = "force-relaychain")]
+    pub force_relaychain: bool,
 
     /// Setup a GRANDPA scheduled voting pause.
     ///

@@ -7,6 +7,7 @@ edition = "2018"
 [dependencies]
 futures = "0.3.12"
 tracing = "0.1.22"
+tracing-futures = "0.2.4"
 memory-lru = "0.1.0"
 parity-util-mem = { version = "0.9.0", default-features = false }
 
@@ -22,3 +23,4 @@ indracore-node-subsystem-util = { path = "../../subsystem-util" }
 sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
 futures = { version = "0.3.12", features = ["thread-pool"] }
 indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
+indracore-node-primitives = { path = "../../primitives" }

@@ -102,8 +102,8 @@ where
         + Send
         + Sync
         + 'static,
-    C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber>,
     C::Api: frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
+    C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber>,
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
     C::Api: BabeApi<Block>,
     C::Api: BlockBuilder<Block>,
@@ -141,12 +141,12 @@ where
         finality_provider,
     } = grandpa;
 
-    io.extend_with(ContractsApi::to_delegate(Contracts::new(client.clone())));
     io.extend_with(SystemApi::to_delegate(FullSystem::new(
         client.clone(),
         pool,
         deny_unsafe,
     )));
+    io.extend_with(ContractsApi::to_delegate(Contracts::new(client.clone())));
     io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
         client.clone(),
     )));

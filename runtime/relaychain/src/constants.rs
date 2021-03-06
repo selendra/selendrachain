@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Parity Technologies (UK) Ltd.
+// Copyright 2020 Parity Technologies (UK) Ltd.
 // This file is part of Polkadot.
 
 // Polkadot is free software: you can redistribute it and/or modify
@@ -18,13 +18,13 @@
 pub mod currency {
     use primitives::v0::Balance;
 
-    pub const SELS: Balance = 100_000_000;
-    pub const DOLLARS: Balance = SELS / 100; // 100_000_000
-    pub const CENTS: Balance = DOLLARS / 100; // 1000_000
-    pub const MILLICENTS: Balance = CENTS / 1_000; // 100
+    pub const SELS: Balance = 1_000_000_000_000;
+    pub const DOLLARS: Balance = SELS;
+    pub const CENTS: Balance = DOLLARS / 100;
+    pub const MILLICENTS: Balance = CENTS / 1_000;
 
     pub const fn deposit(items: u32, bytes: u32) -> Balance {
-        items as Balance * 20 * DOLLARS + (bytes as Balance) * 100 * MILLICENTS
+        items as Balance * 1 * DOLLARS + (bytes as Balance) * 5 * MILLICENTS
     }
 }
 
@@ -33,7 +33,9 @@ pub mod time {
     use primitives::v0::{BlockNumber, Moment};
     pub const MILLISECS_PER_BLOCK: Moment = 6000;
     pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-    pub const EPOCH_DURATION_IN_BLOCKS: BlockNumber = 4 * HOURS;
+    frame_support::parameter_types! {
+        pub storage EpochDurationInBlocks: BlockNumber = 1 * HOURS;
+    }
 
     // These time units are defined in number of blocks.
     pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
@@ -61,7 +63,7 @@ pub mod fee {
     /// node's balance type.
     ///
     /// This should typically create a mapping between the following ranges:
-    ///   - [0, MAXIMUM_BLOCK_WEIGHT]
+    ///   - [0, frame_system::MaximumBlockWeight]
     ///   - [Balance::min, Balance::max]
     ///
     /// Yet, it can be used for any other sort of change to weight-fee. Some examples being:
@@ -71,7 +73,7 @@ pub mod fee {
     impl WeightToFeePolynomial for WeightToFee {
         type Balance = Balance;
         fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-            // in Polkadot, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 CENT:
+            // in Westend, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 CENT:
             let p = super::currency::CENTS;
             let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
             smallvec![WeightToFeeCoefficient {
@@ -88,15 +90,20 @@ pub mod fee {
 mod tests {
     use super::currency::{CENTS, DOLLARS, MILLICENTS};
     use super::fee::WeightToFee;
-    use frame_support::weights::WeightToFeePolynomial;
-    use runtime_common::{ExtrinsicBaseWeight, MAXIMUM_BLOCK_WEIGHT};
+    use frame_support::weights::{DispatchClass, WeightToFeePolynomial};
+    use runtime_common::BlockWeights;
 
     #[test]
-    // This function tests that the fee for `MAXIMUM_BLOCK_WEIGHT` of weight is correct
+    // This function tests that the fee for `MaximumBlockWeight` of weight is correct
     fn full_block_fee_is_correct() {
         // A full block should cost 16 DOLLARS
-        println!("Base: {}", ExtrinsicBaseWeight::get());
-        let x = WeightToFee::calc(&MAXIMUM_BLOCK_WEIGHT);
+        println!(
+            "Base: {}",
+            BlockWeights::get()
+                .get(DispatchClass::Normal)
+                .base_extrinsic
+        );
+        let x = WeightToFee::calc(&BlockWeights::get().max_block);
         let y = 16 * DOLLARS;
         assert!(x.max(y) - x.min(y) < MILLICENTS);
     }
@@ -105,8 +112,11 @@ mod tests {
     // This function tests that the fee for `ExtrinsicBaseWeight` of weight is correct
     fn extrinsic_base_fee_is_correct() {
         // `ExtrinsicBaseWeight` should cost 1/10 of a CENT
-        println!("Base: {}", ExtrinsicBaseWeight::get());
-        let x = WeightToFee::calc(&ExtrinsicBaseWeight::get());
+        let base_weight = BlockWeights::get()
+            .get(DispatchClass::Normal)
+            .base_extrinsic;
+        println!("Base: {}", base_weight);
+        let x = WeightToFee::calc(&base_weight);
         let y = CENTS / 10;
         assert!(x.max(y) - x.min(y) < MILLICENTS);
     }
