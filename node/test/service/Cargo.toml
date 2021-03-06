@@ -10,7 +10,7 @@ futures01 = { package = "futures", version = "0.1.29" }
 hex = "0.4.2"
 tracing = "0.1.22"
 
-rand = "0.8.3"
+rand = "0.2.0"
 tempfile = "3.2.0"
 
 # Indracore dependencies

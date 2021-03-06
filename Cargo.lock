@@ -293,7 +293,7 @@ dependencies = [
  "async-io",
  "async-lock",
  "async-process",
- "crossbeam-utils 0.8.3",
+ "crossbeam-utils 0.2.0",
  "futures-channel",
  "futures-core",
  "futures-io",
@@ -1017,7 +1017,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dca26ee1f8d361640700bde38b2c37d8c22b3ce2d360e1fc1c74ea4b0aa7d775"
 dependencies = [
  "cfg-if 1.0.0",
- "crossbeam-utils 0.8.3",
+ "crossbeam-utils 0.2.0",
 ]
 
 [[package]]
@@ -1039,7 +1039,7 @@ checksum = "94af6efb46fef72616855b036a624cf27ba656ffc9be1b9a3c931cfc7749a9a9"
 dependencies = [
  "cfg-if 1.0.0",
  "crossbeam-epoch 0.9.3",
- "crossbeam-utils 0.8.3",
+ "crossbeam-utils 0.2.0",
 ]
 
 [[package]]
@@ -1064,7 +1064,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2584f639eb95fea8c798496315b297cf81b9b58b6d30ab066a75455333cf4b12"
 dependencies = [
  "cfg-if 1.0.0",
- "crossbeam-utils 0.8.3",
+ "crossbeam-utils 0.2.0",
  "lazy_static",
  "memoffset 0.6.1",
  "scopeguard",
@@ -1094,7 +1094,7 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-utils"
-version = "0.8.3"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e7e9d99fa91428effe99c5c6d4634cdeba32b8cf784fc428a2a687f61a952c49"
 dependencies = [
@@ -1394,7 +1394,7 @@ dependencies = [
 
 [[package]]
 name = "env_logger"
-version = "0.8.3"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17392a012ea30ef05a610aa97dfb49496e71c9f676b27879922ea5bdf60d9d3f"
 dependencies = [
@@ -1593,7 +1593,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cfcf0ed7fe52a17a03854ec54a9f76d6d84508d1c0e66bc1793301c73fc8493c"
 dependencies = [
  "byteorder",
- "rand 0.8.3",
+ "rand 0.2.0",
  "rustc-hex",
  "static_assertions",
 ]
@@ -2567,7 +2567,7 @@ name = "indracore-approval-distribution"
 version = "0.1.0"
 dependencies = [
  "assert_matches",
- "env_logger 0.8.3",
+ "env_logger 0.2.0",
  "futures 0.3.13",
  "indracore-node-network-protocol",
  "indracore-node-primitives",
@@ -2588,7 +2588,7 @@ version = "0.1.0"
 dependencies = [
  "assert_matches",
  "bitvec",
- "env_logger 0.8.3",
+ "env_logger 0.2.0",
  "futures 0.3.13",
  "indracore-node-network-protocol",
  "indracore-node-subsystem",
@@ -2633,7 +2633,7 @@ name = "indracore-availability-recovery"
 version = "0.1.0"
 dependencies = [
  "assert_matches",
- "env_logger 0.8.3",
+ "env_logger 0.2.0",
  "futures 0.3.13",
  "futures-timer 3.0.2",
  "indracore-erasure-coding",
@@ -2644,7 +2644,7 @@ dependencies = [
  "indracore-primitives",
  "log",
  "lru",
- "rand 0.8.3",
+ "rand 0.2.0",
  "smallvec 1.6.1",
  "sp-application-crypto",
  "sp-core",
@@ -2681,7 +2681,7 @@ name = "indracore-collator-protocol"
 version = "0.1.0"
 dependencies = [
  "assert_matches",
- "env_logger 0.8.3",
+ "env_logger 0.2.0",
  "futures 0.3.13",
  "futures-timer 3.0.2",
  "indracore-node-network-protocol",
@@ -2800,7 +2800,7 @@ version = "0.1.0"
 dependencies = [
  "assert_matches",
  "bitvec",
- "env_logger 0.8.3",
+ "env_logger 0.2.0",
  "futures 0.3.13",
  "futures-timer 3.0.2",
  "indracore-erasure-coding",
@@ -3069,7 +3069,7 @@ version = "0.1.0"
 dependencies = [
  "assert_matches",
  "async-trait",
- "env_logger 0.8.3",
+ "env_logger 0.2.0",
  "futures 0.3.13",
  "futures-timer 3.0.2",
  "indracore-node-jaeger",
@@ -3144,7 +3144,7 @@ name = "indracore-pov-distribution"
 version = "0.1.0"
 dependencies = [
  "assert_matches",
- "env_logger 0.8.3",
+ "env_logger 0.2.0",
  "futures 0.3.13",
  "indracore-node-network-protocol",
  "indracore-node-subsystem",
@@ -3374,7 +3374,7 @@ dependencies = [
  "pallet-treasury",
  "pallet-vesting",
  "parity-scale-codec",
- "rand 0.8.3",
+ "rand 0.2.0",
  "rand_chacha 0.3.0",
  "rustc-hex",
  "sc-keystore",
@@ -3401,7 +3401,7 @@ dependencies = [
 name = "indracore-service"
 version = "0.3.0"
 dependencies = [
- "env_logger 0.8.3",
+ "env_logger 0.2.0",
  "frame-benchmarking",
  "frame-system-rpc-runtime-api",
  "futures 0.3.13",
@@ -3625,7 +3625,7 @@ dependencies = [
  "pallet-staking",
  "pallet-sudo",
  "pallet-transaction-payment",
- "rand 0.8.3",
+ "rand 0.2.0",
  "sc-authority-discovery",
  "sc-chain-spec",
  "sc-cli",
@@ -5731,7 +5731,7 @@ dependencies = [
  "log",
  "memmap2",
  "parking_lot 0.11.1",
- "rand 0.8.3",
+ "rand 0.2.0",
 ]
 
 [[package]]
@@ -5900,7 +5900,7 @@ checksum = "6d7744ac029df22dca6284efe4e898991d28e3085c706c972bcd7da4a27a15eb"
 dependencies = [
  "instant",
  "lock_api 0.4.2",
- "parking_lot_core 0.8.3",
+ "parking_lot_core 0.2.0",
 ]
 
 [[package]]
@@ -5934,7 +5934,7 @@ dependencies = [
 
 [[package]]
 name = "parking_lot_core"
-version = "0.8.3"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fa7a782938e745763fe6907fc6ba86946d72f49fe7e21de074e08128a99fb018"
 dependencies = [
@@ -6455,7 +6455,7 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.8.3"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ef9e7e66b4468674bfcb0c81af8b7fa0bb154fa9f28eb840da5c447baeb8d7e"
 dependencies = [
@@ -6574,7 +6574,7 @@ dependencies = [
  "cfg-if 0.1.10",
  "libc",
  "nix 0.20.0",
- "rand 0.8.3",
+ "rand 0.2.0",
  "winapi 0.3.9",
 ]
 
@@ -6604,7 +6604,7 @@ checksum = "9ab346ac5921dc62ffa9f89b7a773907511cdfa5490c572ae9be1be33e8afa4a"
 dependencies = [
  "crossbeam-channel",
  "crossbeam-deque 0.8.0",
- "crossbeam-utils 0.8.3",
+ "crossbeam-utils 0.2.0",
  "lazy_static",
  "num_cpus",
 ]
@@ -6740,7 +6740,7 @@ version = "0.9.0"
 source = "git+https://github.com/selendra/substrate?branch=v2.0.3#99acf6c31e4554794e3afb5ea1ee8c7b27467cb6"
 dependencies = [
  "bincode",
- "env_logger 0.8.3",
+ "env_logger 0.2.0",
  "futures 0.1.31",
  "hex-literal",
  "jsonrpc-core-client",
@@ -6814,14 +6814,14 @@ dependencies = [
 
 [[package]]
 name = "rust-argon2"
-version = "0.8.3"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4b18820d944b33caa75a71378964ac46f58517c92b6ae5f762636247c09e78fb"
 dependencies = [
  "base64 0.13.0",
  "blake2b_simd",
  "constant_time_eq",
- "crossbeam-utils 0.8.3",
+ "crossbeam-utils 0.2.0",
 ]
 
 [[package]]
@@ -8164,7 +8164,7 @@ dependencies = [
  "libc",
  "nix 0.20.0",
  "quick-error 2.0.0",
- "rand 0.8.3",
+ "rand 0.2.0",
  "winapi 0.3.9",
 ]
 
@@ -9247,7 +9247,7 @@ checksum = "dac1c663cfc93810f88aed9b8941d48cabf856a1b111c29a40439018d870eb22"
 dependencies = [
  "cfg-if 1.0.0",
  "libc",
- "rand 0.8.3",
+ "rand 0.2.0",
  "redox_syscall 0.2.5",
  "remove_dir_all",
  "winapi 0.3.9",
