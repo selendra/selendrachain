@@ -14,13 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Common runtime code for Indracore.
+//! Common runtime code for Indracore and .
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod crowdloan;
 pub mod impls;
 pub mod paras_registrar;
 pub mod paras_sudo_wrapper;
+pub mod purchase;
 pub mod slot_range;
 pub mod slots;
 
