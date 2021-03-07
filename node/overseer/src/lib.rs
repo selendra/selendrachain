@@ -1648,7 +1648,7 @@ where
             all_subsystems.runtime_api,
             &metrics,
             &mut seed,
-            TaskKind::Regular,
+            TaskKind::Blocking,
         )?;
 
         let availability_store_subsystem = spawn(
@@ -1678,7 +1678,7 @@ where
             all_subsystems.chain_api,
             &metrics,
             &mut seed,
-            TaskKind::Regular,
+            TaskKind::Blocking,
         )?;
 
         let collation_generation_subsystem = spawn(
