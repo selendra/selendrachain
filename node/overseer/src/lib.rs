@@ -1548,6 +1548,7 @@ where
             all_subsystems.candidate_validation,
             &metrics,
             &mut seed,
+            TaskKind::Regular,
         )?;
 
         let candidate_backing_subsystem = spawn(
@@ -1557,6 +1558,7 @@ where
             all_subsystems.candidate_backing,
             &metrics,
             &mut seed,
+            TaskKind::Regular,
         )?;
 
         let candidate_selection_subsystem = spawn(
@@ -1566,6 +1568,7 @@ where
             all_subsystems.candidate_selection,
             &metrics,
             &mut seed,
+            TaskKind::Regular,
         )?;
 
         let statement_distribution_subsystem = spawn(
@@ -1575,6 +1578,7 @@ where
             all_subsystems.statement_distribution,
             &metrics,
             &mut seed,
+            TaskKind::Regular,
         )?;
 
         let availability_distribution_subsystem = spawn(
@@ -1584,6 +1588,7 @@ where
             all_subsystems.availability_distribution,
             &metrics,
             &mut seed,
+            TaskKind::Regular,
         )?;
 
         let availability_recovery_subsystem = spawn(
@@ -1593,6 +1598,7 @@ where
             all_subsystems.availability_recovery,
             &metrics,
             &mut seed,
+            TaskKind::Regular,
         )?;
 
         let bitfield_signing_subsystem = spawn(
@@ -1602,6 +1608,7 @@ where
             all_subsystems.bitfield_signing,
             &metrics,
             &mut seed,
+            TaskKind::Regular,
         )?;
 
         let bitfield_distribution_subsystem = spawn(
@@ -1611,6 +1618,7 @@ where
             all_subsystems.bitfield_distribution,
             &metrics,
             &mut seed,
+            TaskKind::Regular,
         )?;
 
         let provisioner_subsystem = spawn(
@@ -1620,6 +1628,7 @@ where
             all_subsystems.provisioner,
             &metrics,
             &mut seed,
+            TaskKind::Regular,
         )?;
 
         let pov_distribution_subsystem = spawn(
@@ -1629,6 +1638,7 @@ where
             all_subsystems.pov_distribution,
             &metrics,
             &mut seed,
+            TaskKind::Regular,
         )?;
 
         let runtime_api_subsystem = spawn(
@@ -1638,6 +1648,7 @@ where
             all_subsystems.runtime_api,
             &metrics,
             &mut seed,
+            TaskKind::Regular,
         )?;
 
         let availability_store_subsystem = spawn(
@@ -1647,6 +1658,7 @@ where
             all_subsystems.availability_store,
             &metrics,
             &mut seed,
+            TaskKind::Blocking,
         )?;
 
         let network_bridge_subsystem = spawn(
@@ -1656,6 +1668,7 @@ where
             all_subsystems.network_bridge,
             &metrics,
             &mut seed,
+            TaskKind::Regular,
         )?;
 
         let chain_api_subsystem = spawn(
@@ -1665,6 +1678,7 @@ where
             all_subsystems.chain_api,
             &metrics,
             &mut seed,
+            TaskKind::Regular,
         )?;
 
         let collation_generation_subsystem = spawn(
@@ -1674,6 +1688,7 @@ where
             all_subsystems.collation_generation,
             &metrics,
             &mut seed,
+            TaskKind::Regular,
         )?;
 
         let collator_protocol_subsystem = spawn(
@@ -1683,6 +1698,7 @@ where
             all_subsystems.collator_protocol,
             &metrics,
             &mut seed,
+            TaskKind::Regular,
         )?;
 
         let approval_distribution_subsystem = spawn(
@@ -1692,6 +1708,7 @@ where
             all_subsystems.approval_distribution,
             &metrics,
             &mut seed,
+            TaskKind::Regular,
         )?;
 
         let approval_voting_subsystem = spawn(
@@ -1701,6 +1718,7 @@ where
             all_subsystems.approval_voting,
             &metrics,
             &mut seed,
+            TaskKind::Blocking,
         )?;
 
         let leaves = leaves
@@ -2178,6 +2196,11 @@ where
     }
 }
 
+enum TaskKind {
+    Regular,
+    Blocking,
+}
+
 fn spawn<S: SpawnNamed, M: Send + 'static>(
     spawner: &mut S,
     futures: &mut FuturesUnordered<BoxFuture<'static, SubsystemResult<()>>>,
@@ -2185,6 +2208,7 @@ fn spawn<S: SpawnNamed, M: Send + 'static>(
     s: impl Subsystem<OverseerSubsystemContext<M>>,
     metrics: &Metrics,
     seed: &mut u64,
+    task_kind: TaskKind,
 ) -> SubsystemResult<OverseenSubsystem<M>> {
     let (to_tx, to_rx) = metered::channel(CHANNEL_CAPACITY, "subsystem_spawn");
     let ctx = OverseerSubsystemContext::new(
@@ -2210,7 +2234,10 @@ fn spawn<S: SpawnNamed, M: Send + 'static>(
         let _ = tx.send(());
     });
 
-    spawner.spawn(name, fut);
+    match task_kind {
+        TaskKind::Regular => spawner.spawn(name, fut),
+        TaskKind::Blocking => spawner.spawn_blocking(name, fut),
+    }
 
     futures.push(Box::pin(rx.map(|e| {
         tracing::warn!(err = ?e, "dropping error");
