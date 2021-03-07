@@ -59,9 +59,7 @@ pub use self::client::{
     AbstractClient, Client, ClientHandle, ExecuteWithClient, RuntimeApiCollection,
 };
 pub use chain_spec::{IndracoreChainSpec, RelaychainChainSpec};
-pub use consensus_common::{
-    block_validation::Chain, BlockImport, Proposal, RecordProof, SelectChain,
-};
+pub use consensus_common::{block_validation::Chain, BlockImport, Proposal, SelectChain};
 pub use indracore_parachain::wasm_executor::IsolationStrategy;
 pub use indracore_primitives::v1::{Block, BlockId, CollatorId, Hash, Id as ParaId};
 pub use sc_client_api::{Backend, CallExecutor, ExecutionStrategy};

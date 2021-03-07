@@ -31,7 +31,7 @@ use prometheus_endpoint::Registry as PrometheusRegistry;
 use sc_block_builder::{BlockBuilderApi, BlockBuilderProvider};
 use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
-use sp_consensus::{Proposal, RecordProof};
+use sp_consensus::{DisableProofRecording, Proposal};
 use sp_core::traits::SpawnNamed;
 use sp_inherents::InherentData;
 use sp_runtime::traits::{DigestFor, HashFor};
@@ -43,7 +43,7 @@ const PROPOSE_TIMEOUT: core::time::Duration = core::time::Duration::from_millis(
 
 /// Custom Proposer factory for Indracore
 pub struct ProposerFactory<TxPool, Backend, Client> {
-    inner: sc_basic_authorship::ProposerFactory<TxPool, Backend, Client>,
+    inner: sc_basic_authorship::ProposerFactory<TxPool, Backend, Client, DisableProofRecording>,
     overseer: OverseerHandler,
 }
 
@@ -114,7 +114,7 @@ where
 /// This proposer gets the ProvisionerInherentData and injects it into the wrapped
 /// proposer's inherent data, then delegates the actual proposal generation.
 pub struct Proposer<TxPool: TransactionPool<Block = Block>, Backend, Client> {
-    inner: sc_basic_authorship::Proposer<Backend, Block, Client, TxPool>,
+    inner: sc_basic_authorship::Proposer<Backend, Block, Client, TxPool, DisableProofRecording>,
     overseer: OverseerHandler,
     parent_header: Header,
     parent_header_hash: Hash,
@@ -193,18 +193,22 @@ where
     type Proposal = Pin<
         Box<
             dyn Future<
-                    Output = Result<Proposal<Block, sp_api::TransactionFor<Client, Block>>, Error>,
+                    Output = Result<
+                        Proposal<Block, sp_api::TransactionFor<Client, Block>, ()>,
+                        Error,
+                    >,
                 > + Send,
         >,
     >;
     type Error = Error;
+    type ProofRecording = DisableProofRecording;
+    type Proof = ();
 
     fn propose(
         self,
         mut inherent_data: InherentData,
         inherent_digests: DigestFor<Block>,
         max_duration: time::Duration,
-        record_proof: RecordProof,
     ) -> Self::Proposal {
         async move {
 			let span = jaeger::hash_span(&self.parent_header_hash, "propose");
@@ -232,7 +236,7 @@ where
 
 			let _span = span.child("authorship-propose");
 			self.inner
-				.propose(inherent_data, inherent_digests, max_duration, record_proof)
+				.propose(inherent_data, inherent_digests, max_duration)
 				.await
 				.map_err(Into::into)
 		}
