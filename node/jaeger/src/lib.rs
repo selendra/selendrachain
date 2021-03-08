@@ -44,7 +44,8 @@
 //!  docker.io/jaegertracing/all-in-one:1.21
 //! ```
 
-use indracore_primitives::v1::{CandidateHash, Hash, PoV, ValidatorIndex};
+use indracore_primitives::v1::{BlakeTwo256, CandidateHash, Hash, HashT, PoV, ValidatorIndex};
+use parity_scale_codec::Encode;
 use sc_network::PeerId;
 use sp_core::traits::SpawnNamed;
 
@@ -179,6 +180,7 @@ pub enum Stage {
     AvailabilityDistribution = 5,
     AvailabilityRecovery = 6,
     BitfieldDistribution = 7,
+    ApprovalChecking = 8,
     // Expand as needed, numbers should be ascending according to the stage
     // through the inclusion pipeline, or according to the descriptions
     // in [the path of a para chain block]
@@ -390,6 +392,15 @@ pub fn hash_span(hash: &Hash, span_name: &'static str) -> Span {
     let mut span: Span = INSTANCE.read_recursive().span(|| *hash, span_name).into();
     span.add_string_tag("relay-parent", &format!("{:?}", hash));
     span
+}
+
+/// Creates a `Span` referring to the given descriptor, which should be unique.
+#[inline(always)]
+pub fn descriptor_span(descriptor: impl Encode, span_name: &'static str) -> Span {
+    INSTANCE
+        .read_recursive()
+        .span(|| BlakeTwo256::hash_of(&descriptor), span_name)
+        .into()
 }
 
 /// Stateful convenience wrapper around [`mick_jaeger`].

@@ -21,6 +21,7 @@ indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subs
 indracore-overseer = { path = "../../overseer" }
 indracore-primitives = { path = "../../../primitives" }
 indracore-node-primitives = { path = "../../primitives" }
+indracore-node-jaeger = { path = "../../jaeger" }
 
 sc-client-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
 sc-keystore = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }

@@ -6,6 +6,7 @@ edition = "2018"
 description = "Indracore Jaeger primitives"
 
 [dependencies]
+parity-scale-codec = { version = "2.0.0", default-features = false }
 async-std = "1.8.0"
 mick-jaeger = "0.1.4"
 lazy_static = "1.4"
