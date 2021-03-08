@@ -22,12 +22,21 @@ use frame_support::{decl_module, decl_storage, traits::Get, weights::Weight, Sto
 use primitives::v1::{DownwardMessage, Hash, Id as ParaId, InboundDownwardMessage};
 use sp_runtime::traits::{BlakeTwo256, Hash as HashT, SaturatedConversion};
 use sp_std::{fmt, prelude::*};
+use xcm::v0::Error as XcmError;
 
 /// An error sending a downward message.
 #[cfg_attr(test, derive(Debug))]
 pub enum QueueDownwardMessageError {
     /// The message being sent exceeds the configured max message size.
     ExceedsMaxMessageSize,
+}
+
+impl From<QueueDownwardMessageError> for XcmError {
+    fn from(err: QueueDownwardMessageError) -> Self {
+        match err {
+            QueueDownwardMessageError::ExceedsMaxMessageSize => XcmError::ExceedsMaxMessageSize,
+        }
+    }
 }
 
 /// An error returned by [`check_processed_downward_messages`] that indicates an acceptance check

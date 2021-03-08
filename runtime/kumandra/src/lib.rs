@@ -44,7 +44,7 @@ use runtime_common::{
     impls::ToAuthor, BlockHashCount, BlockLength, BlockWeights, RocksDbWeight,
     SlowAdjustingFeeUpdate, AVERAGE_ON_INITIALIZE_RATIO,
 };
-use runtime_common::{paras_registrar, paras_sudo_wrapper};
+use runtime_common::{paras_registrar, paras_sudo_wrapper, xcm_sender};
 use runtime_parachains::{self, runtime_api_impl::v1 as runtime_api_impl};
 use sp_core::OpaqueMetadata;
 use sp_runtime::{
@@ -619,7 +619,7 @@ type LocalOriginConverter = (
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
     type Call = Call;
-    type XcmSender = ();
+    type XcmSender = xcm_sender::RelayChainXcmSender<Runtime>;
     type AssetTransactor = LocalAssetTransactor;
     type OriginConverter = LocalOriginConverter;
     type IsReserve = ();

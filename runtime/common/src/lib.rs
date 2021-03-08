@@ -25,6 +25,7 @@ pub mod paras_sudo_wrapper;
 pub mod purchase;
 pub mod slot_range;
 pub mod slots;
+pub mod xcm_sender;
 
 pub use frame_support::weights::constants::{
     BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight,
