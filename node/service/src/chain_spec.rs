@@ -141,19 +141,19 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
     const STASH: u128 = 100 * SELS;
 
     indracore::GenesisConfig {
-        frame_system: Some(indracore::SystemConfig {
+        frame_system: indracore::SystemConfig {
             code: wasm_binary.to_vec(),
             changes_trie_config: Default::default(),
-        }),
-        pallet_balances: Some(indracore::BalancesConfig {
+        },
+        pallet_balances: indracore::BalancesConfig {
             balances: endowed_accounts
                 .iter()
                 .map(|k: &AccountId| (k.clone(), ENDOWMENT))
                 .chain(initial_authorities.iter().map(|x| (x.0.clone(), STASH)))
                 .collect(),
-        }),
-        pallet_indices: Some(indracore::IndicesConfig { indices: vec![] }),
-        pallet_session: Some(indracore::SessionConfig {
+        },
+        pallet_indices: indracore::IndicesConfig { indices: vec![] },
+        pallet_session: indracore::SessionConfig {
             keys: initial_authorities
                 .iter()
                 .map(|x| {
@@ -171,8 +171,8 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
                     )
                 })
                 .collect::<Vec<_>>(),
-        }),
-        pallet_staking: Some(indracore::StakingConfig {
+        },
+        pallet_staking: indracore::StakingConfig {
             validator_count: 50,
             minimum_validator_count: 4,
             stakers: initial_authorities
@@ -190,32 +190,32 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
             force_era: Forcing::ForceNone,
             slash_reward_fraction: Perbill::from_percent(10),
             ..Default::default()
-        }),
-        pallet_elections_phragmen: Some(Default::default()),
-        pallet_democracy: Some(Default::default()),
-        pallet_collective_Instance1: Some(indracore::CouncilConfig {
+        },
+        pallet_elections_phragmen: Default::default(),
+        pallet_democracy: Default::default(),
+        pallet_collective_Instance1: indracore::CouncilConfig {
             members: vec![],
             phantom: Default::default(),
-        }),
-        pallet_collective_Instance2: Some(indracore::TechnicalCommitteeConfig {
+        },
+        pallet_collective_Instance2: indracore::TechnicalCommitteeConfig {
             members: vec![],
             phantom: Default::default(),
-        }),
-        pallet_membership_Instance1: Some(Default::default()),
-        pallet_babe: Some(Default::default()),
-        pallet_grandpa: Some(Default::default()),
-        pallet_im_online: Some(Default::default()),
-        pallet_authority_discovery: Some(indracore::AuthorityDiscoveryConfig { keys: vec![] }),
-        pallet_vesting: Some(indracore::VestingConfig { vesting: vec![] }),
-        pallet_treasury: Some(Default::default()),
-        pallet_sudo: Some(indracore::SudoConfig {
+        },
+        pallet_membership_Instance1: Default::default(),
+        pallet_babe: Default::default(),
+        pallet_grandpa: Default::default(),
+        pallet_im_online: Default::default(),
+        pallet_authority_discovery: indracore::AuthorityDiscoveryConfig { keys: vec![] },
+        pallet_vesting: indracore::VestingConfig { vesting: vec![] },
+        pallet_treasury: Default::default(),
+        pallet_sudo: indracore::SudoConfig {
             key: endowed_accounts[0].clone(),
-        }),
-        pallet_contracts: Some(indracore::ContractsConfig {
+        },
+        pallet_contracts: indracore::ContractsConfig {
             current_schedule: pallet_contracts::Schedule {
                 ..Default::default()
             },
-        }),
+        },
     }
 }
 
@@ -435,19 +435,19 @@ fn kumandra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> kumandra_runti
     const STASH: u128 = 100 * REL;
 
     kumandra_runtime::GenesisConfig {
-        frame_system: Some(kumandra_runtime::SystemConfig {
+        frame_system: kumandra_runtime::SystemConfig {
             code: wasm_binary.to_vec(),
             changes_trie_config: Default::default(),
-        }),
-        pallet_balances: Some(kumandra_runtime::BalancesConfig {
+        },
+        pallet_balances: kumandra_runtime::BalancesConfig {
             balances: endowed_accounts
                 .iter()
                 .map(|k: &AccountId| (k.clone(), ENDOWMENT))
                 .chain(initial_authorities.iter().map(|x| (x.0.clone(), STASH)))
                 .collect(),
-        }),
-        pallet_indices: Some(kumandra_runtime::IndicesConfig { indices: vec![] }),
-        pallet_session: Some(kumandra_runtime::SessionConfig {
+        },
+        pallet_indices: kumandra_runtime::IndicesConfig { indices: vec![] },
+        pallet_session: kumandra_runtime::SessionConfig {
             keys: initial_authorities
                 .iter()
                 .map(|x| {
@@ -465,22 +465,20 @@ fn kumandra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> kumandra_runti
                     )
                 })
                 .collect::<Vec<_>>(),
-        }),
-        pallet_babe: Some(Default::default()),
-        pallet_grandpa: Some(Default::default()),
-        pallet_im_online: Some(Default::default()),
-        pallet_authority_discovery: Some(kumandra_runtime::AuthorityDiscoveryConfig {
-            keys: vec![],
-        }),
-        pallet_sudo: Some(kumandra_runtime::SudoConfig {
+        },
+        pallet_babe: Default::default(),
+        pallet_grandpa: Default::default(),
+        pallet_im_online: Default::default(),
+        pallet_authority_discovery: kumandra_runtime::AuthorityDiscoveryConfig { keys: vec![] },
+        pallet_sudo: kumandra_runtime::SudoConfig {
             key: endowed_accounts[0].clone(),
-        }),
-        pallet_contracts: Some(kumandra_runtime::ContractsConfig {
+        },
+        pallet_contracts: kumandra_runtime::ContractsConfig {
             current_schedule: pallet_contracts::Schedule {
                 ..Default::default()
             },
-        }),
-        parachains_configuration: Some(kumandra_runtime::ParachainsConfigurationConfig {
+        },
+        parachains_configuration: kumandra_runtime::ParachainsConfigurationConfig {
             config: indracore_runtime_parachains::configuration::HostConfiguration {
                 validation_upgrade_frequency: 600u32,
                 validation_upgrade_delay: 300,
@@ -516,7 +514,7 @@ fn kumandra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> kumandra_runti
                 hrmp_max_message_num_per_candidate: 5,
                 ..Default::default()
             },
-        }),
+        },
     }
 }
 
@@ -644,18 +642,18 @@ pub fn indracore_testnet_genesis(
     const STASH: u128 = 100 * SELS;
 
     indracore::GenesisConfig {
-        frame_system: Some(indracore::SystemConfig {
+        frame_system: indracore::SystemConfig {
             code: wasm_binary.to_vec(),
             changes_trie_config: Default::default(),
-        }),
-        pallet_indices: Some(indracore::IndicesConfig { indices: vec![] }),
-        pallet_balances: Some(indracore::BalancesConfig {
+        },
+        pallet_indices: indracore::IndicesConfig { indices: vec![] },
+        pallet_balances: indracore::BalancesConfig {
             balances: endowed_accounts
                 .iter()
                 .map(|k| (k.clone(), ENDOWMENT))
                 .collect(),
-        }),
-        pallet_session: Some(indracore::SessionConfig {
+        },
+        pallet_session: indracore::SessionConfig {
             keys: initial_authorities
                 .iter()
                 .map(|x| {
@@ -673,8 +671,8 @@ pub fn indracore_testnet_genesis(
                     )
                 })
                 .collect::<Vec<_>>(),
-        }),
-        pallet_staking: Some(indracore::StakingConfig {
+        },
+        pallet_staking: indracore::StakingConfig {
             minimum_validator_count: 1,
             validator_count: 2,
             stakers: initial_authorities
@@ -692,32 +690,32 @@ pub fn indracore_testnet_genesis(
             force_era: Forcing::NotForcing,
             slash_reward_fraction: Perbill::from_percent(10),
             ..Default::default()
-        }),
-        pallet_elections_phragmen: Some(Default::default()),
-        pallet_democracy: Some(indracore::DemocracyConfig::default()),
-        pallet_collective_Instance1: Some(indracore::CouncilConfig {
+        },
+        pallet_elections_phragmen: Default::default(),
+        pallet_democracy: indracore::DemocracyConfig::default(),
+        pallet_collective_Instance1: indracore::CouncilConfig {
             members: vec![],
             phantom: Default::default(),
-        }),
-        pallet_collective_Instance2: Some(indracore::TechnicalCommitteeConfig {
+        },
+        pallet_collective_Instance2: indracore::TechnicalCommitteeConfig {
             members: vec![],
             phantom: Default::default(),
-        }),
-        pallet_membership_Instance1: Some(Default::default()),
-        pallet_babe: Some(Default::default()),
-        pallet_grandpa: Some(Default::default()),
-        pallet_im_online: Some(Default::default()),
-        pallet_authority_discovery: Some(indracore::AuthorityDiscoveryConfig { keys: vec![] }),
-        pallet_vesting: Some(indracore::VestingConfig { vesting: vec![] }),
-        pallet_treasury: Some(Default::default()),
-        pallet_sudo: Some(indracore::SudoConfig {
+        },
+        pallet_membership_Instance1: Default::default(),
+        pallet_babe: Default::default(),
+        pallet_grandpa: Default::default(),
+        pallet_im_online: Default::default(),
+        pallet_authority_discovery: indracore::AuthorityDiscoveryConfig { keys: vec![] },
+        pallet_vesting: indracore::VestingConfig { vesting: vec![] },
+        pallet_treasury: Default::default(),
+        pallet_sudo: indracore::SudoConfig {
             key: endowed_accounts[0].clone(),
-        }),
-        pallet_contracts: Some(indracore::ContractsConfig {
+        },
+        pallet_contracts: indracore::ContractsConfig {
             current_schedule: pallet_contracts::Schedule {
                 ..Default::default()
             },
-        }),
+        },
     }
 }
 
@@ -742,18 +740,18 @@ pub fn kumandra_testnet_genesis(
     const ENDOWMENT: u128 = 1_000_000 * SELS;
 
     kumandra_runtime::GenesisConfig {
-        frame_system: Some(kumandra_runtime::SystemConfig {
+        frame_system: kumandra_runtime::SystemConfig {
             code: wasm_binary.to_vec(),
             changes_trie_config: Default::default(),
-        }),
-        pallet_indices: Some(kumandra_runtime::IndicesConfig { indices: vec![] }),
-        pallet_balances: Some(kumandra_runtime::BalancesConfig {
+        },
+        pallet_indices: kumandra_runtime::IndicesConfig { indices: vec![] },
+        pallet_balances: kumandra_runtime::BalancesConfig {
             balances: endowed_accounts
                 .iter()
                 .map(|k| (k.clone(), ENDOWMENT))
                 .collect(),
-        }),
-        pallet_session: Some(kumandra_runtime::SessionConfig {
+        },
+        pallet_session: kumandra_runtime::SessionConfig {
             keys: initial_authorities
                 .iter()
                 .map(|x| {
@@ -771,20 +769,18 @@ pub fn kumandra_testnet_genesis(
                     )
                 })
                 .collect::<Vec<_>>(),
-        }),
-        pallet_babe: Some(Default::default()),
-        pallet_grandpa: Some(Default::default()),
-        pallet_im_online: Some(Default::default()),
-        pallet_authority_discovery: Some(kumandra_runtime::AuthorityDiscoveryConfig {
-            keys: vec![],
-        }),
-        pallet_contracts: Some(kumandra_runtime::ContractsConfig {
+        },
+        pallet_babe: Default::default(),
+        pallet_grandpa: Default::default(),
+        pallet_im_online: Default::default(),
+        pallet_authority_discovery: kumandra_runtime::AuthorityDiscoveryConfig { keys: vec![] },
+        pallet_contracts: kumandra_runtime::ContractsConfig {
             current_schedule: pallet_contracts::Schedule {
                 ..Default::default()
             },
-        }),
-        pallet_sudo: Some(kumandra_runtime::SudoConfig { key: root_key }),
-        parachains_configuration: Some(kumandra_runtime::ParachainsConfigurationConfig {
+        },
+        pallet_sudo: kumandra_runtime::SudoConfig { key: root_key },
+        parachains_configuration: kumandra_runtime::ParachainsConfigurationConfig {
             config: indracore_runtime_parachains::configuration::HostConfiguration {
                 validation_upgrade_frequency: 600u32,
                 validation_upgrade_delay: 300,
@@ -820,7 +816,7 @@ pub fn kumandra_testnet_genesis(
                 hrmp_max_message_num_per_candidate: 5,
                 ..Default::default()
             },
-        }),
+        },
     }
 }
 
