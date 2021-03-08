@@ -98,9 +98,7 @@ impl SubstrateCli for Cli {
                 Box::new(service::chain_spec::indracore_staging_testnet_config()?)
             }
             "indracore" => Box::new(service::chain_spec::indracore_config()?),
-            "kumandra-staging" => {
-                Box::new(service::chain_spec::kumandra_staging_testnet_config()?)
-            }
+            "kumandra-staging" => Box::new(service::chain_spec::kumandra_staging_testnet_config()?),
             "kumandra-local" => Box::new(service::chain_spec::kumandra_local_testnet_config()?),
             "kumandra" => Box::new(service::chain_spec::kumandra_config()?),
             path => {

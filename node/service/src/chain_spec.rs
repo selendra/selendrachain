@@ -22,10 +22,10 @@ use hex_literal::hex;
 use indracore::constants::currency::SELS;
 use indracore_primitives::v1::{AccountId, AccountPublic, AssignmentId, ValidatorId};
 use indracore_runtime as indracore;
-use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
-use pallet_staking::Forcing;
 use kumandra_runtime as kumandra;
 use kumandra_runtime::constants::currency::SELS as REL;
+use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
+use pallet_staking::Forcing;
 use sc_chain_spec::{ChainSpecExtension, ChainType};
 use serde::{Deserialize, Serialize};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
@@ -219,9 +219,7 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
     }
 }
 
-fn kumandra_staging_testnet_config_genesis(
-    wasm_binary: &[u8],
-) -> kumandra_runtime::GenesisConfig {
+fn kumandra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> kumandra_runtime::GenesisConfig {
     // subkey inspect "$SECRET"
     let endowed_accounts = vec![
         // 5FeyRQmjtdHoPH56ASFW76AJEP1yaQC1K9aEMvJTF9nzt9S9

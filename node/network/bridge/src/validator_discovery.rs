@@ -298,6 +298,12 @@ impl<N: Network, AD: AuthorityDiscovery> Service<N, AD> {
             if let Some(addresses) = result {
                 // We might have several `PeerId`s per `AuthorityId`
                 multiaddr_to_add.extend(addresses.into_iter().take(MAX_ADDR_PER_PEER));
+            } else {
+                tracing::debug!(
+                    target: LOG_TARGET,
+                    "Authority Discovery couldn't resolve {:?}",
+                    authority
+                );
             }
         }
 
@@ -316,6 +322,9 @@ impl<N: Network, AD: AuthorityDiscovery> Service<N, AD> {
         }
 
         // clean up revoked requests states
+        //
+        // note that the `.rev()` here is important to guarantee `swap_remove`
+        // doesn't invalidate unprocessed `revoked_indices`
         for to_revoke in revoked_indices.into_iter().rev() {
             drop(state.non_revoked_discovery_requests.swap_remove(to_revoke));
         }
@@ -324,10 +333,16 @@ impl<N: Network, AD: AuthorityDiscovery> Service<N, AD> {
         let mut multiaddr_to_remove = HashSet::new();
         for id in revoked_validators.into_iter() {
             let result = authority_discovery_service
-                .get_addresses_by_authority_id(id)
+                .get_addresses_by_authority_id(id.clone())
                 .await;
             if let Some(addresses) = result {
                 multiaddr_to_remove.extend(addresses.into_iter());
+            } else {
+                tracing::debug!(
+                    target: LOG_TARGET,
+                    "Authority Discovery couldn't resolve {:?} on cleanup, a leak is possible",
+                    id,
+                );
             }
         }
 

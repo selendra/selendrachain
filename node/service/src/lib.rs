@@ -1031,10 +1031,7 @@ pub fn new_chain_ops(
             import_queue,
             task_manager,
             ..
-        } = new_partial::<kumandra_runtime::RuntimeApi, KumandraExecutor>(
-            config,
-            jaeger_agent,
-        )?;
+        } = new_partial::<kumandra_runtime::RuntimeApi, KumandraExecutor>(config, jaeger_agent)?;
         Ok((
             Arc::new(Client::Kumandra(client)),
             backend,
