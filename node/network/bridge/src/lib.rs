@@ -1661,8 +1661,10 @@ mod tests {
                 AllMessages::ApprovalVoting(_) => unreachable!("Not interested in network events"),
                 AllMessages::ApprovalDistribution(_) => {
                     cnt += 1;
-                } // Add variants here as needed, `{ cnt += 1; }` for those that need to be
-                  // notified, `unreachable!()` for those that should not.
+                }
+                AllMessages::GossipSupport(_) => unreachable!("Not interested in network events"),
+                // Add variants here as needed, `{ cnt += 1; }` for those that need to be
+                // notified, `unreachable!()` for those that should not.
             }
         }
         assert_eq!(cnt, EXPECTED_COUNT);

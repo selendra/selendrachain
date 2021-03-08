@@ -388,6 +388,7 @@ where
     use indracore_collator_protocol::{CollatorProtocolSubsystem, ProtocolSide};
     use indracore_network_bridge::NetworkBridge as NetworkBridgeSubsystem;
     use indracore_node_collation_generation::CollationGenerationSubsystem;
+    use indracore_node_core_approval_voting::ApprovalVotingSubsystem;
     use indracore_node_core_av_store::AvailabilityStoreSubsystem;
     use indracore_node_core_backing::CandidateBackingSubsystem;
     use indracore_node_core_bitfield_signing::BitfieldSigningSubsystem;
@@ -398,8 +399,7 @@ where
     use indracore_node_core_runtime_api::RuntimeApiSubsystem;
     use indracore_pov_distribution::PoVDistribution as PoVDistributionSubsystem;
     use indracore_statement_distribution::StatementDistribution as StatementDistributionSubsystem;
-
-    use indracore_node_core_approval_voting::ApprovalVotingSubsystem;
+    use polkadot_gossip_support::GossipSupport as GossipSupportSubsystem;
 
     let all_subsystems = AllSubsystems {
         availability_distribution: AvailabilityDistributionSubsystem::new(
@@ -459,6 +459,7 @@ where
             approval_voting_config,
             keystore.clone(),
         )?,
+        gossip_support: GossipSupportSubsystem::new(),
     };
 
     Overseer::new(leaves, all_subsystems, registry, spawner).map_err(|e| e.into())

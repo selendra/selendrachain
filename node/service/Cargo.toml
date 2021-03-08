@@ -98,6 +98,7 @@ indracore-pov-distribution = { path = "../network/pov-distribution", optional = 
 indracore-statement-distribution = { path = "../network/statement-distribution", optional = true }
 indracore-approval-distribution = { path = "../network/approval-distribution", optional = true }
 indracore-node-core-approval-voting = { path = "../core/approval-voting", optional = true }
+indracore-gossip-support = { path = "../network/gossip-support", optional = true }
 
 [dev-dependencies]
 env_logger = "0.8.2"
@@ -124,6 +125,7 @@ real-overseer = [
 	"indracore-availability-distribution",
 	"indracore-availability-recovery",
 	"indracore-collator-protocol",
+	"indracore-gossip-support",
 	"indracore-network-bridge",
 	"indracore-node-collation-generation",
 	"indracore-node-core-backing",
