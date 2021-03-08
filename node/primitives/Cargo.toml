@@ -10,10 +10,10 @@ futures = "0.3.12"
 indracore-primitives = { path = "../../primitives" }
 indracore-statement-table = { path = "../../statement-table" }
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
-runtime_primitives = { package = "sp-runtime", git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
-sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
-sp-consensus-vrf = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
-sp-consensus-babe = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+runtime_primitives = { package = "sp-runtime", git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-consensus-vrf = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-consensus-babe = { git = "https://github.com/selendra/substrate", branch = "master" }
 schnorrkel = "0.9.1"
 thiserror = "1.0.22"

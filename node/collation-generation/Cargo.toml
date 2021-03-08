@@ -13,7 +13,7 @@ indracore-node-primitives = { path = "../primitives" }
 indracore-node-subsystem = { path = "../subsystem" }
 indracore-node-subsystem-util = { path = "../subsystem-util" }
 indracore-primitives = { path = "../../primitives" }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
 thiserror = "1.0.23"
 
 [dev-dependencies]

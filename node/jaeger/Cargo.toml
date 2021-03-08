@@ -12,7 +12,7 @@ mick-jaeger = "0.1.4"
 lazy_static = "1.4"
 parking_lot = "0.11.1"
 indracore-primitives = { path = "../../primitives" }
-sc-network = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
 thiserror = "1.0.23"
 log = "0.4.13"

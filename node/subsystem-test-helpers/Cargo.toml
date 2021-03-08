@@ -19,9 +19,9 @@ indracore-node-subsystem = { path = "../subsystem" }
 indracore-node-subsystem-util = { path = "../subsystem-util" }
 indracore-primitives = { path = "../../primitives" }
 indracore-statement-table = { path = "../../statement-table" }
-sc-network = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "master" }
 smallvec = "1.6.1"
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
 
 [dev-dependencies]
 indracore-overseer = { path = "../overseer" }

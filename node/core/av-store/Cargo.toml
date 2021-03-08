@@ -21,7 +21,7 @@ indracore-node-subsystem-util = { path = "../../subsystem-util" }
 indracore-overseer = { path = "../../overseer" }
 indracore-primitives = { path = "../../../primitives" }
 
-sc-service = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
+sc-service = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
 
 [dev-dependencies]
 log = "0.4.13"
@@ -29,8 +29,8 @@ env_logger = "0.8.2"
 assert_matches = "1.4.0"
 kvdb-memorydb = "0.9.0"
 
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
 indracore-node-subsystem-util = { path = "../../subsystem-util" }
 indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
-sp-keyring = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+sp-keyring = { git = "https://github.com/selendra/substrate", branch = "master" }
 parking_lot = "0.11.1"

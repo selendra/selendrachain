@@ -10,7 +10,7 @@ futures = "0.3.12"
 tracing = "0.1.22"
 tracing-futures = "0.2.4"
 indracore-primitives = { path = "../../../primitives" }
-sp-staking = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", default-features = false }
+sp-staking = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
 indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
 indracore-node-primitives = { path = "../../primitives" }
 indracore-node-subsystem-util = { path = "../../subsystem-util" }
@@ -21,8 +21,8 @@ indexmap = "1.6.1"
 [dev-dependencies]
 indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
 assert_matches = "1.4.0"
-sp-keyring = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
-sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
-sp-keystore = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
-sc-keystore = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+sp-keyring = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "master" }
+sc-keystore = { git = "https://github.com/selendra/substrate", branch = "master" }

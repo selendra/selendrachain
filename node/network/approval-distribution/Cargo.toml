@@ -16,7 +16,7 @@ tracing = "0.1.22"
 tracing-futures = "0.2.4"
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.3", features = ["std"] }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master", features = ["std"] }
 
 indracore-node-subsystem-util = { path = "../../subsystem-util" }
 indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }

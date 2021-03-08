@@ -23,10 +23,10 @@ indracore-node-network-protocol = { path = "../network/protocol" }
 indracore-primitives = { path = "../../primitives" }
 indracore-statement-table = { path = "../../statement-table" }
 indracore-node-jaeger = { path = "../jaeger" }
-sc-network = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "master" }
 smallvec = "1.6.1"
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
-substrate-prometheus-endpoint = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
+substrate-prometheus-endpoint = { git = "https://github.com/selendra/substrate", branch = "master" }
 thiserror = "1.0.23"
 log = "0.4.13"
 

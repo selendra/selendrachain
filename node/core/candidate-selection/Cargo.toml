@@ -10,7 +10,7 @@ tracing = "0.1.22"
 tracing-futures = "0.2.4"
 thiserror = "1.0.23"
 
-sp-keystore = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "master" }
 
 indracore-primitives = { path = "../../../primitives" }
 indracore-node-subsystem = { path = "../../subsystem" }
@@ -18,4 +18,4 @@ indracore-node-primitives = { path = "../../primitives" }
 indracore-node-subsystem-util = { path = "../../subsystem-util" }
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.3" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
