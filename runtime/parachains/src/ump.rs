@@ -77,8 +77,8 @@ impl<Config: xcm_executor::Config> UmpSink for XcmSink<Config> {
                 }
             }
         } else {
-            frame_support::debug::error!(
-                target: "xcm",
+            log::error!(
+                target: "runtime::ump-sink",
                 "Failed to decode versioned XCM from upward message.",
             );
         }

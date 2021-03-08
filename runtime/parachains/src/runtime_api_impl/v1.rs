@@ -11,9 +11,6 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-// You should have received a copy of the GNU General Public License
-// along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
-
 //! A module exporting runtime API implementation functions for all runtime APIs using v1
 //! primitives.
 //!
@@ -23,7 +20,6 @@
 use crate::{
     configuration, dmp, hrmp, inclusion, initializer, paras, scheduler, session_info, shared,
 };
-use frame_support::debug;
 use primitives::v1::{
     AuthorityDiscoveryId, CandidateEvent, CommittedCandidateReceipt, CoreIndex, CoreOccupied,
     CoreState, GroupIndex, GroupRotationInfo, Hash, Id as ParaId, InboundDownwardMessage,
@@ -89,9 +85,10 @@ pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::Hash, T:
         ) {
             Some(g) => g,
             None => {
-                debug::warn!(
+                log::warn!(
+                    target: "runtime::polkadot-api::v1",
                     "Could not determine the group responsible for core extracted \
-					from list of cores for some prior block in same session"
+                    from list of cores for some prior block in same session",
                 );
 
                 GroupIndex(0)

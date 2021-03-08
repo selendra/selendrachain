@@ -29,7 +29,7 @@ use runtime_common::{
 
 use authority_discovery_primitives::AuthorityId as AuthorityDiscoveryId;
 use frame_support::{
-    construct_runtime, debug, parameter_types,
+    construct_runtime, parameter_types,
     traits::{Filter, KeyOwnerProofSystem, LockIdentifier, Randomness},
     weights::Weight,
     RuntimeDebug,
@@ -778,7 +778,7 @@ where
         );
         let raw_payload = SignedPayload::new(call, extra)
             .map_err(|e| {
-                debug::warn!("Unable to create signed payload: {:?}", e);
+                log::warn!("Unable to create signed payload: {:?}", e);
             })
             .ok()?;
         let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
@@ -1430,7 +1430,6 @@ sp_api::impl_runtime_apis! {
     #[cfg(feature = "try-runtime")]
     impl frame_try_runtime::TryRuntime<Block> for Runtime {
         fn on_runtime_upgrade() -> Result<(Weight, Weight), sp_runtime::RuntimeString> {
-            frame_support::debug::RuntimeLogger::init();
             let weight = Executive::try_runtime_upgrade()?;
             Ok((weight, BlockWeights::get().max_block))
         }

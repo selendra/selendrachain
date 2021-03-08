@@ -22,7 +22,7 @@
 
 use authority_discovery_primitives::AuthorityId as AuthorityDiscoveryId;
 use frame_support::{
-    construct_runtime, debug, parameter_types,
+    construct_runtime, parameter_types,
     traits::{EnsureOrigin, Filter, KeyOwnerProofSystem, Randomness},
     weights::Weight,
 };
@@ -349,7 +349,7 @@ where
         );
         let raw_payload = SignedPayload::new(call, extra)
             .map_err(|e| {
-                debug::warn!("Unable to create signed payload: {:?}", e);
+                log::warn!("Unable to create signed payload: {:?}", e);
             })
             .ok()?;
         let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
