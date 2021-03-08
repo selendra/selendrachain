@@ -889,7 +889,7 @@ fn check_and_import_assignment(
             tracing::trace!(
                 target: LOG_TARGET,
                 "Imported assignment from validator {} on candidate {:?}",
-                assignment.validator,
+                assignment.validator.0,
                 (
                     assigned_candidate_hash,
                     candidate_entry.candidate_receipt().descriptor.para_id
@@ -958,7 +958,7 @@ fn check_and_import_approval<T>(
     let approval_payload =
         approval_signing_payload(ApprovalVote(approved_candidate_hash), block_entry.session());
 
-    let pubkey = match session_info.validators.get(approval.validator as usize) {
+    let pubkey = match session_info.validators.get(approval.validator.0 as usize) {
         Some(k) => k,
         None => respond_early!(ApprovalCheckResult::Bad),
     };
@@ -1564,13 +1564,13 @@ async fn issue_approval(
         }
     };
 
-    let validator_pubkey = match session_info.validators.get(validator_index as usize) {
+    let validator_pubkey = match session_info.validators.get(validator_index.0 as usize) {
         Some(p) => p,
         None => {
             tracing::warn!(
                 target: LOG_TARGET,
                 "Validator index {} out of bounds in session {}",
-                validator_index,
+                validator_index.0,
                 block_entry.session(),
             );
 
@@ -1589,7 +1589,7 @@ async fn issue_approval(
             tracing::warn!(
 				target: LOG_TARGET,
 				"Could not issue approval signature with validator index {} in session {}. Assignment key present but not validator key?",
-				validator_index,
+				validator_index.0,
 				block_entry.session(),
 			);
 

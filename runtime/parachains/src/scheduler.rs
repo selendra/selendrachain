@@ -267,7 +267,7 @@ impl<T: Config> Module<T> {
 
             let mut shuffled_indices: Vec<_> = (0..validators.len())
                 .enumerate()
-                .map(|(i, _)| i as ValidatorIndex)
+                .map(|(i, _)| ValidatorIndex(i as _))
                 .collect();
 
             shuffled_indices.shuffle(&mut rng);

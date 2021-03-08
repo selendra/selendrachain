@@ -771,6 +771,7 @@ mod tests {
     use assert_matches::assert_matches;
     use indracore_node_primitives::approval::{VRFOutput, VRFProof};
     use indracore_node_subsystem_test_helpers::make_subsystem_context;
+    use indracore_primitives::v1::ValidatorIndex;
     use indracore_subsystem::messages::AllMessages;
     use merlin::Transcript;
     use sp_consensus_babe::digests::{CompatibleDigestItem, PreDigest, SecondaryVRFPreDigest};
@@ -1587,7 +1588,7 @@ mod tests {
             validators: vec![Sr25519Keyring::Alice.public().into(); 6],
             discovery_keys: Vec::new(),
             assignment_keys: Vec::new(),
-            validator_groups: vec![vec![0; 5], vec![0; 2]],
+            validator_groups: vec![vec![ValidatorIndex(0); 5], vec![ValidatorIndex(0); 2]],
             n_cores: 6,
             needed_approvals: 2,
             zeroth_delay_tranche_width: irrelevant,

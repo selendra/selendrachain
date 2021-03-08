@@ -1,19 +1,3 @@
-// Copyright 2020 Parity Technologies (UK) Ltd.
-// This file is part of Polkadot.
-
-// Polkadot is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Polkadot is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
-
 use super::*;
 use bitvec::bitvec;
 use indracore_primitives::v1::{OccupiedCore, ScheduledCore};
@@ -98,9 +82,17 @@ mod select_availability_bitfields {
         // we pass in three bitfields with two validators
         // this helps us check the postcondition that we get two bitfields back, for which the validators differ
         let bitfields = vec![
-            block_on(signed_bitfield(&keystore, bitvec.clone(), 0)),
-            block_on(signed_bitfield(&keystore, bitvec.clone(), 1)),
-            block_on(signed_bitfield(&keystore, bitvec, 1)),
+            block_on(signed_bitfield(
+                &keystore,
+                bitvec.clone(),
+                ValidatorIndex(0),
+            )),
+            block_on(signed_bitfield(
+                &keystore,
+                bitvec.clone(),
+                ValidatorIndex(1),
+            )),
+            block_on(signed_bitfield(&keystore, bitvec, ValidatorIndex(1))),
         ];
 
         let mut selected_bitfields = select_availability_bitfields(&cores, &bitfields);
@@ -136,9 +128,13 @@ mod select_availability_bitfields {
         ];
 
         let bitfields = vec![
-            block_on(signed_bitfield(&keystore, bitvec0, 0)),
-            block_on(signed_bitfield(&keystore, bitvec1, 1)),
-            block_on(signed_bitfield(&keystore, bitvec2.clone(), 2)),
+            block_on(signed_bitfield(&keystore, bitvec0, ValidatorIndex(0))),
+            block_on(signed_bitfield(&keystore, bitvec1, ValidatorIndex(1))),
+            block_on(signed_bitfield(
+                &keystore,
+                bitvec2.clone(),
+                ValidatorIndex(2),
+            )),
         ];
 
         let selected_bitfields = select_availability_bitfields(&cores, &bitfields);
@@ -160,8 +156,12 @@ mod select_availability_bitfields {
         let cores = vec![occupied_core(0), occupied_core(1)];
 
         let bitfields = vec![
-            block_on(signed_bitfield(&keystore, bitvec, 1)),
-            block_on(signed_bitfield(&keystore, bitvec1.clone(), 1)),
+            block_on(signed_bitfield(&keystore, bitvec, ValidatorIndex(1))),
+            block_on(signed_bitfield(
+                &keystore,
+                bitvec1.clone(),
+                ValidatorIndex(1),
+            )),
         ];
 
         let selected_bitfields = select_availability_bitfields(&cores, &bitfields);
@@ -199,11 +199,31 @@ mod select_availability_bitfields {
         // these are out of order but will be selected in order. The better
         // bitfield for 3 will be selected.
         let bitfields = vec![
-            block_on(signed_bitfield(&keystore, bitvec2.clone(), 3)),
-            block_on(signed_bitfield(&keystore, bitvec3.clone(), 3)),
-            block_on(signed_bitfield(&keystore, bitvec0.clone(), 0)),
-            block_on(signed_bitfield(&keystore, bitvec2.clone(), 2)),
-            block_on(signed_bitfield(&keystore, bitvec1.clone(), 1)),
+            block_on(signed_bitfield(
+                &keystore,
+                bitvec2.clone(),
+                ValidatorIndex(3),
+            )),
+            block_on(signed_bitfield(
+                &keystore,
+                bitvec3.clone(),
+                ValidatorIndex(3),
+            )),
+            block_on(signed_bitfield(
+                &keystore,
+                bitvec0.clone(),
+                ValidatorIndex(0),
+            )),
+            block_on(signed_bitfield(
+                &keystore,
+                bitvec2.clone(),
+                ValidatorIndex(2),
+            )),
+            block_on(signed_bitfield(
+                &keystore,
+                bitvec1.clone(),
+                ValidatorIndex(1),
+            )),
         ];
 
         let selected_bitfields = select_availability_bitfields(&cores, &bitfields);

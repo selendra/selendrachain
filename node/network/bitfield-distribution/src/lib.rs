@@ -287,7 +287,7 @@ async fn handle_bitfield_distribution<Context>(
         return;
     }
 
-    let validator_index = signed_availability.validator_index() as usize;
+    let validator_index = signed_availability.validator_index().0 as usize;
     let validator = if let Some(validator) = validator_set.get(validator_index) {
         validator.clone()
     } else {
@@ -431,7 +431,7 @@ async fn process_incoming_peer_message<Context>(
     // Use the (untrusted) validator index provided by the signed payload
     // and see if that one actually signed the availability bitset.
     let signing_context = job_data.signing_context.clone();
-    let validator_index = message.signed_availability.validator_index() as usize;
+    let validator_index = message.signed_availability.validator_index().0 as usize;
     let validator = if let Some(validator) = validator_set.get(validator_index) {
         validator.clone()
     } else {
@@ -782,7 +782,7 @@ mod test {
     use indracore_node_network_protocol::{our_view, view, ObservedRole};
     use indracore_node_subsystem_test_helpers::make_subsystem_context;
     use indracore_node_subsystem_util::TimeoutExt;
-    use indracore_primitives::v1::{AvailabilityBitfield, Signed};
+    use indracore_primitives::v1::{AvailabilityBitfield, Signed, ValidatorIndex};
     use indracore_subsystem::jaeger;
     use maplit::hashmap;
     use sp_application_crypto::AppKey;
@@ -903,7 +903,7 @@ mod test {
             &keystore,
             payload,
             &signing_context,
-            0,
+            ValidatorIndex(0),
             &malicious.into(),
         ))
         .ok()
@@ -971,7 +971,7 @@ mod test {
             &keystore,
             payload,
             &signing_context,
-            42,
+            ValidatorIndex(42),
             &validator,
         ))
         .ok()
@@ -1031,7 +1031,7 @@ mod test {
             &keystore,
             payload,
             &signing_context,
-            0,
+            ValidatorIndex(0),
             &validator,
         ))
         .ok()
@@ -1140,7 +1140,7 @@ mod test {
             &keystore,
             payload,
             &signing_context,
-            0,
+            ValidatorIndex(0),
             &validator,
         ))
         .ok()
@@ -1245,7 +1245,7 @@ mod test {
             &keystore,
             payload,
             &signing_context,
-            0,
+            ValidatorIndex(0),
             &validator,
         ))
         .ok()
@@ -1400,7 +1400,7 @@ mod test {
             &keystore,
             payload,
             &signing_context,
-            0,
+            ValidatorIndex(0),
             &validator,
         ))
         .ok()

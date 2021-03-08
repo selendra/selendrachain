@@ -40,7 +40,7 @@ where
     let validators = C::SessionInterface::validators();
     let rewards = indices
         .into_iter()
-        .filter_map(|i| validators.get(i as usize).map(|v| v.clone()))
+        .filter_map(|i| validators.get(i.0 as usize).map(|v| v.clone()))
         .map(|v| (v, points));
 
     <pallet_staking::Module<C>>::reward_by_ids(rewards);

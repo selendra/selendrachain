@@ -116,7 +116,7 @@ impl<N, AD> NetworkBridge<N, AD> {
 
 impl<Net, AD, Context> Subsystem<Context> for NetworkBridge<Net, AD>
 where
-    Net: Network + validator_discovery::Network,
+    Net: Network + validator_discovery::Network + Sync,
     AD: validator_discovery::AuthorityDiscovery,
     Context: SubsystemContext<Message = NetworkBridgeMessage>,
 {
@@ -235,7 +235,10 @@ where
 
             Action::SendRequests(reqs) => {
                 for req in reqs {
-                    bridge.network_service.start_request(req);
+                    bridge
+                        .network_service
+                        .start_request(&mut bridge.authority_discovery_service, req)
+                        .await;
                 }
             }
 
@@ -617,8 +620,8 @@ mod tests {
     use indracore_node_subsystem_util::metered;
     use indracore_primitives::v1::AuthorityDiscoveryId;
     use indracore_subsystem::messages::{
-        ApprovalDistributionMessage, AvailabilityDistributionMessage, AvailabilityRecoveryMessage,
-        BitfieldDistributionMessage, PoVDistributionMessage, StatementDistributionMessage,
+        ApprovalDistributionMessage, AvailabilityRecoveryMessage, BitfieldDistributionMessage,
+        PoVDistributionMessage, StatementDistributionMessage,
     };
     use indracore_subsystem::{ActiveLeavesUpdate, FromOverseer, OverseerSignal};
     use sc_network::config::RequestResponseConfig;
@@ -626,6 +629,7 @@ mod tests {
     use sp_keyring::Sr25519Keyring;
 
     use crate::network::{Network, NetworkAction};
+    use crate::validator_discovery::AuthorityDiscovery;
 
     // The subsystem's view of the network - only supports a single call to `event_stream`.
     struct TestNetwork {
@@ -660,6 +664,7 @@ mod tests {
         )
     }
 
+    #[async_trait]
     impl Network for TestNetwork {
         fn event_stream(&mut self) -> BoxStream<'static, NetworkEvent> {
             self.net_events
@@ -675,7 +680,7 @@ mod tests {
             Box::pin((&mut self.action_tx).sink_map_err(Into::into))
         }
 
-        fn start_request(&self, _: Requests) {}
+        async fn start_request<AD: AuthorityDiscovery>(&self, _: &mut AD, _: Requests) {}
     }
 
     #[async_trait]
@@ -816,13 +821,6 @@ mod tests {
             virtual_overseer.recv().await,
             AllMessages::StatementDistribution(
                 StatementDistributionMessage::NetworkBridgeUpdateV1(e)
-            ) if e == event.focus().expect("could not focus message")
-        );
-
-        assert_matches!(
-            virtual_overseer.recv().await,
-            AllMessages::AvailabilityDistribution(
-                AvailabilityDistributionMessage::NetworkBridgeUpdateV1(e)
             ) if e == event.focus().expect("could not focus message")
         );
 
@@ -1615,7 +1613,7 @@ mod tests {
     fn spread_event_to_subsystems_is_up_to_date() {
         // Number of subsystems expected to be interested in a network event,
         // and hence the network event broadcasted to.
-        const EXPECTED_COUNT: usize = 6;
+        const EXPECTED_COUNT: usize = 5;
 
         let mut cnt = 0_usize;
         for msg in
@@ -1639,7 +1637,7 @@ mod tests {
                     cnt += 1;
                 }
                 AllMessages::AvailabilityDistribution(_) => {
-                    cnt += 1;
+                    unreachable!("Not interested in network events")
                 }
                 AllMessages::AvailabilityRecovery(_) => {
                     cnt += 1;

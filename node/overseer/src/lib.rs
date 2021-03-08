@@ -2956,10 +2956,6 @@ mod tests {
         StatementDistributionMessage::NetworkBridgeUpdateV1(test_network_bridge_event())
     }
 
-    fn test_availability_distribution_msg() -> AvailabilityDistributionMessage {
-        AvailabilityDistributionMessage::NetworkBridgeUpdateV1(test_network_bridge_event())
-    }
-
     fn test_availability_recovery_msg() -> AvailabilityRecoveryMessage {
         let (sender, _) = oneshot::channel();
         AvailabilityRecoveryMessage::RecoverAvailableData(
@@ -3089,11 +3085,6 @@ mod tests {
                 ))
                 .await;
             handler
-                .send_msg(AllMessages::AvailabilityDistribution(
-                    test_availability_distribution_msg(),
-                ))
-                .await;
-            handler
                 .send_msg(AllMessages::AvailabilityRecovery(
                     test_availability_recovery_msg(),
                 ))
@@ -3141,8 +3132,8 @@ mod tests {
                     assert_eq!(stop_signals_received.load(atomic::Ordering::SeqCst), NUM_SUBSYSTEMS);
                     // x2 because of broadcast_signal on startup
                     assert_eq!(signals_received.load(atomic::Ordering::SeqCst), NUM_SUBSYSTEMS);
-                    // -1 for BitfieldSigning
-                    assert_eq!(msgs_received.load(atomic::Ordering::SeqCst), NUM_SUBSYSTEMS - 1);
+                    // -2 for BitfieldSigning and Availability distribution
+                    assert_eq!(msgs_received.load(atomic::Ordering::SeqCst), NUM_SUBSYSTEMS - 2);
 
                     assert!(res.is_ok());
                 },

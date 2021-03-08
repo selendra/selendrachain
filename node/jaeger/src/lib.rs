@@ -218,7 +218,7 @@ impl SpanBuilder {
     #[inline(always)]
     pub fn with_validator_index(mut self, validator: ValidatorIndex) -> Self {
         self.span
-            .add_string_tag("validator-index", &validator.to_string());
+            .add_string_tag("validator-index", &validator.0.to_string());
         self
     }
 
@@ -239,7 +239,7 @@ impl SpanBuilder {
     #[inline(always)]
     pub fn with_claimed_validator_index(mut self, claimed_validator_index: ValidatorIndex) -> Self {
         self.span
-            .add_string_tag("claimed-validator", &claimed_validator_index.to_string());
+            .add_string_tag("claimed-validator", &claimed_validator_index.0.to_string());
         self
     }
 
