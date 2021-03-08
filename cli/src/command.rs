@@ -81,7 +81,7 @@ impl SubstrateCli for Cli {
     fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
         let id = if id == "" {
             let n = get_exec_name().unwrap_or_default();
-            ["indracore", "relaychain"]
+            ["indracore", "kumandra"]
                 .iter()
                 .cloned()
                 .find(|&chain| n.starts_with(chain))
@@ -98,11 +98,11 @@ impl SubstrateCli for Cli {
                 Box::new(service::chain_spec::indracore_staging_testnet_config()?)
             }
             "indracore" => Box::new(service::chain_spec::indracore_config()?),
-            "relaychain-staging" => {
-                Box::new(service::chain_spec::relaychain_staging_testnet_config()?)
+            "kumandra-staging" => {
+                Box::new(service::chain_spec::kumandra_staging_testnet_config()?)
             }
-            "relaychain-local" => Box::new(service::chain_spec::relaychain_local_testnet_config()?),
-            "relaychain" => Box::new(service::chain_spec::relaychain_config()?),
+            "kumandra-local" => Box::new(service::chain_spec::kumandra_local_testnet_config()?),
+            "kumandra" => Box::new(service::chain_spec::kumandra_config()?),
             path => {
                 let path = std::path::PathBuf::from(path);
 
@@ -115,8 +115,8 @@ impl SubstrateCli for Cli {
 
                 // When `force_*` is given or the file name starts with the name of one of the known chains,
                 // we use the chain spec for the specific chain.
-                if self.run.force_relaychain || starts_with("relaychain") {
-                    Box::new(service::RelaychainChainSpec::from_json_file(path)?)
+                if self.run.force_kumandra || starts_with("kumandra") {
+                    Box::new(service::KumandraChainSpec::from_json_file(path)?)
                 } else {
                     Box::new(service::IndracoreChainSpec::from_json_file(path)?)
                 }
@@ -125,8 +125,8 @@ impl SubstrateCli for Cli {
     }
 
     fn native_runtime_version(spec: &Box<dyn service::ChainSpec>) -> &'static RuntimeVersion {
-        if spec.is_relaychain() {
-            &service::relaychain_runtime::VERSION
+        if spec.is_kumandra() {
+            &service::kumandra_runtime::VERSION
         } else {
             &service::indracore_runtime::VERSION
         }

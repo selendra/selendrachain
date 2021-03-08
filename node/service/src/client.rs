@@ -149,7 +149,7 @@ pub trait ClientHandle {
 #[derive(Clone)]
 pub enum Client {
     Indracore(Arc<crate::FullClient<indracore_runtime::RuntimeApi, crate::IndracoreExecutor>>),
-    Relaychain(Arc<crate::FullClient<relaychain_runtime::RuntimeApi, crate::RelaychainExecutor>>),
+    Kumandra(Arc<crate::FullClient<kumandra_runtime::RuntimeApi, crate::KumandraExecutor>>),
 }
 
 impl ClientHandle for Client {
@@ -158,7 +158,7 @@ impl ClientHandle for Client {
             Self::Indracore(client) => {
                 T::execute_with_client::<_, _, crate::FullBackend>(t, client.clone())
             }
-            Self::Relaychain(client) => {
+            Self::Kumandra(client) => {
                 T::execute_with_client::<_, _, crate::FullBackend>(t, client.clone())
             }
         }
@@ -169,7 +169,7 @@ impl sc_client_api::UsageProvider<Block> for Client {
     fn usage_info(&self) -> sc_client_api::ClientInfo<Block> {
         match self {
             Self::Indracore(client) => client.usage_info(),
-            Self::Relaychain(client) => client.usage_info(),
+            Self::Kumandra(client) => client.usage_info(),
         }
     }
 }
@@ -181,28 +181,28 @@ impl sc_client_api::BlockBackend<Block> for Client {
     ) -> sp_blockchain::Result<Option<Vec<<Block as BlockT>::Extrinsic>>> {
         match self {
             Self::Indracore(client) => client.block_body(id),
-            Self::Relaychain(client) => client.block_body(id),
+            Self::Kumandra(client) => client.block_body(id),
         }
     }
 
     fn block(&self, id: &BlockId<Block>) -> sp_blockchain::Result<Option<SignedBlock<Block>>> {
         match self {
             Self::Indracore(client) => client.block(id),
-            Self::Relaychain(client) => client.block(id),
+            Self::Kumandra(client) => client.block(id),
         }
     }
 
     fn block_status(&self, id: &BlockId<Block>) -> sp_blockchain::Result<BlockStatus> {
         match self {
             Self::Indracore(client) => client.block_status(id),
-            Self::Relaychain(client) => client.block_status(id),
+            Self::Kumandra(client) => client.block_status(id),
         }
     }
 
     fn justification(&self, id: &BlockId<Block>) -> sp_blockchain::Result<Option<Justification>> {
         match self {
             Self::Indracore(client) => client.justification(id),
-            Self::Relaychain(client) => client.justification(id),
+            Self::Kumandra(client) => client.justification(id),
         }
     }
 
@@ -212,7 +212,7 @@ impl sc_client_api::BlockBackend<Block> for Client {
     ) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
         match self {
             Self::Indracore(client) => client.block_hash(number),
-            Self::Relaychain(client) => client.block_hash(number),
+            Self::Kumandra(client) => client.block_hash(number),
         }
     }
 
@@ -222,7 +222,7 @@ impl sc_client_api::BlockBackend<Block> for Client {
     ) -> sp_blockchain::Result<Option<<Block as BlockT>::Extrinsic>> {
         match self {
             Self::Indracore(client) => client.extrinsic(id),
-            Self::Relaychain(client) => client.extrinsic(id),
+            Self::Kumandra(client) => client.extrinsic(id),
         }
     }
 }
@@ -235,7 +235,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
     ) -> sp_blockchain::Result<Option<StorageData>> {
         match self {
             Self::Indracore(client) => client.storage(id, key),
-            Self::Relaychain(client) => client.storage(id, key),
+            Self::Kumandra(client) => client.storage(id, key),
         }
     }
 
@@ -246,7 +246,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
     ) -> sp_blockchain::Result<Vec<StorageKey>> {
         match self {
             Self::Indracore(client) => client.storage_keys(id, key_prefix),
-            Self::Relaychain(client) => client.storage_keys(id, key_prefix),
+            Self::Kumandra(client) => client.storage_keys(id, key_prefix),
         }
     }
 
@@ -257,7 +257,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
     ) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
         match self {
             Self::Indracore(client) => client.storage_hash(id, key),
-            Self::Relaychain(client) => client.storage_hash(id, key),
+            Self::Kumandra(client) => client.storage_hash(id, key),
         }
     }
 
@@ -268,7 +268,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
     ) -> sp_blockchain::Result<Vec<(StorageKey, StorageData)>> {
         match self {
             Self::Indracore(client) => client.storage_pairs(id, key_prefix),
-            Self::Relaychain(client) => client.storage_pairs(id, key_prefix),
+            Self::Kumandra(client) => client.storage_pairs(id, key_prefix),
         }
     }
 
@@ -282,7 +282,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
     > {
         match self {
             Self::Indracore(client) => client.storage_keys_iter(id, prefix, start_key),
-            Self::Relaychain(client) => client.storage_keys_iter(id, prefix, start_key),
+            Self::Kumandra(client) => client.storage_keys_iter(id, prefix, start_key),
         }
     }
 
@@ -294,7 +294,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
     ) -> sp_blockchain::Result<Option<StorageData>> {
         match self {
             Self::Indracore(client) => client.child_storage(id, child_info, key),
-            Self::Relaychain(client) => client.child_storage(id, child_info, key),
+            Self::Kumandra(client) => client.child_storage(id, child_info, key),
         }
     }
 
@@ -306,7 +306,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
     ) -> sp_blockchain::Result<Vec<StorageKey>> {
         match self {
             Self::Indracore(client) => client.child_storage_keys(id, child_info, key_prefix),
-            Self::Relaychain(client) => client.child_storage_keys(id, child_info, key_prefix),
+            Self::Kumandra(client) => client.child_storage_keys(id, child_info, key_prefix),
         }
     }
 
@@ -318,7 +318,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
     ) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
         match self {
             Self::Indracore(client) => client.child_storage_hash(id, child_info, key),
-            Self::Relaychain(client) => client.child_storage_hash(id, child_info, key),
+            Self::Kumandra(client) => client.child_storage_hash(id, child_info, key),
         }
     }
 
@@ -329,7 +329,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
     ) -> sp_blockchain::Result<Option<(NumberFor<Block>, BlockId<Block>)>> {
         match self {
             Self::Indracore(client) => client.max_key_changes_range(first, last),
-            Self::Relaychain(client) => client.max_key_changes_range(first, last),
+            Self::Kumandra(client) => client.max_key_changes_range(first, last),
         }
     }
 
@@ -342,7 +342,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
     ) -> sp_blockchain::Result<Vec<(NumberFor<Block>, u32)>> {
         match self {
             Self::Indracore(client) => client.key_changes(first, last, storage_key, key),
-            Self::Relaychain(client) => client.key_changes(first, last, storage_key, key),
+            Self::Kumandra(client) => client.key_changes(first, last, storage_key, key),
         }
     }
 }
@@ -351,35 +351,35 @@ impl sp_blockchain::HeaderBackend<Block> for Client {
     fn header(&self, id: BlockId<Block>) -> sp_blockchain::Result<Option<Header>> {
         match self {
             Self::Indracore(client) => client.header(&id),
-            Self::Relaychain(client) => client.header(&id),
+            Self::Kumandra(client) => client.header(&id),
         }
     }
 
     fn info(&self) -> sp_blockchain::Info<Block> {
         match self {
             Self::Indracore(client) => client.info(),
-            Self::Relaychain(client) => client.info(),
+            Self::Kumandra(client) => client.info(),
         }
     }
 
     fn status(&self, id: BlockId<Block>) -> sp_blockchain::Result<sp_blockchain::BlockStatus> {
         match self {
             Self::Indracore(client) => client.status(id),
-            Self::Relaychain(client) => client.status(id),
+            Self::Kumandra(client) => client.status(id),
         }
     }
 
     fn number(&self, hash: Hash) -> sp_blockchain::Result<Option<BlockNumber>> {
         match self {
             Self::Indracore(client) => client.number(hash),
-            Self::Relaychain(client) => client.number(hash),
+            Self::Kumandra(client) => client.number(hash),
         }
     }
 
     fn hash(&self, number: BlockNumber) -> sp_blockchain::Result<Option<Hash>> {
         match self {
             Self::Indracore(client) => client.hash(number),
-            Self::Relaychain(client) => client.hash(number),
+            Self::Kumandra(client) => client.hash(number),
         }
     }
 }

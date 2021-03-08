@@ -58,7 +58,7 @@ use telemetry::{TelemetryConnectionNotifier, TelemetrySpan};
 pub use self::client::{
     AbstractClient, Client, ClientHandle, ExecuteWithClient, RuntimeApiCollection,
 };
-pub use chain_spec::{IndracoreChainSpec, RelaychainChainSpec};
+pub use chain_spec::{IndracoreChainSpec, KumandraChainSpec};
 pub use consensus_common::{block_validation::Chain, BlockImport, Proposal, SelectChain};
 pub use indracore_parachain::wasm_executor::IsolationStrategy;
 pub use indracore_primitives::v1::{Block, BlockId, CollatorId, Hash, Id as ParaId};
@@ -77,7 +77,7 @@ pub use sp_runtime::traits::{
 };
 
 pub use indracore_runtime;
-pub use relaychain_runtime;
+pub use kumandra_runtime;
 
 native_executor_instance!(
     pub IndracoreExecutor,
@@ -87,9 +87,9 @@ native_executor_instance!(
 );
 
 native_executor_instance!(
-    pub RelaychainExecutor,
-    relaychain_runtime::api::dispatch,
-    relaychain_runtime::native_version,
+    pub KumandraExecutor,
+    kumandra_runtime::api::dispatch,
+    kumandra_runtime::native_version,
     frame_benchmarking::benchmarking::HostFunctions,
 );
 
@@ -133,13 +133,13 @@ pub enum Error {
 
 /// Can be called for a `Configuration` to check if it is a configuration for the `` network.
 pub trait IdentifyVariant {
-    /// Returns if this is a configuration for the `Relaychain` network.
-    fn is_relaychain(&self) -> bool;
+    /// Returns if this is a configuration for the `Kumandra` network.
+    fn is_kumandra(&self) -> bool;
 }
 
 impl IdentifyVariant for Box<dyn ChainSpec> {
-    fn is_relaychain(&self) -> bool {
-        self.id().starts_with("relaychain") || self.id().starts_with("rco")
+    fn is_kumandra(&self) -> bool {
+        self.id().starts_with("kumandra") || self.id().starts_with("rco")
     }
 }
 
@@ -1024,19 +1024,19 @@ pub fn new_chain_ops(
     Error,
 > {
     config.keystore = service::config::KeystoreConfig::InMemory;
-    if config.chain_spec.is_relaychain() {
+    if config.chain_spec.is_kumandra() {
         let service::PartialComponents {
             client,
             backend,
             import_queue,
             task_manager,
             ..
-        } = new_partial::<relaychain_runtime::RuntimeApi, RelaychainExecutor>(
+        } = new_partial::<kumandra_runtime::RuntimeApi, KumandraExecutor>(
             config,
             jaeger_agent,
         )?;
         Ok((
-            Arc::new(Client::Relaychain(client)),
+            Arc::new(Client::Kumandra(client)),
             backend,
             import_queue,
             task_manager,
@@ -1069,8 +1069,8 @@ pub fn build_light(
     ),
     Error,
 > {
-    if config.chain_spec.is_relaychain() {
-        new_light::<relaychain_runtime::RuntimeApi, RelaychainExecutor>(config)
+    if config.chain_spec.is_kumandra() {
+        new_light::<kumandra_runtime::RuntimeApi, KumandraExecutor>(config)
     } else {
         new_light::<indracore_runtime::RuntimeApi, IndracoreExecutor>(config)
     }
@@ -1096,15 +1096,15 @@ pub fn build_full(
         }
     };
 
-    if config.chain_spec.is_relaychain() {
-        new_full::<relaychain_runtime::RuntimeApi, RelaychainExecutor>(
+    if config.chain_spec.is_kumandra() {
+        new_full::<kumandra_runtime::RuntimeApi, KumandraExecutor>(
             config,
             is_collator,
             grandpa_pause,
             jaeger_agent,
             isolation_strategy,
         )
-        .map(|full| full.with_client(Client::Relaychain))
+        .map(|full| full.with_client(Client::Kumandra))
     } else {
         new_full::<indracore_runtime::RuntimeApi, IndracoreExecutor>(
             config,

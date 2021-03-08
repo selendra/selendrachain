@@ -1,5 +1,5 @@
 [package]
-name = "relaychain-runtime"
+name = "kumandra-runtime"
 version = "0.3.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"

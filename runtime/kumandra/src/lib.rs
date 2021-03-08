@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! The Relaychain runtime for v1 parachains.
+//! The Kumandra runtime for v1 parachains.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
@@ -96,12 +96,12 @@ mod propose_parachain;
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-/// Runtime version (Relaychain).
+/// Runtime version (Kumandra).
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-    spec_name: create_runtime_str!("relaychain"),
-    impl_name: create_runtime_str!("parity-relaychain-v1-1"),
+    spec_name: create_runtime_str!("kumandra"),
+    impl_name: create_runtime_str!("parity-kumandra-v1-1"),
     authoring_version: 1,
-    spec_version: 210,
+    spec_version: 2,
     impl_version: 1,
     #[cfg(not(feature = "disable-runtime-api"))]
     apis: RUNTIME_API_VERSIONS,
@@ -589,13 +589,13 @@ impl parachains_paras::Config for Runtime {
 
 parameter_types! {
     pub const RocLocation: MultiLocation = MultiLocation::Null;
-    pub const RelaychainNetwork: NetworkId = NetworkId::Indracore;
+    pub const KumandraNetwork: NetworkId = NetworkId::Indracore;
     pub const Ancestry: MultiLocation = MultiLocation::Null;
 }
 
 pub type LocationConverter = (
     ChildParachainConvertsVia<ParaId, AccountId>,
-    AccountId32Aliases<RelaychainNetwork, AccountId>,
+    AccountId32Aliases<KumandraNetwork, AccountId>,
 );
 
 pub type LocalAssetTransactor = XcmCurrencyAdapter<
@@ -612,7 +612,7 @@ pub type LocalAssetTransactor = XcmCurrencyAdapter<
 type LocalOriginConverter = (
     SovereignSignedViaLocation<LocationConverter, Origin>,
     ChildParachainAsNative<parachains_origin::Origin, Origin>,
-    SignedAccountId32AsNative<RelaychainNetwork, Origin>,
+    SignedAccountId32AsNative<KumandraNetwork, Origin>,
     ChildSystemParachainAsSuperuser<ParaId, Origin>,
 );
 

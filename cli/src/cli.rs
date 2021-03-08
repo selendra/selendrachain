@@ -75,9 +75,9 @@ pub struct RunCmd {
     #[structopt(flatten)]
     pub base: sc_cli::RunCmd,
 
-    /// Force using Relaychain native runtime.
-    #[structopt(long = "force-relaychain")]
-    pub force_relaychain: bool,
+    /// Force using Kumandra native runtime.
+    #[structopt(long = "force-kumandra")]
+    pub force_kumandra: bool,
 
     /// Setup a GRANDPA scheduled voting pause.
     ///

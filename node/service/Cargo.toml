@@ -77,7 +77,7 @@ indracore-runtime-parachains = { path = "../../runtime/parachains" }
 
 # Indracore Runtimes
 indracore-runtime = { path = "../../runtime/indracore" }
-relaychain-runtime = { path = "../../runtime/relaychain" }
+kumandra-runtime = { path = "../../runtime/kumandra" }
 
 # Indracore Subsystems
 indracore-availability-bitfield-distribution = { path = "../network/bitfield-distribution", optional = true }
@@ -113,7 +113,7 @@ full-node = [
 
 runtime-benchmarks = [
 	"indracore-runtime/runtime-benchmarks",
-	"relaychain-runtime/runtime-benchmarks"
+	"kumandra-runtime/runtime-benchmarks"
 ]
 try-runtime = [
 	"indracore-runtime/try-runtime",

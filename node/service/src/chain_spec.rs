@@ -24,8 +24,8 @@ use indracore_primitives::v1::{AccountId, AccountPublic, AssignmentId, Validator
 use indracore_runtime as indracore;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_staking::Forcing;
-use relaychain_runtime as relaychain;
-use relaychain_runtime::constants::currency::SELS as REL;
+use kumandra_runtime as kumandra;
+use kumandra_runtime::constants::currency::SELS as REL;
 use sc_chain_spec::{ChainSpecExtension, ChainType};
 use serde::{Deserialize, Serialize};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
@@ -34,7 +34,7 @@ use sp_runtime::{traits::IdentifyAccount, Perbill};
 use telemetry::TelemetryEndpoints;
 
 const INDRACORE_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
-const RELAYCHAIN_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
+const KUMANDRA_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 const DEFAULT_PROTOCOL_ID: &str = "dot";
 
 /// Node `ChainSpec` extensions.
@@ -53,25 +53,25 @@ pub struct Extensions {
 /// The `ChainSpec` parametrised for the indracore runtime.
 pub type IndracoreChainSpec = service::GenericChainSpec<indracore::GenesisConfig, Extensions>;
 
-/// The `ChainSpec` parametrized for the relaychain runtime.
-pub type RelaychainChainSpec = service::GenericChainSpec<RelaychainGenesisExt, Extensions>;
+/// The `ChainSpec` parametrized for the kumandra runtime.
+pub type KumandraChainSpec = service::GenericChainSpec<KumandraGenesisExt, Extensions>;
 
-/// Extension for the Relaychain genesis config to support a custom changes to the genesis state.
+/// Extension for the Kumandra genesis config to support a custom changes to the genesis state.
 #[derive(serde::Serialize, serde::Deserialize)]
-pub struct RelaychainGenesisExt {
+pub struct KumandraGenesisExt {
     /// The runtime genesis config.
-    runtime_genesis_config: relaychain::GenesisConfig,
+    runtime_genesis_config: kumandra::GenesisConfig,
     /// The session length in blocks.
     ///
     /// If `None` is supplied, the default value is used.
     session_length_in_blocks: Option<u32>,
 }
 
-impl sp_runtime::BuildStorage for RelaychainGenesisExt {
+impl sp_runtime::BuildStorage for KumandraGenesisExt {
     fn assimilate_storage(&self, storage: &mut sp_core::storage::Storage) -> Result<(), String> {
         sp_state_machine::BasicExternalities::execute_with_storage(storage, || {
             if let Some(length) = self.session_length_in_blocks.as_ref() {
-                relaychain::constants::time::EpochDurationInBlocks::set(length);
+                kumandra::constants::time::EpochDurationInBlocks::set(length);
             }
         });
         self.runtime_genesis_config.assimilate_storage(storage)
@@ -82,8 +82,8 @@ pub fn indracore_config() -> Result<IndracoreChainSpec, String> {
     IndracoreChainSpec::from_json_bytes(&include_bytes!("../res/indracore-sel.json")[..])
 }
 
-pub fn relaychain_config() -> Result<IndracoreChainSpec, String> {
-    IndracoreChainSpec::from_json_bytes(&include_bytes!("../res/relaychain.json")[..])
+pub fn kumandra_config() -> Result<IndracoreChainSpec, String> {
+    IndracoreChainSpec::from_json_bytes(&include_bytes!("../res/kumandra.json")[..])
 }
 
 fn indracore_session_keys(
@@ -104,15 +104,15 @@ fn indracore_session_keys(
     }
 }
 
-fn relaychain_session_keys(
+fn kumandra_session_keys(
     babe: BabeId,
     grandpa: GrandpaId,
     im_online: ImOnlineId,
     para_validator: ValidatorId,
     para_assignment: AssignmentId,
     authority_discovery: AuthorityDiscoveryId,
-) -> relaychain_runtime::SessionKeys {
-    relaychain_runtime::SessionKeys {
+) -> kumandra_runtime::SessionKeys {
+    kumandra_runtime::SessionKeys {
         babe,
         grandpa,
         im_online,
@@ -219,9 +219,9 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
     }
 }
 
-fn relaychain_staging_testnet_config_genesis(
+fn kumandra_staging_testnet_config_genesis(
     wasm_binary: &[u8],
-) -> relaychain_runtime::GenesisConfig {
+) -> kumandra_runtime::GenesisConfig {
     // subkey inspect "$SECRET"
     let endowed_accounts = vec![
         // 5FeyRQmjtdHoPH56ASFW76AJEP1yaQC1K9aEMvJTF9nzt9S9
@@ -436,27 +436,27 @@ fn relaychain_staging_testnet_config_genesis(
     const ENDOWMENT: u128 = 1_000_000 * REL;
     const STASH: u128 = 100 * REL;
 
-    relaychain_runtime::GenesisConfig {
-        frame_system: Some(relaychain_runtime::SystemConfig {
+    kumandra_runtime::GenesisConfig {
+        frame_system: Some(kumandra_runtime::SystemConfig {
             code: wasm_binary.to_vec(),
             changes_trie_config: Default::default(),
         }),
-        pallet_balances: Some(relaychain_runtime::BalancesConfig {
+        pallet_balances: Some(kumandra_runtime::BalancesConfig {
             balances: endowed_accounts
                 .iter()
                 .map(|k: &AccountId| (k.clone(), ENDOWMENT))
                 .chain(initial_authorities.iter().map(|x| (x.0.clone(), STASH)))
                 .collect(),
         }),
-        pallet_indices: Some(relaychain_runtime::IndicesConfig { indices: vec![] }),
-        pallet_session: Some(relaychain_runtime::SessionConfig {
+        pallet_indices: Some(kumandra_runtime::IndicesConfig { indices: vec![] }),
+        pallet_session: Some(kumandra_runtime::SessionConfig {
             keys: initial_authorities
                 .iter()
                 .map(|x| {
                     (
                         x.0.clone(),
                         x.0.clone(),
-                        relaychain_session_keys(
+                        kumandra_session_keys(
                             x.2.clone(),
                             x.3.clone(),
                             x.4.clone(),
@@ -471,18 +471,18 @@ fn relaychain_staging_testnet_config_genesis(
         pallet_babe: Some(Default::default()),
         pallet_grandpa: Some(Default::default()),
         pallet_im_online: Some(Default::default()),
-        pallet_authority_discovery: Some(relaychain_runtime::AuthorityDiscoveryConfig {
+        pallet_authority_discovery: Some(kumandra_runtime::AuthorityDiscoveryConfig {
             keys: vec![],
         }),
-        pallet_sudo: Some(relaychain_runtime::SudoConfig {
+        pallet_sudo: Some(kumandra_runtime::SudoConfig {
             key: endowed_accounts[0].clone(),
         }),
-        pallet_contracts: Some(relaychain_runtime::ContractsConfig {
+        pallet_contracts: Some(kumandra_runtime::ContractsConfig {
             current_schedule: pallet_contracts::Schedule {
                 ..Default::default()
             },
         }),
-        parachains_configuration: Some(relaychain_runtime::ParachainsConfigurationConfig {
+        parachains_configuration: Some(kumandra_runtime::ParachainsConfigurationConfig {
             config: indracore_runtime_parachains::configuration::HostConfiguration {
                 validation_upgrade_frequency: 600u32,
                 validation_upgrade_delay: 300,
@@ -543,23 +543,23 @@ pub fn indracore_staging_testnet_config() -> Result<IndracoreChainSpec, String> 
     ))
 }
 
-/// Relaychain staging testnet config.
-pub fn relaychain_staging_testnet_config() -> Result<RelaychainChainSpec, String> {
-    let wasm_binary = relaychain::WASM_BINARY.ok_or("Relaychain development wasm not available")?;
+/// Kumandra staging testnet config.
+pub fn kumandra_staging_testnet_config() -> Result<KumandraChainSpec, String> {
+    let wasm_binary = kumandra::WASM_BINARY.ok_or("Kumandra development wasm not available")?;
     let boot_nodes = vec![];
 
-    Ok(RelaychainChainSpec::from_genesis(
-        "Relaychain Staging Testnet",
-        "relaychain_staging_testnet",
+    Ok(KumandraChainSpec::from_genesis(
+        "Kumandra Staging Testnet",
+        "kumandra_staging_testnet",
         ChainType::Live,
-        move || RelaychainGenesisExt {
-            runtime_genesis_config: relaychain_staging_testnet_config_genesis(wasm_binary),
+        move || KumandraGenesisExt {
+            runtime_genesis_config: kumandra_staging_testnet_config_genesis(wasm_binary),
             session_length_in_blocks: None,
         },
         boot_nodes,
         Some(
-            TelemetryEndpoints::new(vec![(RELAYCHAIN_STAGING_TELEMETRY_URL.to_string(), 0)])
-                .expect("Relaychain Staging telemetry url is valid; qed"),
+            TelemetryEndpoints::new(vec![(KUMANDRA_STAGING_TELEMETRY_URL.to_string(), 0)])
+                .expect("Kumandra Staging telemetry url is valid; qed"),
         ),
         Some(DEFAULT_PROTOCOL_ID),
         None,
@@ -723,8 +723,8 @@ pub fn indracore_testnet_genesis(
     }
 }
 
-/// Helper function to create relaychain GenesisConfig for testing
-pub fn relaychain_testnet_genesis(
+/// Helper function to create kumandra GenesisConfig for testing
+pub fn kumandra_testnet_genesis(
     wasm_binary: &[u8],
     initial_authorities: Vec<(
         AccountId,
@@ -738,31 +738,31 @@ pub fn relaychain_testnet_genesis(
     )>,
     root_key: AccountId,
     endowed_accounts: Option<Vec<AccountId>>,
-) -> relaychain_runtime::GenesisConfig {
+) -> kumandra_runtime::GenesisConfig {
     let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 
     const ENDOWMENT: u128 = 1_000_000 * SELS;
 
-    relaychain_runtime::GenesisConfig {
-        frame_system: Some(relaychain_runtime::SystemConfig {
+    kumandra_runtime::GenesisConfig {
+        frame_system: Some(kumandra_runtime::SystemConfig {
             code: wasm_binary.to_vec(),
             changes_trie_config: Default::default(),
         }),
-        pallet_indices: Some(relaychain_runtime::IndicesConfig { indices: vec![] }),
-        pallet_balances: Some(relaychain_runtime::BalancesConfig {
+        pallet_indices: Some(kumandra_runtime::IndicesConfig { indices: vec![] }),
+        pallet_balances: Some(kumandra_runtime::BalancesConfig {
             balances: endowed_accounts
                 .iter()
                 .map(|k| (k.clone(), ENDOWMENT))
                 .collect(),
         }),
-        pallet_session: Some(relaychain_runtime::SessionConfig {
+        pallet_session: Some(kumandra_runtime::SessionConfig {
             keys: initial_authorities
                 .iter()
                 .map(|x| {
                     (
                         x.0.clone(),
                         x.0.clone(),
-                        relaychain_session_keys(
+                        kumandra_session_keys(
                             x.2.clone(),
                             x.3.clone(),
                             x.4.clone(),
@@ -777,16 +777,16 @@ pub fn relaychain_testnet_genesis(
         pallet_babe: Some(Default::default()),
         pallet_grandpa: Some(Default::default()),
         pallet_im_online: Some(Default::default()),
-        pallet_authority_discovery: Some(relaychain_runtime::AuthorityDiscoveryConfig {
+        pallet_authority_discovery: Some(kumandra_runtime::AuthorityDiscoveryConfig {
             keys: vec![],
         }),
-        pallet_contracts: Some(relaychain_runtime::ContractsConfig {
+        pallet_contracts: Some(kumandra_runtime::ContractsConfig {
             current_schedule: pallet_contracts::Schedule {
                 ..Default::default()
             },
         }),
-        pallet_sudo: Some(relaychain_runtime::SudoConfig { key: root_key }),
-        parachains_configuration: Some(relaychain_runtime::ParachainsConfigurationConfig {
+        pallet_sudo: Some(kumandra_runtime::SudoConfig { key: root_key }),
+        parachains_configuration: Some(kumandra_runtime::ParachainsConfigurationConfig {
             config: indracore_runtime_parachains::configuration::HostConfiguration {
                 validation_upgrade_frequency: 600u32,
                 validation_upgrade_delay: 300,
@@ -897,8 +897,8 @@ pub fn indracore_local_testnet_config() -> Result<IndracoreChainSpec, String> {
     ))
 }
 
-fn relaychain_local_testnet_genesis(wasm_binary: &[u8]) -> relaychain_runtime::GenesisConfig {
-    relaychain_testnet_genesis(
+fn kumandra_local_testnet_genesis(wasm_binary: &[u8]) -> kumandra_runtime::GenesisConfig {
+    kumandra_testnet_genesis(
         wasm_binary,
         vec![
             get_authority_keys_from_seed("Alice"),
@@ -909,16 +909,16 @@ fn relaychain_local_testnet_genesis(wasm_binary: &[u8]) -> relaychain_runtime::G
     )
 }
 
-/// Relaychain local testnet config (multivalidator Alice + Bob)
-pub fn relaychain_local_testnet_config() -> Result<RelaychainChainSpec, String> {
-    let wasm_binary = relaychain::WASM_BINARY.ok_or("Relaychain development wasm not available")?;
+/// Kumandra local testnet config (multivalidator Alice + Bob)
+pub fn kumandra_local_testnet_config() -> Result<KumandraChainSpec, String> {
+    let wasm_binary = kumandra::WASM_BINARY.ok_or("Kumandra development wasm not available")?;
 
-    Ok(RelaychainChainSpec::from_genesis(
-        "Relaychain Local Testnet",
-        "relaychain_local_testnet",
+    Ok(KumandraChainSpec::from_genesis(
+        "Kumandra Local Testnet",
+        "kumandra_local_testnet",
         ChainType::Local,
-        move || RelaychainGenesisExt {
-            runtime_genesis_config: relaychain_local_testnet_genesis(wasm_binary),
+        move || KumandraGenesisExt {
+            runtime_genesis_config: kumandra_local_testnet_genesis(wasm_binary),
             // Use 1 minute session length.
             session_length_in_blocks: Some(10),
         },
