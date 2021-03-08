@@ -202,7 +202,7 @@ construct_runtime! {
         Initializer: parachains_initializer::{Module, Call, Storage},
         Dmp: parachains_dmp::{Module, Call, Storage},
         Ump: parachains_ump::{Module, Call, Storage},
-        Hrmp: parachains_hrmp::{Module, Call, Storage},
+        Hrmp: parachains_hrmp::{Module, Call, Storage, Event},
         SessionInfo: parachains_session_info::{Module, Call, Storage},
 
         Registrar: paras_registrar::{Module, Call, Storage},
@@ -638,6 +638,7 @@ impl parachains_dmp::Config for Runtime {}
 impl parachains_hrmp::Config for Runtime {
     type Origin = Origin;
     type Currency = Balances;
+    type Event = Event;
 }
 
 impl parachains_inclusion_inherent::Config for Runtime {}

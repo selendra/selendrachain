@@ -291,6 +291,7 @@ mod tests {
              Staking: pallet_staking::{Module, Call, Config<T>, Storage, Event<T>, ValidateUnsigned},
             Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
             Initializer: initializer::{Module, Call, Storage},
+            Hrmp: hrmp::{Module, Call, Storage, Event},
         }
     );
 
@@ -450,6 +451,7 @@ mod tests {
     }
 
     impl hrmp::Config for Test {
+        type Event = Event;
         type Origin = Origin;
         type Currency = pallet_balances::Module<Test>;
     }
