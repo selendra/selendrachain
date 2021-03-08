@@ -399,11 +399,7 @@ where
     use indracore_pov_distribution::PoVDistribution as PoVDistributionSubsystem;
     use indracore_statement_distribution::StatementDistribution as StatementDistributionSubsystem;
 
-    #[cfg(feature = "real-overseer")]
     use indracore_node_core_approval_voting::ApprovalVotingSubsystem;
-
-    #[cfg(not(feature = "real-overseer"))]
-    let _ = approval_voting_config; // silence.
 
     let all_subsystems = AllSubsystems {
         availability_distribution: AvailabilityDistributionSubsystem::new(
@@ -459,13 +455,10 @@ where
         ),
         statement_distribution: StatementDistributionSubsystem::new(Metrics::register(registry)?),
         approval_distribution: ApprovalDistributionSubsystem::new(Metrics::register(registry)?),
-        #[cfg(feature = "real-overseer")]
         approval_voting: ApprovalVotingSubsystem::with_config(
             approval_voting_config,
             keystore.clone(),
         )?,
-        #[cfg(not(feature = "real-overseer"))]
-        approval_voting: indracore_subsystem::DummySubsystem,
     };
 
     Overseer::new(leaves, all_subsystems, registry, spawner).map_err(|e| e.into())
