@@ -386,6 +386,7 @@ where
     use indracore_availability_distribution::AvailabilityDistributionSubsystem;
     use indracore_availability_recovery::AvailabilityRecoverySubsystem;
     use indracore_collator_protocol::{CollatorProtocolSubsystem, ProtocolSide};
+    use indracore_gossip_support::GossipSupport as GossipSupportSubsystem;
     use indracore_network_bridge::NetworkBridge as NetworkBridgeSubsystem;
     use indracore_node_collation_generation::CollationGenerationSubsystem;
     use indracore_node_core_approval_voting::ApprovalVotingSubsystem;
@@ -399,7 +400,6 @@ where
     use indracore_node_core_runtime_api::RuntimeApiSubsystem;
     use indracore_pov_distribution::PoVDistribution as PoVDistributionSubsystem;
     use indracore_statement_distribution::StatementDistribution as StatementDistributionSubsystem;
-    use polkadot_gossip_support::GossipSupport as GossipSupportSubsystem;
 
     let all_subsystems = AllSubsystems {
         availability_distribution: AvailabilityDistributionSubsystem::new(
@@ -529,9 +529,8 @@ where
         RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
     Executor: NativeExecutionDispatch + 'static,
 {
-
     #[cfg(feature = "real-overseer")]
-	info!("real-overseer feature is ENABLED");
+    info!("real-overseer feature is ENABLED");
 
     let telemetry_span = TelemetrySpan::new();
     let _telemetry_span_entered = telemetry_span.enter();
@@ -577,6 +576,23 @@ where
         .extra_sets
         .extend(indracore_network_bridge::peer_sets_info());
 
+    // Add a dummy collation set with the intent of printing an error if one tries to connect a
+    // collator to a node that isn't compiled with `--features real-overseer`.
+    #[cfg(not(feature = "real-overseer"))]
+    config
+        .network
+        .extra_sets
+        .push(sc_network::config::NonDefaultSetConfig {
+            notifications_protocol: "/indracore/collation/1".into(),
+            max_notification_size: 16,
+            set_config: sc_network::config::SetConfig {
+                in_peers: 25,
+                out_peers: 0,
+                reserved_nodes: Vec::new(),
+                non_reserved_mode: sc_network::config::NonReservedPeerMode::Accept,
+            },
+        });
+
     // TODO: At the moment, the collator protocol uses notifications protocols to download
     // collations. Because of DoS-protection measures, notifications protocols have a very limited
     // bandwidth capacity, resulting in the collation download taking a long time.
@@ -621,6 +637,30 @@ where
             on_demand: None,
             block_announce_validator_builder: None,
         })?;
+
+    // See above. We have added a dummy collation set with the intent of printing an error if one
+    // tries to connect a collator to a node that isn't compiled with `--features real-overseer`.
+    #[cfg(not(feature = "real-overseer"))]
+    task_manager
+        .spawn_handle()
+        .spawn("dummy-collation-handler", {
+            let mut network_events = network.event_stream("dummy-collation-handler");
+            async move {
+                use futures::prelude::*;
+                while let Some(ev) = network_events.next().await {
+                    if let sc_network::Event::NotificationStreamOpened { protocol, .. } = ev {
+                        if protocol == "/indracore/collation/1" {
+                            tracing::warn!(
+							"Incoming collator on a node with parachains disabled. This warning \
+							is harmless and is here to warn developers that they might have \
+							accidentally compiled their node without the `real-overseer` feature \
+							enabled."
+						);
+                        }
+                    }
+                }
+            }
+        });
 
     if config.offchain_worker.enabled {
         let _ = service::build_offchain_workers(
