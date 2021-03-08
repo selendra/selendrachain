@@ -58,6 +58,10 @@ pub enum Error {
     #[error("Session is not cached.")]
     NoSuchCachedSession,
 
+    /// We tried reporting bad validators, although we are not a validator ourselves.
+    #[error("Not a validator.")]
+    NotAValidator,
+
     /// Requester stream exhausted.
     #[error("Erasure chunk requester stream exhausted")]
     RequesterExhausted,
