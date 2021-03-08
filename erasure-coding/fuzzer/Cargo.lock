@@ -941,7 +941,7 @@ dependencies = [
 
 [[package]]
 name = "memory_units"
-version = "0.3.0"
+version = "0.4.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71d96e3f3c0b6325d8ccd83c33b28acb183edcb6c67938ba104ec546854b0882"
 
@@ -1080,7 +1080,7 @@ checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
 
 [[package]]
 name = "opaque-debug"
-version = "0.3.0"
+version = "0.4.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
@@ -1212,7 +1212,7 @@ dependencies = [
 
 [[package]]
 name = "pbkdf2"
-version = "0.3.0"
+version = "0.4.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "006c038a43a45995a9670da19e67600114740e8511d4333bf97a56e66a7542d9"
 dependencies = [
@@ -1412,7 +1412,7 @@ dependencies = [
 
 [[package]]
 name = "radium"
-version = "0.3.0"
+version = "0.4.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "def50a86306165861203e7f84ecffbbdfdea79f0e51039b33de1e952358c47ac"
 
@@ -2570,7 +2570,7 @@ dependencies = [
 
 [[package]]
 name = "wasmi-validation"
-version = "0.3.0"
+version = "0.4.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea78c597064ba73596099281e2f4cfc019075122a65cdda3205af94f0b264d93"
 dependencies = [

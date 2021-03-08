@@ -2117,7 +2117,7 @@ dependencies = [
 
 [[package]]
 name = "glob"
-version = "0.3.0"
+version = "0.4.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 
@@ -2255,7 +2255,7 @@ checksum = "5af1f635ef1bc545d78392b136bfe1c9809e029023c84a3638a864a10b8819c8"
 
 [[package]]
 name = "hex_fmt"
-version = "0.3.0"
+version = "0.4.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b07f60793ff0a4d9cef0f18e63b5357e06209987153a64648c972c1e5aff336f"
 
@@ -2503,7 +2503,7 @@ dependencies = [
 
 [[package]]
 name = "impl-rlp"
-version = "0.3.0"
+version = "0.4.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f28220f89297a075ddc7245cd538076ee98b01f2a9c23a53a4f1105d5a322808"
 dependencies = [
@@ -2549,7 +2549,7 @@ dependencies = [
 
 [[package]]
 name = "indracore"
-version = "0.3.0"
+version = "0.4.0-dev"
 dependencies = [
  "assert_cmd",
  "color-eyre",
@@ -2656,7 +2656,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-cli"
-version = "0.3.0"
+version = "0.4.0-dev"
 dependencies = [
  "frame-benchmarking-cli",
  "futures 0.3.13",
@@ -2699,7 +2699,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-core-primitives"
-version = "0.3.0"
+version = "0.4.0-dev"
 dependencies = [
  "parity-scale-codec",
  "parity-util-mem",
@@ -2710,7 +2710,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-erasure-coding"
-version = "0.3.0"
+version = "0.4.0-dev"
 dependencies = [
  "indracore-primitives",
  "parity-scale-codec",
@@ -3115,7 +3115,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-parachain"
-version = "0.3.0"
+version = "0.4.0-dev"
 dependencies = [
  "derive_more",
  "futures 0.3.13",
@@ -3160,7 +3160,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-primitives"
-version = "0.3.0"
+version = "0.4.0-dev"
 dependencies = [
  "bitvec",
  "frame-system",
@@ -3189,7 +3189,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-rpc"
-version = "0.3.0"
+version = "0.4.0-dev"
 dependencies = [
  "indracore-primitives",
  "jsonrpc-core",
@@ -3219,7 +3219,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-runtime"
-version = "0.3.0"
+version = "0.4.0-dev"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -3302,7 +3302,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-runtime-common"
-version = "0.3.0"
+version = "0.4.0-dev"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -3399,7 +3399,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-service"
-version = "0.3.0"
+version = "0.4.0-dev"
 dependencies = [
  "env_logger 0.2.0",
  "frame-benchmarking",
@@ -3506,7 +3506,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-statement-table"
-version = "0.3.0"
+version = "0.4.0-dev"
 dependencies = [
  "indracore-primitives",
  "parity-scale-codec",
@@ -3515,7 +3515,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-test-client"
-version = "0.3.0"
+version = "0.4.0-dev"
 dependencies = [
  "indracore-node-subsystem",
  "indracore-primitives",
@@ -3540,7 +3540,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-test-runtime"
-version = "0.3.0"
+version = "0.4.0-dev"
 dependencies = [
  "bitvec",
  "frame-executive",
@@ -3603,7 +3603,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-test-service"
-version = "0.3.0"
+version = "0.4.0-dev"
 dependencies = [
  "frame-benchmarking",
  "frame-system",
@@ -4622,7 +4622,7 @@ dependencies = [
 
 [[package]]
 name = "memory_units"
-version = "0.3.0"
+version = "0.4.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71d96e3f3c0b6325d8ccd83c33b28acb183edcb6c67938ba104ec546854b0882"
 
@@ -5028,7 +5028,7 @@ checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
 
 [[package]]
 name = "opaque-debug"
-version = "0.3.0"
+version = "0.4.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
@@ -5973,7 +5973,7 @@ dependencies = [
 
 [[package]]
 name = "pbkdf2"
-version = "0.3.0"
+version = "0.4.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "006c038a43a45995a9670da19e67600114740e8511d4333bf97a56e66a7542d9"
 dependencies = [
@@ -6477,7 +6477,7 @@ dependencies = [
 
 [[package]]
 name = "rand_chacha"
-version = "0.3.0"
+version = "0.4.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e12735cf05c9e10bf21534da50a147b924d555dc7a547c42e6bb2d5b6017ae0d"
 dependencies = [
@@ -6538,7 +6538,7 @@ dependencies = [
 
 [[package]]
 name = "rand_hc"
-version = "0.3.0"
+version = "0.4.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3190ef7066a446f2e7f42e239d161e905420ccab01eb967c9eb27d21b2322a73"
 dependencies = [
@@ -10044,7 +10044,7 @@ dependencies = [
 
 [[package]]
 name = "want"
-version = "0.3.0"
+version = "0.4.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ce8a968cb1cd110d136ff8b819a556d6fb6d919363c61534f6860c7eb172ba0"
 dependencies = [
@@ -10174,7 +10174,7 @@ dependencies = [
 
 [[package]]
 name = "wasmi-validation"
-version = "0.3.0"
+version = "0.4.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea78c597064ba73596099281e2f4cfc019075122a65cdda3205af94f0b264d93"
 dependencies = [

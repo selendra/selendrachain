@@ -1,6 +1,6 @@
 [package]
 name = "indracore-parachain"
-version = "0.3.0"
+version = "0.4.0-dev"
 authors = ["Selendra <info@selendra.org>"]
 description = "Types and utilities for creating and working with parachains"
 edition = "2018"
