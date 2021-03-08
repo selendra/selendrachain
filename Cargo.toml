@@ -1,6 +1,5 @@
 [workspace]
 members = [
-	"indracore",
 	"cli",
 	"core-primitives",
 	"erasure-coding",
@@ -38,12 +37,10 @@ members = [
 	"node/subsystem-util",
 	"node/jaeger",
 	"node/metered-channel",
-	"node/test/client",
-	"node/test/service",
 	"runtime/common",
 	"runtime/parachains",
 	"runtime/indracore",
-	"runtime/test-runtime",
+	"runtime/relaychain",
 ]
 
 # make sure dev builds with backtrace do
