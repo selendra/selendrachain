@@ -23,6 +23,7 @@ indracore-node-network-protocol = { path = "../network/protocol" }
 indracore-primitives = { path = "../../primitives" }
 indracore-statement-table = { path = "../../statement-table" }
 indracore-node-jaeger = { path = "../jaeger" }
+indracore-procmacro-subsystem-dispatch-gen = { path = "dispatch-gen" }
 sc-network = { git = "https://github.com/selendra/substrate", branch = "master" }
 smallvec = "1.6.1"
 sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }

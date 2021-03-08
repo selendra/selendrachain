@@ -27,9 +27,7 @@ use indracore_node_network_protocol::{
 };
 use indracore_primitives::v1::{BlockNumber, Hash};
 use indracore_subsystem::messages::{
-    AllMessages, ApprovalDistributionMessage, AvailabilityDistributionMessage,
-    AvailabilityRecoveryMessage, BitfieldDistributionMessage, CollatorProtocolMessage,
-    NetworkBridgeEvent, NetworkBridgeMessage, PoVDistributionMessage, StatementDistributionMessage,
+    AllMessages, CollatorProtocolMessage, NetworkBridgeEvent, NetworkBridgeMessage,
 };
 use indracore_subsystem::{
     jaeger, ActiveLeavesUpdate, SpawnedSubsystem, Subsystem, SubsystemContext, SubsystemError,
@@ -573,44 +571,7 @@ async fn dispatch_validation_events_to_all<I>(
     I: IntoIterator<Item = NetworkBridgeEvent<protocol_v1::ValidationProtocol>>,
     I::IntoIter: Send,
 {
-    let messages_for = |event: NetworkBridgeEvent<protocol_v1::ValidationProtocol>| {
-        let av_d = std::iter::once(event.focus().ok().map(|m| {
-            AllMessages::AvailabilityDistribution(
-                AvailabilityDistributionMessage::NetworkBridgeUpdateV1(m),
-            )
-        }));
-
-        let b = std::iter::once(event.focus().ok().map(|m| {
-            AllMessages::BitfieldDistribution(BitfieldDistributionMessage::NetworkBridgeUpdateV1(m))
-        }));
-
-        let p = std::iter::once(event.focus().ok().map(|m| {
-            AllMessages::PoVDistribution(PoVDistributionMessage::NetworkBridgeUpdateV1(m))
-        }));
-
-        let s = std::iter::once(event.focus().ok().map(|m| {
-            AllMessages::StatementDistribution(StatementDistributionMessage::NetworkBridgeUpdateV1(
-                m,
-            ))
-        }));
-
-        let ap = std::iter::once(event.focus().ok().map(|m| {
-            AllMessages::ApprovalDistribution(ApprovalDistributionMessage::NetworkBridgeUpdateV1(m))
-        }));
-
-        let av_r = std::iter::once(event.focus().ok().map(|m| {
-            AllMessages::AvailabilityRecovery(AvailabilityRecoveryMessage::NetworkBridgeUpdateV1(m))
-        }));
-
-        av_d.chain(b)
-            .chain(p)
-            .chain(s)
-            .chain(ap)
-            .chain(av_r)
-            .filter_map(|x| x)
-    };
-
-    ctx.send_messages(events.into_iter().flat_map(messages_for))
+    ctx.send_messages(events.into_iter().flat_map(AllMessages::dispatch_iter))
         .await
 }
 
@@ -656,7 +617,8 @@ mod tests {
     use indracore_node_subsystem_util::metered;
     use indracore_primitives::v1::AuthorityDiscoveryId;
     use indracore_subsystem::messages::{
-        ApprovalDistributionMessage, BitfieldDistributionMessage, StatementDistributionMessage,
+        ApprovalDistributionMessage, AvailabilityDistributionMessage, AvailabilityRecoveryMessage,
+        BitfieldDistributionMessage, PoVDistributionMessage, StatementDistributionMessage,
     };
     use indracore_subsystem::{ActiveLeavesUpdate, FromOverseer, OverseerSignal};
     use sc_network::config::RequestResponseConfig;
@@ -848,10 +810,26 @@ mod tests {
         event: NetworkBridgeEvent<protocol_v1::ValidationProtocol>,
         virtual_overseer: &mut TestSubsystemContextHandle<NetworkBridgeMessage>,
     ) {
+        // Ordering must match the enum variant order
+        // in `AllMessages`.
+        assert_matches!(
+            virtual_overseer.recv().await,
+            AllMessages::StatementDistribution(
+                StatementDistributionMessage::NetworkBridgeUpdateV1(e)
+            ) if e == event.focus().expect("could not focus message")
+        );
+
         assert_matches!(
             virtual_overseer.recv().await,
             AllMessages::AvailabilityDistribution(
                 AvailabilityDistributionMessage::NetworkBridgeUpdateV1(e)
+            ) if e == event.focus().expect("could not focus message")
+        );
+
+        assert_matches!(
+            virtual_overseer.recv().await,
+            AllMessages::AvailabilityRecovery(
+                AvailabilityRecoveryMessage::NetworkBridgeUpdateV1(e)
             ) if e == event.focus().expect("could not focus message")
         );
 
@@ -871,22 +849,8 @@ mod tests {
 
         assert_matches!(
             virtual_overseer.recv().await,
-            AllMessages::StatementDistribution(
-                StatementDistributionMessage::NetworkBridgeUpdateV1(e)
-            ) if e == event.focus().expect("could not focus message")
-        );
-
-        assert_matches!(
-            virtual_overseer.recv().await,
             AllMessages::ApprovalDistribution(
                 ApprovalDistributionMessage::NetworkBridgeUpdateV1(e)
-            ) if e == event.focus().expect("could not focus message")
-        );
-
-        assert_matches!(
-            virtual_overseer.recv().await,
-            AllMessages::AvailabilityRecovery(
-                AvailabilityRecoveryMessage::NetworkBridgeUpdateV1(e)
             ) if e == event.focus().expect("could not focus message")
         );
     }
@@ -1645,5 +1609,64 @@ mod tests {
                 );
             }
         });
+    }
+
+    #[test]
+    fn spread_event_to_subsystems_is_up_to_date() {
+        // Number of subsystems expected to be interested in a network event,
+        // and hence the network event broadcasted to.
+        const EXPECTED_COUNT: usize = 6;
+
+        let mut cnt = 0_usize;
+        for msg in
+            AllMessages::dispatch_iter(NetworkBridgeEvent::PeerDisconnected(PeerId::random()))
+        {
+            match msg {
+                AllMessages::CandidateValidation(_) => {
+                    unreachable!("Not interested in network events")
+                }
+                AllMessages::CandidateBacking(_) => {
+                    unreachable!("Not interested in network events")
+                }
+                AllMessages::CandidateSelection(_) => {
+                    unreachable!("Not interested in network events")
+                }
+                AllMessages::ChainApi(_) => unreachable!("Not interested in network events"),
+                AllMessages::CollatorProtocol(_) => {
+                    unreachable!("Not interested in network events")
+                }
+                AllMessages::StatementDistribution(_) => {
+                    cnt += 1;
+                }
+                AllMessages::AvailabilityDistribution(_) => {
+                    cnt += 1;
+                }
+                AllMessages::AvailabilityRecovery(_) => {
+                    cnt += 1;
+                }
+                AllMessages::BitfieldDistribution(_) => {
+                    cnt += 1;
+                }
+                AllMessages::BitfieldSigning(_) => unreachable!("Not interested in network events"),
+                AllMessages::Provisioner(_) => unreachable!("Not interested in network events"),
+                AllMessages::PoVDistribution(_) => {
+                    cnt += 1;
+                }
+                AllMessages::RuntimeApi(_) => unreachable!("Not interested in network events"),
+                AllMessages::AvailabilityStore(_) => {
+                    unreachable!("Not interested in network events")
+                }
+                AllMessages::NetworkBridge(_) => unreachable!("Not interested in network events"),
+                AllMessages::CollationGeneration(_) => {
+                    unreachable!("Not interested in network events")
+                }
+                AllMessages::ApprovalVoting(_) => unreachable!("Not interested in network events"),
+                AllMessages::ApprovalDistribution(_) => {
+                    cnt += 1;
+                } // Add variants here as needed, `{ cnt += 1; }` for those that need to be
+                  // notified, `unreachable!()` for those that should not.
+            }
+        }
+        assert_eq!(cnt, EXPECTED_COUNT);
     }
 }
