@@ -139,4 +139,4 @@ $ cargo run --release --features=runtime-benchmarks -- benchmark --chain=indraco
 
 ## License
 
-Indracore is implement from Polkadot under license [GPL 3.0 licensed](LICENSE-GPL3).
+Indracore is implement from [Polkadot](https://github.com/paritytech/polkadot.git) under license [GPL 3.0 licensed](LICENSE-GPL3).
