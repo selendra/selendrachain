@@ -42,6 +42,17 @@ members = [
 	"runtime/parachains",
 	"runtime/indracore",
 	"runtime/kumandra",
+	"cumulus/cli",
+	"cumulus/client/collator",
+	"cumulus/client/network",
+	"cumulus/client/service",
+	"cumulus/client/consensus/common",
+	"cumulus/client/consensus/relay-chain",
+	"cumulus/pallets/parachain-info",
+	"cumulus/pallets/parachain-system",
+	"cumulus/pallets/xcm-handler",
+	"cumulus/primitives/core",
+	"cumulus/primitives/parachain-inherent"
 ]
 
 # make sure dev builds with backtrace do

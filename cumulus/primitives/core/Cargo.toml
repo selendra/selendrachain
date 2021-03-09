@@ -1,0 +1,32 @@
+[package]
+name = "cumulus-primitives-core"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+# Substrate dependencies
+sp-std = { git = "https://github.com/selendra/substrate", default-features = false, branch = "master" }
+sp-runtime = { git = "https://github.com/selendra/substrate", default-features = false, branch = "master" }
+sp-trie = { git = "https://github.com/selendra/substrate", default-features = false, branch = "master" }
+
+# Indracore dependencies
+indracore-parachain = { path = "../../../parachain", default-features = false }
+indracore-primitives = {  path = "../../../primitives", default-features = false }
+indracore-core-primitives = {  path = "../../../core-primitives", default-features = false }
+
+# Other dependencies
+impl-trait-for-tuples = "0.2.1"
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = [ "derive" ] }
+
+[features]
+default = [ "std" ]
+std = [
+	"codec/std",
+	"sp-std/std",
+	"indracore-primitives/std",
+	"indracore-parachain/std",
+	"indracore-core-primitives/std",
+	"sp-runtime/std",
+	"sp-trie/std",
+]

@@ -16,7 +16,7 @@
 
 #![allow(dead_code)]
 
-use polkadot_procmacro_subsystem_dispatch_gen::subsystem_dispatch_gen;
+use indracore_procmacro_subsystem_dispatch_gen::subsystem_dispatch_gen;
 
 /// The event type in question.
 #[derive(Clone, Copy)]
