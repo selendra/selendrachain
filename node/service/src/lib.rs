@@ -612,7 +612,7 @@ where
             &config,
             task_manager.spawn_handle(),
             backend.clone(),
-            mport_setup.1.shared_authority_set().clone(),
+            import_setup.1.shared_authority_set().clone(),
         ),
     );
     #[cfg(feature = "real-overseer")]

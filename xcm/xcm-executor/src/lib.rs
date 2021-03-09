@@ -78,7 +78,7 @@ impl<Config: config::Config> ExecuteXcm for XcmExecutor<Config> {
             (origin, Xcm::TeleportAsset { assets, effects }) => {
                 // check whether we trust origin to teleport this asset to us via config trait.
                 // TODO: should de-wildcard `assets` before passing in.
-                frame_support::debug::print!("Teleport from {:?}", origin);
+                log::debug!(target: "runtime::xcm-executor", "Teleport from {:?}", origin);
                 if assets
                     .iter()
                     .all(|asset| Config::IsTeleporter::filter_asset_location(asset, &origin))
