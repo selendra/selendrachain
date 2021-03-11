@@ -1284,7 +1284,8 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "sp-std",
- "xcm",
+ "xcm 0.1.0",
+ "xcm-executor 0.1.0 (git+https://github.com/selendra/indracore?branch=v0.4.0-dev)",
 ]
 
 [[package]]
@@ -3598,7 +3599,7 @@ dependencies = [
  "sp-trie",
  "static_assertions",
  "trie-db",
- "xcm",
+ "xcm 0.1.0",
 ]
 
 [[package]]
@@ -3648,8 +3649,8 @@ dependencies = [
  "sp-std",
  "sp-trie",
  "sp-version",
- "xcm",
- "xcm-executor",
+ "xcm 0.1.0",
+ "xcm-executor 0.1.0",
 ]
 
 [[package]]
@@ -4130,9 +4131,9 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "xcm",
+ "xcm 0.1.0",
  "xcm-builder",
- "xcm-executor",
+ "xcm-executor 0.1.0",
 ]
 
 [[package]]
@@ -10738,6 +10739,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "xcm"
+version = "0.1.0"
+source = "git+https://github.com/selendra/indracore?branch=v0.4.0-dev#167075cf187d02d072c846bb0e6a6c6e766f32a9"
+dependencies = [
+ "parity-scale-codec",
+]
+
+[[package]]
 name = "xcm-builder"
 version = "0.1.0"
 dependencies = [
@@ -10748,8 +10757,8 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm",
- "xcm-executor",
+ "xcm 0.1.0",
+ "xcm-executor 0.1.0",
 ]
 
 [[package]]
@@ -10765,7 +10774,24 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm",
+ "xcm 0.1.0",
+]
+
+[[package]]
+name = "xcm-executor"
+version = "0.1.0"
+source = "git+https://github.com/selendra/indracore?branch=v0.4.0-dev#167075cf187d02d072c846bb0e6a6c6e766f32a9"
+dependencies = [
+ "frame-support",
+ "impl-trait-for-tuples",
+ "log",
+ "parity-scale-codec",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm 0.1.0 (git+https://github.com/selendra/indracore?branch=v0.4.0-dev)",
 ]
 
 [[package]]

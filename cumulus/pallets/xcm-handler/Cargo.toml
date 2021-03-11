@@ -16,6 +16,7 @@ frame-system = { git = "https://github.com/selendra/substrate", default-features
 
 # Indracore Dependencies
 xcm = { path = "../../../xcm", default-features = false }
+xcm-executor = { git = "https://github.com/selendra/indracore", branch = "v0.4.0-dev", default-features = false }
 
 # Cumulus Dependencies
 cumulus-primitives-core = { path = "../../primitives/core", default-features = false }
@@ -29,5 +30,6 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"cumulus-primitives-core/std",
-	"xcm/std"
+	"xcm/std",
+	"xcm-executor/std",
 ]
