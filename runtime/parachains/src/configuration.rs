@@ -27,7 +27,7 @@ use frame_support::{
 };
 use frame_system::ensure_root;
 use parity_scale_codec::{Decode, Encode};
-use primitives::v1::{Balance, SessionIndex, ValidatorId};
+use primitives::v1::{Balance, SessionIndex};
 use sp_runtime::traits::Zero;
 use sp_std::prelude::*;
 
@@ -145,6 +145,10 @@ pub struct HostConfiguration<BlockNumber> {
     ///
     /// `None` means no maximum.
     pub max_validators_per_core: Option<u32>,
+    /// The maximum number of valdiators to use for parachain consensus, period.
+    ///
+    /// `None` means no maximum.
+    pub max_validators: Option<u32>,
     /// The amount of sessions to keep for disputes.
     pub dispute_period: SessionIndex,
     /// The amount of consensus slots that must pass between submitting an assignment and
@@ -180,6 +184,7 @@ impl<BlockNumber: Default + From<u32>> Default for HostConfiguration<BlockNumber
             parathread_retries: Default::default(),
             scheduling_lookahead: Default::default(),
             max_validators_per_core: Default::default(),
+            max_validators: None,
             dispute_period: Default::default(),
             n_delay_tranches: Default::default(),
             zeroth_delay_tranche_width: Default::default(),
@@ -395,6 +400,16 @@ decl_module! {
             ensure_root(origin)?;
             Self::update_config_member(|config| {
                 sp_std::mem::replace(&mut config.max_validators_per_core, new) != new
+            });
+            Ok(())
+        }
+
+        /// Set the maximum number of validators to use in parachain consensus.
+        #[weight = (1_000, DispatchClass::Operational)]
+        pub fn set_max_validators(origin, new: Option<u32>) -> DispatchResult {
+            ensure_root(origin)?;
+            Self::update_config_member(|config| {
+                sp_std::mem::replace(&mut config.max_validators, new) != new
             });
             Ok(())
         }
@@ -646,11 +661,7 @@ impl<T: Config> Module<T> {
     pub(crate) fn initializer_finalize() {}
 
     /// Called by the initializer to note that a new session has started.
-    pub(crate) fn initializer_on_new_session(
-        _validators: &[ValidatorId],
-        _queued: &[ValidatorId],
-        session_index: &SessionIndex,
-    ) {
+    pub(crate) fn initializer_on_new_session(session_index: &SessionIndex) {
         if let Some(pending) = <Self as Store>::PendingConfig::take(session_index) {
             <Self as Store>::ActiveConfig::set(pending);
         }
@@ -700,7 +711,7 @@ mod tests {
             assert_eq!(Configuration::config(), old_config);
             assert_eq!(<Configuration as Store>::PendingConfig::get(1), None);
 
-            Configuration::initializer_on_new_session(&[], &[], &1);
+            Configuration::initializer_on_new_session(&1);
 
             assert_eq!(Configuration::config(), old_config);
             assert_eq!(
@@ -708,7 +719,7 @@ mod tests {
                 Some(config.clone())
             );
 
-            Configuration::initializer_on_new_session(&[], &[], &2);
+            Configuration::initializer_on_new_session(&2);
 
             assert_eq!(Configuration::config(), config);
             assert_eq!(<Configuration as Store>::PendingConfig::get(3), None);
@@ -732,6 +743,7 @@ mod tests {
                 thread_availability_period: 8,
                 scheduling_lookahead: 3,
                 max_validators_per_core: None,
+                max_validators: None,
                 dispute_period: 239,
                 no_show_slots: 240,
                 n_delay_tranches: 241,
@@ -804,6 +816,7 @@ mod tests {
                 new_config.max_validators_per_core,
             )
             .unwrap();
+            Configuration::set_max_validators(Origin::root(), new_config.max_validators).unwrap();
             Configuration::set_dispute_period(Origin::root(), new_config.dispute_period).unwrap();
             Configuration::set_no_show_slots(Origin::root(), new_config.no_show_slots).unwrap();
             Configuration::set_n_delay_tranches(Origin::root(), new_config.n_delay_tranches)

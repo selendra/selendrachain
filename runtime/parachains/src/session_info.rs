@@ -19,7 +19,8 @@
 //!
 //! See https://w3f.github.io/parachain-implementers-guide/runtime/session_info.html.
 
-use crate::{configuration, paras, scheduler};
+use crate::util::take_active_subset;
+use crate::{configuration, paras, scheduler, shared};
 use frame_support::{
     decl_error, decl_module, decl_storage, traits::OneSessionHandler, weights::Weight,
 };
@@ -29,6 +30,7 @@ use sp_std::vec::Vec;
 pub trait Config:
     frame_system::Config
     + configuration::Config
+    + shared::Config
     + paras::Config
     + scheduler::Config
     + AuthorityDiscoveryConfig
@@ -87,6 +89,8 @@ impl<T: Config> Module<T> {
         let validators = notification.validators.clone();
         let discovery_keys = <T as AuthorityDiscoveryConfig>::authorities();
         let assignment_keys = AssignmentKeysUnsafe::get();
+
+        let active_set = <shared::Module<T>>::active_validator_indices();
         let validator_groups = <scheduler::Module<T>>::validator_groups();
         let n_cores = n_parachains + config.parathread_cores;
         let zeroth_delay_tranche_width = config.zeroth_delay_tranche_width;
@@ -114,9 +118,9 @@ impl<T: Config> Module<T> {
         }
         // create a new entry in `Sessions` with information about the current session
         let new_session_info = SessionInfo {
-            validators,
-            discovery_keys,
-            assignment_keys,
+            validators: take_active_subset(&active_set, &validators),
+            discovery_keys: take_active_subset(&active_set, &discovery_keys),
+            assignment_keys: take_active_subset(&active_set, &assignment_keys),
             validator_groups,
             n_cores,
             zeroth_delay_tranche_width,
@@ -184,12 +188,13 @@ mod tests {
             Configuration::initializer_finalize();
 
             if let Some(notification) = new_session(b + 1) {
-                Configuration::initializer_on_new_session(
-                    &notification.validators,
-                    &notification.queued,
-                    &notification.session_index,
+                Configuration::initializer_on_new_session(&notification.session_index);
+                Shared::initializer_on_new_session(
+                    notification.session_index,
+                    notification.random_seed,
+                    &notification.new_config,
+                    notification.validators.clone(),
                 );
-                Shared::initializer_on_new_session(&notification);
                 SessionInfo::initializer_on_new_session(&notification);
             }
 

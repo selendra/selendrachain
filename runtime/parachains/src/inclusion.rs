@@ -29,8 +29,7 @@ use parity_scale_codec::{Decode, Encode};
 use primitives::v1::{
     AvailabilityBitfield, BackedCandidate, CandidateCommitments, CandidateDescriptor,
     CandidateHash, CandidateReceipt, CommittedCandidateReceipt, CoreIndex, GroupIndex, Hash,
-    HeadData, Id as ParaId, SignedAvailabilityBitfields, SigningContext, ValidatorId,
-    ValidatorIndex,
+    HeadData, Id as ParaId, SignedAvailabilityBitfields, SigningContext, ValidatorIndex,
 };
 use sp_runtime::{
     traits::{One, Saturating},
@@ -137,9 +136,6 @@ decl_storage! {
         /// The commitments of candidates pending availability, by ParaId.
         PendingAvailabilityCommitments: map hasher(twox_64_concat) ParaId
             => Option<CandidateCommitments>;
-
-        /// The current validators, by their parachain session keys.
-        Validators get(fn validators) config(validators): Vec<ValidatorId>;
     }
 }
 
@@ -229,15 +225,13 @@ impl<T: Config> Module<T> {
 
     /// Handle an incoming session change.
     pub(crate) fn initializer_on_new_session(
-        notification: &crate::initializer::SessionChangeNotification<T::BlockNumber>,
+        _notification: &crate::initializer::SessionChangeNotification<T::BlockNumber>,
     ) {
         // unlike most drain methods, drained elements are not cleared on `Drop` of the iterator
         // and require consumption.
         for _ in <PendingAvailabilityCommitments>::drain() {}
         for _ in <PendingAvailability<T>>::drain() {}
         for _ in <AvailabilityBitfields<T>>::drain() {}
-
-        Validators::set(notification.validators.clone()); // substrate forces us to clone, stupidly.
     }
 
     /// Process a set of incoming bitfields. Return a vec of cores freed by candidates
@@ -247,7 +241,7 @@ impl<T: Config> Module<T> {
         signed_bitfields: SignedAvailabilityBitfields,
         core_lookup: impl Fn(CoreIndex) -> Option<ParaId>,
     ) -> Result<Vec<CoreIndex>, DispatchError> {
-        let validators = Validators::get();
+        let validators = shared::Module::<T>::active_validator_keys();
         let session_index = shared::Module::<T>::session_index();
 
         let mut assigned_paras_record: Vec<_> = (0..expected_bits)
@@ -410,7 +404,7 @@ impl<T: Config> Module<T> {
             return Ok(Vec::new());
         }
 
-        let validators = Validators::get();
+        let validators = shared::Module::<T>::active_validator_keys();
         let parent_hash = <frame_system::Module<T>>::parent_hash();
 
         // At the moment we assume (and in fact enforce, below) that the relay-parent is always one
@@ -944,7 +938,8 @@ mod tests {
     use primitives::v1::{BlockNumber, Hash};
     use primitives::v1::{
         CandidateCommitments, CandidateDescriptor, CollatorId, CompactStatement as Statement,
-        SignedAvailabilityBitfield, SignedStatement, ValidationCode, ValidityAttestation,
+        SignedAvailabilityBitfield, SignedStatement, ValidationCode, ValidatorId,
+        ValidityAttestation,
     };
     use sc_keystore::LocalKeystore;
     use sp_keystore::{SyncCryptoStore, SyncCryptoStorePtr};
@@ -1089,7 +1084,12 @@ mod tests {
             Shared::initializer_finalize();
 
             if let Some(notification) = new_session(b + 1) {
-                Shared::initializer_on_new_session(&notification);
+                Shared::initializer_on_new_session(
+                    notification.session_index,
+                    notification.random_seed,
+                    &notification.new_config,
+                    notification.validators.clone(),
+                );
                 Paras::initializer_on_new_session(&notification);
                 Inclusion::initializer_on_new_session(&notification);
             }
@@ -1114,11 +1114,11 @@ mod tests {
     }
 
     fn default_availability_votes() -> BitVec<BitOrderLsb0, u8> {
-        bitvec::bitvec![BitOrderLsb0, u8; 0; Validators::get().len()]
+        bitvec::bitvec![BitOrderLsb0, u8; 0; Shared::active_validator_keys().len()]
     }
 
     fn default_backing_bitfield() -> BitVec<BitOrderLsb0, u8> {
-        bitvec::bitvec![BitOrderLsb0, u8; 0; Validators::get().len()]
+        bitvec::bitvec![BitOrderLsb0, u8; 0; Shared::active_validator_keys().len()]
     }
 
     fn backing_bitfield(v: &[usize]) -> BitVec<BitOrderLsb0, u8> {
@@ -1274,7 +1274,7 @@ mod tests {
         let validator_public = validator_pubkeys(&validators);
 
         new_test_ext(genesis_config(paras)).execute_with(|| {
-            Validators::set(validator_public.clone());
+            shared::Module::<Test>::set_active_validators(validator_public.clone());
             shared::Module::<Test>::set_session_index(5);
 
             let signing_context = SigningContext {
@@ -1513,7 +1513,7 @@ mod tests {
         let validator_public = validator_pubkeys(&validators);
 
         new_test_ext(genesis_config(paras)).execute_with(|| {
-            Validators::set(validator_public.clone());
+            shared::Module::<Test>::set_active_validators(validator_public.clone());
             shared::Module::<Test>::set_session_index(5);
 
             let signing_context = SigningContext {
@@ -1696,7 +1696,7 @@ mod tests {
         let validator_public = validator_pubkeys(&validators);
 
         new_test_ext(genesis_config(paras)).execute_with(|| {
-            Validators::set(validator_public.clone());
+            shared::Module::<Test>::set_active_validators(validator_public.clone());
             shared::Module::<Test>::set_session_index(5);
 
             run_to_block(5, |_| None);
@@ -2171,7 +2171,7 @@ mod tests {
         let validator_public = validator_pubkeys(&validators);
 
         new_test_ext(genesis_config(paras)).execute_with(|| {
-            Validators::set(validator_public.clone());
+            shared::Module::<Test>::set_active_validators(validator_public.clone());
             shared::Module::<Test>::set_session_index(5);
 
             run_to_block(5, |_| None);
@@ -2374,7 +2374,7 @@ mod tests {
         let validator_public = validator_pubkeys(&validators);
 
         new_test_ext(genesis_config(paras)).execute_with(|| {
-            Validators::set(validator_public.clone());
+            shared::Module::<Test>::set_active_validators(validator_public.clone());
             shared::Module::<Test>::set_session_index(5);
 
             run_to_block(5, |_| None);
@@ -2451,7 +2451,7 @@ mod tests {
     }
 
     #[test]
-    fn session_change_wipes_and_updates_session_info() {
+    fn session_change_wipes() {
         let chain_a = ParaId::from(1);
         let chain_b = ParaId::from(2);
         let thread_a = ParaId::from(3);
@@ -2476,7 +2476,7 @@ mod tests {
         let validator_public = validator_pubkeys(&validators);
 
         new_test_ext(genesis_config(paras)).execute_with(|| {
-            Validators::set(validator_public.clone());
+            shared::Module::<Test>::set_active_validators(validator_public.clone());
             shared::Module::<Test>::set_session_index(5);
 
             let validators_new = vec![
@@ -2546,7 +2546,6 @@ mod tests {
 
             run_to_block(11, |_| None);
 
-            assert_eq!(Validators::get(), validator_public);
             assert_eq!(shared::Module::<Test>::session_index(), 5);
 
             assert!(<AvailabilityBitfields<Test>>::get(&ValidatorIndex(0)).is_some());
@@ -2570,7 +2569,6 @@ mod tests {
                 _ => None,
             });
 
-            assert_eq!(Validators::get(), validator_public_new);
             assert_eq!(shared::Module::<Test>::session_index(), 6);
 
             assert!(<AvailabilityBitfields<Test>>::get(&ValidatorIndex(0)).is_none());
