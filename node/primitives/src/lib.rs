@@ -31,7 +31,9 @@ use indracore_primitives::v1::{
 use parity_scale_codec::{Decode, Encode};
 use std::pin::Pin;
 
-pub use sp_consensus_babe::Epoch as BabeEpoch;
+pub use sp_consensus_babe::{
+    AllowedSlots as BabeAllowedSlots, BabeEpochConfiguration, Epoch as BabeEpoch,
+};
 pub use sp_core::traits::SpawnNamed;
 
 pub mod approval;

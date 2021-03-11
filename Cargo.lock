@@ -3008,6 +3008,7 @@ dependencies = [
  "indracore-node-primitives",
  "indracore-node-subsystem",
  "indracore-node-subsystem-test-helpers",
+ "indracore-node-subsystem-util",
  "indracore-overseer",
  "indracore-primitives",
  "kvdb",

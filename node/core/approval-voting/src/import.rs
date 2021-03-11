@@ -775,7 +775,7 @@ mod tests {
     use indracore_primitives::v1::ValidatorIndex;
     use merlin::Transcript;
     use sp_consensus_babe::digests::{CompatibleDigestItem, PreDigest, SecondaryVRFPreDigest};
-    use sp_consensus_babe::Epoch as BabeEpoch;
+    use sp_consensus_babe::{AllowedSlots, BabeEpochConfiguration, Epoch as BabeEpoch};
     use sp_core::testing::TaskExecutor;
     use sp_keyring::sr25519::Keyring as Sr25519Keyring;
     use sp_runtime::{Digest, DigestItem};
@@ -1386,6 +1386,10 @@ mod tests {
                         duration: 200,
                         authorities: vec![(Sr25519Keyring::Alice.public().into(), 1)],
                         randomness: [0u8; 32],
+                        config: BabeEpochConfiguration {
+                            c: (1, 4),
+                            allowed_slots: AllowedSlots::PrimarySlots,
+                        },
                     }));
                 }
             );
@@ -1490,6 +1494,10 @@ mod tests {
                         duration: 200,
                         authorities: vec![(Sr25519Keyring::Alice.public().into(), 1)],
                         randomness: [0u8; 32],
+                        config: BabeEpochConfiguration {
+                            c: (1, 4),
+                            allowed_slots: AllowedSlots::PrimarySlots,
+                        },
                     }));
                 }
             );
@@ -1739,6 +1747,10 @@ mod tests {
                         duration: 200,
                         authorities: vec![(Sr25519Keyring::Alice.public().into(), 1)],
                         randomness: [0u8; 32],
+                        config: BabeEpochConfiguration {
+                            c: (1, 4),
+                            allowed_slots: AllowedSlots::PrimarySlots,
+                        },
                     }));
                 }
             );

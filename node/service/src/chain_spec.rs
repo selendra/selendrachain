@@ -202,7 +202,10 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
             phantom: Default::default(),
         },
         pallet_membership_Instance1: Default::default(),
-        pallet_babe: Default::default(),
+        pallet_babe: indracore::BabeConfig {
+            authorities: Default::default(),
+            epoch_config: Some(indracore::BABE_GENESIS_EPOCH_CONFIG),
+        },
         pallet_grandpa: Default::default(),
         pallet_im_online: Default::default(),
         pallet_authority_discovery: indracore::AuthorityDiscoveryConfig { keys: vec![] },
@@ -466,7 +469,10 @@ fn kumandra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> kumandra_runti
                 })
                 .collect::<Vec<_>>(),
         },
-        pallet_babe: Default::default(),
+        pallet_babe: kumandra::BabeConfig {
+            authorities: Default::default(),
+            epoch_config: Some(kumandra::BABE_GENESIS_EPOCH_CONFIG),
+        },
         pallet_grandpa: Default::default(),
         pallet_im_online: Default::default(),
         pallet_authority_discovery: kumandra_runtime::AuthorityDiscoveryConfig { keys: vec![] },
@@ -710,7 +716,10 @@ pub fn indracore_testnet_genesis(
             phantom: Default::default(),
         },
         pallet_membership_Instance1: Default::default(),
-        pallet_babe: Default::default(),
+        pallet_babe: indracore::BabeConfig {
+            authorities: Default::default(),
+            epoch_config: Some(indracore::BABE_GENESIS_EPOCH_CONFIG),
+        },
         pallet_grandpa: Default::default(),
         pallet_im_online: Default::default(),
         pallet_authority_discovery: indracore::AuthorityDiscoveryConfig { keys: vec![] },
@@ -778,7 +787,10 @@ pub fn kumandra_testnet_genesis(
                 })
                 .collect::<Vec<_>>(),
         },
-        pallet_babe: Default::default(),
+        pallet_babe: kumandra_runtime::BabeConfig {
+            authorities: Default::default(),
+            epoch_config: Some(kumandra_runtime::BABE_GENESIS_EPOCH_CONFIG),
+        },
         pallet_grandpa: Default::default(),
         pallet_im_online: Default::default(),
         pallet_authority_discovery: kumandra_runtime::AuthorityDiscoveryConfig { keys: vec![] },

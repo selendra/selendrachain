@@ -470,7 +470,7 @@ mod tests {
     use super::*;
 
     use futures::channel::oneshot;
-    use indracore_node_primitives::BabeEpoch;
+    use indracore_node_primitives::{BabeAllowedSlots, BabeEpoch, BabeEpochConfiguration};
     use indracore_node_subsystem_test_helpers as test_helpers;
     use indracore_primitives::v1::{
         BlockNumber, CandidateEvent, CommittedCandidateReceipt, CoreState, GroupRotationInfo,
@@ -1303,6 +1303,10 @@ mod tests {
             duration: 10,
             authorities: Vec::new(),
             randomness: [1u8; 32],
+            config: BabeEpochConfiguration {
+                c: (1, 4),
+                allowed_slots: BabeAllowedSlots::PrimarySlots,
+            },
         };
         runtime_api.babe_epoch = Some(epoch.clone());
         let runtime_api = Arc::new(runtime_api);
