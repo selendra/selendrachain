@@ -31,15 +31,15 @@
 use indracore_node_primitives::approval::{
     self as approval_types, BlockApprovalMeta, RelayVRFStory,
 };
-use indracore_primitives::v1::{
-    BlockNumber, CandidateEvent, CandidateHash, CandidateReceipt, CoreIndex, GroupIndex, Hash,
-    Header, SessionIndex, SessionInfo,
-};
-use indracore_subsystem::{
+use indracore_node_subsystem::{
     messages::{
         ApprovalDistributionMessage, ChainApiMessage, RuntimeApiMessage, RuntimeApiRequest,
     },
     SubsystemContext, SubsystemError, SubsystemResult,
+};
+use indracore_primitives::v1::{
+    BlockNumber, CandidateEvent, CandidateHash, CandidateReceipt, CoreIndex, GroupIndex, Hash,
+    Header, SessionIndex, SessionInfo,
 };
 use kvdb::KeyValueDB;
 use sc_keystore::LocalKeystore;
@@ -667,7 +667,7 @@ pub(crate) async fn handle_new_head(
             .iter()
             .map(|v| v.len())
             .collect();
-        // insta-approve candidates on low-node testnets:
+        // insta-approve candidates on low-node testnets
         let num_candidates = included_candidates.len();
         let approved_bitfield = {
             if needed_approvals == 0 {
@@ -770,9 +770,9 @@ mod tests {
     use super::*;
     use assert_matches::assert_matches;
     use indracore_node_primitives::approval::{VRFOutput, VRFProof};
+    use indracore_node_subsystem::messages::AllMessages;
     use indracore_node_subsystem_test_helpers::make_subsystem_context;
     use indracore_primitives::v1::ValidatorIndex;
-    use indracore_subsystem::messages::AllMessages;
     use merlin::Transcript;
     use sp_consensus_babe::digests::{CompatibleDigestItem, PreDigest, SecondaryVRFPreDigest};
     use sp_consensus_babe::Epoch as BabeEpoch;

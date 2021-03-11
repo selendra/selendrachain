@@ -26,12 +26,7 @@ use indracore_node_primitives::approval::{
     ApprovalVote, DelayTranche, IndirectAssignmentCert, IndirectSignedApprovalVote,
 };
 use indracore_node_primitives::ValidationResult;
-use indracore_primitives::v1::{
-    BlockNumber, CandidateDescriptor, CandidateHash, CandidateIndex, CandidateReceipt, GroupIndex,
-    Hash, PersistedValidationData, PoV, SessionIndex, SessionInfo, ValidationCode, ValidatorId,
-    ValidatorIndex, ValidatorPair, ValidatorSignature,
-};
-use indracore_subsystem::{
+use indracore_node_subsystem::{
     errors::RecoveryError,
     messages::{
         ApprovalCheckResult, ApprovalDistributionMessage, ApprovalVotingMessage,
@@ -40,6 +35,12 @@ use indracore_subsystem::{
     },
     FromOverseer, OverseerSignal, SpawnedSubsystem, Subsystem, SubsystemContext, SubsystemError,
     SubsystemResult,
+};
+use indracore_node_subsystem_util::metrics::{self, prometheus};
+use indracore_primitives::v1::{
+    BlockNumber, CandidateDescriptor, CandidateHash, CandidateIndex, CandidateReceipt, GroupIndex,
+    Hash, PersistedValidationData, PoV, SessionIndex, SessionInfo, ValidationCode, ValidatorId,
+    ValidatorIndex, ValidatorPair, ValidatorSignature,
 };
 use kvdb::KeyValueDB;
 use parity_scale_codec::Encode;
@@ -93,13 +94,80 @@ pub struct ApprovalVotingSubsystem {
     keystore: Arc<LocalKeystore>,
     slot_duration_millis: u64,
     db: Arc<dyn KeyValueDB>,
+    metrics: Metrics,
+}
+
+#[derive(Clone)]
+struct MetricsInner {
+    imported_candidates_total: prometheus::Counter<prometheus::U64>,
+    assignments_produced_total: prometheus::Counter<prometheus::U64>,
+    approvals_produced_total: prometheus::Counter<prometheus::U64>,
+}
+
+/// Aproval Voting metrics.
+#[derive(Default, Clone)]
+pub struct Metrics(Option<MetricsInner>);
+
+impl Metrics {
+    fn on_candidate_imported(&self) {
+        if let Some(metrics) = &self.0 {
+            metrics.imported_candidates_total.inc();
+        }
+    }
+
+    fn on_assignment_produced(&self) {
+        if let Some(metrics) = &self.0 {
+            metrics.assignments_produced_total.inc();
+        }
+    }
+
+    fn on_approval_produced(&self) {
+        if let Some(metrics) = &self.0 {
+            metrics.approvals_produced_total.inc();
+        }
+    }
+}
+
+impl metrics::Metrics for Metrics {
+    fn try_register(
+        registry: &prometheus::Registry,
+    ) -> std::result::Result<Self, prometheus::PrometheusError> {
+        let metrics = MetricsInner {
+            imported_candidates_total: prometheus::register(
+                prometheus::Counter::new(
+                    "parachain_imported_candidates_total",
+                    "Number of candidates imported by the approval voting subsystem",
+                )?,
+                registry,
+            )?,
+            assignments_produced_total: prometheus::register(
+                prometheus::Counter::new(
+                    "parachain_assignments_produced_total",
+                    "Number of assignments produced by the approval voting subsystem",
+                )?,
+                registry,
+            )?,
+            approvals_produced_total: prometheus::register(
+                prometheus::Counter::new(
+                    "parachain_approvals_produced_total",
+                    "Number of approvals produced by the approval voting subsystem",
+                )?,
+                registry,
+            )?,
+        };
+        Ok(Metrics(Some(metrics)))
+    }
 }
 
 impl ApprovalVotingSubsystem {
-    /// Create a new approval voting subsystem with the given keystore, slot duration,
+    /// Create a new approval voting subsystem with the given keystore and config,
     /// which creates a DB at the given path. This function will delete the directory
     /// at the given path if it already exists.
-    pub fn with_config(config: Config, keystore: Arc<LocalKeystore>) -> std::io::Result<Self> {
+    pub fn with_config(
+        config: Config,
+        keystore: Arc<LocalKeystore>,
+        metrics: Metrics,
+    ) -> std::io::Result<Self> {
         const DEFAULT_CACHE_SIZE: usize = 100 * 1024 * 1024; // 100MiB default should be fine unless finality stalls.
 
         let db = approval_db::v1::clear_and_recreate(
@@ -111,6 +179,7 @@ impl ApprovalVotingSubsystem {
             keystore,
             slot_duration_millis: config.slot_duration_millis,
             db,
+            metrics,
         })
     }
 }
@@ -345,6 +414,7 @@ where
                 handle_from_overseer(
                     &mut ctx,
                     &mut state,
+                    &subsystem.metrics,
                     db_writer,
                     next_msg?,
                     &mut last_finalized_height,
@@ -355,6 +425,7 @@ where
                     handle_background_request(
                         &mut ctx,
                         &mut state,
+                        &subsystem.metrics,
                         req,
                     ).await?
                 } else {
@@ -363,7 +434,16 @@ where
             }
         };
 
-        if handle_actions(&mut ctx, &mut wakeups, db_writer, &background_tx, actions).await? {
+        if handle_actions(
+            &mut ctx,
+            &subsystem.metrics,
+            &mut wakeups,
+            db_writer,
+            &background_tx,
+            actions,
+        )
+        .await?
+        {
             break;
         }
     }
@@ -374,6 +454,7 @@ where
 // returns `true` if any of the actions was a `Conclude` command.
 async fn handle_actions(
     ctx: &mut impl SubsystemContext,
+    metrics: &Metrics,
     wakeups: &mut Wakeups,
     db: &dyn KeyValueDB,
     background_tx: &mpsc::Sender<BackgroundRequest>,
@@ -402,6 +483,7 @@ async fn handle_actions(
                 candidate,
                 backing_group,
             } => {
+                metrics.on_assignment_produced();
                 let block_hash = indirect_cert.block_hash;
                 let validator_index = indirect_cert.validator;
 
@@ -443,6 +525,7 @@ async fn handle_actions(
 async fn handle_from_overseer(
     ctx: &mut impl SubsystemContext,
     state: &mut State<impl DBReader>,
+    metrics: &Metrics,
     db_writer: &dyn KeyValueDB,
     x: FromOverseer<ApprovalVotingMessage>,
     last_finalized_height: &mut Option<BlockNumber>,
@@ -467,6 +550,8 @@ async fn handle_from_overseer(
                             );
 
                             for (c_hash, c_entry) in block_batch.imported_candidates {
+                                metrics.on_candidate_imported();
+
                                 let our_tranche = c_entry
                                     .approval_entry(&block_batch.block_hash)
                                     .and_then(|a| a.our_assignment().map(|a| a.tranche()));
@@ -544,11 +629,12 @@ async fn handle_from_overseer(
 async fn handle_background_request(
     ctx: &mut impl SubsystemContext,
     state: &State<impl DBReader>,
+    metrics: &Metrics,
     request: BackgroundRequest,
 ) -> SubsystemResult<Vec<Action>> {
     match request {
         BackgroundRequest::ApprovalVote(vote_request) => {
-            issue_approval(ctx, state, vote_request).await
+            issue_approval(ctx, state, metrics, vote_request).await
         }
         BackgroundRequest::CandidateValidation(
             validation_data,
@@ -1511,6 +1597,7 @@ async fn launch_approval(
 async fn issue_approval(
     ctx: &mut impl SubsystemContext,
     state: &State<impl DBReader>,
+    metrics: &Metrics,
     request: ApprovalVoteRequest,
 ) -> SubsystemResult<Vec<Action>> {
     let ApprovalVoteRequest {
@@ -1612,6 +1699,8 @@ async fn issue_approval(
         candidate_entry,
         validator_index as _,
     )?;
+
+    metrics.on_approval_produced();
 
     // dispatch to approval distribution.
     ctx.send_message(
