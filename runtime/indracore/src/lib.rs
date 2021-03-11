@@ -1216,7 +1216,7 @@ sp_api::impl_runtime_apis! {
         }
 
         fn random_seed() -> <Block as BlockT>::Hash {
-            RandomnessCollectiveFlip::random_seed()
+            pallet_babe::RandomnessFromOneEpochAgo::<Runtime>::random_seed().0
         }
     }
 
@@ -1337,7 +1337,7 @@ sp_api::impl_runtime_apis! {
             babe_primitives::BabeGenesisConfiguration {
                 slot_duration: Babe::slot_duration(),
                 epoch_length: EpochDuration::get(),
-                c: BABE_GENESIS_EPOCH_CONFIG,
+                c: BABE_GENESIS_EPOCH_CONFIG.c,
                 genesis_authorities: Babe::authorities(),
                 randomness: Babe::randomness(),
                 allowed_slots: BABE_GENESIS_EPOCH_CONFIG.allowed_slots,

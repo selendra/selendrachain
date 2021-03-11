@@ -19,7 +19,8 @@
 use crate::{
     configuration, dmp, hrmp, inclusion, initializer, paras, scheduler, session_info, shared, ump,
 };
-use frame_support::{parameter_types, traits::Randomness as RandomnessT};
+use frame_support::parameter_types;
+use frame_support_test::TestRandomness;
 use primitives::v1::{AuthorityDiscoveryId, Balance, BlockNumber, Header, ValidatorIndex};
 use sp_core::H256;
 use sp_io::TestExternalities;
@@ -50,14 +51,6 @@ frame_support::construct_runtime!(
         SessionInfo: session_info::{Module, Call, Storage},
     }
 );
-
-pub struct TestRandomness;
-
-impl RandomnessT<H256> for TestRandomness {
-    fn random(_subject: &[u8]) -> H256 {
-        Default::default()
-    }
-}
 
 parameter_types! {
     pub const BlockHashCount: u32 = 250;
@@ -105,7 +98,7 @@ impl pallet_balances::Config for Test {
 }
 
 impl crate::initializer::Config for Test {
-    type Randomness = TestRandomness;
+    type Randomness = TestRandomness<Self>;
 }
 
 impl crate::configuration::Config for Test {}

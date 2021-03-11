@@ -254,8 +254,9 @@ mod tests {
     use frame_support::traits::OneSessionHandler;
     use frame_support::{
         assert_noop, assert_ok, parameter_types,
-        traits::{OnFinalize, OnInitialize, Randomness},
+        traits::{OnFinalize, OnInitialize},
     };
+    use frame_support_test::TestRandomness;
     use frame_system::limits;
     use keyring::Sr25519Keyring;
     use primitives::v1::{
@@ -516,16 +517,8 @@ mod tests {
 
     impl session_info::Config for Test {}
 
-    pub struct TestRandomness;
-
-    impl Randomness<H256> for TestRandomness {
-        fn random(_subject: &[u8]) -> H256 {
-            Default::default()
-        }
-    }
-
     impl initializer::Config for Test {
-        type Randomness = TestRandomness;
+        type Randomness = TestRandomness<Self>;
     }
 
     impl scheduler::Config for Test {}

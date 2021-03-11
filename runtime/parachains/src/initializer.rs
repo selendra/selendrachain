@@ -82,7 +82,7 @@ pub trait Config:
     + hrmp::Config
 {
     /// A randomness beacon.
-    type Randomness: Randomness<Self::Hash>;
+    type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
 }
 
 decl_storage! {
@@ -182,7 +182,8 @@ impl<T: Config> Module<T> {
 
         let random_seed = {
             let mut buf = [0u8; 32];
-            let random_hash = T::Randomness::random(&b"paras"[..]);
+            // TODO: audit usage of randomness API
+            let (random_hash, _) = T::Randomness::random(&b"paras"[..]);
             let len = sp_std::cmp::min(32, random_hash.as_ref().len());
             buf[..len].copy_from_slice(&random_hash.as_ref()[..len]);
             buf
