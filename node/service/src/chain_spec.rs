@@ -23,7 +23,7 @@ use indracore::constants::currency::SELS;
 use indracore_primitives::v1::{AccountId, AccountPublic, AssignmentId, ValidatorId};
 use indracore_runtime as indracore;
 use kumandra_runtime as kumandra;
-use kumandra_runtime::constants::currency::SELS as REL;
+use kumandra_runtime::constants::currency::SELS as KMDS;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_staking::Forcing;
 use sc_chain_spec::{ChainSpecExtension, ChainType};
@@ -35,7 +35,7 @@ use telemetry::TelemetryEndpoints;
 
 const INDRACORE_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 const KUMANDRA_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
-const DEFAULT_PROTOCOL_ID: &str = "dot";
+const DEFAULT_PROTOCOL_ID: &str = "sel";
 
 /// Node `ChainSpec` extensions.
 ///
@@ -137,7 +137,7 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
         AuthorityDiscoveryId,
     )> = vec![];
 
-    const ENDOWMENT: u128 = 1_000_000 * SELS;
+    const ENDOWMENT: u128 = 31415926535 * SELS;
     const STASH: u128 = 100 * SELS;
 
     indracore::GenesisConfig {
@@ -431,8 +431,8 @@ fn kumandra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> kumandra_runti
         ),
     ];
 
-    const ENDOWMENT: u128 = 1_000_000 * REL;
-    const STASH: u128 = 100 * REL;
+    const ENDOWMENT: u128 = 31415926535 * KMDS;
+    const STASH: u128 = 100 * KMDS;
 
     kumandra_runtime::GenesisConfig {
         frame_system: kumandra_runtime::SystemConfig {
@@ -558,7 +558,15 @@ pub fn kumandra_staging_testnet_config() -> Result<KumandraChainSpec, String> {
                 .expect("Kumandra Staging telemetry url is valid; qed"),
         ),
         Some(DEFAULT_PROTOCOL_ID),
-        None,
+        Some(
+            serde_json::from_str(
+                "{
+            \"tokenDecimals\": 8,
+            \"tokenSymbol\": \"KMD\"
+        	}",
+            )
+            .expect("Provided valid json map"),
+        ),
         Default::default(),
     ))
 }
@@ -638,7 +646,7 @@ pub fn indracore_testnet_genesis(
 ) -> indracore::GenesisConfig {
     let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 
-    const ENDOWMENT: u128 = 1_000_000 * SELS;
+    const ENDOWMENT: u128 = 31415926535 * SELS;
     const STASH: u128 = 100 * SELS;
 
     indracore::GenesisConfig {
@@ -737,7 +745,7 @@ pub fn kumandra_testnet_genesis(
 ) -> kumandra_runtime::GenesisConfig {
     let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 
-    const ENDOWMENT: u128 = 1_000_000 * SELS;
+    const ENDOWMENT: u128 = 31415926535 * KMDS;
 
     kumandra_runtime::GenesisConfig {
         frame_system: kumandra_runtime::SystemConfig {
@@ -919,7 +927,15 @@ pub fn kumandra_local_testnet_config() -> Result<KumandraChainSpec, String> {
         vec![],
         None,
         Some(DEFAULT_PROTOCOL_ID),
-        None,
+        Some(
+            serde_json::from_str(
+                "{
+            \"tokenDecimals\": 8,
+            \"tokenSymbol\": \"KMD\"
+        	}",
+            )
+            .expect("Provided valid json map"),
+        ),
         Default::default(),
     ))
 }
