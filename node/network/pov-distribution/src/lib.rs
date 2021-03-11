@@ -65,7 +65,7 @@ const BENEFIT_LATE_POV: Rep = Rep::BenefitMinor(
 	but was not the first to do so",
 );
 
-const LOG_TARGET: &str = "pov_distribution";
+const LOG_TARGET: &str = "parachain::pov_distribution";
 
 /// The PoV Distribution Subsystem.
 pub struct PoVDistribution {

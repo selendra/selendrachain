@@ -30,7 +30,7 @@ use indracore_primitives::v1::{AuthorityDiscoveryId, Block, Hash};
 use sc_authority_discovery::Service as AuthorityDiscoveryService;
 use sc_network::multiaddr::{Multiaddr, Protocol};
 
-const LOG_TARGET: &str = "validator_discovery";
+const LOG_TARGET: &str = "parachain::validator_discovery";
 
 /// An abstraction over networking for the purposes of validator discovery service.
 #[async_trait]

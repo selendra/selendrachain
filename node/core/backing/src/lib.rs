@@ -61,7 +61,7 @@ use statement_table::{
 };
 use thiserror::Error;
 
-const LOG_TARGET: &str = "candidate_backing";
+const LOG_TARGET: &str = "parachain::candidate_backing";
 
 #[derive(Debug, Error)]
 enum Error {

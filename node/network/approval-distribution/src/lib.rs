@@ -44,7 +44,7 @@ use indracore_primitives::v1::{
 };
 use std::collections::{hash_map, BTreeMap, HashMap, HashSet};
 
-const LOG_TARGET: &str = "approval_distribution";
+const LOG_TARGET: &str = "parachain::approval_distribution";
 
 const COST_UNEXPECTED_MESSAGE: Rep =
     Rep::CostMinor("Peer sent an out-of-view assignment or approval");

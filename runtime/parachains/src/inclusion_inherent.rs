@@ -40,6 +40,8 @@ use primitives::v1::{
 };
 use sp_std::prelude::*;
 
+const LOG_TARGET: &str = "runtime::inclusion-inherent";
+
 // In the future, we should benchmark these consts; these are all untested assumptions for now.
 const BACKED_CANDIDATE_WEIGHT: Weight = 100_000;
 const INCLUSION_INHERENT_CLAIMED_WEIGHT: Weight = 1_000_000_000;
@@ -213,34 +215,34 @@ impl<T: Config> ProvideInherent for Module<T> {
 
     fn create_inherent(data: &InherentData) -> Option<Self::Call> {
         data.get_data(&Self::INHERENT_IDENTIFIER)
-			.expect("inclusion inherent data failed to decode")
-			.map(
-				|(signed_bitfields, backed_candidates, parent_header): (
-					SignedAvailabilityBitfields,
-					Vec<BackedCandidate<T::Hash>>,
-					Header,
-				)| {
-					// Sanity check: session changes can invalidate an inherent, and we _really_ don't want that to happen.
-					let (signed_bitfields, backed_candidates) = match Self::inclusion(
-						frame_system::RawOrigin::None.into(),
-						signed_bitfields.clone(),
-						backed_candidates.clone(),
-						parent_header.clone(),
-					) {
-						Ok(_) => (signed_bitfields, backed_candidates),
-						Err(err) => {
-							log::warn!(
-								target: "runtime_inclusion_inherent",
+            .expect("inclusion inherent data failed to decode")
+            .map(
+                |(signed_bitfields, backed_candidates, parent_header): (
+                    SignedAvailabilityBitfields,
+                    Vec<BackedCandidate<T::Hash>>,
+                    Header,
+                )| {
+                    // Sanity check: session changes can invalidate an inherent, and we _really_ don't want that to happen.
+                    let (signed_bitfields, backed_candidates) = match Self::inclusion(
+                        frame_system::RawOrigin::None.into(),
+                        signed_bitfields.clone(),
+                        backed_candidates.clone(),
+                        parent_header.clone(),
+                    ) {
+                        Ok(_) => (signed_bitfields, backed_candidates),
+                        Err(err) => {
+                            log::warn!(
+								target: LOG_TARGET,
 								"dropping signed_bitfields and backed_candidates because they produced \
 								an invalid inclusion inherent: {:?}",
 								err,
 							);
-							(Vec::new().into(), Vec::new())
-						}
-					};
-					Call::inclusion(signed_bitfields, backed_candidates, parent_header)
-				}
-			)
+                            (Vec::new().into(), Vec::new())
+                        }
+                    };
+                    Call::inclusion(signed_bitfields, backed_candidates, parent_header)
+                },
+            )
     }
 }
 

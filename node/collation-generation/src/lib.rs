@@ -37,7 +37,7 @@ use std::sync::Arc;
 
 mod error;
 
-const LOG_TARGET: &'static str = "collation_generation";
+const LOG_TARGET: &'static str = "parachain::collation-generation";
 
 /// Collation Generation Subsystem
 pub struct CollationGenerationSubsystem {

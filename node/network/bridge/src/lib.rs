@@ -73,7 +73,7 @@ const MALFORMED_VIEW_COST: Rep = Rep::CostMajor("Malformed view");
 const EMPTY_VIEW_COST: Rep = Rep::CostMajor("Peer sent us an empty view");
 
 // network bridge log target
-const LOG_TARGET: &'static str = "network_bridge";
+const LOG_TARGET: &'static str = "parachain::network_bridge";
 
 /// Messages from and to the network.
 ///

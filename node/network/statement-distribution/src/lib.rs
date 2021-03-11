@@ -64,7 +64,7 @@ const BENEFIT_VALID_STATEMENT_FIRST: Rep =
 /// Typically we will only keep 1, but when a validator equivocates we will need to track 2.
 const VC_THRESHOLD: usize = 2;
 
-const LOG_TARGET: &str = "statement_distribution";
+const LOG_TARGET: &str = "parachain::statement_distribution";
 
 /// The statement distribution subsystem.
 pub struct StatementDistribution {

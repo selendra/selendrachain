@@ -45,7 +45,7 @@ use sp_keystore::SyncCryptoStorePtr;
 use std::{pin::Pin, sync::Arc};
 use thiserror::Error;
 
-const LOG_TARGET: &'static str = "candidate_selection";
+const LOG_TARGET: &'static str = "parachain::candidate_selection";
 
 struct CandidateSelectionJob {
     assignment: ParaId,

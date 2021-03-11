@@ -31,7 +31,7 @@ use indracore_node_subsystem_util::{
 use indracore_primitives::v1::{Hash, SessionIndex, ValidatorId};
 use rand::seq::SliceRandom as _;
 
-const LOG_TARGET: &str = "gossip_support";
+const LOG_TARGET: &str = "parachain::gossip_support";
 
 /// The Gossip Support subsystem.
 pub struct GossipSupport {}

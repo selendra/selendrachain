@@ -41,7 +41,7 @@ use std::sync::Arc;
 
 use futures::prelude::*;
 
-const LOG_TARGET: &str = "chain_api";
+const LOG_TARGET: &str = "parachain::chain_api";
 
 /// The Chain API Subsystem implementation.
 pub struct ChainApiSubsystem<Client> {
