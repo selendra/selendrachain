@@ -192,7 +192,7 @@ struct InvalidErasureRoot;
 // the code. So this does the necessary conversion.
 fn primitive_statement_to_table(s: &SignedFullStatement) -> TableSignedStatement {
     let statement = match s.payload() {
-        Statement::Seconded(c) => TableStatement::Candidate(c.clone()),
+        Statement::Seconded(c) => TableStatement::Seconded(c.clone()),
         Statement::Valid(h) => TableStatement::Valid(h.clone()),
         Statement::Invalid(h) => TableStatement::Invalid(h.clone()),
     };
@@ -1308,7 +1308,7 @@ mod tests {
 
     fn table_statement_to_primitive(statement: TableStatement) -> Statement {
         match statement {
-            TableStatement::Candidate(committed_candidate_receipt) => {
+            TableStatement::Seconded(committed_candidate_receipt) => {
                 Statement::Seconded(committed_candidate_receipt)
             }
             TableStatement::Valid(candidate_hash) => Statement::Valid(candidate_hash),
