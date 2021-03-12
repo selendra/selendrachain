@@ -15,6 +15,7 @@ sc-chain-spec = { git = "https://github.com/selendra/substrate", branch = "maste
 sc-client-api = { git = "https://github.com/selendra/substrate", branch = "master" }
 sc-service = { git = "https://github.com/selendra/substrate", branch = "master" }
 sc-tracing = { git = "https://github.com/selendra/substrate", branch = "master" }
+sc-telemetry = { git = "https://github.com/selendra/substrate", branch = "master" }
 sp-consensus = { git = "https://github.com/selendra/substrate", branch = "master" }
 sp-runtime = { git = "https://github.com/selendra/substrate", branch = "master" }
 sp-api = { git = "https://github.com/selendra/substrate", branch = "master" }

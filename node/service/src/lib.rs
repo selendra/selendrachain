@@ -53,7 +53,7 @@ use std::sync::Arc;
 use prometheus_endpoint::Registry;
 use sc_executor::native_executor_instance;
 use service::RpcHandlers;
-use telemetry::{TelemetryConnectionNotifier, TelemetrySpan};
+use telemetry::{Telemetry, TelemetryWorker, TelemetryWorkerHandle};
 
 pub use self::client::{
     AbstractClient, Client, ClientHandle, ExecuteWithClient, RuntimeApiCollection,
@@ -115,6 +115,9 @@ pub enum Error {
 
     #[error(transparent)]
     Prometheus(#[from] prometheus_endpoint::PrometheusError),
+
+    #[error(transparent)]
+    Telemetry(#[from] telemetry::Error),
 
     #[error(transparent)]
     Jaeger(#[from] indracore_subsystem::jaeger::JaegerError),
@@ -191,6 +194,7 @@ type LightClient<RuntimeApi, Executor> =
 fn new_partial<RuntimeApi, Executor>(
     config: &mut Configuration,
     jaeger_agent: Option<std::net::SocketAddr>,
+    telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 ) -> Result<
     service::PartialComponents<
         FullClient<RuntimeApi, Executor>,
@@ -214,6 +218,7 @@ fn new_partial<RuntimeApi, Executor>(
             ),
             grandpa::SharedVoterState,
             u64, // slot-duration
+            Option<Telemetry>,
         ),
     >,
     Error,
@@ -229,9 +234,36 @@ where
 
     let inherent_data_providers = inherents::InherentDataProviders::new();
 
+    let telemetry = config
+        .telemetry_endpoints
+        .clone()
+        .filter(|x| !x.is_empty())
+        .map(move |endpoints| -> Result<_, telemetry::Error> {
+            let (worker, mut worker_handle) = if let Some(worker_handle) = telemetry_worker_handle {
+                (None, worker_handle)
+            } else {
+                let worker = TelemetryWorker::new(16)?;
+                let worker_handle = worker.handle();
+                (Some(worker), worker_handle)
+            };
+            let telemetry = worker_handle.new_telemetry(endpoints);
+            Ok((worker, telemetry))
+        })
+        .transpose()?;
+
     let (client, backend, keystore_container, task_manager) =
-        service::new_full_parts::<Block, RuntimeApi, Executor>(&config)?;
+        service::new_full_parts::<Block, RuntimeApi, Executor>(
+            &config,
+            telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
+        )?;
     let client = Arc::new(client);
+
+    let telemetry = telemetry.map(|(worker, telemetry)| {
+        if let Some(worker) = worker {
+            task_manager.spawn_handle().spawn("telemetry", worker.run());
+        }
+        telemetry
+    });
 
     jaeger_launch_collector_with_agent(task_manager.spawn_handle(), &*config, jaeger_agent)?;
 
@@ -252,6 +284,7 @@ where
         &(client.clone() as Arc<_>),
         select_chain.clone(),
         grandpa_hard_forks,
+        telemetry.as_ref().map(|x| x.handle()),
     )?;
 
     let justification_import = grandpa_block_import.clone();
@@ -270,6 +303,7 @@ where
         &task_manager.spawn_essential_handle(),
         config.prometheus_registry(),
         consensus_common::CanAuthorWithNativeVersion::new(client.executor().clone()),
+        telemetry.as_ref().map(|x| x.handle()),
     )?;
 
     let justification_stream = grandpa_link.justification_stream();
@@ -332,6 +366,7 @@ where
             import_setup,
             rpc_setup,
             slot_duration,
+            telemetry,
         ),
     })
 }
@@ -522,6 +557,7 @@ pub fn new_full<RuntimeApi, Executor>(
     grandpa_pause: Option<(u32, u32)>,
     jaeger_agent: Option<std::net::SocketAddr>,
     isolation_strategy: IsolationStrategy,
+    telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 ) -> Result<NewFull<Arc<FullClient<RuntimeApi, Executor>>>, Error>
 where
     RuntimeApi:
@@ -532,9 +568,6 @@ where
 {
     #[cfg(feature = "real-overseer")]
     info!("real-overseer feature is ENABLED");
-
-    let telemetry_span = TelemetrySpan::new();
-    let _telemetry_span_entered = telemetry_span.enter();
 
     let role = config.role.clone();
     let force_authoring = config.force_authoring;
@@ -557,8 +590,8 @@ where
         import_queue,
         transaction_pool,
         inherent_data_providers,
-        other: (rpc_extensions_builder, import_setup, rpc_setup, slot_duration),
-    } = new_partial::<RuntimeApi, Executor>(&mut config, jaeger_agent)?;
+        other: (rpc_extensions_builder, import_setup, rpc_setup, slot_duration, mut telemetry),
+    } = new_partial::<RuntimeApi, Executor>(&mut config, jaeger_agent, telemetry_worker_handle)?;
 
     let prometheus_registry = config.prometheus_registry().cloned();
 
@@ -689,22 +722,21 @@ where
         cache_size: None, // default is fine.
     };
 
-    let (rpc_handlers, telemetry_connection_notifier) =
-        service::spawn_tasks(service::SpawnTasksParams {
-            config,
-            backend: backend.clone(),
-            client: client.clone(),
-            keystore: keystore_container.sync_keystore(),
-            network: network.clone(),
-            rpc_extensions_builder: Box::new(rpc_extensions_builder),
-            transaction_pool: transaction_pool.clone(),
-            task_manager: &mut task_manager,
-            on_demand: None,
-            remote_blockchain: None,
-            network_status_sinks: network_status_sinks.clone(),
-            system_rpc_tx,
-            telemetry_span: Some(telemetry_span.clone()),
-        })?;
+    let rpc_handlers = service::spawn_tasks(service::SpawnTasksParams {
+        config,
+        backend: backend.clone(),
+        client: client.clone(),
+        keystore: keystore_container.sync_keystore(),
+        network: network.clone(),
+        rpc_extensions_builder: Box::new(rpc_extensions_builder),
+        transaction_pool: transaction_pool.clone(),
+        task_manager: &mut task_manager,
+        on_demand: None,
+        remote_blockchain: None,
+        network_status_sinks: network_status_sinks.clone(),
+        system_rpc_tx,
+        telemetry: telemetry.as_mut(),
+    })?;
 
     let (block_import, link_half, babe_link) = import_setup;
 
@@ -829,6 +861,7 @@ where
                 .ok_or(Error::AuthoritiesRequireRealOverseer)?
                 .clone(),
             prometheus_registry.as_ref(),
+            telemetry.as_ref().map(|x| x.handle()),
         );
 
         let babe_config = babe::BabeParams {
@@ -844,6 +877,7 @@ where
             babe_link,
             can_author_with,
             block_proposal_slot_portion: babe::SlotProportion::new(2f32 / 3f32),
+            telemetry: telemetry.as_ref().map(|x| x.handle()),
         };
 
         let babe = babe::start_babe(babe_config)?;
@@ -868,6 +902,7 @@ where
         observer_enabled: false,
         keystore: keystore_opt,
         is_authority: role.is_authority(),
+        telemetry: telemetry.as_ref().map(|x| x.handle()),
     };
 
     let enable_grandpa = !disable_grandpa;
@@ -915,10 +950,10 @@ where
             config,
             link: link_half,
             network: network.clone(),
-            telemetry_on_connect: telemetry_connection_notifier.map(|x| x.on_connect_stream()),
             voting_rule,
             prometheus_registry: prometheus_registry.clone(),
             shared_voter_state,
+            telemetry: telemetry.as_ref().map(|x| x.handle()),
         };
 
         task_manager
@@ -942,14 +977,7 @@ where
 /// Builds a new service for a light client.
 fn new_light<Runtime, Dispatch>(
     mut config: Configuration,
-) -> Result<
-    (
-        TaskManager,
-        RpcHandlers,
-        Option<TelemetryConnectionNotifier>,
-    ),
-    Error,
->
+) -> Result<(TaskManager, RpcHandlers), Error>
 where
     Runtime: 'static + Send + Sync + ConstructRuntimeApi<Block, LightClient<Runtime, Dispatch>>,
     <Runtime as ConstructRuntimeApi<Block, LightClient<Runtime, Dispatch>>>::RuntimeApi:
@@ -959,8 +987,27 @@ where
     set_prometheus_registry(&mut config)?;
     use sc_client_api::backend::RemoteBackend;
 
+    let telemetry = config
+        .telemetry_endpoints
+        .clone()
+        .filter(|x| !x.is_empty())
+        .map(|endpoints| -> Result<_, telemetry::Error> {
+            let worker = TelemetryWorker::new(16)?;
+            let telemetry = worker.handle().new_telemetry(endpoints);
+            Ok((worker, telemetry))
+        })
+        .transpose()?;
+
     let (client, backend, keystore_container, mut task_manager, on_demand) =
-        service::new_light_parts::<Block, Runtime, Dispatch>(&config)?;
+        service::new_light_parts::<Block, Runtime, Dispatch>(
+            &config,
+            telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
+        )?;
+
+    let mut telemetry = telemetry.map(|(worker, telemetry)| {
+        task_manager.spawn_handle().spawn("telemetry", worker.run());
+        telemetry
+    });
 
     let select_chain = sc_consensus::LongestChain::new(backend.clone());
 
@@ -976,6 +1023,7 @@ where
         client.clone(),
         &(client.clone() as Arc<_>),
         select_chain.clone(),
+        telemetry.as_ref().map(|x| x.handle()),
     )?;
     let justification_import = grandpa_block_import.clone();
 
@@ -998,6 +1046,7 @@ where
         &task_manager.spawn_essential_handle(),
         config.prometheus_registry(),
         consensus_common::NeverCanAuthor,
+        telemetry.as_ref().map(|x| x.handle()),
     )?;
 
     let (network, network_status_sinks, system_rpc_tx, network_starter) =
@@ -1029,29 +1078,25 @@ where
 
     let rpc_extensions = indracore_rpc::create_light(light_deps);
 
-    let telemetry_span = TelemetrySpan::new();
-    let _telemetry_span_entered = telemetry_span.enter();
-
-    let (rpc_handlers, telemetry_connection_notifier) =
-        service::spawn_tasks(service::SpawnTasksParams {
-            on_demand: Some(on_demand),
-            remote_blockchain: Some(backend.remote_blockchain()),
-            rpc_extensions_builder: Box::new(service::NoopRpcExtensionBuilder(rpc_extensions)),
-            task_manager: &mut task_manager,
-            config,
-            keystore: keystore_container.sync_keystore(),
-            backend,
-            transaction_pool,
-            client,
-            network,
-            network_status_sinks,
-            system_rpc_tx,
-            telemetry_span: Some(telemetry_span.clone()),
-        })?;
+    let rpc_handlers = service::spawn_tasks(service::SpawnTasksParams {
+        on_demand: Some(on_demand),
+        remote_blockchain: Some(backend.remote_blockchain()),
+        rpc_extensions_builder: Box::new(service::NoopRpcExtensionBuilder(rpc_extensions)),
+        task_manager: &mut task_manager,
+        config,
+        keystore: keystore_container.sync_keystore(),
+        backend,
+        transaction_pool,
+        client,
+        network,
+        network_status_sinks,
+        system_rpc_tx,
+        telemetry: telemetry.as_mut(),
+    })?;
 
     network_starter.start_network();
 
-    Ok((task_manager, rpc_handlers, telemetry_connection_notifier))
+    Ok((task_manager, rpc_handlers))
 }
 
 /// Builds a new object suitable for chain operations.
@@ -1076,7 +1121,11 @@ pub fn new_chain_ops(
             import_queue,
             task_manager,
             ..
-        } = new_partial::<kumandra_runtime::RuntimeApi, KumandraExecutor>(config, jaeger_agent)?;
+        } = new_partial::<kumandra_runtime::RuntimeApi, KumandraExecutor>(
+            config,
+            jaeger_agent,
+            None,
+        )?;
         Ok((
             Arc::new(Client::Kumandra(client)),
             backend,
@@ -1090,7 +1139,11 @@ pub fn new_chain_ops(
             import_queue,
             task_manager,
             ..
-        } = new_partial::<indracore_runtime::RuntimeApi, IndracoreExecutor>(config, jaeger_agent)?;
+        } = new_partial::<indracore_runtime::RuntimeApi, IndracoreExecutor>(
+            config,
+            jaeger_agent,
+            None,
+        )?;
         Ok((
             Arc::new(Client::Indracore(client)),
             backend,
@@ -1101,16 +1154,7 @@ pub fn new_chain_ops(
 }
 
 /// Build a new light node.
-pub fn build_light(
-    config: Configuration,
-) -> Result<
-    (
-        TaskManager,
-        RpcHandlers,
-        Option<TelemetryConnectionNotifier>,
-    ),
-    Error,
-> {
+pub fn build_light(config: Configuration) -> Result<(TaskManager, RpcHandlers), Error> {
     if config.chain_spec.is_kumandra() {
         new_light::<kumandra_runtime::RuntimeApi, KumandraExecutor>(config)
     } else {
@@ -1124,6 +1168,7 @@ pub fn build_full(
     is_collator: IsCollator,
     grandpa_pause: Option<(u32, u32)>,
     jaeger_agent: Option<std::net::SocketAddr>,
+    telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 ) -> Result<NewFull<Client>, Error> {
     let isolation_strategy = {
         #[cfg(not(any(target_os = "android", target_os = "unknown")))]
@@ -1145,6 +1190,7 @@ pub fn build_full(
             grandpa_pause,
             jaeger_agent,
             isolation_strategy,
+            telemetry_worker_handle,
         )
         .map(|full| full.with_client(Client::Kumandra))
     } else {
@@ -1154,6 +1200,7 @@ pub fn build_full(
             grandpa_pause,
             jaeger_agent,
             isolation_strategy,
+            telemetry_worker_handle,
         )
         .map(|full| full.with_client(Client::Indracore))
     }
