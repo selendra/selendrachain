@@ -59,17 +59,40 @@ pub enum RequiredTranches {
     },
 }
 
+/// The result of a check.
+#[derive(Debug, Clone, Copy)]
+pub enum Check {
+    /// The candidate is unapproved.
+    Unapproved,
+    /// The candidate is approved, with the given amount of no-shows.
+    Approved(usize),
+}
+
+impl Check {
+    /// Whether the candidate is approved.
+    pub fn is_approved(&self) -> bool {
+        match *self {
+            Check::Unapproved => false,
+            Check::Approved(_) => true,
+        }
+    }
+}
+
 /// Check the approval of a candidate.
 pub fn check_approval(
     candidate: &CandidateEntry,
     approval: &ApprovalEntry,
     required: RequiredTranches,
-) -> bool {
+) -> Check {
     match required {
-        RequiredTranches::Pending { .. } => false,
+        RequiredTranches::Pending { .. } => Check::Unapproved,
         RequiredTranches::All => {
             let approvals = candidate.approvals();
-            3 * approvals.count_ones() > 2 * approvals.len()
+            if 3 * approvals.count_ones() > 2 * approvals.len() {
+                Check::Approved(0)
+            } else {
+                Check::Unapproved
+            }
         }
         RequiredTranches::Exact {
             needed,
@@ -97,7 +120,11 @@ pub fn check_approval(
             // note: the process of computing `required` only chooses `exact` if
             // that will surpass a minimum amount of checks.
             // shouldn't typically go above, since all no-shows are supposed to be covered.
-            n_approved + tolerated_missing >= n_assigned
+            if n_approved + tolerated_missing >= n_assigned {
+                Check::Approved(tolerated_missing)
+            } else {
+                Check::Unapproved
+            }
         }
     }
 }
@@ -397,7 +424,8 @@ mod tests {
                 maximum_broadcast: 0,
                 clock_drift: 0,
             },
-        ));
+        )
+        .is_approved());
     }
 
     #[test]
@@ -423,18 +451,10 @@ mod tests {
         }
         .into();
 
-        assert!(!check_approval(
-            &candidate,
-            &approval_entry,
-            RequiredTranches::All
-        ));
+        assert!(!check_approval(&candidate, &approval_entry, RequiredTranches::All).is_approved());
 
         candidate.mark_approval(ValidatorIndex(6));
-        assert!(check_approval(
-            &candidate,
-            &approval_entry,
-            RequiredTranches::All
-        ));
+        assert!(check_approval(&candidate, &approval_entry, RequiredTranches::All).is_approved());
     }
 
     #[test]
@@ -481,7 +501,8 @@ mod tests {
                 tolerated_missing: 0,
                 next_no_show: None,
             },
-        ));
+        )
+        .is_approved());
         assert!(!check_approval(
             &candidate,
             &approval_entry,
@@ -490,7 +511,8 @@ mod tests {
                 tolerated_missing: 0,
                 next_no_show: None,
             },
-        ));
+        )
+        .is_approved());
         assert!(check_approval(
             &candidate,
             &approval_entry,
@@ -499,7 +521,8 @@ mod tests {
                 tolerated_missing: 4,
                 next_no_show: None,
             },
-        ));
+        )
+        .is_approved());
     }
 
     #[test]

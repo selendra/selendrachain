@@ -373,8 +373,13 @@ fn rejects_bad_assignment() {
     let mut state = some_state(Default::default());
     let candidate_index = 0;
 
-    let res =
-        check_and_import_assignment(&mut state, assignment_good.clone(), candidate_index).unwrap();
+    let res = check_and_import_assignment(
+        &mut state,
+        &Metrics(None),
+        assignment_good.clone(),
+        candidate_index,
+    )
+    .unwrap();
     assert_eq!(res.0, AssignmentCheckResult::Accepted);
     // Check that the assignment's been imported.
     assert!(res
@@ -389,7 +394,8 @@ fn rejects_bad_assignment() {
         cert: garbage_assignment_cert(AssignmentCertKind::RelayVRFModulo { sample: 0 }),
     };
 
-    let res = check_and_import_assignment(&mut state, assignment, candidate_index).unwrap();
+    let res = check_and_import_assignment(&mut state, &Metrics(None), assignment, candidate_index)
+        .unwrap();
     assert_eq!(res.0, AssignmentCheckResult::Bad);
 
     let mut state = State {
@@ -400,7 +406,9 @@ fn rejects_bad_assignment() {
     };
 
     // same assignment, but this time rejected
-    let res = check_and_import_assignment(&mut state, assignment_good, candidate_index).unwrap();
+    let res =
+        check_and_import_assignment(&mut state, &Metrics(None), assignment_good, candidate_index)
+            .unwrap();
     assert_eq!(res.0, AssignmentCheckResult::Bad);
 }
 
@@ -425,7 +433,13 @@ fn rejects_assignment_in_future() {
         })
     };
 
-    let res = check_and_import_assignment(&mut state, assignment.clone(), candidate_index).unwrap();
+    let res = check_and_import_assignment(
+        &mut state,
+        &Metrics(None),
+        assignment.clone(),
+        candidate_index,
+    )
+    .unwrap();
     assert_eq!(res.0, AssignmentCheckResult::TooFarInFuture);
 
     let mut state = State {
@@ -438,7 +452,13 @@ fn rejects_assignment_in_future() {
         })
     };
 
-    let res = check_and_import_assignment(&mut state, assignment.clone(), candidate_index).unwrap();
+    let res = check_and_import_assignment(
+        &mut state,
+        &Metrics(None),
+        assignment.clone(),
+        candidate_index,
+    )
+    .unwrap();
     assert_eq!(res.0, AssignmentCheckResult::Accepted);
 }
 
@@ -454,7 +474,13 @@ fn rejects_assignment_with_unknown_candidate() {
 
     let mut state = some_state(Default::default());
 
-    let res = check_and_import_assignment(&mut state, assignment.clone(), candidate_index).unwrap();
+    let res = check_and_import_assignment(
+        &mut state,
+        &Metrics(None),
+        assignment.clone(),
+        candidate_index,
+    )
+    .unwrap();
     assert_eq!(res.0, AssignmentCheckResult::Bad);
 }
 
@@ -475,8 +501,13 @@ fn assignment_import_updates_candidate_entry_and_schedules_wakeup() {
         ..some_state(Default::default())
     };
 
-    let (res, actions) =
-        check_and_import_assignment(&mut state, assignment.clone(), candidate_index).unwrap();
+    let (res, actions) = check_and_import_assignment(
+        &mut state,
+        &Metrics(None),
+        assignment.clone(),
+        candidate_index,
+    )
+    .unwrap();
 
     assert_eq!(res, AssignmentCheckResult::Accepted);
     assert_eq!(actions.len(), 2);
@@ -520,7 +551,7 @@ fn rejects_approval_before_assignment() {
         signature: sign_approval(Sr25519Keyring::Alice, candidate_hash, 1),
     };
 
-    let (actions, res) = check_and_import_approval(&state, vote, |r| r).unwrap();
+    let (actions, res) = check_and_import_approval(&state, &Metrics(None), vote, |r| r).unwrap();
 
     assert_eq!(res, ApprovalCheckResult::Bad);
     assert!(actions.is_empty());
@@ -545,7 +576,7 @@ fn rejects_approval_if_no_candidate_entry() {
 
     state.db.candidate_entries.remove(&candidate_hash);
 
-    let (actions, res) = check_and_import_approval(&state, vote, |r| r).unwrap();
+    let (actions, res) = check_and_import_approval(&state, &Metrics(None), vote, |r| r).unwrap();
 
     assert_eq!(res, ApprovalCheckResult::Bad);
     assert!(actions.is_empty());
@@ -580,7 +611,7 @@ fn rejects_approval_if_no_block_entry() {
 
     state.db.block_entries.remove(&block_hash);
 
-    let (actions, res) = check_and_import_approval(&state, vote, |r| r).unwrap();
+    let (actions, res) = check_and_import_approval(&state, &Metrics(None), vote, |r| r).unwrap();
 
     assert_eq!(res, ApprovalCheckResult::Bad);
     assert!(actions.is_empty());
@@ -626,7 +657,7 @@ fn accepts_and_imports_approval_after_assignment() {
         .unwrap()
         .import_assignment(0, validator_index, 0);
 
-    let (actions, res) = check_and_import_approval(&state, vote, |r| r).unwrap();
+    let (actions, res) = check_and_import_approval(&state, &Metrics(None), vote, |r| r).unwrap();
 
     assert_eq!(res, ApprovalCheckResult::Accepted);
 
@@ -688,7 +719,7 @@ fn second_approval_import_is_no_op() {
         .unwrap()
         .mark_approval(validator_index));
 
-    let (actions, res) = check_and_import_approval(&state, vote, |r| r).unwrap();
+    let (actions, res) = check_and_import_approval(&state, &Metrics(None), vote, |r| r).unwrap();
 
     assert_eq!(res, ApprovalCheckResult::Accepted);
     assert!(actions.is_empty())
@@ -752,6 +783,7 @@ fn check_and_apply_full_approval_sets_flag_and_bit() {
 
     let actions = check_and_apply_full_approval(
         &state,
+        &Metrics(None),
         None,
         candidate_hash,
         state
@@ -842,6 +874,7 @@ fn check_and_apply_full_approval_does_not_load_cached_block_from_db() {
 
     let actions = check_and_apply_full_approval(
         &state,
+        &Metrics(None),
         Some((block_hash, block_entry)),
         candidate_hash,
         state
@@ -1358,6 +1391,7 @@ fn block_not_approved_until_all_candidates_approved() {
 
     let actions = check_and_apply_full_approval(
         &state,
+        &Metrics(None),
         None,
         candidate_hash_2,
         state
@@ -1482,6 +1516,7 @@ fn candidate_approval_applied_to_all_blocks() {
 
     let actions = check_and_apply_full_approval(
         &state,
+        &Metrics(None),
         None,
         candidate_hash,
         state
