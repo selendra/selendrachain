@@ -68,7 +68,7 @@ members = [
 	"runtime/parachains",
 	"runtime/indracore",
 	"runtime/kumandra",
-	"cumulus/cli",
+	"cumulus/client/cli",
 	"cumulus/client/collator",
 	"cumulus/client/network",
 	"cumulus/client/service",

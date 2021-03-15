@@ -1121,7 +1121,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cumulus-cli"
+name = "cumulus-client-cli"
 version = "0.1.0"
 dependencies = [
  "sc-cli",
