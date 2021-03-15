@@ -398,7 +398,7 @@ impl pallet_im_online::Config for Runtime {
     type Event = Event;
     type ValidatorSet = Historical;
     type ReportUnresponsiveness = Offences;
-    type SessionDuration = SessionDuration;
+    type NextSessionRotation = Babe;
     type UnsignedPriority = StakingUnsignedPriority;
     type WeightInfo = ();
 }

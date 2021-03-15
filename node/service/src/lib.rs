@@ -577,7 +577,7 @@ where
 			unfinalized_slack: 100,
 			..Default::default()
         }; 
-        if config.chain_spec.is_rococo() {
+        if config.chain_spec.is_kumandra() {
 			// it's a testnet that's in flux, finality has stalled sometimes due
 			// to operational issues and it's annoying to slow down block
 			// production to 1 block per hour.
