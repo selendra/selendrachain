@@ -33,9 +33,7 @@ pub mod time {
     use primitives::v0::{BlockNumber, Moment};
     pub const MILLISECS_PER_BLOCK: Moment = 6000;
     pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-    frame_support::parameter_types! {
-        pub storage EpochDurationInBlocks: BlockNumber = 1 * HOURS;
-    }
+    pub const EPOCH_DURATION_IN_BLOCKS: BlockNumber = 1 * HOURS;
 
     // These time units are defined in number of blocks.
     pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
@@ -63,7 +61,7 @@ pub mod fee {
     /// node's balance type.
     ///
     /// This should typically create a mapping between the following ranges:
-    ///   - [0, frame_system::MaximumBlockWeight]
+    ///   - [0, MAXIMUM_BLOCK_WEIGHT]
     ///   - [Balance::min, Balance::max]
     ///
     /// Yet, it can be used for any other sort of change to weight-fee. Some examples being:
@@ -90,20 +88,15 @@ pub mod fee {
 mod tests {
     use super::currency::{CENTS, DOLLARS, MILLICENTS};
     use super::fee::WeightToFee;
-    use frame_support::weights::{DispatchClass, WeightToFeePolynomial};
-    use runtime_common::BlockWeights;
+    use frame_support::weights::WeightToFeePolynomial;
+    use runtime_common::{ExtrinsicBaseWeight, MAXIMUM_BLOCK_WEIGHT};
 
     #[test]
-    // This function tests that the fee for `MaximumBlockWeight` of weight is correct
+    // This function tests that the fee for `MAXIMUM_BLOCK_WEIGHT` of weight is correct
     fn full_block_fee_is_correct() {
         // A full block should cost 16 DOLLARS
-        println!(
-            "Base: {}",
-            BlockWeights::get()
-                .get(DispatchClass::Normal)
-                .base_extrinsic
-        );
-        let x = WeightToFee::calc(&BlockWeights::get().max_block);
+        println!("Base: {}", ExtrinsicBaseWeight::get());
+        let x = WeightToFee::calc(&MAXIMUM_BLOCK_WEIGHT);
         let y = 16 * DOLLARS;
         assert!(x.max(y) - x.min(y) < MILLICENTS);
     }
@@ -112,11 +105,8 @@ mod tests {
     // This function tests that the fee for `ExtrinsicBaseWeight` of weight is correct
     fn extrinsic_base_fee_is_correct() {
         // `ExtrinsicBaseWeight` should cost 1/10 of a CENT
-        let base_weight = BlockWeights::get()
-            .get(DispatchClass::Normal)
-            .base_extrinsic;
-        println!("Base: {}", base_weight);
-        let x = WeightToFee::calc(&base_weight);
+        println!("Base: {}", ExtrinsicBaseWeight::get());
+        let x = WeightToFee::calc(&ExtrinsicBaseWeight::get());
         let y = CENTS / 10;
         assert!(x.max(y) - x.min(y) < MILLICENTS);
     }

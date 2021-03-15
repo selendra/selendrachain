@@ -5,6 +5,7 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
+impl-trait-for-tuples = "0.2.0"
 bitvec = { version = "0.20.1", default-features = false, features = ["alloc"] }
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
 log = { version = "0.4.13", optional = true }
@@ -34,6 +35,7 @@ pallet-offences = { git = "https://github.com/selendra/substrate", branch = "mas
 pallet-transaction-payment = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
 pallet-treasury = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
 frame-benchmarking = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false, optional = true }
+pallet-babe = { git = "https://github.com/selendra/substrate", branch = "master", default-features=false, optional = true }
 
 primitives = { package = "indracore-primitives", path = "../../primitives", default-features = false }
 libsecp256k1 = { version = "0.3.5", default-features = false, optional = true }
@@ -93,4 +95,6 @@ runtime-benchmarks = [
 	"frame-benchmarking",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
+	"runtime-parachains/runtime-benchmarks",
+	"pallet-babe/runtime-benchmarks",
 ]

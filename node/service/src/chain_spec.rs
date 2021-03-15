@@ -54,29 +54,7 @@ pub struct Extensions {
 pub type IndracoreChainSpec = service::GenericChainSpec<indracore::GenesisConfig, Extensions>;
 
 /// The `ChainSpec` parametrized for the kumandra runtime.
-pub type KumandraChainSpec = service::GenericChainSpec<KumandraGenesisExt, Extensions>;
-
-/// Extension for the Kumandra genesis config to support a custom changes to the genesis state.
-#[derive(serde::Serialize, serde::Deserialize)]
-pub struct KumandraGenesisExt {
-    /// The runtime genesis config.
-    runtime_genesis_config: kumandra::GenesisConfig,
-    /// The session length in blocks.
-    ///
-    /// If `None` is supplied, the default value is used.
-    session_length_in_blocks: Option<u32>,
-}
-
-impl sp_runtime::BuildStorage for KumandraGenesisExt {
-    fn assimilate_storage(&self, storage: &mut sp_core::storage::Storage) -> Result<(), String> {
-        sp_state_machine::BasicExternalities::execute_with_storage(storage, || {
-            if let Some(length) = self.session_length_in_blocks.as_ref() {
-                kumandra::constants::time::EpochDurationInBlocks::set(length);
-            }
-        });
-        self.runtime_genesis_config.assimilate_storage(storage)
-    }
-}
+pub type KumandraChainSpec = service::GenericChainSpec<kumandra::GenesisConfig, Extensions>;
 
 pub fn indracore_config() -> Result<IndracoreChainSpec, String> {
     IndracoreChainSpec::from_json_bytes(&include_bytes!("../res/indracore-sel.json")[..])
@@ -438,19 +416,19 @@ fn kumandra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> kumandra_runti
     const STASH: u128 = 100 * KMDS;
 
     kumandra_runtime::GenesisConfig {
-        frame_system: kumandra_runtime::SystemConfig {
+        frame_system: kumandra::SystemConfig {
             code: wasm_binary.to_vec(),
             changes_trie_config: Default::default(),
         },
-        pallet_balances: kumandra_runtime::BalancesConfig {
+        pallet_balances: kumandra::BalancesConfig {
             balances: endowed_accounts
                 .iter()
                 .map(|k: &AccountId| (k.clone(), ENDOWMENT))
                 .chain(initial_authorities.iter().map(|x| (x.0.clone(), STASH)))
                 .collect(),
         },
-        pallet_indices: kumandra_runtime::IndicesConfig { indices: vec![] },
-        pallet_session: kumandra_runtime::SessionConfig {
+        pallet_indices: kumandra::IndicesConfig { indices: vec![] },
+        pallet_session: kumandra::SessionConfig {
             keys: initial_authorities
                 .iter()
                 .map(|x| {
@@ -469,22 +447,42 @@ fn kumandra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> kumandra_runti
                 })
                 .collect::<Vec<_>>(),
         },
+        pallet_staking: kumandra::StakingConfig {
+            validator_count: 50,
+            minimum_validator_count: 4,
+            stakers: initial_authorities
+                .iter()
+                .map(|x| {
+                    (
+                        x.0.clone(),
+                        x.1.clone(),
+                        STASH,
+                        kumandra::StakerStatus::Validator,
+                    )
+                })
+                .collect(),
+            invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
+            force_era: Forcing::ForceNone,
+            slash_reward_fraction: Perbill::from_percent(10),
+            ..Default::default()
+        },
         pallet_babe: kumandra::BabeConfig {
             authorities: Default::default(),
             epoch_config: Some(kumandra::BABE_GENESIS_EPOCH_CONFIG),
         },
         pallet_grandpa: Default::default(),
         pallet_im_online: Default::default(),
-        pallet_authority_discovery: kumandra_runtime::AuthorityDiscoveryConfig { keys: vec![] },
-        pallet_sudo: kumandra_runtime::SudoConfig {
+        pallet_authority_discovery: kumandra::AuthorityDiscoveryConfig { keys: vec![] },
+        pallet_vesting: kumandra::VestingConfig { vesting: vec![] },
+        pallet_sudo: kumandra::SudoConfig {
             key: endowed_accounts[0].clone(),
         },
-        pallet_contracts: kumandra_runtime::ContractsConfig {
+        pallet_contracts: kumandra::ContractsConfig {
             current_schedule: pallet_contracts::Schedule {
                 ..Default::default()
             },
         },
-        parachains_configuration: kumandra_runtime::ParachainsConfigurationConfig {
+        parachains_configuration: kumandra::ParachainsConfigurationConfig {
             config: indracore_runtime_parachains::configuration::HostConfiguration {
                 validation_upgrade_frequency: 600u32,
                 validation_upgrade_delay: 300,
@@ -495,7 +493,6 @@ fn kumandra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> kumandra_runti
                 group_rotation_frequency: 20,
                 chain_availability_period: 4,
                 thread_availability_period: 4,
-                no_show_slots: 10,
                 max_upward_queue_count: 8,
                 max_upward_queue_size: 8 * 1024,
                 max_downward_message_size: 1024,
@@ -518,6 +515,11 @@ fn kumandra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> kumandra_runti
                 hrmp_max_parachain_outbound_channels: 4,
                 hrmp_max_parathread_outbound_channels: 4,
                 hrmp_max_message_num_per_candidate: 5,
+                no_show_slots: 2,
+                n_delay_tranches: 25,
+                needed_approvals: 2,
+                relay_vrf_modulo_samples: 10,
+                zeroth_delay_tranche_width: 0,
                 ..Default::default()
             },
         },
@@ -554,10 +556,7 @@ pub fn kumandra_staging_testnet_config() -> Result<KumandraChainSpec, String> {
         "Kumandra Staging Testnet",
         "kumandra_staging_testnet",
         ChainType::Live,
-        move || KumandraGenesisExt {
-            runtime_genesis_config: kumandra_staging_testnet_config_genesis(wasm_binary),
-            session_length_in_blocks: None,
-        },
+        move || kumandra_staging_testnet_config_genesis(wasm_binary),
         boot_nodes,
         Some(
             TelemetryEndpoints::new(vec![(KUMANDRA_STAGING_TELEMETRY_URL.to_string(), 0)])
@@ -755,20 +754,21 @@ pub fn kumandra_testnet_genesis(
     let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 
     const ENDOWMENT: u128 = 31415926535 * KMDS;
+    const STASH: u128 = 100 * KMDS;
 
     kumandra_runtime::GenesisConfig {
-        frame_system: kumandra_runtime::SystemConfig {
+        frame_system: kumandra::SystemConfig {
             code: wasm_binary.to_vec(),
             changes_trie_config: Default::default(),
         },
-        pallet_indices: kumandra_runtime::IndicesConfig { indices: vec![] },
-        pallet_balances: kumandra_runtime::BalancesConfig {
+        pallet_indices: kumandra::IndicesConfig { indices: vec![] },
+        pallet_balances: kumandra::BalancesConfig {
             balances: endowed_accounts
                 .iter()
                 .map(|k| (k.clone(), ENDOWMENT))
                 .collect(),
         },
-        pallet_session: kumandra_runtime::SessionConfig {
+        pallet_session: kumandra::SessionConfig {
             keys: initial_authorities
                 .iter()
                 .map(|x| {
@@ -787,20 +787,40 @@ pub fn kumandra_testnet_genesis(
                 })
                 .collect::<Vec<_>>(),
         },
-        pallet_babe: kumandra_runtime::BabeConfig {
+        pallet_staking: kumandra::StakingConfig {
+            minimum_validator_count: 1,
+            validator_count: 2,
+            stakers: initial_authorities
+                .iter()
+                .map(|x| {
+                    (
+                        x.0.clone(),
+                        x.1.clone(),
+                        STASH,
+                        kumandra::StakerStatus::Validator,
+                    )
+                })
+                .collect(),
+            invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
+            force_era: Forcing::NotForcing,
+            slash_reward_fraction: Perbill::from_percent(10),
+            ..Default::default()
+        },
+        pallet_babe: kumandra::BabeConfig {
             authorities: Default::default(),
-            epoch_config: Some(kumandra_runtime::BABE_GENESIS_EPOCH_CONFIG),
+            epoch_config: Some(kumandra::BABE_GENESIS_EPOCH_CONFIG),
         },
         pallet_grandpa: Default::default(),
         pallet_im_online: Default::default(),
-        pallet_authority_discovery: kumandra_runtime::AuthorityDiscoveryConfig { keys: vec![] },
-        pallet_contracts: kumandra_runtime::ContractsConfig {
+        pallet_authority_discovery: kumandra::AuthorityDiscoveryConfig { keys: vec![] },
+        pallet_vesting: kumandra::VestingConfig { vesting: vec![] },
+        pallet_contracts: kumandra::ContractsConfig {
             current_schedule: pallet_contracts::Schedule {
                 ..Default::default()
             },
         },
-        pallet_sudo: kumandra_runtime::SudoConfig { key: root_key },
-        parachains_configuration: kumandra_runtime::ParachainsConfigurationConfig {
+        pallet_sudo: kumandra::SudoConfig { key: root_key },
+        parachains_configuration: kumandra::ParachainsConfigurationConfig {
             config: indracore_runtime_parachains::configuration::HostConfiguration {
                 validation_upgrade_frequency: 600u32,
                 validation_upgrade_delay: 300,
@@ -811,7 +831,6 @@ pub fn kumandra_testnet_genesis(
                 group_rotation_frequency: 20,
                 chain_availability_period: 4,
                 thread_availability_period: 4,
-                no_show_slots: 10,
                 max_upward_queue_count: 8,
                 max_upward_queue_size: 8 * 1024,
                 max_downward_message_size: 1024,
@@ -834,6 +853,11 @@ pub fn kumandra_testnet_genesis(
                 hrmp_max_parachain_outbound_channels: 4,
                 hrmp_max_parathread_outbound_channels: 4,
                 hrmp_max_message_num_per_candidate: 5,
+                no_show_slots: 2,
+                n_delay_tranches: 25,
+                needed_approvals: 2,
+                relay_vrf_modulo_samples: 10,
+                zeroth_delay_tranche_width: 0,
                 ..Default::default()
             },
         },
@@ -931,11 +955,7 @@ pub fn kumandra_local_testnet_config() -> Result<KumandraChainSpec, String> {
         "Kumandra Local Testnet",
         "kumandra_local_testnet",
         ChainType::Local,
-        move || KumandraGenesisExt {
-            runtime_genesis_config: kumandra_local_testnet_genesis(wasm_binary),
-            // Use 1 minute session length.
-            session_length_in_blocks: Some(10),
-        },
+        move || kumandra_local_testnet_genesis(wasm_binary),
         vec![],
         None,
         Some(DEFAULT_PROTOCOL_ID),

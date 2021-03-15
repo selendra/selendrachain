@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! A pallet for proposing a parachain for Rococo.
+//! A pallet for proposing a parachain for Kumandra.
 //!
-//! This pallet works as registration of parachains for Rococo. The idea is to have
+//! This pallet works as registration of parachains for Kumandra. The idea is to have
 //! the registration of community provides parachains being handled by this pallet.
 //! People will be able to propose their parachain for registration. This proposal
 //! will need to be improved by some priviledged account. After approval the workflow
