@@ -654,9 +654,7 @@ async fn handle_from_overseer(
 
             Vec::new()
         }
-        FromOverseer::Signal(OverseerSignal::Conclude) => {
-            vec![Action::Conclude]
-        }
+        FromOverseer::Signal(OverseerSignal::Conclude) => vec![Action::Conclude],
         FromOverseer::Communication { msg } => match msg {
             ApprovalVotingMessage::CheckAndImportAssignment(a, claimed_core, res) => {
                 let (check_outcome, actions) =
