@@ -143,7 +143,7 @@ pub async fn run_parachain_consensus<P, R, Block, B>(
     para_id: ParaId,
     parachain: Arc<P>,
     relay_chain: R,
-    announce_block: Arc<dyn Fn(Block::Hash, Vec<u8>) + Send + Sync>,
+    announce_block: Arc<dyn Fn(Block::Hash, Option<Vec<u8>>) + Send + Sync>,
 ) -> ClientResult<()>
 where
     Block: BlockT,
@@ -175,7 +175,7 @@ async fn follow_new_best<P, R, Block, B>(
     para_id: ParaId,
     parachain: Arc<P>,
     relay_chain: R,
-    announce_block: Arc<dyn Fn(Block::Hash, Vec<u8>) + Send + Sync>,
+    announce_block: Arc<dyn Fn(Block::Hash, Option<Vec<u8>>) + Send + Sync>,
 ) -> ClientResult<()>
 where
     Block: BlockT,
@@ -203,7 +203,6 @@ where
                     Some(h) => handle_new_best_parachain_head(
                         h,
                         &*parachain,
-                        &*announce_block,
                         &mut unset_best_header,
                     ),
                     None => {
@@ -241,12 +240,19 @@ fn handle_new_block_imported<Block, P>(
     notification: BlockImportNotification<Block>,
     unset_best_header_opt: &mut Option<Block::Header>,
     parachain: &P,
-    announce_block: &dyn Fn(Block::Hash, Vec<u8>),
+    announce_block: &dyn Fn(Block::Hash, Option<Vec<u8>>),
 ) where
     Block: BlockT,
     P: UsageProvider<Block> + Send + Sync + BlockBackend<Block>,
     for<'a> &'a P: BlockImport<Block>,
 {
+    // HACK
+    //
+    // Remove after https://github.com/paritytech/substrate/pull/8052 or similar is merged
+    if notification.origin != BlockOrigin::Own {
+        announce_block(notification.hash, None);
+    }
+
     let unset_best_header = match (notification.is_new_best, &unset_best_header_opt) {
         // If this is the new best block or we don't have any unset block, we can end it here.
         (true, _) | (_, None) => return,
@@ -274,12 +280,12 @@ fn handle_new_block_imported<Block, P>(
                 .take()
                 .expect("We checked above that the value is set; qed");
 
-            import_block_as_new_best(unset_hash, unset_best_header, parachain, announce_block);
+            import_block_as_new_best(unset_hash, unset_best_header, parachain);
         }
         state => tracing::debug!(
             target: "cumulus-consensus",
-            unset_best_header = ?unset_best_header,
-            imported_header = ?notification.header,
+            ?unset_best_header,
+            ?notification.header,
             ?state,
             "Unexpected state for unset best header.",
         ),
@@ -290,7 +296,6 @@ fn handle_new_block_imported<Block, P>(
 fn handle_new_best_parachain_head<Block, P>(
     head: Vec<u8>,
     parachain: &P,
-    announce_block: &dyn Fn(Block::Hash, Vec<u8>),
     unset_best_header: &mut Option<Block::Header>,
 ) where
     Block: BlockT,
@@ -323,7 +328,7 @@ fn handle_new_best_parachain_head<Block, P>(
             Ok(BlockStatus::InChainWithState) => {
                 unset_best_header.take();
 
-                import_block_as_new_best(hash, parachain_head, parachain, announce_block);
+                import_block_as_new_best(hash, parachain_head, parachain);
             }
             Ok(BlockStatus::InChainPruned) => {
                 tracing::error!(
@@ -354,12 +359,8 @@ fn handle_new_best_parachain_head<Block, P>(
     }
 }
 
-fn import_block_as_new_best<Block, P>(
-    hash: Block::Hash,
-    header: Block::Header,
-    parachain: &P,
-    announce_block: &dyn Fn(Block::Hash, Vec<u8>),
-) where
+fn import_block_as_new_best<Block, P>(hash: Block::Hash, header: Block::Header, parachain: &P)
+where
     Block: BlockT,
     P: UsageProvider<Block> + Send + Sync + BlockBackend<Block>,
     for<'a> &'a P: BlockImport<Block>,
@@ -376,8 +377,6 @@ fn import_block_as_new_best<Block, P>(
             error = ?err,
             "Failed to set new best block.",
         );
-    } else {
-        (*announce_block)(hash, Vec::new());
     }
 }
 
@@ -561,328 +560,328 @@ impl<B: BlockT> ParachainConsensus<B> for Box<dyn ParachainConsensus<B> + Send +
 
 // #[cfg(test)]
 // mod tests {
-// 	use super::*;
+//     use super::*;
 
-// 	use codec::Encode;
-// 	use cumulus_test_client::{
-// 		runtime::{Block, Header},
-// 		Client, InitBlockBuilder, TestClientBuilder, TestClientBuilderExt,
-// 	};
-// 	use futures::{channel::mpsc, executor::block_on};
-// 	use futures_timer::Delay;
-// 	use std::{sync::Mutex, time::Duration};
+//     use codec::Encode;
+//     use cumulus_test_client::{
+//         runtime::{Block, Header},
+//         Client, InitBlockBuilder, TestClientBuilder, TestClientBuilderExt,
+//     };
+//     use futures::{channel::mpsc, executor::block_on};
+//     use futures_timer::Delay;
+//     use std::{sync::Mutex, time::Duration};
 
-// 	struct RelaychainInner {
-// 		new_best_heads: Option<mpsc::UnboundedReceiver<Header>>,
-// 		finalized_heads: Option<mpsc::UnboundedReceiver<Header>>,
-// 		new_best_heads_sender: mpsc::UnboundedSender<Header>,
-// 		finalized_heads_sender: mpsc::UnboundedSender<Header>,
-// 	}
+//     struct RelaychainInner {
+//         new_best_heads: Option<mpsc::UnboundedReceiver<Header>>,
+//         finalized_heads: Option<mpsc::UnboundedReceiver<Header>>,
+//         new_best_heads_sender: mpsc::UnboundedSender<Header>,
+//         finalized_heads_sender: mpsc::UnboundedSender<Header>,
+//     }
 
-// 	impl RelaychainInner {
-// 		fn new() -> Self {
-// 			let (new_best_heads_sender, new_best_heads) = mpsc::unbounded();
-// 			let (finalized_heads_sender, finalized_heads) = mpsc::unbounded();
+//     impl RelaychainInner {
+//         fn new() -> Self {
+//             let (new_best_heads_sender, new_best_heads) = mpsc::unbounded();
+//             let (finalized_heads_sender, finalized_heads) = mpsc::unbounded();
 
-// 			Self {
-// 				new_best_heads_sender,
-// 				finalized_heads_sender,
-// 				new_best_heads: Some(new_best_heads),
-// 				finalized_heads: Some(finalized_heads),
-// 			}
-// 		}
-// 	}
+//             Self {
+//                 new_best_heads_sender,
+//                 finalized_heads_sender,
+//                 new_best_heads: Some(new_best_heads),
+//                 finalized_heads: Some(finalized_heads),
+//             }
+//         }
+//     }
 
-// 	#[derive(Clone)]
-// 	struct Relaychain {
-// 		inner: Arc<Mutex<RelaychainInner>>,
-// 	}
+//     #[derive(Clone)]
+//     struct Relaychain {
+//         inner: Arc<Mutex<RelaychainInner>>,
+//     }
 
-// 	impl Relaychain {
-// 		fn new() -> Self {
-// 			Self {
-// 				inner: Arc::new(Mutex::new(RelaychainInner::new())),
-// 			}
-// 		}
-// 	}
+//     impl Relaychain {
+//         fn new() -> Self {
+//             Self {
+//                 inner: Arc::new(Mutex::new(RelaychainInner::new())),
+//             }
+//         }
+//     }
 
-// 	impl RelaychainClient for Relaychain {
-// 		type Error = ClientError;
+//     impl RelaychainClient for Relaychain {
+//         type Error = ClientError;
 
-// 		type HeadStream = Box<dyn Stream<Item = Vec<u8>> + Send + Unpin>;
-// 		fn new_best_heads(&self, _: ParaId) -> ClientResult<Self::HeadStream> {
-// 			let stream = self
-// 				.inner
-// 				.lock()
-// 				.unwrap()
-// 				.new_best_heads
-// 				.take()
-// 				.expect("Should only be called once");
+//         type HeadStream = Box<dyn Stream<Item = Vec<u8>> + Send + Unpin>;
+//         fn new_best_heads(&self, _: ParaId) -> ClientResult<Self::HeadStream> {
+//             let stream = self
+//                 .inner
+//                 .lock()
+//                 .unwrap()
+//                 .new_best_heads
+//                 .take()
+//                 .expect("Should only be called once");
 
-// 			Ok(Box::new(stream.map(|v| v.encode())))
-// 		}
+//             Ok(Box::new(stream.map(|v| v.encode())))
+//         }
 
-// 		fn finalized_heads(&self, _: ParaId) -> ClientResult<Self::HeadStream> {
-// 			let stream = self
-// 				.inner
-// 				.lock()
-// 				.unwrap()
-// 				.finalized_heads
-// 				.take()
-// 				.expect("Should only be called once");
+//         fn finalized_heads(&self, _: ParaId) -> ClientResult<Self::HeadStream> {
+//             let stream = self
+//                 .inner
+//                 .lock()
+//                 .unwrap()
+//                 .finalized_heads
+//                 .take()
+//                 .expect("Should only be called once");
 
-// 			Ok(Box::new(stream.map(|v| v.encode())))
-// 		}
+//             Ok(Box::new(stream.map(|v| v.encode())))
+//         }
 
-// 		fn parachain_head_at(
-// 			&self,
-// 			_: &BlockId<PBlock>,
-// 			_: ParaId,
-// 		) -> ClientResult<Option<Vec<u8>>> {
-// 			unimplemented!("Not required for tests")
-// 		}
-// 	}
+//         fn parachain_head_at(
+//             &self,
+//             _: &BlockId<PBlock>,
+//             _: ParaId,
+//         ) -> ClientResult<Option<Vec<u8>>> {
+//             unimplemented!("Not required for tests")
+//         }
+//     }
 
-// 	fn build_and_import_block(mut client: Arc<Client>) -> Block {
-// 		let builder = client.init_block_builder(None, Default::default());
+//     fn build_and_import_block(mut client: Arc<Client>) -> Block {
+//         let builder = client.init_block_builder(None, Default::default());
 
-// 		let block = builder.build().unwrap().block;
-// 		let (header, body) = block.clone().deconstruct();
+//         let block = builder.build().unwrap().block;
+//         let (header, body) = block.clone().deconstruct();
 
-// 		let mut block_import_params = BlockImportParams::new(BlockOrigin::Own, header);
-// 		block_import_params.fork_choice = Some(ForkChoiceStrategy::Custom(false));
-// 		block_import_params.body = Some(body);
+//         let mut block_import_params = BlockImportParams::new(BlockOrigin::Own, header);
+//         block_import_params.fork_choice = Some(ForkChoiceStrategy::Custom(false));
+//         block_import_params.body = Some(body);
 
-// 		client
-// 			.import_block(block_import_params, Default::default())
-// 			.unwrap();
-// 		assert_eq!(0, client.chain_info().best_number);
+//         client
+//             .import_block(block_import_params, Default::default())
+//             .unwrap();
+//         assert_eq!(0, client.chain_info().best_number);
 
-// 		block
-// 	}
+//         block
+//     }
 
-// 	#[test]
-// 	fn follow_new_best_works() {
-// 		sp_tracing::try_init_simple();
+//     #[test]
+//     fn follow_new_best_works() {
+//         sp_tracing::try_init_simple();
 
-// 		let client = Arc::new(TestClientBuilder::default().build());
+//         let client = Arc::new(TestClientBuilder::default().build());
 
-// 		let block = build_and_import_block(client.clone());
-// 		let relay_chain = Relaychain::new();
-// 		let new_best_heads_sender = relay_chain
-// 			.inner
-// 			.lock()
-// 			.unwrap()
-// 			.new_best_heads_sender
-// 			.clone();
+//         let block = build_and_import_block(client.clone());
+//         let relay_chain = Relaychain::new();
+//         let new_best_heads_sender = relay_chain
+//             .inner
+//             .lock()
+//             .unwrap()
+//             .new_best_heads_sender
+//             .clone();
 
-// 		let consensus =
-// 			run_parachain_consensus(100.into(), client.clone(), relay_chain, Arc::new(|_, _| {}));
+//         let consensus =
+//             run_parachain_consensus(100.into(), client.clone(), relay_chain, Arc::new(|_, _| {}));
 
-// 		let work = async move {
-// 			new_best_heads_sender
-// 				.unbounded_send(block.header().clone())
-// 				.unwrap();
-// 			loop {
-// 				Delay::new(Duration::from_millis(100)).await;
-// 				if block.hash() == client.usage_info().chain.best_hash {
-// 					break;
-// 				}
-// 			}
-// 		};
+//         let work = async move {
+//             new_best_heads_sender
+//                 .unbounded_send(block.header().clone())
+//                 .unwrap();
+//             loop {
+//                 Delay::new(Duration::from_millis(100)).await;
+//                 if block.hash() == client.usage_info().chain.best_hash {
+//                     break;
+//                 }
+//             }
+//         };
 
-// 		block_on(async move {
-// 			futures::pin_mut!(consensus);
-// 			futures::pin_mut!(work);
+//         block_on(async move {
+//             futures::pin_mut!(consensus);
+//             futures::pin_mut!(work);
 
-// 			select! {
-// 				r = consensus.fuse() => panic!("Consensus should not end: {:?}", r),
-// 				_ = work.fuse() => {},
-// 			}
-// 		});
-// 	}
+//             select! {
+//                 r = consensus.fuse() => panic!("Consensus should not end: {:?}", r),
+//                 _ = work.fuse() => {},
+//             }
+//         });
+//     }
 
-// 	#[test]
-// 	fn follow_finalized_works() {
-// 		sp_tracing::try_init_simple();
+//     #[test]
+//     fn follow_finalized_works() {
+//         sp_tracing::try_init_simple();
 
-// 		let client = Arc::new(TestClientBuilder::default().build());
+//         let client = Arc::new(TestClientBuilder::default().build());
 
-// 		let block = build_and_import_block(client.clone());
-// 		let relay_chain = Relaychain::new();
-// 		let finalized_sender = relay_chain
-// 			.inner
-// 			.lock()
-// 			.unwrap()
-// 			.finalized_heads_sender
-// 			.clone();
+//         let block = build_and_import_block(client.clone());
+//         let relay_chain = Relaychain::new();
+//         let finalized_sender = relay_chain
+//             .inner
+//             .lock()
+//             .unwrap()
+//             .finalized_heads_sender
+//             .clone();
 
-// 		let consensus =
-// 			run_parachain_consensus(100.into(), client.clone(), relay_chain, Arc::new(|_, _| {}));
+//         let consensus =
+//             run_parachain_consensus(100.into(), client.clone(), relay_chain, Arc::new(|_, _| {}));
 
-// 		let work = async move {
-// 			finalized_sender
-// 				.unbounded_send(block.header().clone())
-// 				.unwrap();
-// 			loop {
-// 				Delay::new(Duration::from_millis(100)).await;
-// 				if block.hash() == client.usage_info().chain.finalized_hash {
-// 					break;
-// 				}
-// 			}
-// 		};
+//         let work = async move {
+//             finalized_sender
+//                 .unbounded_send(block.header().clone())
+//                 .unwrap();
+//             loop {
+//                 Delay::new(Duration::from_millis(100)).await;
+//                 if block.hash() == client.usage_info().chain.finalized_hash {
+//                     break;
+//                 }
+//             }
+//         };
 
-// 		block_on(async move {
-// 			futures::pin_mut!(consensus);
-// 			futures::pin_mut!(work);
+//         block_on(async move {
+//             futures::pin_mut!(consensus);
+//             futures::pin_mut!(work);
 
-// 			select! {
-// 				r = consensus.fuse() => panic!("Consensus should not end: {:?}", r),
-// 				_ = work.fuse() => {},
-// 			}
-// 		});
-// 	}
+//             select! {
+//                 r = consensus.fuse() => panic!("Consensus should not end: {:?}", r),
+//                 _ = work.fuse() => {},
+//             }
+//         });
+//     }
 
-// 	#[test]
-// 	fn follow_finalized_does_not_stop_on_unknown_block() {
-// 		sp_tracing::try_init_simple();
+//     #[test]
+//     fn follow_finalized_does_not_stop_on_unknown_block() {
+//         sp_tracing::try_init_simple();
 
-// 		let client = Arc::new(TestClientBuilder::default().build());
+//         let client = Arc::new(TestClientBuilder::default().build());
 
-// 		let block = build_and_import_block(client.clone());
+//         let block = build_and_import_block(client.clone());
 
-// 		let unknown_block = {
-// 			let block_builder = client.init_block_builder_at(
-// 				&BlockId::Hash(block.hash()),
-// 				None,
-// 				Default::default(),
-// 			);
-// 			block_builder.build().unwrap().block
-// 		};
+//         let unknown_block = {
+//             let block_builder = client.init_block_builder_at(
+//                 &BlockId::Hash(block.hash()),
+//                 None,
+//                 Default::default(),
+//             );
+//             block_builder.build().unwrap().block
+//         };
 
-// 		let relay_chain = Relaychain::new();
-// 		let finalized_sender = relay_chain
-// 			.inner
-// 			.lock()
-// 			.unwrap()
-// 			.finalized_heads_sender
-// 			.clone();
+//         let relay_chain = Relaychain::new();
+//         let finalized_sender = relay_chain
+//             .inner
+//             .lock()
+//             .unwrap()
+//             .finalized_heads_sender
+//             .clone();
 
-// 		let consensus =
-// 			run_parachain_consensus(100.into(), client.clone(), relay_chain, Arc::new(|_, _| {}));
+//         let consensus =
+//             run_parachain_consensus(100.into(), client.clone(), relay_chain, Arc::new(|_, _| {}));
 
-// 		let work = async move {
-// 			for _ in 0..3usize {
-// 				finalized_sender
-// 					.unbounded_send(unknown_block.header().clone())
-// 					.unwrap();
+//         let work = async move {
+//             for _ in 0..3usize {
+//                 finalized_sender
+//                     .unbounded_send(unknown_block.header().clone())
+//                     .unwrap();
 
-// 				Delay::new(Duration::from_millis(100)).await;
-// 			}
+//                 Delay::new(Duration::from_millis(100)).await;
+//             }
 
-// 			finalized_sender
-// 				.unbounded_send(block.header().clone())
-// 				.unwrap();
-// 			loop {
-// 				Delay::new(Duration::from_millis(100)).await;
-// 				if block.hash() == client.usage_info().chain.finalized_hash {
-// 					break;
-// 				}
-// 			}
-// 		};
+//             finalized_sender
+//                 .unbounded_send(block.header().clone())
+//                 .unwrap();
+//             loop {
+//                 Delay::new(Duration::from_millis(100)).await;
+//                 if block.hash() == client.usage_info().chain.finalized_hash {
+//                     break;
+//                 }
+//             }
+//         };
 
-// 		block_on(async move {
-// 			futures::pin_mut!(consensus);
-// 			futures::pin_mut!(work);
+//         block_on(async move {
+//             futures::pin_mut!(consensus);
+//             futures::pin_mut!(work);
 
-// 			select! {
-// 				r = consensus.fuse() => panic!("Consensus should not end: {:?}", r),
-// 				_ = work.fuse() => {},
-// 			}
-// 		});
-// 	}
+//             select! {
+//                 r = consensus.fuse() => panic!("Consensus should not end: {:?}", r),
+//                 _ = work.fuse() => {},
+//             }
+//         });
+//     }
 
-// 	// It can happen that we first import a relay chain block, while not yet having the parachain
-// 	// block imported that would be set to the best block. We need to make sure to import this
-// 	// block as new best block in the moment it is imported.
-// 	#[test]
-// 	fn follow_new_best_sets_best_after_it_is_imported() {
-// 		sp_tracing::try_init_simple();
+//     // It can happen that we first import a relay chain block, while not yet having the parachain
+//     // block imported that would be set to the best block. We need to make sure to import this
+//     // block as new best block in the moment it is imported.
+//     #[test]
+//     fn follow_new_best_sets_best_after_it_is_imported() {
+//         sp_tracing::try_init_simple();
 
-// 		let mut client = Arc::new(TestClientBuilder::default().build());
+//         let mut client = Arc::new(TestClientBuilder::default().build());
 
-// 		let block = build_and_import_block(client.clone());
+//         let block = build_and_import_block(client.clone());
 
-// 		let unknown_block = {
-// 			let block_builder = client.init_block_builder_at(
-// 				&BlockId::Hash(block.hash()),
-// 				None,
-// 				Default::default(),
-// 			);
-// 			block_builder.build().unwrap().block
-// 		};
+//         let unknown_block = {
+//             let block_builder = client.init_block_builder_at(
+//                 &BlockId::Hash(block.hash()),
+//                 None,
+//                 Default::default(),
+//             );
+//             block_builder.build().unwrap().block
+//         };
 
-// 		let relay_chain = Relaychain::new();
-// 		let new_best_heads_sender = relay_chain
-// 			.inner
-// 			.lock()
-// 			.unwrap()
-// 			.new_best_heads_sender
-// 			.clone();
+//         let relay_chain = Relaychain::new();
+//         let new_best_heads_sender = relay_chain
+//             .inner
+//             .lock()
+//             .unwrap()
+//             .new_best_heads_sender
+//             .clone();
 
-// 		let consensus =
-// 			run_parachain_consensus(100.into(), client.clone(), relay_chain, Arc::new(|_, _| {}));
+//         let consensus =
+//             run_parachain_consensus(100.into(), client.clone(), relay_chain, Arc::new(|_, _| {}));
 
-// 		let work = async move {
-// 			new_best_heads_sender
-// 				.unbounded_send(block.header().clone())
-// 				.unwrap();
+//         let work = async move {
+//             new_best_heads_sender
+//                 .unbounded_send(block.header().clone())
+//                 .unwrap();
 
-// 			loop {
-// 				Delay::new(Duration::from_millis(100)).await;
-// 				if block.hash() == client.usage_info().chain.best_hash {
-// 					break;
-// 				}
-// 			}
+//             loop {
+//                 Delay::new(Duration::from_millis(100)).await;
+//                 if block.hash() == client.usage_info().chain.best_hash {
+//                     break;
+//                 }
+//             }
 
-// 			// Announce the unknown block
-// 			new_best_heads_sender
-// 				.unbounded_send(unknown_block.header().clone())
-// 				.unwrap();
+//             // Announce the unknown block
+//             new_best_heads_sender
+//                 .unbounded_send(unknown_block.header().clone())
+//                 .unwrap();
 
-// 			// Do some iterations. As this is a local task executor, only one task can run at a time.
-// 			// Meaning that it should already have processed the unknown block.
-// 			for _ in 0..3usize {
-// 				Delay::new(Duration::from_millis(100)).await;
-// 			}
+//             // Do some iterations. As this is a local task executor, only one task can run at a time.
+//             // Meaning that it should already have processed the unknown block.
+//             for _ in 0..3usize {
+//                 Delay::new(Duration::from_millis(100)).await;
+//             }
 
-// 			let (header, body) = unknown_block.clone().deconstruct();
+//             let (header, body) = unknown_block.clone().deconstruct();
 
-// 			let mut block_import_params = BlockImportParams::new(BlockOrigin::Own, header);
-// 			block_import_params.fork_choice = Some(ForkChoiceStrategy::Custom(false));
-// 			block_import_params.body = Some(body);
+//             let mut block_import_params = BlockImportParams::new(BlockOrigin::Own, header);
+//             block_import_params.fork_choice = Some(ForkChoiceStrategy::Custom(false));
+//             block_import_params.body = Some(body);
 
-// 			// Now import the unkown block to make it "known"
-// 			client
-// 				.import_block(block_import_params, Default::default())
-// 				.unwrap();
+//             // Now import the unkown block to make it "known"
+//             client
+//                 .import_block(block_import_params, Default::default())
+//                 .unwrap();
 
-// 			loop {
-// 				Delay::new(Duration::from_millis(100)).await;
-// 				if unknown_block.hash() == client.usage_info().chain.best_hash {
-// 					break;
-// 				}
-// 			}
-// 		};
+//             loop {
+//                 Delay::new(Duration::from_millis(100)).await;
+//                 if unknown_block.hash() == client.usage_info().chain.best_hash {
+//                     break;
+//                 }
+//             }
+//         };
 
-// 		block_on(async move {
-// 			futures::pin_mut!(consensus);
-// 			futures::pin_mut!(work);
+//         block_on(async move {
+//             futures::pin_mut!(consensus);
+//             futures::pin_mut!(work);
 
-// 			select! {
-// 				r = consensus.fuse() => panic!("Consensus should not end: {:?}", r),
-// 				_ = work.fuse() => {},
-// 			}
-// 		});
-// 	}
+//             select! {
+//                 r = consensus.fuse() => panic!("Consensus should not end: {:?}", r),
+//                 _ = work.fuse() => {},
+//             }
+//         });
+//     }
 // }

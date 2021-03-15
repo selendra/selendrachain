@@ -1217,8 +1217,6 @@ dependencies = [
  "sp-blockchain",
  "sp-consensus",
  "sp-core",
- "sp-keyring",
- "sp-keystore",
  "sp-runtime",
  "tracing",
 ]

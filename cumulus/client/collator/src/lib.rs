@@ -79,7 +79,7 @@ where
     fn new(
         block_status: Arc<BS>,
         spawner: Arc<dyn SpawnNamed + Send + Sync>,
-        announce_block: Arc<dyn Fn(Block::Hash, Vec<u8>) + Send + Sync>,
+        announce_block: Arc<dyn Fn(Block::Hash, Option<Vec<u8>>) + Send + Sync>,
         backend: Arc<Backend>,
         parachain_consensus: Box<dyn ParachainConsensus<Block>>,
     ) -> Self {
@@ -337,7 +337,7 @@ pub struct StartCollatorParams<Block: BlockT, Backend, BS, Spawner> {
     pub para_id: ParaId,
     pub backend: Arc<Backend>,
     pub block_status: Arc<BS>,
-    pub announce_block: Arc<dyn Fn(Block::Hash, Vec<u8>) + Send + Sync>,
+    pub announce_block: Arc<dyn Fn(Block::Hash, Option<Vec<u8>>) + Send + Sync>,
     pub overseer_handler: OverseerHandler,
     pub spawner: Spawner,
     pub key: CollatorPair,
@@ -392,107 +392,107 @@ pub async fn start_collator<Block, Backend, BS, Spawner>(
 
 // #[cfg(test)]
 // mod tests {
-// 	use super::*;
-// 	use cumulus_client_consensus_common::ParachainCandidate;
-// 	use cumulus_test_client::{
-// 		Client, ClientBlockImportExt, DefaultTestClientBuilderExt, InitBlockBuilder,
-// 		TestClientBuilder, TestClientBuilderExt,
-// 	};
-// 	use cumulus_test_runtime::{Block, Header};
-// 	use futures::{channel::mpsc, executor::block_on, StreamExt};
-// 	use indracore_node_subsystem_test_helpers::ForwardSubsystem;
-// 	use indracore_overseer::{AllSubsystems, Overseer};
-// 	use sp_consensus::BlockOrigin;
-// 	use sp_core::{testing::TaskExecutor, Pair};
+//     use super::*;
+//     use cumulus_client_consensus_common::ParachainCandidate;
+//     use cumulus_test_client::{
+//         Client, ClientBlockImportExt, DefaultTestClientBuilderExt, InitBlockBuilder,
+//         TestClientBuilder, TestClientBuilderExt,
+//     };
+//     use cumulus_test_runtime::{Block, Header};
+//     use futures::{channel::mpsc, executor::block_on, StreamExt};
+//     use indracore_node_subsystem_test_helpers::ForwardSubsystem;
+//     use indracore_overseer::{AllSubsystems, Overseer};
+//     use sp_consensus::BlockOrigin;
+//     use sp_core::{testing::TaskExecutor, Pair};
 
-// 	#[derive(Clone)]
-// 	struct DummyParachainConsensus {
-// 		client: Arc<Client>,
-// 	}
+//     #[derive(Clone)]
+//     struct DummyParachainConsensus {
+//         client: Arc<Client>,
+//     }
 
-// 	#[async_trait::async_trait]
-// 	impl ParachainConsensus<Block> for DummyParachainConsensus {
-// 		async fn produce_candidate(
-// 			&mut self,
-// 			parent: &Header,
-// 			_: PHash,
-// 			validation_data: &PersistedValidationData,
-// 		) -> Option<ParachainCandidate<Block>> {
-// 			let block_id = BlockId::Hash(parent.hash());
-// 			let builder = self.client.init_block_builder_at(
-// 				&block_id,
-// 				Some(validation_data.clone()),
-// 				Default::default(),
-// 			);
+//     #[async_trait::async_trait]
+//     impl ParachainConsensus<Block> for DummyParachainConsensus {
+//         async fn produce_candidate(
+//             &mut self,
+//             parent: &Header,
+//             _: PHash,
+//             validation_data: &PersistedValidationData,
+//         ) -> Option<ParachainCandidate<Block>> {
+//             let block_id = BlockId::Hash(parent.hash());
+//             let builder = self.client.init_block_builder_at(
+//                 &block_id,
+//                 Some(validation_data.clone()),
+//                 Default::default(),
+//             );
 
-// 			let (block, _, proof) = builder.build().expect("Creates block").into_inner();
+//             let (block, _, proof) = builder.build().expect("Creates block").into_inner();
 
-// 			self.client
-// 				.import(BlockOrigin::Own, block.clone())
-// 				.expect("Imports the block");
+//             self.client
+//                 .import(BlockOrigin::Own, block.clone())
+//                 .expect("Imports the block");
 
-// 			Some(ParachainCandidate {
-// 				block,
-// 				proof: proof.expect("Proof is returned"),
-// 			})
-// 		}
-// 	}
+//             Some(ParachainCandidate {
+//                 block,
+//                 proof: proof.expect("Proof is returned"),
+//             })
+//         }
+//     }
 
-// 	#[test]
-// 	fn collates_produces_a_block() {
-// 		let _ = env_logger::try_init();
+//     #[test]
+//     fn collates_produces_a_block() {
+//         let _ = env_logger::try_init();
 
-// 		let spawner = TaskExecutor::new();
-// 		let para_id = ParaId::from(100);
-// 		let announce_block = |_, _| ();
-// 		let client_builder = TestClientBuilder::new();
-// 		let backend = client_builder.backend();
-// 		let client = Arc::new(client_builder.build());
-// 		let header = client.header(&BlockId::Number(0)).unwrap().unwrap();
+//         let spawner = TaskExecutor::new();
+//         let para_id = ParaId::from(100);
+//         let announce_block = |_, _| ();
+//         let client_builder = TestClientBuilder::new();
+//         let backend = client_builder.backend();
+//         let client = Arc::new(client_builder.build());
+//         let header = client.header(&BlockId::Number(0)).unwrap().unwrap();
 
-// 		let (sub_tx, sub_rx) = mpsc::channel(64);
+//         let (sub_tx, sub_rx) = mpsc::channel(64);
 
-// 		let all_subsystems =
-// 			AllSubsystems::<()>::dummy().replace_collation_generation(ForwardSubsystem(sub_tx));
-// 		let (overseer, handler) = Overseer::new(Vec::new(), all_subsystems, None, spawner.clone())
-// 			.expect("Creates overseer");
+//         let all_subsystems =
+//             AllSubsystems::<()>::dummy().replace_collation_generation(ForwardSubsystem(sub_tx));
+//         let (overseer, handler) = Overseer::new(Vec::new(), all_subsystems, None, spawner.clone())
+//             .expect("Creates overseer");
 
-// 		spawner.spawn("overseer", overseer.run().then(|_| async { () }).boxed());
+//         spawner.spawn("overseer", overseer.run().then(|_| async { () }).boxed());
 
-// 		let collator_start = start_collator(StartCollatorParams {
-// 			backend,
-// 			block_status: client.clone(),
-// 			announce_block: Arc::new(announce_block),
-// 			overseer_handler: handler,
-// 			spawner,
-// 			para_id,
-// 			key: CollatorPair::generate().0,
-// 			parachain_consensus: Box::new(DummyParachainConsensus {
-// 				client: client.clone(),
-// 			}),
-// 		});
-// 		block_on(collator_start);
+//         let collator_start = start_collator(StartCollatorParams {
+//             backend,
+//             block_status: client.clone(),
+//             announce_block: Arc::new(announce_block),
+//             overseer_handler: handler,
+//             spawner,
+//             para_id,
+//             key: CollatorPair::generate().0,
+//             parachain_consensus: Box::new(DummyParachainConsensus {
+//                 client: client.clone(),
+//             }),
+//         });
+//         block_on(collator_start);
 
-// 		let msg = block_on(sub_rx.into_future())
-// 			.0
-// 			.expect("message should be send by `start_collator` above.");
+//         let msg = block_on(sub_rx.into_future())
+//             .0
+//             .expect("message should be send by `start_collator` above.");
 
-// 		let config = match msg {
-// 			CollationGenerationMessage::Initialize(config) => config,
-// 		};
+//         let config = match msg {
+//             CollationGenerationMessage::Initialize(config) => config,
+//         };
 
-// 		let mut validation_data = PersistedValidationData::default();
-// 		validation_data.parent_head = header.encode().into();
-// 		let relay_parent = Default::default();
+//         let mut validation_data = PersistedValidationData::default();
+//         validation_data.parent_head = header.encode().into();
+//         let relay_parent = Default::default();
 
-// 		let collation = block_on((config.collator)(relay_parent, &validation_data))
-// 			.expect("Collation is build")
-// 			.collation;
+//         let collation = block_on((config.collator)(relay_parent, &validation_data))
+//             .expect("Collation is build")
+//             .collation;
 
-// 		let block_data = collation.proof_of_validity.block_data;
+//         let block_data = collation.proof_of_validity.block_data;
 
-// 		let block = Block::decode(&mut &block_data.0[..]).expect("Is a valid block");
+//         let block = Block::decode(&mut &block_data.0[..]).expect("Is a valid block");
 
-// 		assert_eq!(1, *block.header().number());
-// 	}
+//         assert_eq!(1, *block.header().number());
+//     }
 // }
