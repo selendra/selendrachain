@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! A pallet for proposing a parachain for Relaychain.
+//! A pallet for proposing a parachain for Rococo.
 //!
-//! This pallet works as registration of parachains for Relaychain. The idea is to have
+//! This pallet works as registration of parachains for Rococo. The idea is to have
 //! the registration of community provides parachains being handled by this pallet.
 //! People will be able to propose their parachain for registration. This proposal
 //! will need to be improved by some priviledged account. After approval the workflow
@@ -109,6 +109,8 @@ decl_event! {
         ParachainRegistered(ParaId),
         /// New validators were added to the set.
         ValidatorsRegistered(Vec<ValidatorId>),
+        /// Validators were removed from the set.
+        ValidatorsDeregistered(Vec<ValidatorId>),
     }
 }
 
@@ -298,6 +300,8 @@ decl_module! {
         }
 
         /// Add new validators to the set.
+        ///
+        /// The new validators will be active from current session + 2.
         #[weight = 100_000]
         fn register_validators(
             origin,
@@ -308,6 +312,21 @@ decl_module! {
             validators.clone().into_iter().for_each(|v| ValidatorsToAdd::<T>::append(v));
 
             Self::deposit_event(RawEvent::ValidatorsRegistered(validators));
+        }
+
+        /// Remove validators from the set.
+        ///
+        /// The removed validators will be deactivated from current session + 2.
+        #[weight = 100_000]
+        fn deregister_validators(
+            origin,
+            validators: Vec<T::ValidatorId>,
+        ) {
+            T::PriviledgedOrigin::ensure_origin(origin)?;
+
+            validators.clone().into_iter().for_each(|v| ValidatorsToRetire::<T>::append(v));
+
+            Self::deposit_event(RawEvent::ValidatorsDeregistered(validators));
         }
     }
 }
