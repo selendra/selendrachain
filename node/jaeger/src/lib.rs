@@ -44,7 +44,9 @@
 //!  docker.io/jaegertracing/all-in-one:1.21
 //! ```
 
-use indracore_primitives::v1::{BlakeTwo256, CandidateHash, Hash, HashT, PoV, ValidatorIndex};
+use indracore_primitives::v1::{
+    BlakeTwo256, CandidateHash, Hash, HashT, Id as ParaId, PoV, ValidatorIndex,
+};
 use parity_scale_codec::Encode;
 use sc_network::PeerId;
 use sp_core::traits::SpawnNamed;
@@ -184,7 +186,6 @@ pub enum Stage {
     // Expand as needed, numbers should be ascending according to the stage
     // through the inclusion pipeline, or according to the descriptions
     // in [the path of a para chain block]
-    // (https://polkadot.network/the-path-of-a-parachain-block/)
 }
 
 /// Builder pattern for children and root spans to unify
@@ -207,6 +208,14 @@ impl SpanBuilder {
             .add_string_tag("candidate-hash", &format!("{:?}", candidate_hash.0));
         self
     }
+
+    /// Attach a para-id to the span.
+    #[inline(always)]
+    pub fn with_para_id(mut self, para_id: ParaId) -> Self {
+        self.span.add_para_id(para_id);
+        self
+    }
+
     /// Attach a candidate stage.
     /// Should always come with a `CandidateHash`.
     #[inline(always)]
@@ -308,6 +317,11 @@ impl Span {
             // avoid computing the pov hash if jaeger is not enabled
             self.add_string_tag("pov", &format!("{:?}", pov.hash()));
         }
+    }
+
+    /// Add the para-id to the span.
+    pub fn add_para_id(&mut self, para_id: ParaId) {
+        self.add_int_tag("para-id", u32::from(para_id) as i64);
     }
 
     /// Add an additional tag to the span.
