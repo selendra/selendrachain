@@ -39,7 +39,7 @@ use indracore_node_subsystem_util::{
     request_from_runtime, request_validator_groups, FromJobCommand, JobTrait, Validator,
 };
 use indracore_primitives::v1::{
-    CandidateReceipt, CollatorId, CoreIndex, CoreState, Hash, Id as ParaId, PoV,
+    BlockNumber, CandidateReceipt, CollatorId, CoreIndex, CoreState, Hash, Id as ParaId, PoV,
 };
 use sp_keystore::SyncCryptoStorePtr;
 use std::{pin::Pin, sync::Arc};
@@ -146,30 +146,47 @@ impl JobTrait for CandidateSelectionJob {
                 .with_stage(jaeger::Stage::CandidateSelection)
                 .build();
 
-            let mut assignment = None;
+            #[derive(Debug)]
+            enum AssignmentState {
+                Unassigned,
+                Scheduled(ParaId),
+                Occupied(BlockNumber),
+                Free,
+            }
+
+            let mut assignment = AssignmentState::Unassigned;
 
             for (idx, core) in cores.into_iter().enumerate() {
-                // Ignore prospective assignments on occupied cores for the time being.
-                if let CoreState::Scheduled(scheduled) = core {
-                    let core_index = CoreIndex(idx as _);
-                    let group_index = group_rotation_info.group_for_core(core_index, n_cores);
-                    if let Some(g) = validator_groups.get(group_index.0 as usize) {
-                        if g.contains(&validator.index()) {
-                            assignment = Some(scheduled.para_id);
-                            break;
+                let core_index = CoreIndex(idx as _);
+                let group_index = group_rotation_info.group_for_core(core_index, n_cores);
+                if let Some(g) = validator_groups.get(group_index.0 as usize) {
+                    if g.contains(&validator.index()) {
+                        match core {
+                            CoreState::Scheduled(scheduled) => {
+                                assignment = AssignmentState::Scheduled(scheduled.para_id);
+                            }
+                            CoreState::Occupied(occupied) => {
+                                // Ignore prospective assignments on occupied cores
+                                // for the time being.
+                                assignment = AssignmentState::Occupied(occupied.occupied_since);
+                            }
+                            CoreState::Free => {
+                                assignment = AssignmentState::Free;
+                            }
                         }
+                        break;
                     }
                 }
             }
 
             let assignment = match assignment {
-                Some(assignment) => {
+                AssignmentState::Scheduled(assignment) => {
                     assignment_span.add_string_tag("assigned", "true");
                     assignment_span.add_para_id(assignment);
 
                     assignment
                 }
-                None => {
+                assignment => {
                     assignment_span.add_string_tag("assigned", "false");
 
                     let validator_index = validator.index();
@@ -180,8 +197,10 @@ impl JobTrait for CandidateSelectionJob {
                         ?relay_parent,
                         ?validator_index,
                         ?validator_id,
+                        ?assignment,
                         "No assignment. Will not select candidate."
                     );
+
                     return Ok(());
                 }
             };
