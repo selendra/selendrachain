@@ -1165,50 +1165,47 @@ pub type Executive = frame_executive::Executive<
 
 pub struct FixIndracoreCouncilVotersDeposit;
 impl frame_support::traits::OnRuntimeUpgrade for FixIndracoreCouncilVotersDeposit {
-	fn on_runtime_upgrade() -> Weight {
-		use pallet_elections_phragmen::Voter;
-		use frame_support::IterableStorageMap;
-		let mut updated = 0;
-		let mut skipped = 0;
-		let mut correct = 0;
-		pallet_elections_phragmen::Voting::<Runtime>::translate::<Voter<AccountId, Balance>, _>(
-			|_who, mut vote| {
-				if vote.deposit == 5 * CENTS {
-					// If their deposit is what we set by mistake
-					vote.deposit = 5 * DOLLARS;
-					updated += 1;
-				} else if vote.deposit == 5 * DOLLARS {
-					correct += 1;
-				} else {
-					skipped += 1;
-				}
-				Some(vote)
-			},
-		);
+    fn on_runtime_upgrade() -> Weight {
+        use frame_support::IterableStorageMap;
+        use pallet_elections_phragmen::Voter;
+        let mut updated = 0;
+        let mut skipped = 0;
+        let mut correct = 0;
+        pallet_elections_phragmen::Voting::<Runtime>::translate::<Voter<AccountId, Balance>, _>(
+            |_who, mut vote| {
+                if vote.deposit == 5 * CENTS {
+                    // If their deposit is what we set by mistake
+                    vote.deposit = 5 * DOLLARS;
+                    updated += 1;
+                } else if vote.deposit == 5 * DOLLARS {
+                    correct += 1;
+                } else {
+                    skipped += 1;
+                }
+                Some(vote)
+            },
+        );
 
-		log::info!(
-			target: "runtime::indracore",
-			"updated {} (updated) + {} (correct) + {} (skipped) voter's deposit.",
-			updated,
-			correct,
-			skipped,
-		);
-		BlockWeights::get().max_block
-	}
+        log::info!(
+            target: "runtime::indracore",
+            "updated {} (updated) + {} (correct) + {} (skipped) voter's deposit.",
+            updated,
+            correct,
+            skipped,
+        );
+        BlockWeights::get().max_block
+    }
 
-	#[cfg(feature = "try-runtime")]
-	fn post_upgrade() -> Result<(), &'static str> {
-		use frame_support::IterableStorageMap;
-		log::info!("Checking FixIndracoreCouncilVotersDeposit post migration");
-		// no further vote with the wrong 5 CENT deposit shall exist.
-		assert!(
-			pallet_elections_phragmen::Voting::<Runtime>::iter().all(
-				|(_, vote)| vote.deposit != 5 * CENTS
-			)
-		);
+    #[cfg(feature = "try-runtime")]
+    fn post_upgrade() -> Result<(), &'static str> {
+        use frame_support::IterableStorageMap;
+        log::info!("Checking FixIndracoreCouncilVotersDeposit post migration");
+        // no further vote with the wrong 5 CENT deposit shall exist.
+        assert!(pallet_elections_phragmen::Voting::<Runtime>::iter()
+            .all(|(_, vote)| vote.deposit != 5 * CENTS));
 
-		Ok(())
-	}
+        Ok(())
+    }
 }
 
 /// The payload being signed in transactions.
