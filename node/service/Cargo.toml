@@ -118,6 +118,7 @@ runtime-benchmarks = [
 ]
 try-runtime = [
 	"indracore-runtime/try-runtime",
+	"kumandra-runtime/try-runtime",
 ]
 
 real-overseer = [

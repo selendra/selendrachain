@@ -10731,7 +10731,6 @@ dependencies = [
 [[package]]
 name = "xcm"
 version = "0.1.0"
-source = "git+https://github.com/selendra/indracore?branch=v0.4.0-dev#9b0fdbb833320f9e6e906ea4919d9097a39a62c3"
 dependencies = [
  "parity-scale-codec",
 ]
@@ -10739,6 +10738,7 @@ dependencies = [
 [[package]]
 name = "xcm"
 version = "0.1.0"
+source = "git+https://github.com/selendra/indracore?branch=v0.4.0-dev#9b0fdbb833320f9e6e906ea4919d9097a39a62c3"
 dependencies = [
  "parity-scale-codec",
 ]
@@ -10761,6 +10761,22 @@ dependencies = [
 [[package]]
 name = "xcm-executor"
 version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "impl-trait-for-tuples",
+ "log",
+ "parity-scale-codec",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm 0.1.0",
+]
+
+[[package]]
+name = "xcm-executor"
+version = "0.1.0"
 source = "git+https://github.com/selendra/indracore?branch=v0.4.0-dev#9b0fdbb833320f9e6e906ea4919d9097a39a62c3"
 dependencies = [
  "frame-support",
@@ -10773,22 +10789,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "xcm 0.1.0 (git+https://github.com/selendra/indracore?branch=v0.4.0-dev)",
-]
-
-[[package]]
-name = "xcm-executor"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "impl-trait-for-tuples",
- "log",
- "parity-scale-codec",
- "sp-arithmetic",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "xcm 0.1.0",
 ]
 
 [[package]]
