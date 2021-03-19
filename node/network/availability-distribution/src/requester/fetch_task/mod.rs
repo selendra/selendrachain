@@ -23,14 +23,16 @@ use futures::{FutureExt, SinkExt};
 
 use indracore_erasure_coding::branch_hash;
 use indracore_node_network_protocol::request_response::{
-    request::{OutgoingRequest, RequestError, Requests},
+    request::{OutgoingRequest, Recipient, RequestError, Requests},
     v1::{AvailabilityFetchingRequest, AvailabilityFetchingResponse},
 };
 use indracore_primitives::v1::{
     AuthorityDiscoveryId, BlakeTwo256, ErasureChunk, GroupIndex, Hash, HashT, OccupiedCore,
     SessionIndex,
 };
-use indracore_subsystem::messages::{AllMessages, AvailabilityStoreMessage, NetworkBridgeMessage};
+use indracore_subsystem::messages::{
+    AllMessages, AvailabilityStoreMessage, IfDisconnected, NetworkBridgeMessage,
+};
 use indracore_subsystem::{jaeger, SubsystemContext};
 
 use crate::{
@@ -330,12 +332,13 @@ impl RunningTask {
         &mut self,
         validator: &AuthorityDiscoveryId,
     ) -> std::result::Result<AvailabilityFetchingResponse, TaskError> {
-        let (full_request, response_recv) = OutgoingRequest::new(validator.clone(), self.request);
+        let (full_request, response_recv) =
+            OutgoingRequest::new(Recipient::Authority(validator.clone()), self.request);
         let requests = Requests::AvailabilityFetching(full_request);
 
         self.sender
             .send(FromFetchTask::Message(AllMessages::NetworkBridge(
-                NetworkBridgeMessage::SendRequests(vec![requests]),
+                NetworkBridgeMessage::SendRequests(vec![requests], IfDisconnected::TryConnect),
             )))
             .await
             .map_err(|_| TaskError::ShuttingDown)?;

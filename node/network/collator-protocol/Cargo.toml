@@ -9,6 +9,7 @@ futures = "0.3.12"
 tracing = "0.1.22"
 tracing-futures = "0.2.4"
 thiserror = "1.0.23"
+always-assert = "0.1.2"
 
 indracore-primitives = { path = "../../../primitives" }
 indracore-node-network-protocol = { path = "../../network/protocol" }
@@ -20,7 +21,6 @@ indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subs
 log = "0.4.13"
 env_logger = "0.8.2"
 assert_matches = "1.4.0"
-futures-timer = "3.0.2"
 
 sp-core = { git = "https://github.com/selendra/substrate", branch = "master", features = ["std"] }
 sp-keyring = { git = "https://github.com/selendra/substrate", branch = "master" }

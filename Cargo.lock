@@ -97,6 +97,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "always-assert"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fbf688625d06217d5b1bb0ea9d9c44a1635fd0ee3534466388d18203174f4d11"
+
+[[package]]
 name = "ansi_term"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2901,10 +2907,10 @@ dependencies = [
 name = "indracore-collator-protocol"
 version = "0.1.0"
 dependencies = [
+ "always-assert",
  "assert_matches",
  "env_logger 0.8.2",
  "futures 0.3.12",
- "futures-timer 3.0.2",
  "indracore-node-network-protocol",
  "indracore-node-primitives",
  "indracore-node-subsystem",
@@ -3241,8 +3247,6 @@ dependencies = [
  "parity-scale-codec",
  "sc-network",
  "strum",
- "thiserror",
- "zstd",
 ]
 
 [[package]]
@@ -3442,6 +3446,8 @@ dependencies = [
  "sp-std",
  "sp-trie",
  "sp-version",
+ "thiserror",
+ "zstd",
 ]
 
 [[package]]

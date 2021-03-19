@@ -30,6 +30,7 @@ use futures_timer::Delay;
 use sc_keystore::LocalKeystore;
 use sc_network as network;
 use sc_network::config as netconfig;
+use sc_network::IfDisconnected;
 use sp_application_crypto::AppKey;
 use sp_core::{testing::TaskExecutor, traits::SpawnNamed};
 use sp_keyring::Sr25519Keyring;
@@ -218,7 +219,10 @@ impl TestState {
             tracing::trace!(target: LOG_TARGET, remaining_stores, "Stores left to go");
             let msg = overseer_recv(&mut rx).await;
             match msg {
-                AllMessages::NetworkBridge(NetworkBridgeMessage::SendRequests(reqs)) => {
+                AllMessages::NetworkBridge(NetworkBridgeMessage::SendRequests(
+                    reqs,
+                    IfDisconnected::TryConnect,
+                )) => {
                     for req in reqs {
                         // Forward requests:
                         let in_req = to_incoming_req(&executor, req);
@@ -347,5 +351,6 @@ fn to_incoming_req(
                 tx,
             )
         }
+        _ => panic!("Unexpected request!"),
     }
 }

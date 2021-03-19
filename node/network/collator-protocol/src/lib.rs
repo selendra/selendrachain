@@ -21,7 +21,6 @@
 #![recursion_limit = "256"]
 
 use futures::{channel::oneshot, FutureExt, TryFutureExt};
-use std::time::Duration;
 use thiserror::Error;
 
 use indracore_node_network_protocol::{PeerId, UnifiedReputationChange as Rep};
@@ -36,8 +35,7 @@ use indracore_subsystem::{
 mod collator_side;
 mod validator_side;
 
-const LOG_TARGET: &'static str = "parachain::collator_protocol";
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(1);
+const LOG_TARGET: &'static str = "parachain::collator-protocol";
 
 #[derive(Debug, Error)]
 enum Error {
@@ -83,9 +81,7 @@ impl CollatorProtocolSubsystem {
         Context: SubsystemContext<Message = CollatorProtocolMessage>,
     {
         match self.protocol_side {
-            ProtocolSide::Validator(metrics) => {
-                validator_side::run(ctx, REQUEST_TIMEOUT, metrics).await
-            }
+            ProtocolSide::Validator(metrics) => validator_side::run(ctx, metrics).await,
             ProtocolSide::Collator(id, metrics) => collator_side::run(ctx, id, metrics).await,
         }
         .map_err(|e| SubsystemError::with_origin("collator-protocol", e).into())
@@ -113,7 +109,7 @@ where
 #[tracing::instrument(level = "trace", skip(ctx), fields(subsystem = LOG_TARGET))]
 async fn modify_reputation<Context>(ctx: &mut Context, peer: PeerId, rep: Rep)
 where
-    Context: SubsystemContext<Message = CollatorProtocolMessage>,
+    Context: SubsystemContext,
 {
     tracing::trace!(
         target: LOG_TARGET,

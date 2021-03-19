@@ -73,7 +73,7 @@ const MALFORMED_VIEW_COST: Rep = Rep::CostMajor("Malformed view");
 const EMPTY_VIEW_COST: Rep = Rep::CostMajor("Peer sent us an empty view");
 
 // network bridge log target
-const LOG_TARGET: &'static str = "parachain::network_bridge";
+const LOG_TARGET: &'static str = "parachain::network-bridge";
 
 /// Messages from and to the network.
 ///
@@ -233,11 +233,15 @@ where
                 }
             }
 
-            Action::SendRequests(reqs) => {
+            Action::SendRequests(reqs, if_disconnected) => {
                 for req in reqs {
                     bridge
                         .network_service
-                        .start_request(&mut bridge.authority_discovery_service, req)
+                        .start_request(
+                            &mut bridge.authority_discovery_service,
+                            req,
+                            if_disconnected,
+                        )
                         .await;
                 }
             }
@@ -610,7 +614,7 @@ mod tests {
     use std::borrow::Cow;
     use std::collections::HashSet;
 
-    use sc_network::Event as NetworkEvent;
+    use sc_network::{Event as NetworkEvent, IfDisconnected};
 
     use indracore_node_network_protocol::view;
     use indracore_node_network_protocol::{request_response::request::Requests, ObservedRole};
@@ -680,7 +684,13 @@ mod tests {
             Box::pin((&mut self.action_tx).sink_map_err(Into::into))
         }
 
-        async fn start_request<AD: AuthorityDiscovery>(&self, _: &mut AD, _: Requests) {}
+        async fn start_request<AD: AuthorityDiscovery>(
+            &self,
+            _: &mut AD,
+            _: Requests,
+            _: IfDisconnected,
+        ) {
+        }
     }
 
     #[async_trait]
