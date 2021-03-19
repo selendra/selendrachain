@@ -30,12 +30,12 @@ where
 {
     fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
         let numeric_amount = amount.peek();
-        let author = <pallet_authorship::Module<R>>::author();
-        <pallet_balances::Module<R>>::resolve_creating(
-            &<pallet_authorship::Module<R>>::author(),
+        let author = <pallet_authorship::Pallet<R>>::author();
+        <pallet_balances::Pallet<R>>::resolve_creating(
+            &<pallet_authorship::Pallet<R>>::author(),
             amount,
         );
-        <frame_system::Module<R>>::deposit_event(pallet_balances::Event::Deposit(
+        <frame_system::Pallet<R>>::deposit_event(pallet_balances::Event::Deposit(
             author,
             numeric_amount,
         ));
@@ -46,7 +46,7 @@ pub struct DealWithFees<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
 where
     R: pallet_balances::Config + pallet_treasury::Config + pallet_authorship::Config,
-    pallet_treasury::Module<R>: OnUnbalanced<NegativeImbalance<R>>,
+    pallet_treasury::Pallet<R>: OnUnbalanced<NegativeImbalance<R>>,
     <R as frame_system::Config>::AccountId: From<primitives::v1::AccountId>,
     <R as frame_system::Config>::AccountId: Into<primitives::v1::AccountId>,
     <R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
@@ -59,7 +59,7 @@ where
                 // for tips, if any, 100% to author
                 tips.merge_into(&mut split.1);
             }
-            use pallet_treasury::Module as Treasury;
+            use pallet_treasury::Pallet as Treasury;
             <Treasury<R> as OnUnbalanced<_>>::on_unbalanced(split.0);
             <ToAuthor<R> as OnUnbalanced<_>>::on_unbalanced(split.1);
         }
@@ -89,9 +89,9 @@ mod tests {
             NodeBlock = Block,
             UncheckedExtrinsic = UncheckedExtrinsic,
         {
-            System: frame_system::{Module, Call, Config, Storage, Event<T>},
-            Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
-            Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
+            System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+            Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+            Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
         }
     );
 
@@ -149,7 +149,7 @@ mod tests {
     }
 
     impl pallet_treasury::Config for Test {
-        type Currency = pallet_balances::Module<Test>;
+        type Currency = pallet_balances::Pallet<Test>;
         type ApproveOrigin = frame_system::EnsureRoot<AccountId>;
         type RejectOrigin = frame_system::EnsureRoot<AccountId>;
         type Event = Event;

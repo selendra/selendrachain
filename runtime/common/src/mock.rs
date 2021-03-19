@@ -106,7 +106,7 @@ impl<T: frame_system::Config> Registrar for TestRegistrar<T> {
         OPERATIONS.with(|x| {
             x.borrow_mut().push((
                 id,
-                frame_system::Module::<T>::block_number().saturated_into(),
+                frame_system::Pallet::<T>::block_number().saturated_into(),
                 true,
             ))
         });
@@ -132,7 +132,7 @@ impl<T: frame_system::Config> Registrar for TestRegistrar<T> {
         OPERATIONS.with(|x| {
             x.borrow_mut().push((
                 id,
-                frame_system::Module::<T>::block_number().saturated_into(),
+                frame_system::Pallet::<T>::block_number().saturated_into(),
                 false,
             ))
         });

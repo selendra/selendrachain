@@ -333,7 +333,7 @@ impl<T: Config> Module<T> {
         });
         ParathreadQueue::set(thread_queue);
 
-        let now = <frame_system::Module<T>>::block_number() + One::one();
+        let now = <frame_system::Pallet<T>>::block_number() + One::one();
         <SessionStartBlock<T>>::set(now);
     }
 
@@ -625,7 +625,7 @@ impl<T: Config> Module<T> {
     /// which prevents us from testing the code if using `impl Trait`.
     pub(crate) fn availability_timeout_predicate(
     ) -> Option<Box<dyn Fn(CoreIndex, T::BlockNumber) -> bool>> {
-        let now = <frame_system::Module<T>>::block_number();
+        let now = <frame_system::Pallet<T>>::block_number();
         let config = <configuration::Module<T>>::config();
 
         let session_start = <SessionStartBlock<T>>::get();

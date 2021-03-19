@@ -142,7 +142,7 @@ decl_module! {
         #[weight = (0, DispatchClass::Operational)]
         pub fn schedule_upgrade(origin, validation_function: Vec<u8>) {
             ensure_root(origin)?;
-            <frame_system::Module<T>>::can_set_code(&validation_function)?;
+            <frame_system::Pallet<T>>::can_set_code(&validation_function)?;
             Self::schedule_upgrade_impl(validation_function)?;
         }
 
