@@ -216,13 +216,13 @@ impl sc_client_api::BlockBackend<Block> for Client {
         }
     }
 
-    fn extrinsic(
+    fn indexed_transaction(
         &self,
         id: &<Block as BlockT>::Hash,
-    ) -> sp_blockchain::Result<Option<<Block as BlockT>::Extrinsic>> {
+    ) -> sp_blockchain::Result<Option<Vec<u8>>> {
         match self {
-            Self::Indracore(client) => client.extrinsic(id),
-            Self::Kumandra(client) => client.extrinsic(id),
+            Self::Indracore(client) => client.indexed_transaction(id),
+            Self::Kumandra(client) => client.indexed_transaction(id),
         }
     }
 }
