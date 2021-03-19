@@ -51,8 +51,6 @@ use std::{convert::TryFrom, fmt, marker::PhantomData, pin::Pin, sync::Arc};
 
 use wait_on_relay_chain_block::WaitOnRelayChainBlock;
 
-#[cfg(test)]
-mod tests;
 mod wait_on_relay_chain_block;
 
 const LOG_TARGET: &str = "cumulus-network";

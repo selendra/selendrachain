@@ -30,9 +30,4 @@ tracing = "0.1.25"
 async-trait = "0.1.42"
 dyn-clone = "1.0.4"
 
-# [dev-dependencies]
-# # Substrate deps
-# sp-tracing = { git = "https://github.com/selendra/substrate", branch = "master" }
-
-# # Other deps
-# futures-timer = "3.0.2"
+[dev-dependencies]
