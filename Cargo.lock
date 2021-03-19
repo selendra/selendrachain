@@ -2810,7 +2810,6 @@ dependencies = [
  "schnorrkel",
  "sp-core",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -2833,7 +2832,6 @@ dependencies = [
  "sp-core",
  "sp-keystore",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -2864,7 +2862,6 @@ dependencies = [
  "sp-tracing",
  "thiserror",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -2891,7 +2888,6 @@ dependencies = [
  "streamunordered",
  "thiserror",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -2911,7 +2907,6 @@ dependencies = [
  "substrate-browser-utils",
  "substrate-build-script-utils",
  "thiserror",
- "tracing-futures",
  "try-runtime-cli",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -2936,7 +2931,6 @@ dependencies = [
  "sp-keyring",
  "thiserror",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -2973,7 +2967,6 @@ dependencies = [
  "indracore-primitives",
  "rand 0.8.3",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -2996,7 +2989,6 @@ dependencies = [
  "sp-keyring",
  "strum",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -3013,7 +3005,6 @@ dependencies = [
  "sp-core",
  "thiserror",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -3052,7 +3043,6 @@ dependencies = [
  "sp-keystore",
  "sp-runtime",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -3081,7 +3071,6 @@ dependencies = [
  "sp-keyring",
  "thiserror",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -3105,7 +3094,6 @@ dependencies = [
  "sp-keystore",
  "thiserror",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -3119,7 +3107,6 @@ dependencies = [
  "sp-keystore",
  "thiserror",
  "tracing",
- "tracing-futures",
  "wasm-timer",
 ]
 
@@ -3136,7 +3123,6 @@ dependencies = [
  "sp-keystore",
  "thiserror",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -3155,7 +3141,6 @@ dependencies = [
  "sp-core",
  "sp-keyring",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -3171,7 +3156,6 @@ dependencies = [
  "sp-blockchain",
  "sp-core",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -3212,7 +3196,6 @@ dependencies = [
  "sp-keystore",
  "thiserror",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -3231,7 +3214,6 @@ dependencies = [
  "sp-consensus-babe",
  "sp-core",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -3309,7 +3291,6 @@ dependencies = [
  "substrate-prometheus-endpoint",
  "thiserror",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -3332,7 +3313,6 @@ dependencies = [
  "smallvec 1.6.1",
  "sp-core",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -3363,7 +3343,6 @@ dependencies = [
  "substrate-prometheus-endpoint",
  "thiserror",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -3384,7 +3363,6 @@ dependencies = [
  "sc-client-api",
  "sp-core",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -3430,7 +3408,6 @@ dependencies = [
  "sp-keyring",
  "thiserror",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -3771,7 +3748,6 @@ dependencies = [
  "substrate-prometheus-endpoint",
  "thiserror",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]
@@ -3795,7 +3771,6 @@ dependencies = [
  "sp-keystore",
  "sp-staking",
  "tracing",
- "tracing-futures",
 ]
 
 [[package]]

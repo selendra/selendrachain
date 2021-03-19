@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 futures = "0.3.12"
 tracing = "0.1.22"
-tracing-futures = "0.2.4"
+# tracing-futures = "0.2.4"
 sp-blockchain = { git = "https://github.com/selendra/substrate", branch = "master" }
 indracore-primitives = { path = "../../../primitives" }
 indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }

@@ -15,7 +15,7 @@ pin-project = "1.0.4"
 streamunordered = "0.5.1"
 thiserror = "1.0.23"
 tracing = "0.1.22"
-tracing-futures = "0.2.4"
+# tracing-futures = "0.2.4"
 
 indracore-node-primitives = { path = "../primitives" }
 indracore-node-subsystem = { path = "../subsystem" }

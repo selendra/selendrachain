@@ -15,7 +15,7 @@ indracore-node-subsystem-util = { path = "../subsystem-util" }
 indracore-primitives = { path = "../../primitives" }
 indracore-subsystem = { package = "indracore-node-subsystem", path = "../subsystem" }
 tracing = "0.1.22"
-tracing-futures = "0.2.4"
+# tracing-futures = "0.2.4"
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }

@@ -10,7 +10,7 @@ lru = "0.6.1"
 rand = "0.8.3"
 thiserror = "1.0.21"
 tracing = "0.1.22"
-tracing-futures = "0.2.4"
+# tracing-futures = "0.2.4"
 
 indracore-erasure-coding = { path = "../../../erasure-coding" }
 indracore-primitives = { path = "../../../primitives" }
