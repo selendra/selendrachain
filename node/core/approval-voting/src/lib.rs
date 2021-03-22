@@ -21,7 +21,7 @@
 //! of others. It uses this information to determine when candidates and blocks have
 //! been sufficiently approved to finalize.
 
-use indracore_node_jaeger::Stage as JaegerStage;
+use indracore_node_jaeger as jaeger;
 use indracore_node_primitives::approval::{
     ApprovalVote, DelayTranche, IndirectAssignmentCert, IndirectSignedApprovalVote,
 };
@@ -734,8 +734,8 @@ async fn handle_approved_ancestor(
 
     use bitvec::{order::Lsb0, vec::BitVec};
 
-    let mut span = indracore_node_jaeger::hash_span(&target, "approved-ancestor");
-    span.add_stage(JaegerStage::ApprovalChecking);
+    let mut span =
+        jaeger::Span::new(&target, "approved-ancestor").with_stage(jaeger::Stage::ApprovalChecking);
 
     let mut all_approved_max = None;
 
@@ -756,8 +756,8 @@ async fn handle_approved_ancestor(
         return Ok(None);
     }
 
-    span.add_string_tag("target-number", &format!("{}", target_number));
-    span.add_string_tag("target-hash", &format!("{}", target));
+    span.add_string_fmt_debug_tag("target-number", target_number);
+    span.add_string_fmt_debug_tag("target-hash", target);
 
     // request ancestors up to but not including the lower bound,
     // as a vote on the lower bound is implied if we cannot find
@@ -904,8 +904,8 @@ async fn handle_approved_ancestor(
 
     match all_approved_max {
         Some((ref hash, ref number)) => {
-            span.add_string_tag("approved-number", &format!("{}", number));
-            span.add_string_tag("approved-hash", &format!("{:?}", hash));
+            span.add_uint_tag("approved-number", *number as u64);
+            span.add_string_fmt_debug_tag("approved-hash", hash);
         }
         None => {
             span.add_string_tag("reached-lower-bound", "true");
@@ -1427,15 +1427,13 @@ fn process_wakeup(
     candidate_hash: CandidateHash,
     expected_tick: Tick,
 ) -> SubsystemResult<Vec<Action>> {
-    let mut span = indracore_node_jaeger::descriptor_span(
+    let _span = jaeger::Span::from_encodable(
         (relay_block, candidate_hash, expected_tick),
         "process-approval-wakeup",
-    );
-
-    span.add_string_tag("relay-parent", &format!("{:?}", relay_block));
-    span.add_string_tag("candidate-hash", &format!("{:?}", candidate_hash));
-    span.add_string_tag("tick", &format!("{:?}", expected_tick));
-    span.add_stage(JaegerStage::ApprovalChecking);
+    )
+    .with_relay_parent(relay_block)
+    .with_candidate(candidate_hash)
+    .with_stage(jaeger::Stage::ApprovalChecking);
 
     let block_entry = state.db.load_block_entry(&relay_block)?;
     let candidate_entry = state.db.load_candidate_entry(&candidate_hash)?;

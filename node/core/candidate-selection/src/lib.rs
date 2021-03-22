@@ -107,10 +107,9 @@ impl JobTrait for CandidateSelectionJob {
         let span = PerLeafSpan::new(span, "candidate-selection");
         async move {
             let _span = span
-                .child_builder("query-runtime")
-                .with_relay_parent(&relay_parent)
-                .with_stage(jaeger::Stage::CandidateSelection)
-                .build();
+                .child("query-runtime")
+                .with_relay_parent(relay_parent)
+                .with_stage(jaeger::Stage::CandidateSelection);
             let (groups, cores) = futures::try_join!(
                 try_runtime_api!(request_validator_groups(relay_parent, &mut sender).await),
                 try_runtime_api!(
@@ -126,10 +125,9 @@ impl JobTrait for CandidateSelectionJob {
 
             drop(_span);
             let _span = span
-                .child_builder("validator-construction")
-                .with_relay_parent(&relay_parent)
-                .with_stage(jaeger::Stage::CandidateSelection)
-                .build();
+                .child("validator-construction")
+                .with_relay_parent(relay_parent)
+                .with_stage(jaeger::Stage::CandidateSelection);
 
             let n_cores = cores.len();
 
@@ -140,11 +138,10 @@ impl JobTrait for CandidateSelectionJob {
                     Err(err) => return Err(Error::Util(err)),
                 };
 
-            let mut assignment_span = span
-                .child_builder("find-assignment")
-                .with_relay_parent(&relay_parent)
-                .with_stage(jaeger::Stage::CandidateSelection)
-                .build();
+            let assignment_span = span
+                .child("find-assignment")
+                .with_relay_parent(relay_parent)
+                .with_stage(jaeger::Stage::CandidateSelection);
 
             #[derive(Debug)]
             enum AssignmentState {
@@ -179,15 +176,16 @@ impl JobTrait for CandidateSelectionJob {
                 }
             }
 
-            let assignment = match assignment {
+            let (assignment, assignment_span) = match assignment {
                 AssignmentState::Scheduled(assignment) => {
-                    assignment_span.add_string_tag("assigned", "true");
-                    assignment_span.add_para_id(assignment);
+                    let assignment_span = assignment_span
+                        .with_string_tag("assigned", "true")
+                        .with_para_id(assignment);
 
-                    assignment
+                    (assignment, assignment_span)
                 }
                 assignment => {
-                    assignment_span.add_string_tag("assigned", "false");
+                    let _assignment_span = assignment_span.with_string_tag("assigned", "false");
 
                     let validator_index = validator.index();
                     let validator_id = validator.id();
@@ -233,9 +231,8 @@ impl CandidateSelectionJob {
 
     async fn run_loop(&mut self, span: &jaeger::Span) -> Result<(), Error> {
         let span = span
-            .child_builder("run-loop")
-            .with_stage(jaeger::Stage::CandidateSelection)
-            .build();
+            .child("run-loop")
+            .with_stage(jaeger::Stage::CandidateSelection);
 
         loop {
             match self.receiver.next().await {
@@ -246,20 +243,18 @@ impl CandidateSelectionJob {
                 }
                 Some(CandidateSelectionMessage::Invalid(_relay_parent, candidate_receipt)) => {
                     let _span = span
-                        .child_builder("handle-invalid")
+                        .child("handle-invalid")
                         .with_stage(jaeger::Stage::CandidateSelection)
-                        .with_candidate(&candidate_receipt.hash())
-                        .with_relay_parent(&_relay_parent)
-                        .build();
+                        .with_candidate(candidate_receipt.hash())
+                        .with_relay_parent(_relay_parent);
                     self.handle_invalid(candidate_receipt).await;
                 }
                 Some(CandidateSelectionMessage::Seconded(_relay_parent, statement)) => {
                     let _span = span
-                        .child_builder("handle-seconded")
+                        .child("handle-seconded")
                         .with_stage(jaeger::Stage::CandidateSelection)
-                        .with_candidate(&statement.payload().candidate_hash())
-                        .with_relay_parent(&_relay_parent)
-                        .build();
+                        .with_candidate(statement.payload().candidate_hash())
+                        .with_relay_parent(_relay_parent);
                     self.handle_seconded(statement).await;
                 }
                 None => break,

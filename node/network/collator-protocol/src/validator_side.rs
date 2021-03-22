@@ -349,11 +349,10 @@ async fn request_collation<Context>(
     let per_request = PerRequest {
         from_collator: response_recv.boxed().fuse(),
         to_requester: result,
-        span: state.span_per_relay_parent.get(&relay_parent).map(|s| {
-            s.child_builder("collation-request")
-                .with_para_id(para_id)
-                .build()
-        }),
+        span: state
+            .span_per_relay_parent
+            .get(&relay_parent)
+            .map(|s| s.child("collation-request").with_para_id(para_id)),
     };
 
     state.requested_collations.insert(
@@ -714,7 +713,7 @@ where
                         );
 
                         // Actual sending:
-                        let _span = jaeger::pov_span(&pov, "received-collation");
+                        let _span = jaeger::Span::new(&pov, "received-collation");
                         let (mut tx, _) = oneshot::channel();
                         std::mem::swap(&mut tx, &mut (per_req.to_requester));
                         let result = tx.send((receipt, pov));

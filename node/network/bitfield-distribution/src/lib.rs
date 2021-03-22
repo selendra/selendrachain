@@ -146,7 +146,7 @@ impl PerRelayParentData {
     }
 }
 
-const LOG_TARGET: &str = "parachain::bitfield_distribution";
+const LOG_TARGET: &str = "parachain::bitfield-distribution";
 
 /// The bitfield distribution subsystem.
 pub struct BitfieldDistribution {
@@ -411,11 +411,10 @@ async fn process_incoming_peer_message<Context>(
 
     let mut _span = job_data
         .span
-        .child_builder("msg-received")
+        .child("msg-received")
         .with_peer_id(&origin)
         .with_claimed_validator_index(message.signed_availability.validator_index())
-        .with_stage(jaeger::Stage::BitfieldDistribution)
-        .build();
+        .with_stage(jaeger::Stage::BitfieldDistribution);
 
     let validator_set = &job_data.validator_set;
     if validator_set.is_empty() {

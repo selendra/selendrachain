@@ -28,6 +28,7 @@
 //!
 //! We maintain a rolling window of session indices. This starts as empty
 
+use indracore_node_jaeger as jaeger;
 use indracore_node_primitives::approval::{
     self as approval_types, BlockApprovalMeta, RelayVRFStory,
 };
@@ -579,7 +580,7 @@ pub(crate) async fn handle_new_head(
 ) -> SubsystemResult<Vec<BlockImportedCandidates>> {
     // Update session info based on most recent head.
 
-    let mut span = indracore_node_jaeger::hash_span(&head, "approval-checking-import");
+    let mut span = jaeger::Span::new(head, "approval-checking-import");
 
     let header = {
         let (h_tx, h_rx) = oneshot::channel();
@@ -624,7 +625,7 @@ pub(crate) async fn handle_new_head(
         .map_err(|e| SubsystemError::with_origin("approval-voting", e))
         .await?;
 
-    span.add_string_tag("new-blocks", &format!("{}", new_blocks.len()));
+    span.add_uint_tag("new-blocks", new_blocks.len() as u64);
 
     if new_blocks.is_empty() {
         return Ok(Vec::new());
@@ -691,7 +692,7 @@ pub(crate) async fn handle_new_head(
             .iter()
             .map(|v| v.len())
             .collect();
-        // insta-approve candidates on low-node testnets
+        // insta-approve candidates on low-node testnets:
         let num_candidates = included_candidates.len();
         let approved_bitfield = {
             if needed_approvals == 0 {
