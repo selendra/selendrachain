@@ -231,7 +231,9 @@ where
             novelpoly::Error::WantedShardCountTooHigh(_) => return Err(Error::TooManyValidators),
             novelpoly::Error::WantedShardCountTooLow(_) => return Err(Error::NotEnoughValidators),
             novelpoly::Error::PayloadSizeIsZero { .. } => return Err(Error::BadPayload),
-            novelpoly::Error::InconsistentShardLengths { .. } => return Err(Error::NonUniformChunks),
+            novelpoly::Error::InconsistentShardLengths { .. } => {
+                return Err(Error::NonUniformChunks)
+            }
             _ => return Err(Error::UnknownReconstruction),
         },
         Ok(payload_bytes) => payload_bytes,
