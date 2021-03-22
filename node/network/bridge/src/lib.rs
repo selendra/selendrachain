@@ -37,7 +37,7 @@ use indracore_subsystem::{
 /// Peer set infos for network initialization.
 ///
 /// To be added to [`NetworkConfiguration::extra_sets`].
-pub use indracore_node_network_protocol::peer_set::peer_sets_info;
+pub use indracore_node_network_protocol::peer_set::{peer_sets_info, IsAuthority};
 
 use std::collections::{hash_map, HashMap};
 use std::iter::ExactSizeIterator;

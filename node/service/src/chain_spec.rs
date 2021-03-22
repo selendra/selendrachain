@@ -664,6 +664,7 @@ pub fn indracore_testnet_genesis(
         pallet_balances: indracore::BalancesConfig {
             balances: endowed_accounts
                 .iter()
+                .cloned()
                 .map(|k| (k.clone(), ENDOWMENT))
                 .collect(),
         },
