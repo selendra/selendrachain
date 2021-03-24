@@ -202,6 +202,11 @@ impl ApprovalEntry {
         self.assignments.len()
     }
 
+    /// Get the number of assignments by validators, including the local validator.
+    pub fn n_assignments(&self) -> usize {
+        self.assignments.count_ones()
+    }
+
     /// Get the backing group index of the approval entry.
     pub fn backing_group(&self) -> GroupIndex {
         self.backing_group
@@ -362,7 +367,13 @@ impl BlockEntry {
         self.approved_bitfield
             .iter()
             .enumerate()
-            .filter_map(move |(i, a)| if *a { Some(self.candidates[i].1) } else { None })
+            .filter_map(move |(i, a)| {
+                if !*a {
+                    Some(self.candidates[i].1)
+                } else {
+                    None
+                }
+            })
     }
 
     #[cfg(test)]
