@@ -403,7 +403,7 @@ parameter_types! {
     pub const BondingDuration: pallet_staking::EraIndex = 28;
     pub const SlashDeferDuration: pallet_staking::EraIndex = 27;
     pub const RewardCurve: &'static PiecewiseLinear<'static> = &REWARD_CURVE;
-    pub const MaxNominatorRewardedPerValidator: u32 = 128;
+    pub const MaxNominatorRewardedPerValidator: u32 = 256;
 }
 
 type SlashCancelOrigin = EnsureOneOf<
