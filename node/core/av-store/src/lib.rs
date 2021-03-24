@@ -706,8 +706,8 @@ fn note_block_included(
             // Warn and ignore.
             tracing::warn!(
                 target: LOG_TARGET,
-                "Candidate {}, included without being backed?",
-                candidate_hash,
+                ?candidate_hash,
+                "Candidate included without being backed?",
             );
         }
         Some(mut meta) => {
@@ -1110,8 +1110,8 @@ fn store_available_data(
 
     tracing::debug!(
         target: LOG_TARGET,
-        "Stored data and chunks for candidate={}",
-        candidate_hash,
+        ?candidate_hash,
+        "Stored data and chunks",
     );
 
     Ok(())

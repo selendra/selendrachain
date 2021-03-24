@@ -31,7 +31,7 @@ use indracore_node_subsystem_util::{
 use indracore_primitives::v1::{Hash, SessionIndex, ValidatorId};
 use rand::seq::SliceRandom as _;
 
-const LOG_TARGET: &str = "parachain::gossip_support";
+const LOG_TARGET: &str = "parachain::gossip-support";
 
 /// The Gossip Support subsystem.
 pub struct GossipSupport {}
@@ -40,7 +40,7 @@ pub struct GossipSupport {}
 struct State {
     last_session_index: Option<SessionIndex>,
     /// when we overwrite this, it automatically drops the previous request
-    last_connection_request: Option<ConnectionRequest>,
+    _last_connection_request: Option<ConnectionRequest>,
 }
 
 impl GossipSupport {
@@ -77,7 +77,7 @@ impl GossipSupport {
 
                     let leaves = activated.into_iter().map(|(h, _)| h);
                     if let Err(e) = state.handle_active_leaves(&mut ctx, leaves).await {
-                        tracing::debug!(target: LOG_TARGET, "Error {}", e);
+                        tracing::debug!(target: LOG_TARGET, error = ?e);
                     }
                 }
                 FromOverseer::Signal(OverseerSignal::BlockFinalized(_hash, _number)) => {}
@@ -130,15 +130,11 @@ impl State {
             };
 
             if let Some((new_session, relay_parent)) = maybe_new_session {
-                tracing::debug!(target: LOG_TARGET, "New session detected {}", new_session);
+                tracing::debug!(target: LOG_TARGET, %new_session, "New session detected");
                 let validators =
                     determine_relevant_validators(ctx, relay_parent, new_session).await?;
                 let validators = choose_random_subset(validators);
-                tracing::debug!(
-                    target: LOG_TARGET,
-                    "Issuing a connection request to {:?}",
-                    validators
-                );
+                tracing::debug!(target: LOG_TARGET, targets = ?validators, "Issuing a connection request");
 
                 let request = validator_discovery::connect_to_validators_in_session(
                     ctx,
@@ -150,7 +146,7 @@ impl State {
                 .await?;
 
                 self.last_session_index = Some(new_session);
-                self.last_connection_request = Some(request);
+                self._last_connection_request = Some(request);
             }
         }
 
