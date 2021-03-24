@@ -23,10 +23,10 @@
 use authority_discovery_primitives::AuthorityId as AuthorityDiscoveryId;
 use frame_support::{
     construct_runtime, parameter_types,
-    traits::{EnsureOrigin, Filter, KeyOwnerProofSystem, Randomness},
+    traits::{Filter, KeyOwnerProofSystem, Randomness},
     weights::Weight,
 };
-use frame_system::{EnsureOneOf, EnsureRoot, EnsureSigned};
+use frame_system::EnsureRoot;
 use pallet_contracts::weights::WeightInfo;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId};
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
@@ -40,11 +40,11 @@ use primitives::v1::{
     Nonce, OccupiedCoreAssumption, PersistedValidationData, SessionInfo as SessionInfoData,
     Signature, ValidationCode, ValidatorId, ValidatorIndex,
 };
+use runtime_common::{auctions, crowdloan, paras_registrar, paras_sudo_wrapper, slots, xcm_sender};
 use runtime_common::{
     impls::ToAuthor, BlockHashCount, BlockLength, BlockWeights, RocksDbWeight,
     SlowAdjustingFeeUpdate, AVERAGE_ON_INITIALIZE_RATIO,
 };
-use runtime_common::{paras_registrar, paras_sudo_wrapper, xcm_sender};
 use runtime_parachains::{self, runtime_api_impl::v1 as runtime_api_impl};
 use sp_core::OpaqueMetadata;
 use sp_runtime::{
@@ -54,7 +54,7 @@ use sp_runtime::{
         SaturatedConversion, Verify,
     },
     transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, KeyTypeId, Perbill,
+    ApplyExtrinsicResult, KeyTypeId, ModuleId, Perbill,
 };
 use sp_staking::SessionIndex;
 use sp_std::collections::btree_map::BTreeMap;
@@ -90,7 +90,7 @@ use xcm_executor::traits::IsConcrete;
 
 /// Constant values used within the runtime.
 pub mod constants;
-mod propose_parachain;
+mod validator_manager;
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
@@ -99,16 +99,23 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 /// Runtime version (Kumandra).
 pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("kumandra"),
-    impl_name: create_runtime_str!("parity-kumandra-v1-1"),
-    authoring_version: 1,
-    spec_version: 2,
-    impl_version: 1,
+    impl_name: create_runtime_str!("selendra-kumandra"),
+    authoring_version: 0,
+    spec_version: 215,
+    impl_version: 0,
     #[cfg(not(feature = "disable-runtime-api"))]
     apis: RUNTIME_API_VERSIONS,
     #[cfg(feature = "disable-runtime-api")]
     apis: sp_version::create_apis_vec![[]],
-    transaction_version: 1,
+    transaction_version: 0,
 };
+
+/// The BABE epoch configuration at genesis.
+pub const BABE_GENESIS_EPOCH_CONFIG: babe_primitives::BabeEpochConfiguration =
+    babe_primitives::BabeEpochConfiguration {
+        c: PRIMARY_PROBABILITY,
+        allowed_slots: babe_primitives::AllowedSlots::PrimaryAndSecondaryVRFSlots,
+    };
 
 /// Native version.
 #[cfg(any(feature = "std", test))]
@@ -118,13 +125,6 @@ pub fn native_version() -> NativeVersion {
         can_author_with: Default::default(),
     }
 }
-
-/// The BABE epoch configuration at genesis.
-pub const BABE_GENESIS_EPOCH_CONFIG: babe_primitives::BabeEpochConfiguration =
-    babe_primitives::BabeEpochConfiguration {
-        c: PRIMARY_PROBABILITY,
-        allowed_slots: babe_primitives::AllowedSlots::PrimaryAndSecondaryVRFSlots,
-    };
 
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
@@ -212,14 +212,18 @@ construct_runtime! {
         Hrmp: parachains_hrmp::{Pallet, Call, Storage, Event},
         SessionInfo: parachains_session_info::{Pallet, Call, Storage},
 
+        // Parachain Onboarding Pallets
         Registrar: paras_registrar::{Pallet, Call, Storage, Event<T>},
+        Auctions: auctions::{Pallet, Call, Storage, Event<T>},
+        Crowdloan: crowdloan::{Pallet, Call, Storage, Event<T>},
+        Slots: slots::{Pallet, Call, Storage, Event<T>},
         ParasSudoWrapper: paras_sudo_wrapper::{Pallet, Call},
 
         // Sudo
         Sudo: pallet_sudo::{Pallet, Call, Storage, Event<T>, Config<T>},
 
-        // Propose parachain pallet.
-        ProposeParachain: propose_parachain::{Pallet, Call, Storage, Event<T>},
+        // Validator Manager pallet.
+        ValidatorManager: validator_manager::{Pallet, Call, Storage, Event<T>},
         Contracts: pallet_contracts::{Pallet, Call, Config<T>, Storage, Event<T>},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
     }
@@ -394,8 +398,8 @@ impl pallet_im_online::Config for Runtime {
     type AuthorityId = ImOnlineId;
     type Event = Event;
     type ValidatorSet = Historical;
-    type ReportUnresponsiveness = Offences;
     type NextSessionRotation = Babe;
+    type ReportUnresponsiveness = Offences;
     type UnsignedPriority = ImOnlineUnsignedPriority;
     type WeightInfo = ();
 }
@@ -480,7 +484,7 @@ impl pallet_session::Config for Runtime {
     type ValidatorIdOf = ValidatorIdOf;
     type ShouldEndSession = Babe;
     type NextSessionRotation = Babe;
-    type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, ProposeParachain>;
+    type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, ValidatorManager>;
     type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
     type Keys = SessionKeys;
     type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
@@ -638,9 +642,9 @@ impl parachains_ump::Config for Runtime {
 impl parachains_dmp::Config for Runtime {}
 
 impl parachains_hrmp::Config for Runtime {
+    type Event = Event;
     type Origin = Origin;
     type Currency = Balances;
-    type Event = Event;
 }
 
 impl parachains_inclusion_inherent::Config for Runtime {}
@@ -664,7 +668,7 @@ impl paras_registrar::Config for Runtime {
     type Event = Event;
     type Origin = Origin;
     type Currency = Balances;
-    type OnSwap = ();
+    type OnSwap = (Crowdloan, Slots);
     type ParaDeposit = ParaDeposit;
     type DataDepositPerByte = DataDepositPerByte;
     type MaxCodeSize = MaxCodeSize;
@@ -672,46 +676,60 @@ impl paras_registrar::Config for Runtime {
     type WeightInfo = paras_registrar::TestWeightInfo;
 }
 
+parameter_types! {
+    pub const EndingPeriod: BlockNumber = 15 * MINUTES;
+}
+
+impl auctions::Config for Runtime {
+    type Event = Event;
+    type Leaser = Slots;
+    type EndingPeriod = EndingPeriod;
+    type Randomness = pallet_babe::RandomnessFromOneEpochAgo<Runtime>;
+    type InitiateOrigin = EnsureRoot<AccountId>;
+    type WeightInfo = auctions::TestWeightInfo;
+}
+
+parameter_types! {
+    pub const LeasePeriod: BlockNumber = 1 * DAYS;
+}
+
+impl slots::Config for Runtime {
+    type Event = Event;
+    type Currency = Balances;
+    type Registrar = Registrar;
+    type LeasePeriod = LeasePeriod;
+    type WeightInfo = slots::TestWeightInfo;
+}
+
+parameter_types! {
+    pub const CrowdloanId: ModuleId = ModuleId(*b"py/cfund");
+    pub const SubmissionDeposit: Balance = 100 * DOLLARS;
+    pub const MinContribution: Balance = 1 * DOLLARS;
+    pub const RetirementPeriod: BlockNumber = 6 * HOURS;
+    pub const RemoveKeysLimit: u32 = 500;
+}
+
+impl crowdloan::Config for Runtime {
+    type Event = Event;
+    type ModuleId = CrowdloanId;
+    type SubmissionDeposit = SubmissionDeposit;
+    type MinContribution = MinContribution;
+    type RetirementPeriod = RetirementPeriod;
+    type OrphanedFunds = ();
+    type RemoveKeysLimit = RemoveKeysLimit;
+    type Registrar = Registrar;
+    type Auctioneer = Auctions;
+    type WeightInfo = crowdloan::TestWeightInfo;
+}
+
 impl pallet_sudo::Config for Runtime {
     type Event = Event;
     type Call = Call;
 }
 
-/// Priviledged origin used by propose parachain.
-pub struct PriviledgedOrigin;
-
-impl EnsureOrigin<Origin> for PriviledgedOrigin {
-    type Success = ();
-
-    fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
-        let allowed = [
-            hex_literal::hex!("b44c58e50328768ac06ed44b842bfa69d86ea10f60bc36156c9ffc5e00867220"),
-            hex_literal::hex!("762a6a38ba72b139cba285a39a6766e02046fb023f695f5ecf7f48b037c0dd6b"),
-        ];
-
-        let origin = o.clone();
-        match EnsureSigned::try_origin(o) {
-            Ok(who) if allowed.iter().any(|a| a == &who.as_ref()) => Ok(()),
-            _ => Err(origin),
-        }
-    }
-
-    #[cfg(feature = "runtime-benchmarks")]
-    fn successful_origin() -> Origin {
-        Origin::root()
-    }
-}
-
-parameter_types! {
-    pub const ProposeDeposit: Balance = 1000 * DOLLARS;
-    pub const MaxNameLength: u32 = 20;
-}
-
-impl propose_parachain::Config for Runtime {
+impl validator_manager::Config for Runtime {
     type Event = Event;
-    type MaxNameLength = MaxNameLength;
-    type ProposeDeposit = ProposeDeposit;
-    type PriviledgedOrigin = EnsureOneOf<AccountId, EnsureRoot<AccountId>, PriviledgedOrigin>;
+    type PrivilegedOrigin = EnsureRoot<AccountId>;
 }
 
 #[cfg(not(feature = "disable-runtime-api"))]
