@@ -132,6 +132,7 @@ where
         _relay_vrf_story: indracore_node_primitives::approval::RelayVRFStory,
         _config: &criteria::Config,
         _leaving_cores: Vec<(
+            CandidateHash,
             indracore_primitives::v1::CoreIndex,
             indracore_primitives::v1::GroupIndex,
         )>,

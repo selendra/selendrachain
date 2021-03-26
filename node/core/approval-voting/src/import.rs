@@ -522,7 +522,7 @@ async fn imported_block_info(
                             &crate::criteria::Config::from(session_info),
                             included_candidates
                                 .iter()
-                                .map(|(_, _, core, group)| (*core, *group))
+                                .map(|(c_hash, _, core, group)| (*c_hash, *core, *group))
                                 .collect(),
                         );
 
@@ -955,6 +955,7 @@ mod tests {
             _relay_vrf_story: indracore_node_primitives::approval::RelayVRFStory,
             _config: &criteria::Config,
             _leaving_cores: Vec<(
+                CandidateHash,
                 indracore_primitives::v1::CoreIndex,
                 indracore_primitives::v1::GroupIndex,
             )>,

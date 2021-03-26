@@ -20,7 +20,7 @@ use indracore_node_primitives::approval::{
     self as approval_types, AssignmentCert, AssignmentCertKind, DelayTranche, RelayVRFStory,
 };
 use indracore_primitives::v1::{
-    AssignmentId, AssignmentPair, CoreIndex, GroupIndex, SessionInfo, ValidatorIndex,
+    AssignmentId, AssignmentPair, CandidateHash, CoreIndex, GroupIndex, SessionInfo, ValidatorIndex,
 };
 use parity_scale_codec::{Decode, Encode};
 use sc_keystore::LocalKeystore;
@@ -170,7 +170,7 @@ pub(crate) trait AssignmentCriteria {
         keystore: &LocalKeystore,
         relay_vrf_story: RelayVRFStory,
         config: &Config,
-        leaving_cores: Vec<(CoreIndex, GroupIndex)>,
+        leaving_cores: Vec<(CandidateHash, CoreIndex, GroupIndex)>,
     ) -> HashMap<CoreIndex, OurAssignment>;
 
     fn check_assignment_cert(
@@ -192,7 +192,7 @@ impl AssignmentCriteria for RealAssignmentCriteria {
         keystore: &LocalKeystore,
         relay_vrf_story: RelayVRFStory,
         config: &Config,
-        leaving_cores: Vec<(CoreIndex, GroupIndex)>,
+        leaving_cores: Vec<(CandidateHash, CoreIndex, GroupIndex)>,
     ) -> HashMap<CoreIndex, OurAssignment> {
         compute_assignments(keystore, relay_vrf_story, config, leaving_cores)
     }
@@ -231,7 +231,7 @@ pub(crate) fn compute_assignments(
     keystore: &LocalKeystore,
     relay_vrf_story: RelayVRFStory,
     config: &Config,
-    leaving_cores: impl IntoIterator<Item = (CoreIndex, GroupIndex)> + Clone,
+    leaving_cores: impl IntoIterator<Item = (CandidateHash, CoreIndex, GroupIndex)> + Clone,
 ) -> HashMap<CoreIndex, OurAssignment> {
     if config.n_cores == 0
         || config.assignment_keys.is_empty()
@@ -265,8 +265,8 @@ pub(crate) fn compute_assignments(
     // Ignore any cores where the assigned group is our own.
     let leaving_cores = leaving_cores
         .into_iter()
-        .filter(|&(_, ref g)| !is_in_backing_group(&config.validator_groups, index, *g))
-        .map(|(c, _)| c)
+        .filter(|&(_, _, ref g)| !is_in_backing_group(&config.validator_groups, index, *g))
+        .map(|(c_hash, core, _)| (c_hash, core))
         .collect::<Vec<_>>();
 
     let assignments_key: &sp_application_crypto::sr25519::Pair = assignments_key.as_ref();
@@ -302,7 +302,7 @@ fn compute_relay_vrf_modulo_assignments(
     validator_index: ValidatorIndex,
     config: &Config,
     relay_vrf_story: RelayVRFStory,
-    leaving_cores: impl IntoIterator<Item = CoreIndex> + Clone,
+    leaving_cores: impl IntoIterator<Item = (CandidateHash, CoreIndex)> + Clone,
     assignments: &mut HashMap<CoreIndex, OurAssignment>,
 ) {
     for rvm_sample in 0..config.relay_vrf_modulo_samples {
@@ -316,7 +316,18 @@ fn compute_relay_vrf_modulo_assignments(
                 relay_vrf_modulo_transcript(relay_vrf_story.clone(), rvm_sample),
                 |vrf_in_out| {
                     *core = relay_vrf_modulo_core(&vrf_in_out, config.n_cores);
-                    if leaving_cores.clone().into_iter().any(|c| c == *core) {
+                    if let Some((candidate_hash, _)) =
+                        leaving_cores.clone().into_iter().find(|(_, c)| c == core)
+                    {
+                        tracing::trace!(
+                            target: LOG_TARGET,
+                            ?candidate_hash,
+                            ?core,
+                            ?validator_index,
+                            tranche = 0,
+                            "RelayVRFModulo Assignment."
+                        );
+
                         Some(assigned_core_transcript(*core))
                     } else {
                         None
@@ -352,10 +363,10 @@ fn compute_relay_vrf_delay_assignments(
     validator_index: ValidatorIndex,
     config: &Config,
     relay_vrf_story: RelayVRFStory,
-    leaving_cores: impl IntoIterator<Item = CoreIndex>,
+    leaving_cores: impl IntoIterator<Item = (CandidateHash, CoreIndex)>,
     assignments: &mut HashMap<CoreIndex, OurAssignment>,
 ) {
-    for core in leaving_cores {
+    for (candidate_hash, core) in leaving_cores {
         let (vrf_in_out, vrf_proof, _) =
             assignments_key.vrf_sign(relay_vrf_delay_transcript(relay_vrf_story.clone(), core));
 
@@ -380,15 +391,30 @@ fn compute_relay_vrf_delay_assignments(
             triggered: false,
         };
 
-        match assignments.entry(core) {
+        let used = match assignments.entry(core) {
             Entry::Vacant(e) => {
                 let _ = e.insert(our_assignment);
+                true
             }
             Entry::Occupied(mut e) => {
                 if e.get().tranche > our_assignment.tranche {
                     e.insert(our_assignment);
+                    true
+                } else {
+                    false
                 }
             }
+        };
+
+        if used {
+            tracing::trace!(
+                target: LOG_TARGET,
+                ?candidate_hash,
+                ?core,
+                ?validator_index,
+                tranche,
+                "RelayVRFDelay Assignment",
+            );
         }
     }
 }
@@ -504,7 +530,7 @@ fn is_in_backing_group(
 mod tests {
     use super::*;
     use indracore_node_primitives::approval::{VRFOutput, VRFProof};
-    use indracore_primitives::v1::ASSIGNMENT_KEY_TYPE_ID;
+    use indracore_primitives::v1::{Hash, ASSIGNMENT_KEY_TYPE_ID};
     use sp_application_crypto::sr25519;
     use sp_core::crypto::Pair as PairT;
     use sp_keyring::sr25519::Keyring as Sr25519Keyring;
@@ -574,6 +600,9 @@ mod tests {
     fn assignments_produced_for_non_backing() {
         let keystore = futures::executor::block_on(make_keystore(&[Sr25519Keyring::Alice]));
 
+        let c_a = CandidateHash(Hash::repeat_byte(0));
+        let c_b = CandidateHash(Hash::repeat_byte(1));
+
         let relay_vrf_story = RelayVRFStory([42u8; 32]);
         let assignments = compute_assignments(
             &keystore,
@@ -593,7 +622,10 @@ mod tests {
                 relay_vrf_modulo_samples: 3,
                 n_delay_tranches: 40,
             },
-            vec![(CoreIndex(0), GroupIndex(1)), (CoreIndex(1), GroupIndex(0))],
+            vec![
+                (c_a, CoreIndex(0), GroupIndex(1)),
+                (c_b, CoreIndex(1), GroupIndex(0)),
+            ],
         );
 
         // Note that alice is in group 0, which was the backing group for core 1.
@@ -606,6 +638,9 @@ mod tests {
     fn assign_to_nonzero_core() {
         let keystore = futures::executor::block_on(make_keystore(&[Sr25519Keyring::Alice]));
 
+        let c_a = CandidateHash(Hash::repeat_byte(0));
+        let c_b = CandidateHash(Hash::repeat_byte(1));
+
         let relay_vrf_story = RelayVRFStory([42u8; 32]);
         let assignments = compute_assignments(
             &keystore,
@@ -625,7 +660,10 @@ mod tests {
                 relay_vrf_modulo_samples: 3,
                 n_delay_tranches: 40,
             },
-            vec![(CoreIndex(0), GroupIndex(0)), (CoreIndex(1), GroupIndex(1))],
+            vec![
+                (c_a, CoreIndex(0), GroupIndex(0)),
+                (c_b, CoreIndex(1), GroupIndex(1)),
+            ],
         );
 
         assert_eq!(assignments.len(), 1);
@@ -696,7 +734,13 @@ mod tests {
             relay_vrf_story.clone(),
             &config,
             (0..n_cores)
-                .map(|i| (CoreIndex(i as u32), group_for_core(i)))
+                .map(|i| {
+                    (
+                        CandidateHash(Hash::repeat_byte(i as u8)),
+                        CoreIndex(i as u32),
+                        group_for_core(i),
+                    )
+                })
                 .collect::<Vec<_>>(),
         );
 

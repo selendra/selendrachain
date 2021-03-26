@@ -215,7 +215,7 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
             key: endowed_accounts[0].clone(),
         },
         pallet_contracts: indracore::ContractsConfig {
-            current_schedule: pallet_contracts::Schedule::default()
+            current_schedule: pallet_contracts::Schedule::default(),
         },
     }
 }
@@ -478,7 +478,7 @@ fn kumandra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> kumandra_runti
             key: endowed_accounts[0].clone(),
         },
         pallet_contracts: kumandra_runtime::ContractsConfig {
-            current_schedule: pallet_contracts::Schedule::default()
+            current_schedule: pallet_contracts::Schedule::default(),
         },
         parachains_configuration: kumandra_runtime::ParachainsConfigurationConfig {
             config: indracore_runtime_parachains::configuration::HostConfiguration {
@@ -726,7 +726,7 @@ pub fn indracore_testnet_genesis(
             key: endowed_accounts[0].clone(),
         },
         pallet_contracts: indracore::ContractsConfig {
-            current_schedule: pallet_contracts::Schedule::default()
+            current_schedule: pallet_contracts::Schedule::default(),
         },
     }
 }
@@ -790,7 +790,7 @@ pub fn kumandra_testnet_genesis(
         pallet_im_online: Default::default(),
         pallet_authority_discovery: kumandra_runtime::AuthorityDiscoveryConfig { keys: vec![] },
         pallet_contracts: kumandra_runtime::ContractsConfig {
-            current_schedule: pallet_contracts::Schedule::default()
+            current_schedule: pallet_contracts::Schedule::default(),
         },
         pallet_sudo: kumandra_runtime::SudoConfig { key: root_key },
         parachains_configuration: kumandra_runtime::ParachainsConfigurationConfig {
