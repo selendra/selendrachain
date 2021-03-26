@@ -2970,6 +2970,7 @@ dependencies = [
  "log",
  "sp-core",
  "sp-keyring",
+ "sp-runtime",
  "thiserror",
  "tracing",
 ]

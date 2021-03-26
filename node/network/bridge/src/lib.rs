@@ -1365,6 +1365,7 @@ mod tests {
 
             let collator_protocol_message = protocol_v1::CollatorProtocolMessage::Declare(
                 Sr25519Keyring::Alice.public().into(),
+                Default::default(),
             );
 
             let message =
@@ -1666,6 +1667,7 @@ mod tests {
             {
                 let collator_protocol_message = protocol_v1::CollatorProtocolMessage::Declare(
                     Sr25519Keyring::Alice.public().into(),
+                    Default::default(),
                 );
 
                 let message = protocol_v1::CollationProtocol::CollatorProtocol(

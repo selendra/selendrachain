@@ -62,7 +62,7 @@ pub use self::client::{
 pub use chain_spec::{IndracoreChainSpec, KumandraChainSpec};
 pub use consensus_common::{block_validation::Chain, BlockImport, Proposal, SelectChain};
 pub use indracore_parachain::wasm_executor::IsolationStrategy;
-pub use indracore_primitives::v1::{Block, BlockId, CollatorId, Hash, Id as ParaId};
+pub use indracore_primitives::v1::{Block, BlockId, CollatorPair, Hash, Id as ParaId};
 pub use sc_client_api::{Backend, CallExecutor, ExecutionStrategy};
 pub use sc_consensus::LongestChain;
 pub use sc_executor::NativeExecutionDispatch;
@@ -475,7 +475,11 @@ where
         collation_generation: CollationGenerationSubsystem::new(Metrics::register(registry)?),
         collator_protocol: {
             let side = match is_collator {
-                IsCollator::Yes(id) => ProtocolSide::Collator(id, Metrics::register(registry)?),
+                IsCollator::Yes(collator_pair) => ProtocolSide::Collator(
+					network_service.local_peer_id().clone(),
+					collator_pair,
+					Metrics::register(registry)?,
+				),
                 IsCollator::No => {
                     ProtocolSide::Validator(Default::default(), Metrics::register(registry)?)
                 }
@@ -536,12 +540,23 @@ impl<C> NewFull<C> {
 
 /// Is this node a collator?
 #[cfg(feature = "full-node")]
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub enum IsCollator {
     /// This node is a collator.
-    Yes(CollatorId),
+    Yes(CollatorPair),
     /// This node is not a collator.
     No,
+}
+
+#[cfg(feature = "full-node")]
+impl std::fmt::Debug for IsCollator {
+	fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+		use sp_core::Pair;
+		match self {
+			IsCollator::Yes(pair) => write!(fmt, "Yes({})", pair.public()),
+			IsCollator::No => write!(fmt, "No"),
+		}
+	}
 }
 
 #[cfg(feature = "full-node")]

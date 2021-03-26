@@ -27,7 +27,7 @@ use thiserror::Error;
 
 use indracore_node_network_protocol::{PeerId, UnifiedReputationChange as Rep};
 use indracore_node_subsystem_util::{self as util, metrics::prometheus};
-use indracore_primitives::v1::CollatorId;
+use indracore_primitives::v1::CollatorPair;
 use indracore_subsystem::{
     errors::RuntimeApiError,
     messages::{AllMessages, CollatorProtocolMessage, NetworkBridgeMessage},
@@ -70,7 +70,7 @@ pub enum ProtocolSide {
     /// Validators operate on the relay chain.
     Validator(CollatorEvictionPolicy, validator_side::Metrics),
     /// Collators operate on a parachain.
-    Collator(CollatorId, collator_side::Metrics),
+    Collator(PeerId, CollatorPair, collator_side::Metrics),
 }
 
 /// The collator protocol subsystem.
@@ -96,7 +96,9 @@ impl CollatorProtocolSubsystem {
             ProtocolSide::Validator(policy, metrics) => {
                 validator_side::run(ctx, policy, metrics).await
             }
-            ProtocolSide::Collator(id, metrics) => collator_side::run(ctx, id, metrics).await,
+            ProtocolSide::Collator(local_peer_id, collator_pair, metrics) => {
+                collator_side::run(ctx, local_peer_id, collator_pair, metrics).await
+            }
         }
         .map_err(|e| SubsystemError::with_origin("collator-protocol", e).into())
     }
