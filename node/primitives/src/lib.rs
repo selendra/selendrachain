@@ -16,7 +16,7 @@
 
 //! Primitive types used on the node-side.
 //!
-//! Unlike the `indracore-primitives` crate, these primitives are only used on the node-side,
+//! Unlike the `polkadot-primitives` crate, these primitives are only used on the node-side,
 //! not shared between the node and the runtime. This crate builds on top of the primitives defined
 //! there.
 
@@ -44,7 +44,7 @@ pub mod approval;
 /// it gives access to the commitments to validators who have not executed the candidate. This
 /// is necessary to allow a block-producing validator to include candidates from outside of the para
 /// it is assigned to.
-#[derive(Debug, Clone, PartialEq, Eq, Encode, Decode)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode)]
 pub enum Statement {
     /// A statement that a validator seconds a candidate.
     #[codec(index = 1)]
@@ -52,6 +52,15 @@ pub enum Statement {
     /// A statement that a validator has deemed a candidate valid.
     #[codec(index = 2)]
     Valid(CandidateHash),
+}
+
+impl std::fmt::Debug for Statement {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Statement::Seconded(seconded) => write!(f, "Seconded: {:?}", seconded.descriptor),
+            Statement::Valid(hash) => write!(f, "Valid: {:?}", hash),
+        }
+    }
 }
 
 impl Statement {

@@ -407,7 +407,7 @@ impl RequestChunksPhase {
                                 ))
                                 .await?;
                         } else {
-                            tracing::debug!(
+                            tracing::trace!(
                                 target: LOG_TARGET,
                                 validator = ?peer_id,
                                 ?validator_index,

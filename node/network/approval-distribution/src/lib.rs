@@ -393,7 +393,6 @@ impl State {
                     tracing::debug!(
                         target: LOG_TARGET,
                         ?source,
-                        ?peer_id,
                         ?block_hash,
                         ?validator_index,
                         "Unexpected assignment",
@@ -416,7 +415,6 @@ impl State {
                         tracing::debug!(
                             target: LOG_TARGET,
                             ?source,
-                            ?peer_id,
                             ?fingerprint,
                             "Duplicate assignment",
                         );
@@ -428,9 +426,8 @@ impl State {
                     tracing::debug!(
                         target: LOG_TARGET,
                         ?source,
-                        ?peer_id,
                         ?fingerprint,
-                        "Assignment from unknown peer",
+                        "Assignment from a peer is out of view",
                     );
                     modify_reputation(ctx, peer_id.clone(), COST_UNEXPECTED_MESSAGE).await;
                 }
@@ -443,7 +440,6 @@ impl State {
                     tracing::trace!(
                         target: LOG_TARGET,
                         ?source,
-                        ?peer_id,
                         ?fingerprint,
                         "Known assignment",
                     );
@@ -474,7 +470,6 @@ impl State {
             tracing::trace!(
                 target: LOG_TARGET,
                 ?source,
-                ?peer_id,
                 ?fingerprint,
                 ?result,
                 "Checked assignment",
@@ -645,7 +640,7 @@ impl State {
                         ?source,
                         ?peer_id,
                         ?fingerprint,
-                        "Approval from unknown peer",
+                        "Approval from a peer is out of view",
                     );
                     modify_reputation(ctx, peer_id.clone(), COST_UNEXPECTED_MESSAGE).await;
                 }
