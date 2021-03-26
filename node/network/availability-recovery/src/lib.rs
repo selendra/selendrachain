@@ -225,6 +225,12 @@ impl RequestFromBackersPhase {
         params: &InteractionParams,
         to_state: &mut mpsc::Sender<FromInteraction>,
     ) -> Result<bool, mpsc::SendError> {
+        tracing::trace!(
+            target: LOG_TARGET,
+            candidate_hash = ?params.candidate_hash,
+            erasure_root = ?params.erasure_root,
+            "Requesting from backers",
+        );
         loop {
             // Pop the next backer, and proceed to next phase if we're out.
             let validator_index = match self.shuffled_backers.pop() {
@@ -258,8 +264,19 @@ impl RequestFromBackersPhase {
                             ))
                             .await?;
 
+                        tracing::trace!(
+                            target: LOG_TARGET,
+                            candidate_hash = ?params.candidate_hash,
+                            "Received full data",
+                        );
                         return Ok(true);
                     } else {
+                        tracing::debug!(
+                            target: LOG_TARGET,
+                            candidate_hash = ?params.candidate_hash,
+                            validator = ?peer_id,
+                            "Invalid data response",
+                        );
                         to_state
                             .send(FromInteraction::ReportPeer(
                                 peer_id.clone(),
@@ -272,11 +289,16 @@ impl RequestFromBackersPhase {
                     tracing::debug!(
                         target: LOG_TARGET,
                         err = ?e,
+                        validator = ?params.validator_authority_keys[validator_index.0 as usize],
                         "A response channel was cancelled while waiting for full data",
                     );
                 }
                 None => {
-                    tracing::debug!(target: LOG_TARGET, "A full data request has timed out",);
+                    tracing::debug!(
+                        target: LOG_TARGET,
+                        validator = ?params.validator_authority_keys[validator_index.0 as usize],
+                        "A full data request has timed out",
+                    );
                 }
             }
         }
@@ -303,7 +325,13 @@ impl RequestChunksPhase {
         while self.requesting_chunks.len() < N_PARALLEL {
             if let Some(validator_index) = self.shuffling.pop() {
                 let (tx, rx) = oneshot::channel();
-
+                tracing::trace!(
+                    target: LOG_TARGET,
+                    validator = ?params.validator_authority_keys[validator_index.0 as usize],
+                    ?validator_index,
+                    candidate_hash = ?params.candidate_hash,
+                    "Requesting chunk",
+                );
                 to_state
                     .send(FromInteraction::MakeChunkRequest(
                         params.validator_authority_keys[validator_index.0 as usize].clone(),
@@ -343,6 +371,13 @@ impl RequestChunksPhase {
                     // We need to check that the validator index matches the chunk index and
                     // not blindly trust the data from an untrusted peer.
                     if validator_index != chunk.index {
+                        tracing::debug!(
+                            target: LOG_TARGET,
+                            validator = ?peer_id,
+                            ?validator_index,
+                            chunk_index = ?chunk.index,
+                            "Index mismatch",
+                        );
                         to_state
                             .send(FromInteraction::ReportPeer(
                                 peer_id.clone(),
@@ -359,6 +394,12 @@ impl RequestChunksPhase {
                         let erasure_chunk_hash = BlakeTwo256::hash(&chunk.chunk);
 
                         if erasure_chunk_hash != anticipated_hash {
+                            tracing::debug!(
+                                target: LOG_TARGET,
+                                validator = ?peer_id,
+                                ?validator_index,
+                                "Merkle proof mismatch",
+                            );
                             to_state
                                 .send(FromInteraction::ReportPeer(
                                     peer_id.clone(),
@@ -366,9 +407,21 @@ impl RequestChunksPhase {
                                 ))
                                 .await?;
                         } else {
+                            tracing::debug!(
+                                target: LOG_TARGET,
+                                validator = ?peer_id,
+                                ?validator_index,
+                                "Received valid Merkle proof",
+                            );
                             self.received_chunks.insert(validator_index, chunk);
                         }
                     } else {
+                        tracing::debug!(
+                            target: LOG_TARGET,
+                            validator = ?peer_id,
+                            ?validator_index,
+                            "Invalid Merkle proof",
+                        );
                         to_state
                             .send(FromInteraction::ReportPeer(
                                 peer_id.clone(),
@@ -405,6 +458,15 @@ impl RequestChunksPhase {
                 self.shuffling.len(),
                 params.threshold,
             ) {
+                tracing::debug!(
+                    target: LOG_TARGET,
+                    candidate_hash = ?params.candidate_hash,
+                    erasure_root = ?params.erasure_root,
+                    received = %self.received_chunks.len(),
+                    requesting = %self.requesting_chunks.len(),
+                    n_validators = %self.shuffling.len(),
+                    "Data recovery is not possible",
+                );
                 to_state
                     .send(FromInteraction::Concluded(
                         params.candidate_hash,
@@ -435,18 +497,39 @@ impl RequestChunksPhase {
                             &params.erasure_root,
                             &data,
                         ) {
+                            tracing::trace!(
+                                target: LOG_TARGET,
+                                candidate_hash = ?params.candidate_hash,
+                                erasure_root = ?params.erasure_root,
+                                "Data recovery complete",
+                            );
                             FromInteraction::Concluded(params.candidate_hash.clone(), Ok(data))
                         } else {
+                            tracing::trace!(
+                                target: LOG_TARGET,
+                                candidate_hash = ?params.candidate_hash,
+                                erasure_root = ?params.erasure_root,
+                                "Data recovery - root mismatch",
+                            );
                             FromInteraction::Concluded(
                                 params.candidate_hash.clone(),
                                 Err(RecoveryError::Invalid),
                             )
                         }
                     }
-                    Err(_) => FromInteraction::Concluded(
-                        params.candidate_hash.clone(),
-                        Err(RecoveryError::Invalid),
-                    ),
+                    Err(err) => {
+                        tracing::trace!(
+                            target: LOG_TARGET,
+                            candidate_hash = ?params.candidate_hash,
+                            erasure_root = ?params.erasure_root,
+                            ?err,
+                            "Data recovery error ",
+                        );
+                        FromInteraction::Concluded(
+                            params.candidate_hash.clone(),
+                            Err(RecoveryError::Invalid),
+                        )
+                    }
                 };
 
                 to_state.send(concluded).await?;
@@ -904,6 +987,11 @@ async fn handle_network_update(
                 protocol_v1::AvailabilityRecoveryMessage::Chunk(request_id, chunk) => {
                     match state.live_requests.remove(&request_id) {
                         None => {
+                            tracing::debug!(
+                                target: LOG_TARGET,
+                                ?peer,
+                                "Received unexpected chunk response",
+                            );
                             // If there doesn't exist one, report the peer and return.
                             report_peer(ctx, peer, COST_UNEXPECTED_CHUNK).await;
                         }
@@ -933,6 +1021,11 @@ async fn handle_network_update(
                             }
                         }
                         Some(a) => {
+                            tracing::debug!(
+                                target: LOG_TARGET,
+                                ?peer,
+                                "Received unexpected chunk response",
+                            );
                             // If the peer in the entry doesn't match the sending peer,
                             // reinstate the entry, report the peer, and return
                             state.live_requests.insert(request_id, a);
@@ -974,6 +1067,11 @@ async fn handle_network_update(
                     match state.live_requests.remove(&request_id) {
                         None => {
                             // If there doesn't exist one, report the peer and return.
+                            tracing::debug!(
+                                target: LOG_TARGET,
+                                ?peer,
+                                "Received unexpected full data response",
+                            );
                             report_peer(ctx, peer, COST_UNEXPECTED_CHUNK).await;
                         }
                         Some((peer_id, Awaited::FullData(awaited))) if peer_id == peer => {
@@ -1003,6 +1101,11 @@ async fn handle_network_update(
                         Some(a) => {
                             // If the peer in the entry doesn't match the sending peer,
                             // reinstate the entry, report the peer, and return
+                            tracing::debug!(
+                                target: LOG_TARGET,
+                                ?peer,
+                                "Received unexpected full data response",
+                            );
                             state.live_requests.insert(request_id, a);
                             report_peer(ctx, peer, COST_UNEXPECTED_CHUNK).await;
                         }
@@ -1086,6 +1189,12 @@ async fn handle_validator_connected(
     authority_id: AuthorityDiscoveryId,
     peer_id: PeerId,
 ) -> error::Result<()> {
+    tracing::trace!(
+        target: LOG_TARGET,
+        ?peer_id,
+        ?authority_id,
+        "Validator connected",
+    );
     if let Some(discovering) = state.discovering_validators.remove(&authority_id) {
         for awaited in discovering {
             issue_request(state, ctx, peer_id.clone(), awaited).await?;

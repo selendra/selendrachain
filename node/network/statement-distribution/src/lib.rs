@@ -110,9 +110,10 @@ impl VcPerPeerTracker {
     fn note_local(&mut self, h: CandidateHash) {
         if !note_hash(&mut self.local_observed, h) {
             tracing::warn!(
+                target: LOG_TARGET,
                 "Statement distribution is erroneously attempting to distribute more \
 				than {} candidate(s) per validator index. Ignoring",
-                VC_THRESHOLD
+                VC_THRESHOLD,
             );
         }
     }
@@ -454,6 +455,12 @@ impl ActiveHeadData {
             CompactStatement::Seconded(h) => {
                 let seconded_so_far = self.seconded_counts.entry(validator_index).or_insert(0);
                 if *seconded_so_far >= VC_THRESHOLD {
+                    tracing::trace!(
+                        target: LOG_TARGET,
+                        ?validator_index,
+                        statement = ?stored.statement,
+                        "Extra statement is ignored"
+                    );
                     return NotedStatement::NotUseful;
                 }
 
@@ -461,6 +468,12 @@ impl ActiveHeadData {
                 if self.statements.insert(stored) {
                     *seconded_so_far += 1;
 
+                    tracing::trace!(
+                        target: LOG_TARGET,
+                        ?validator_index,
+                        statement = ?self.statements.last().expect("Just inserted").statement,
+                        "Noted new statement"
+                    );
                     // This will always return `Some` because it was just inserted.
                     NotedStatement::Fresh(
                         self.statements
@@ -468,15 +481,34 @@ impl ActiveHeadData {
                             .expect("Statement was just inserted; qed"),
                     )
                 } else {
+                    tracing::trace!(
+                        target: LOG_TARGET,
+                        ?validator_index,
+                        statement = ?self.statements.get(&comparator)
+                            .expect("Existence was just checked; qed").statement,
+                        "Known statement"
+                    );
                     NotedStatement::UsefulButKnown
                 }
             }
             CompactStatement::Valid(h) => {
                 if !self.candidates.contains(&h) {
+                    tracing::trace!(
+                        target: LOG_TARGET,
+                        ?validator_index,
+                        statement = ?stored.statement,
+                        "Statement for unknown candidate"
+                    );
                     return NotedStatement::NotUseful;
                 }
 
                 if self.statements.insert(stored) {
+                    tracing::trace!(
+                        target: LOG_TARGET,
+                        ?validator_index,
+                        statement = ?self.statements.last().expect("Just inserted").statement,
+                        "Noted new statement"
+                    );
                     // This will always return `Some` because it was just inserted.
                     NotedStatement::Fresh(
                         self.statements
@@ -484,6 +516,13 @@ impl ActiveHeadData {
                             .expect("Statement was just inserted; qed"),
                     )
                 } else {
+                    tracing::trace!(
+                        target: LOG_TARGET,
+                        ?validator_index,
+                        statement = ?self.statements.get(&comparator)
+                            .expect("Existence was just checked; qed").statement,
+                        "Known statement"
+                    );
                     NotedStatement::UsefulButKnown
                 }
             }
@@ -612,6 +651,13 @@ async fn circulate_statement(
     // Send all these peers the initial statement.
     if !peers_to_send.is_empty() {
         let payload = statement_message(relay_parent, stored.statement.clone());
+        tracing::trace!(
+            target: LOG_TARGET,
+            ?peers_to_send,
+            ?relay_parent,
+            statement = ?stored.statement,
+            "Sending statement"
+        );
         ctx.send_message(AllMessages::NetworkBridge(
             NetworkBridgeMessage::SendValidationMessage(
                 peers_to_send.keys().cloned().collect(),
@@ -645,6 +691,14 @@ async fn send_statements_about(
         {
             let payload = statement_message(relay_parent, statement.statement.clone());
 
+            tracing::trace!(
+                target: LOG_TARGET,
+                ?peer,
+                ?relay_parent,
+                ?candidate_hash,
+                statement = ?statement.statement,
+                "Sending statement"
+            );
             ctx.send_message(AllMessages::NetworkBridge(
                 NetworkBridgeMessage::SendValidationMessage(vec![peer.clone()], payload),
             ))
@@ -672,6 +726,13 @@ async fn send_statements(
         {
             let payload = statement_message(relay_parent, statement.statement.clone());
 
+            tracing::trace!(
+                target: LOG_TARGET,
+                ?peer,
+                ?relay_parent,
+                statement = ?statement.statement,
+                "Sending statement"
+            );
             ctx.send_message(AllMessages::NetworkBridge(
                 NetworkBridgeMessage::SendValidationMessage(vec![peer.clone()], payload),
             ))
@@ -709,6 +770,12 @@ async fn handle_incoming_message<'a>(
     };
 
     if !our_view.contains(&relay_parent) {
+        tracing::debug!(
+            target: LOG_TARGET,
+            ?peer,
+            ?statement,
+            "Unexpected statement"
+        );
         report_peer(ctx, peer, COST_UNEXPECTED_STATEMENT).await;
         return None;
     }
@@ -719,6 +786,7 @@ async fn handle_incoming_message<'a>(
             // This should never be out-of-sync with our view if the view updates
             // correspond to actual `StartWork` messages. So we just log and ignore.
             tracing::warn!(
+                target: LOG_TARGET,
                 requested_relay_parent = %relay_parent,
                 "our view out-of-sync with active heads; head not found",
             );
@@ -735,6 +803,12 @@ async fn handle_incoming_message<'a>(
 
     // check the signature on the statement.
     if let Err(()) = check_statement_signature(&active_head, relay_parent, &statement) {
+        tracing::debug!(
+            target: LOG_TARGET,
+            ?peer,
+            ?statement,
+            "Invalid statement signature"
+        );
         report_peer(ctx, peer, COST_INVALID_SIGNATURE).await;
         return None;
     }
@@ -750,10 +824,18 @@ async fn handle_incoming_message<'a>(
     let max_message_count = active_head.validators.len() * 2;
     match peer_data.receive(&relay_parent, &fingerprint, max_message_count) {
         Err(rep) => {
+            tracing::debug!(
+                target: LOG_TARGET,
+                ?peer,
+                ?statement,
+                ?rep,
+                "Error inserting received statement"
+            );
             report_peer(ctx, peer, rep).await;
             return None;
         }
         Ok(true) => {
+            tracing::trace!(target: LOG_TARGET, ?peer, ?statement, "Statement accepted");
             // Send the peer all statements concerning the candidate that we have,
             // since it appears to have just learned about the candidate.
             send_statements_about(
@@ -839,7 +921,8 @@ async fn handle_network_update(
     metrics: &Metrics,
 ) {
     match update {
-        NetworkBridgeEvent::PeerConnected(peer, _role) => {
+        NetworkBridgeEvent::PeerConnected(peer, role) => {
+            tracing::trace!(target: LOG_TARGET, ?peer, ?role, "Peer connected",);
             peers.insert(
                 peer,
                 PeerData {
@@ -849,6 +932,7 @@ async fn handle_network_update(
             );
         }
         NetworkBridgeEvent::PeerDisconnected(peer) => {
+            tracing::trace!(target: LOG_TARGET, ?peer, "Peer disconnected",);
             peers.remove(&peer);
         }
         NetworkBridgeEvent::PeerMessage(peer, message) => {
@@ -880,14 +964,25 @@ async fn handle_network_update(
                 let _ = circulate_statement(peers, ctx, relay_parent, statement).await;
             }
         }
-        NetworkBridgeEvent::PeerViewChange(peer, view) => match peers.get_mut(&peer) {
-            Some(data) => {
-                update_peer_view_and_send_unlocked(peer, data, ctx, &*active_heads, view, metrics)
+        NetworkBridgeEvent::PeerViewChange(peer, view) => {
+            tracing::trace!(target: LOG_TARGET, ?peer, ?view, "Peer view change",);
+            match peers.get_mut(&peer) {
+                Some(data) => {
+                    update_peer_view_and_send_unlocked(
+                        peer,
+                        data,
+                        ctx,
+                        &*active_heads,
+                        view,
+                        metrics,
+                    )
                     .await
+                }
+                None => (),
             }
-            None => (),
-        },
+        }
         NetworkBridgeEvent::OurViewChange(view) => {
+            tracing::trace!(target: LOG_TARGET, "Own view change",);
             let old_view = std::mem::replace(our_view, view);
             active_heads.retain(|head, _| our_view.contains(head));
 
