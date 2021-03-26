@@ -363,6 +363,12 @@ parameter_types! {
     pub const MinerMaxIterations: u32 = 10;
 }
 
+sp_npos_elections::generate_solution_type!(
+    #[compact]
+    pub struct NposCompactSolution16::<u32, u16, sp_runtime::PerU16>(16)
+    // -------------------- ^^ <NominatorIndex, ValidatorIndex, Accuracy>
+);
+
 impl pallet_election_provider_multi_phase::Config for Runtime {
     type Event = Event;
     type Currency = Balances;
@@ -374,7 +380,7 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
     type MinerTxPriority = NposSolutionPriority;
     type DataProvider = Staking;
     type OnChainAccuracy = Perbill;
-    type CompactSolution = pallet_staking::CompactAssignments;
+    type CompactSolution = NposCompactSolution16;
     type Fallback = Fallback;
     type BenchmarkingConfig = ();
     type WeightInfo = weights::pallet_election_provider_multi_phase::WeightInfo<Runtime>;
@@ -413,6 +419,8 @@ type SlashCancelOrigin = EnsureOneOf<
 >;
 
 impl pallet_staking::Config for Runtime {
+    const MAX_NOMINATIONS: u32 =
+        <NposCompactSolution16 as sp_npos_elections::CompactSolution>::LIMIT as u32;
     type Currency = Balances;
     type UnixTime = Timestamp;
     type CurrencyToVote = CurrencyToVote;
@@ -1015,11 +1023,11 @@ impl pallet_recovery::Config for Runtime {
 }
 
 parameter_types! {
-    pub const TombstoneDeposit: Balance = deposit(
+    pub TombstoneDeposit: Balance = deposit(
         1,
-        sp_std::mem::size_of::<pallet_contracts::ContractInfo<Runtime>>() as u32
+        <pallet_contracts::Pallet<Runtime>>::contract_info_size(),
     );
-    pub const DepositPerContract: Balance = TombstoneDeposit::get();
+    pub DepositPerContract: Balance = TombstoneDeposit::get();
     pub const DepositPerStorageByte: Balance = deposit(0, 1);
     pub const DepositPerStorageItem: Balance = deposit(1, 0);
     pub RentFraction: Perbill = Perbill::from_rational(1u32, 30 * DAYS);
