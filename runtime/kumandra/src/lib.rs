@@ -688,7 +688,7 @@ impl auctions::Config for Runtime {
     type SampleLength = SampleLength;
     type Randomness = pallet_babe::RandomnessFromOneEpochAgo<Runtime>;
     type InitiateOrigin = EnsureRoot<AccountId>;
-    type WeightInfo = auctions::TestWeightInfo; 
+    type WeightInfo = auctions::TestWeightInfo;
 }
 
 parameter_types! {
