@@ -16,7 +16,12 @@
 
 //! Metered variant of unbounded mpsc channels to be able to extract metrics.
 
-use super::*;
+use futures::{channel::mpsc, sink::SinkExt, stream::Stream, task::Context, task::Poll};
+
+use std::pin::Pin;
+use std::result;
+
+use super::Meter;
 
 /// Create a wrapped `mpsc::channel` pair of `MeteredSender` and `MeteredReceiver`.
 pub fn unbounded<T>(
@@ -62,8 +67,7 @@ impl<T> Stream for UnboundedMeteredReceiver<T> {
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         match mpsc::UnboundedReceiver::poll_next(Pin::new(&mut self.inner), cx) {
             Poll::Ready(x) => {
-                // always use Ordering::SeqCst to avoid underflows
-                self.meter.fill.fetch_sub(1, Ordering::SeqCst);
+                self.meter.note_received();
                 Poll::Ready(x)
             }
             other => other,
@@ -86,7 +90,7 @@ impl<T> UnboundedMeteredReceiver<T> {
     pub fn try_next(&mut self) -> Result<Option<T>, mpsc::TryRecvError> {
         match self.inner.try_next()? {
             Some(x) => {
-                self.meter.fill.fetch_sub(1, Ordering::SeqCst);
+                self.meter.note_received();
                 Ok(Some(x))
             }
             None => Ok(None),
@@ -141,17 +145,22 @@ impl<T> UnboundedMeteredSender<T> {
     where
         Self: Unpin,
     {
-        self.meter.fill.fetch_add(1, Ordering::SeqCst);
+        self.meter.note_sent();
         let fut = self.inner.send(item);
         futures::pin_mut!(fut);
-        fut.await
+        fut.await.map_err(|e| {
+            self.meter.retract_sent();
+            e
+        })
     }
 
     /// Attempt to send message or fail immediately.
     pub fn unbounded_send(&mut self, msg: T) -> result::Result<(), mpsc::TrySendError<T>> {
-        self.inner.unbounded_send(msg)?;
-        self.meter.fill.fetch_add(1, Ordering::SeqCst);
-        Ok(())
+        self.meter.note_sent();
+        self.inner.unbounded_send(msg).map_err(|e| {
+            self.meter.retract_sent();
+            e
+        })
     }
 }
 
@@ -168,10 +177,7 @@ impl<T> futures::sink::Sink<T> for UnboundedMeteredSender<T> {
 
     fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         match Pin::new(&mut self.inner).poll_ready(cx) {
-            val @ Poll::Ready(_) => {
-                self.meter.fill.store(0, Ordering::SeqCst);
-                val
-            }
+            val @ Poll::Ready(_) => val,
             other => other,
         }
     }
@@ -179,7 +185,7 @@ impl<T> futures::sink::Sink<T> for UnboundedMeteredSender<T> {
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         match Pin::new(&mut self.inner).poll_ready(cx) {
             val @ Poll::Ready(_) => {
-                self.meter.fill.fetch_add(1, Ordering::SeqCst);
+                self.meter.note_sent();
                 val
             }
             other => other,
