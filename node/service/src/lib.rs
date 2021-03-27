@@ -476,10 +476,10 @@ where
         collator_protocol: {
             let side = match is_collator {
                 IsCollator::Yes(collator_pair) => ProtocolSide::Collator(
-					network_service.local_peer_id().clone(),
-					collator_pair,
-					Metrics::register(registry)?,
-				),
+                    network_service.local_peer_id().clone(),
+                    collator_pair,
+                    Metrics::register(registry)?,
+                ),
                 IsCollator::No => {
                     ProtocolSide::Validator(Default::default(), Metrics::register(registry)?)
                 }
@@ -550,13 +550,13 @@ pub enum IsCollator {
 
 #[cfg(feature = "full-node")]
 impl std::fmt::Debug for IsCollator {
-	fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
-		use sp_core::Pair;
-		match self {
-			IsCollator::Yes(pair) => write!(fmt, "Yes({})", pair.public()),
-			IsCollator::No => write!(fmt, "No"),
-		}
-	}
+    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+        use sp_core::Pair;
+        match self {
+            IsCollator::Yes(pair) => write!(fmt, "Yes({})", pair.public()),
+            IsCollator::No => write!(fmt, "No"),
+        }
+    }
 }
 
 #[cfg(feature = "full-node")]
