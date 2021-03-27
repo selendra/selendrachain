@@ -26,7 +26,7 @@ use primitives::v1::Id as ParaId;
 use runtime_parachains::{
     configuration, dmp, hrmp,
     paras::{self, ParaGenesisArgs},
-    ump,
+    ump, ParaLifecycle,
 };
 use sp_std::prelude::*;
 
@@ -49,6 +49,14 @@ decl_error! {
         DefinitelyNotWasm,
         /// Could not schedule para cleanup.
         CouldntCleanup,
+        /// Not a parathread.
+        NotParathread,
+        /// Not a parachain.
+        NotParachain,
+        /// Cannot upgrade parathread.
+        CannotUpgrade,
+        /// Cannot downgrade parachain.
+        CannotDowngrade,
     }
 }
 
@@ -75,6 +83,26 @@ decl_module! {
         pub fn sudo_schedule_para_cleanup(origin, id: ParaId) -> DispatchResult {
             ensure_root(origin)?;
             runtime_parachains::schedule_para_cleanup::<T>(id).map_err(|_| Error::<T>::CouldntCleanup)?;
+            Ok(())
+        }
+
+        /// Upgrade a parathread to a parachain
+        #[weight = (1_000, DispatchClass::Operational)]
+        pub fn sudo_schedule_parathread_upgrade(origin, id: ParaId) -> DispatchResult {
+            ensure_root(origin)?;
+            // Para backend should think this is a parathread...
+            ensure!(paras::Module::<T>::lifecycle(id) == Some(ParaLifecycle::Parathread), Error::<T>::NotParathread);
+            runtime_parachains::schedule_parathread_upgrade::<T>(id).map_err(|_| Error::<T>::CannotUpgrade)?;
+            Ok(())
+        }
+
+        /// Downgrade a parachain to a parathread
+        #[weight = (1_000, DispatchClass::Operational)]
+        pub fn sudo_schedule_parachain_downgrade(origin, id: ParaId) -> DispatchResult {
+            ensure_root(origin)?;
+            // Para backend should think this is a parachain...
+            ensure!(paras::Module::<T>::lifecycle(id) == Some(ParaLifecycle::Parachain), Error::<T>::NotParachain);
+            runtime_parachains::schedule_parachain_downgrade::<T>(id).map_err(|_| Error::<T>::CannotDowngrade)?;
             Ok(())
         }
 
