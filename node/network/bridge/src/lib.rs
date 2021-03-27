@@ -698,8 +698,8 @@ mod tests {
     use indracore_node_subsystem_util::metered;
     use indracore_primitives::v1::AuthorityDiscoveryId;
     use indracore_subsystem::messages::{
-        ApprovalDistributionMessage, AvailabilityRecoveryMessage, BitfieldDistributionMessage,
-        PoVDistributionMessage, StatementDistributionMessage,
+        ApprovalDistributionMessage, BitfieldDistributionMessage, PoVDistributionMessage,
+        StatementDistributionMessage,
     };
     use indracore_subsystem::{ActiveLeavesUpdate, FromOverseer, OverseerSignal};
     use sc_network::config::RequestResponseConfig;
@@ -905,13 +905,6 @@ mod tests {
             virtual_overseer.recv().await,
             AllMessages::StatementDistribution(
                 StatementDistributionMessage::NetworkBridgeUpdateV1(e)
-            ) if e == event.focus().expect("could not focus message")
-        );
-
-        assert_matches!(
-            virtual_overseer.recv().await,
-            AllMessages::AvailabilityRecovery(
-                AvailabilityRecoveryMessage::NetworkBridgeUpdateV1(e)
             ) if e == event.focus().expect("could not focus message")
         );
 
@@ -1699,7 +1692,7 @@ mod tests {
     fn spread_event_to_subsystems_is_up_to_date() {
         // Number of subsystems expected to be interested in a network event,
         // and hence the network event broadcasted to.
-        const EXPECTED_COUNT: usize = 5;
+        const EXPECTED_COUNT: usize = 4;
 
         let mut cnt = 0_usize;
         for msg in
@@ -1726,7 +1719,7 @@ mod tests {
                     unreachable!("Not interested in network events")
                 }
                 AllMessages::AvailabilityRecovery(_) => {
-                    cnt += 1;
+                    unreachable!("Not interested in network events")
                 }
                 AllMessages::BitfieldDistribution(_) => {
                     cnt += 1;

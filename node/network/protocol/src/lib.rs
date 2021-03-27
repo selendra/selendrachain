@@ -25,7 +25,7 @@ use std::{collections::HashMap, fmt};
 
 #[doc(hidden)]
 pub use indracore_node_jaeger as jaeger;
-pub use sc_network::PeerId;
+pub use sc_network::{IfDisconnected, PeerId};
 #[doc(hidden)]
 pub use std::sync::Arc;
 
@@ -37,9 +37,6 @@ pub mod peer_set;
 
 /// Request/response protocols used in Indracore.
 pub mod request_response;
-
-/// A unique identifier of a request.
-pub type RequestId = u64;
 
 /// A version of the protocol.
 pub type ProtocolVersion = u32;
@@ -286,34 +283,17 @@ impl View {
 
 /// v1 protocol types.
 pub mod v1 {
+    use parity_scale_codec::{Decode, Encode};
     use std::convert::TryFrom;
 
-    use parity_scale_codec::{Decode, Encode};
-
-    use super::RequestId;
     use indracore_node_primitives::{
         approval::{IndirectAssignmentCert, IndirectSignedApprovalVote},
         SignedFullStatement,
     };
     use indracore_primitives::v1::{
-        AvailableData, CandidateHash, CandidateIndex, CollatorId, CollatorSignature, CompressedPoV,
-        ErasureChunk, Hash, Id as ParaId, SignedAvailabilityBitfield, ValidatorIndex,
+        CandidateIndex, CollatorId, CollatorSignature, CompressedPoV, Hash, Id as ParaId,
+        SignedAvailabilityBitfield,
     };
-
-    /// Network messages used by the availability recovery subsystem.
-    #[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
-    pub enum AvailabilityRecoveryMessage {
-        /// Request a chunk for a given candidate hash and validator index.
-        RequestChunk(RequestId, CandidateHash, ValidatorIndex),
-        /// Respond with chunk for a given candidate hash and validator index.
-        /// The response may be `None` if the requestee does not have the chunk.
-        Chunk(RequestId, Option<ErasureChunk>),
-        /// Request full data for a given candidate hash.
-        RequestFullData(RequestId, CandidateHash),
-        /// Respond with full data for a given candidate hash.
-        /// The response may be `None` if the requestee does not have the data.
-        FullData(RequestId, Option<AvailableData>),
-    }
 
     /// Network messages used by the bitfield distribution subsystem.
     #[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
@@ -385,11 +365,8 @@ pub mod v1 {
         /// Statement distribution messages
         #[codec(index = 3)]
         StatementDistribution(StatementDistributionMessage),
-        /// Availability recovery messages
-        #[codec(index = 4)]
-        AvailabilityRecovery(AvailabilityRecoveryMessage),
         /// Approval distribution messages
-        #[codec(index = 5)]
+        #[codec(index = 4)]
         ApprovalDistribution(ApprovalDistributionMessage),
     }
 
@@ -408,11 +385,6 @@ pub mod v1 {
         ValidationProtocol,
         ApprovalDistribution,
         ApprovalDistributionMessage
-    );
-    impl_try_from!(
-        ValidationProtocol,
-        AvailabilityRecovery,
-        AvailabilityRecoveryMessage
     );
 
     /// All network messages on the collation peer-set.

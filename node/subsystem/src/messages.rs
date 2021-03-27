@@ -18,7 +18,7 @@
 //!
 //! These messages are intended to define the protocol by which different subsystems communicate with each
 //! other and signals that they receive from an overseer to coordinate their work.
-//! This is intended for use with the `polkadot-overseer` crate.
+//! This is intended for use with the `indracore-overseer` crate.
 //!
 //! Subsystems' APIs are defined separately from their implementation, leading to easier mocking.
 
@@ -276,7 +276,7 @@ impl NetworkBridgeMessage {
 #[derive(Debug, derive_more::From)]
 pub enum AvailabilityDistributionMessage {
     /// Incoming network request for an availability chunk.
-    AvailabilityFetchingRequest(IncomingRequest<req_res_v1::AvailabilityFetchingRequest>),
+    ChunkFetchingRequest(IncomingRequest<req_res_v1::ChunkFetchingRequest>),
 }
 
 /// Availability Recovery Message.
@@ -289,16 +289,16 @@ pub enum AvailabilityRecoveryMessage {
         Option<GroupIndex>, // Optional backing group to request from first.
         oneshot::Sender<Result<AvailableData, crate::errors::RecoveryError>>,
     ),
-    /// Event from the network bridge.
+    /// Incoming network request for available data.
     #[from]
-    NetworkBridgeUpdateV1(NetworkBridgeEvent<protocol_v1::AvailabilityRecoveryMessage>),
+    AvailableDataFetchingRequest(IncomingRequest<req_res_v1::AvailableDataFetchingRequest>),
 }
 
 impl AvailabilityDistributionMessage {
     /// If the current variant contains the relay parent hash, return it.
     pub fn relay_parent(&self) -> Option<Hash> {
         match self {
-            Self::AvailabilityFetchingRequest(_) => None,
+            Self::ChunkFetchingRequest(_) => None,
         }
     }
 }
@@ -729,6 +729,7 @@ pub enum AllMessages {
     #[skip]
     AvailabilityDistribution(AvailabilityDistributionMessage),
     /// Message for the availability recovery subsystem.
+    #[skip]
     AvailabilityRecovery(AvailabilityRecoveryMessage),
     /// Message for the bitfield distribution subsystem.
     BitfieldDistribution(BitfieldDistributionMessage),
@@ -762,8 +763,8 @@ pub enum AllMessages {
     GossipSupport(GossipSupportMessage),
 }
 
-impl From<IncomingRequest<req_res_v1::AvailabilityFetchingRequest>> for AllMessages {
-    fn from(req: IncomingRequest<req_res_v1::AvailabilityFetchingRequest>) -> Self {
+impl From<IncomingRequest<req_res_v1::ChunkFetchingRequest>> for AllMessages {
+    fn from(req: IncomingRequest<req_res_v1::ChunkFetchingRequest>) -> Self {
         From::<AvailabilityDistributionMessage>::from(From::from(req))
     }
 }
@@ -775,5 +776,10 @@ impl From<IncomingRequest<req_res_v1::CollationFetchingRequest>> for AllMessages
 impl From<IncomingRequest<req_res_v1::CollationFetchingRequest>> for CollatorProtocolMessage {
     fn from(req: IncomingRequest<req_res_v1::CollationFetchingRequest>) -> Self {
         Self::CollationFetchingRequest(req)
+    }
+}
+impl From<IncomingRequest<req_res_v1::AvailableDataFetchingRequest>> for AllMessages {
+    fn from(req: IncomingRequest<req_res_v1::AvailableDataFetchingRequest>) -> Self {
+        From::<AvailabilityRecoveryMessage>::from(From::from(req))
     }
 }

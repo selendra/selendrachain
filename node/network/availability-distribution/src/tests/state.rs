@@ -231,9 +231,7 @@ impl TestState {
                             "Request forwarding",
                             overseer_send(
                                 tx.clone(),
-                                AvailabilityDistributionMessage::AvailabilityFetchingRequest(
-                                    in_req,
-                                ),
+                                AvailabilityDistributionMessage::ChunkFetchingRequest(in_req),
                             )
                             .boxed(),
                         );
@@ -321,9 +319,9 @@ async fn overseer_recv(rx: &mut mpsc::UnboundedReceiver<AllMessages>) -> AllMess
 fn to_incoming_req(
     executor: &TaskExecutor,
     outgoing: Requests,
-) -> IncomingRequest<v1::AvailabilityFetchingRequest> {
+) -> IncomingRequest<v1::ChunkFetchingRequest> {
     match outgoing {
-        Requests::AvailabilityFetching(OutgoingRequest {
+        Requests::ChunkFetching(OutgoingRequest {
             payload,
             pending_response,
             ..
