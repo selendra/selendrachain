@@ -1607,6 +1607,7 @@ mod benchmarking {
             head_data,
             validation_code
         ));
+        T::Registrar::execute_pending_transitions();
 
         assert_ok!(Crowdloan::<T>::create(
             RawOrigin::Signed(caller).into(),
