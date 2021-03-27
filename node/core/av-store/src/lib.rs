@@ -546,9 +546,9 @@ where
                 FromOverseer::Signal(OverseerSignal::ActiveLeaves(
                     ActiveLeavesUpdate { activated, .. })
                 ) => {
-                    for (activated, _span) in activated.into_iter() {
+                    for activated in activated.into_iter() {
                         let _timer = subsystem.metrics.time_block_activated();
-                        process_block_activated(ctx, subsystem, activated).await?;
+                        process_block_activated(ctx, subsystem, activated.hash).await?;
                     }
                 }
                 FromOverseer::Signal(OverseerSignal::BlockFinalized(hash, number)) => {
@@ -675,6 +675,8 @@ fn note_block_backed(
 ) -> Result<(), Error> {
     let candidate_hash = candidate.hash();
 
+    tracing::debug!(target: LOG_TARGET, ?candidate_hash, "Candidate backed",);
+
     if load_meta(db, &candidate_hash)?.is_none() {
         let meta = CandidateMeta {
             state: State::Unavailable(now.into()),
@@ -712,6 +714,8 @@ fn note_block_included(
         }
         Some(mut meta) => {
             let be_block = (BEBlockNumber(block.0), block.1);
+
+            tracing::debug!(target: LOG_TARGET, ?candidate_hash, "Candidate included",);
 
             meta.state = match meta.state {
                 State::Unavailable(at) => {
@@ -1046,6 +1050,13 @@ fn store_chunk(
         }
         None => return Ok(false), // out of bounds.
     }
+
+    tracing::debug!(
+        target: LOG_TARGET,
+        ?candidate_hash,
+        chunk_index = %chunk.index.0,
+        "Stored chunk index for candidate.",
+    );
 
     db.write(tx)?;
     Ok(true)

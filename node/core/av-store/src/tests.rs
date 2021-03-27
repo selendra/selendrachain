@@ -26,7 +26,7 @@ use indracore_primitives::v1::{
     GroupIndex, HeadData, Header, Id as ParaId, PersistedValidationData, PoV, ValidatorId,
 };
 use indracore_subsystem::{
-    errors::RuntimeApiError, jaeger, messages::AllMessages, ActiveLeavesUpdate,
+    errors::RuntimeApiError, jaeger, messages::AllMessages, ActivatedLeaf, ActiveLeavesUpdate,
 };
 use parking_lot::Mutex;
 use sp_keyring::Sr25519Keyring;
@@ -235,7 +235,12 @@ fn runtime_api_error_does_not_stop_the_subsystem() {
         overseer_signal(
             &mut virtual_overseer,
             OverseerSignal::ActiveLeaves(ActiveLeavesUpdate {
-                activated: vec![(new_leaf, Arc::new(jaeger::Span::Disabled))].into(),
+                activated: vec![ActivatedLeaf {
+                    hash: new_leaf,
+                    number: 1,
+                    span: Arc::new(jaeger::Span::Disabled),
+                }]
+                .into(),
                 deactivated: vec![].into(),
             }),
         )
@@ -1008,7 +1013,12 @@ async fn import_leaf(
     overseer_signal(
         virtual_overseer,
         OverseerSignal::ActiveLeaves(ActiveLeavesUpdate {
-            activated: vec![(new_leaf, Arc::new(jaeger::Span::Disabled))].into(),
+            activated: vec![ActivatedLeaf {
+                hash: new_leaf,
+                number: 1,
+                span: Arc::new(jaeger::Span::Disabled),
+            }]
+            .into(),
             deactivated: vec![].into(),
         }),
     )

@@ -1021,8 +1021,9 @@ impl StatementDistribution {
                 })) => {
                     let _timer = metrics.time_active_leaves_update();
 
-                    for (relay_parent, span) in activated {
-                        let span = PerLeafSpan::new(span, "statement-distribution");
+                    for activated in activated {
+                        let relay_parent = activated.hash;
+                        let span = PerLeafSpan::new(activated.span, "statement-distribution");
 
                         let (validators, session_index) = {
                             let (val_tx, val_rx) = oneshot::channel();
@@ -1191,7 +1192,7 @@ mod tests {
     use indracore_node_network_protocol::{our_view, view, ObservedRole};
     use indracore_node_primitives::Statement;
     use indracore_primitives::v1::CommittedCandidateReceipt;
-    use indracore_subsystem::jaeger;
+    use indracore_subsystem::{jaeger, ActivatedLeaf};
     use sc_keystore::LocalKeystore;
     use sp_application_crypto::AppKey;
     use sp_keyring::Sr25519Keyring;
@@ -1842,7 +1843,12 @@ mod tests {
             handle
                 .send(FromOverseer::Signal(OverseerSignal::ActiveLeaves(
                     ActiveLeavesUpdate {
-                        activated: vec![(hash_a, Arc::new(jaeger::Span::Disabled))].into(),
+                        activated: vec![ActivatedLeaf {
+                            hash: hash_a,
+                            number: 1,
+                            span: Arc::new(jaeger::Span::Disabled),
+                        }]
+                        .into(),
                         deactivated: vec![].into(),
                     },
                 )))

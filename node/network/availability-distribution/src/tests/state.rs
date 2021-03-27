@@ -49,7 +49,7 @@ use indracore_subsystem::{
         AllMessages, AvailabilityDistributionMessage, AvailabilityStoreMessage,
         NetworkBridgeMessage, RuntimeApiMessage, RuntimeApiRequest,
     },
-    ActiveLeavesUpdate, FromOverseer, OverseerSignal,
+    ActivatedLeaf, ActiveLeavesUpdate, FromOverseer, OverseerSignal,
 };
 use indracore_subsystem_testhelpers as test_helpers;
 use test_helpers::SingleItemSink;
@@ -186,7 +186,11 @@ impl TestState {
                 .iter()
                 .zip(advanced)
                 .map(|(old, new)| ActiveLeavesUpdate {
-                    activated: smallvec![(new.clone(), Arc::new(jaeger::Span::Disabled))],
+                    activated: smallvec![ActivatedLeaf {
+                        hash: new.clone(),
+                        number: 1,
+                        span: Arc::new(jaeger::Span::Disabled),
+                    }],
                     deactivated: smallvec![old.clone()],
                 })
                 .collect::<Vec<_>>()

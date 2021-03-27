@@ -807,15 +807,17 @@ where
                 activated,
                 deactivated,
             }))) => {
-                for (hash, span) in activated {
+                for activated in activated {
                     let metrics = metrics.clone();
-                    if let Err(e) = jobs.spawn_job(hash, span, run_args.clone(), metrics) {
+                    if let Err(e) =
+                        jobs.spawn_job(activated.hash, activated.span, run_args.clone(), metrics)
+                    {
                         tracing::error!(
                             job = Job::NAME,
                             err = ?e,
                             "failed to spawn a job",
                         );
-                        Self::fwd_err(Some(hash), JobsError::Utility(e), err_tx).await;
+                        Self::fwd_err(Some(activated.hash), JobsError::Utility(e), err_tx).await;
                         return true;
                     }
                 }
@@ -1074,7 +1076,7 @@ mod tests {
     use indracore_node_jaeger as jaeger;
     use indracore_node_subsystem::{
         messages::{AllMessages, CandidateSelectionMessage},
-        ActiveLeavesUpdate, FromOverseer, OverseerSignal, SpawnedSubsystem,
+        ActivatedLeaf, ActiveLeavesUpdate, FromOverseer, OverseerSignal, SpawnedSubsystem,
     };
     use indracore_node_subsystem_test_helpers::{self as test_helpers, make_subsystem_context};
     use indracore_primitives::v1::Hash;
@@ -1207,7 +1209,11 @@ mod tests {
         test_harness(true, |mut overseer_handle, err_rx| async move {
             overseer_handle
                 .send(FromOverseer::Signal(OverseerSignal::ActiveLeaves(
-                    ActiveLeavesUpdate::start_work(relay_parent, Arc::new(jaeger::Span::Disabled)),
+                    ActiveLeavesUpdate::start_work(ActivatedLeaf {
+                        hash: relay_parent,
+                        number: 1,
+                        span: Arc::new(jaeger::Span::Disabled),
+                    }),
                 )))
                 .await;
             assert_matches!(
@@ -1236,7 +1242,11 @@ mod tests {
         test_harness(true, |mut overseer_handle, err_rx| async move {
             overseer_handle
                 .send(FromOverseer::Signal(OverseerSignal::ActiveLeaves(
-                    ActiveLeavesUpdate::start_work(relay_parent, Arc::new(jaeger::Span::Disabled)),
+                    ActiveLeavesUpdate::start_work(ActivatedLeaf {
+                        hash: relay_parent,
+                        number: 1,
+                        span: Arc::new(jaeger::Span::Disabled),
+                    }),
                 )))
                 .await;
 

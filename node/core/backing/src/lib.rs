@@ -1319,7 +1319,7 @@ mod tests {
     };
     use indracore_subsystem::{
         messages::{RuntimeApiMessage, RuntimeApiRequest},
-        ActiveLeavesUpdate, FromOverseer, OverseerSignal,
+        ActivatedLeaf, ActiveLeavesUpdate, FromOverseer, OverseerSignal,
     };
     use sp_application_crypto::AppKey;
     use sp_keyring::Sr25519Keyring;
@@ -1512,10 +1512,11 @@ mod tests {
         // Start work on some new parent.
         virtual_overseer
             .send(FromOverseer::Signal(OverseerSignal::ActiveLeaves(
-                ActiveLeavesUpdate::start_work(
-                    test_state.relay_parent,
-                    Arc::new(jaeger::Span::Disabled),
-                ),
+                ActiveLeavesUpdate::start_work(ActivatedLeaf {
+                    hash: test_state.relay_parent,
+                    number: 1,
+                    span: Arc::new(jaeger::Span::Disabled),
+                }),
             )))
             .await;
 
