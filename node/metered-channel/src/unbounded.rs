@@ -24,12 +24,9 @@ use std::result;
 use super::Meter;
 
 /// Create a wrapped `mpsc::channel` pair of `MeteredSender` and `MeteredReceiver`.
-pub fn unbounded<T>(
-    name: &'static str,
-) -> (UnboundedMeteredSender<T>, UnboundedMeteredReceiver<T>) {
+pub fn unbounded<T>() -> (UnboundedMeteredSender<T>, UnboundedMeteredReceiver<T>) {
     let (tx, rx) = mpsc::unbounded();
-    let mut shared_meter = Meter::default();
-    shared_meter.name = name;
+    let shared_meter = Meter::default();
     let tx = UnboundedMeteredSender {
         meter: shared_meter.clone(),
         inner: tx,
@@ -155,7 +152,7 @@ impl<T> UnboundedMeteredSender<T> {
     }
 
     /// Attempt to send message or fail immediately.
-    pub fn unbounded_send(&mut self, msg: T) -> result::Result<(), mpsc::TrySendError<T>> {
+    pub fn unbounded_send(&self, msg: T) -> result::Result<(), mpsc::TrySendError<T>> {
         self.meter.note_sent();
         self.inner.unbounded_send(msg).map_err(|e| {
             self.meter.retract_sent();

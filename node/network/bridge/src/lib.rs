@@ -740,7 +740,7 @@ mod tests {
         req_configs: Vec<RequestResponseConfig>,
     ) -> (TestNetwork, TestNetworkHandle, TestAuthorityDiscovery) {
         let (net_tx, net_rx) = indracore_node_subsystem_test_helpers::single_item_sink();
-        let (action_tx, action_rx) = metered::unbounded("test_action");
+        let (action_tx, action_rx) = metered::unbounded();
 
         (
             TestNetwork {
