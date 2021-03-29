@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 futures = "0.3.12"
 tracing = "0.1.22"
-# tracing-futures = "0.2.4"
+
 indracore-erasure-coding = { path = "../../erasure-coding" }
 indracore-node-primitives = { path = "../primitives" }
 indracore-node-subsystem = { path = "../subsystem" }

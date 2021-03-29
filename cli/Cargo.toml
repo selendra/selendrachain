@@ -25,7 +25,7 @@ service = { package = "indracore-service", path = "../node/service", default-fea
 indracore-parachain = { path = "../parachain", optional = true }
 
 sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
-# tracing-futures = "0.2.4"
+
 frame-benchmarking-cli = { git = "https://github.com/selendra/substrate", branch = "master", optional = true }
 try-runtime-cli = { git = "https://github.com/selendra/substrate", branch = "master", optional = true }
 sc-cli = { git = "https://github.com/selendra/substrate", branch = "master", optional = true }
