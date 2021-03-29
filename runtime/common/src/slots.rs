@@ -28,7 +28,7 @@ use frame_support::{
     traits::{Currency, Get, ReservableCurrency},
     weights::Weight,
 };
-use frame_system::ensure_root;
+use frame_system::{ensure_root, ensure_signed};
 use primitives::v1::Id as ParaId;
 use sp_runtime::traits::{CheckedConversion, CheckedSub, Zero};
 use sp_std::prelude::*;
@@ -40,6 +40,8 @@ type LeasePeriodOf<T> = <T as frame_system::Config>::BlockNumber;
 pub trait WeightInfo {
     fn force_lease() -> Weight;
     fn manage_lease_period_start(c: u32, t: u32) -> Weight;
+    fn clear_all_leases() -> Weight;
+    fn trigger_onboard() -> Weight;
 }
 
 pub struct TestWeightInfo;
@@ -48,6 +50,12 @@ impl WeightInfo for TestWeightInfo {
         0
     }
     fn manage_lease_period_start(_c: u32, _t: u32) -> Weight {
+        0
+    }
+    fn clear_all_leases() -> Weight {
+        0
+    }
+    fn trigger_onboard() -> Weight {
         0
     }
 }
@@ -188,10 +196,8 @@ decl_module! {
         /// Clear all leases for a Para Id, refunding any deposits back to the original owners.
         ///
         /// Can only be called by the Root origin.
-        #[weight = 0] // TODO: Benchmarks
-        fn clear_all_leases(origin,
-            para: ParaId,
-        ) -> DispatchResult {
+        #[weight = T::WeightInfo::clear_all_leases()]
+        fn clear_all_leases(origin, para: ParaId) -> DispatchResult {
             ensure_root(origin)?;
             let deposits = Self::all_deposits_held(para);
 
@@ -202,6 +208,31 @@ decl_module! {
             }
 
             Leases::<T>::remove(para);
+            Ok(())
+        }
+
+        /// Try to onboard a parachain that has a lease for the current lease period.
+        ///
+        /// This function can be useful if there was some state issue with a para that should
+        /// have onboarded, but was unable to. As long as they have a lease period, we can
+        /// let them onboard from here.
+        ///
+        /// Origin must be signed, but can be called by anyone.
+        #[weight = T::WeightInfo::trigger_onboard()]
+        fn trigger_onboard(origin, para: ParaId) -> DispatchResult {
+            let _ = ensure_signed(origin)?;
+            let leases = Leases::<T>::get(para);
+            match leases.first() {
+                // If the first element in leases is present, then it has a lease!
+                // We can try to onboard it.
+                Some(Some(_lease_info)) => {
+                    T::Registrar::make_parachain(para)?
+                },
+                // Otherwise, it does not have a lease.
+                Some(None) | None => {
+                    return Err(Error::<T>::ParaNotOnboarding.into());
+                }
+            };
             Ok(())
         }
     }
@@ -334,10 +365,11 @@ impl<T: Config> Leaser for Module<T> {
         period_begin: Self::LeasePeriod,
         period_count: Self::LeasePeriod,
     ) -> Result<(), LeaseError> {
+        let current_lease_period = Self::lease_period_index();
         // Finally, we update the deposit held so it is `amount` for the new lease period
         // indices that were won in the auction.
         let offset = period_begin
-            .checked_sub(&Self::lease_period_index())
+            .checked_sub(&current_lease_period)
             .and_then(|x| x.checked_into::<usize>())
             .ok_or(LeaseError::AlreadyEnded)?;
 
@@ -388,6 +420,14 @@ impl<T: Config> Leaser for Module<T> {
             }
 
             let reserved = maybe_additional.unwrap_or_default();
+
+            // Check if current lease period is same as period begin, and onboard them directly.
+            // This will allow us to support onboarding new parachains in the middle of a lease period.
+            if current_lease_period == period_begin {
+                // Best effort. Not much we can do if this fails.
+                let _ = T::Registrar::make_parachain(para);
+            }
+
             Self::deposit_event(RawEvent::Leased(
                 para,
                 leaser.clone(),
@@ -437,7 +477,7 @@ mod tests {
 
     use crate::{mock::TestRegistrar, slots};
     use frame_support::{
-        assert_ok, parameter_types,
+        assert_noop, assert_ok, parameter_types,
         traits::{OnFinalize, OnInitialize},
     };
     use pallet_balances;
@@ -567,7 +607,7 @@ mod tests {
                 Default::default()
             ));
 
-            assert!(Slots::lease_out(1.into(), &1, 1, 1, 1).is_ok());
+            assert_ok!(Slots::lease_out(1.into(), &1, 1, 1, 1));
             assert_eq!(Slots::deposit_held(1.into(), &1), 1);
             assert_eq!(Balances::reserved_balance(1), 1);
 
@@ -598,8 +638,8 @@ mod tests {
                 Default::default()
             ));
 
-            assert!(Slots::lease_out(1.into(), &1, 6, 1, 1).is_ok());
-            assert!(Slots::lease_out(1.into(), &1, 4, 3, 1).is_ok());
+            assert_ok!(Slots::lease_out(1.into(), &1, 6, 1, 1));
+            assert_ok!(Slots::lease_out(1.into(), &1, 4, 3, 1));
 
             run_to_block(19);
             assert_eq!(Slots::deposit_held(1.into(), &1), 6);
@@ -792,6 +832,95 @@ mod tests {
             assert!(Leases::<Test>::get(ParaId::from(1)).is_empty());
         });
     }
+
+    #[test]
+    fn lease_out_current_lease_period() {
+        new_test_ext().execute_with(|| {
+            run_to_block(1);
+
+            assert_ok!(TestRegistrar::<Test>::register(
+                1,
+                ParaId::from(1),
+                Default::default(),
+                Default::default()
+            ));
+            assert_ok!(TestRegistrar::<Test>::register(
+                1,
+                ParaId::from(2),
+                Default::default(),
+                Default::default()
+            ));
+
+            run_to_block(20);
+            assert_eq!(Slots::lease_period_index(), 2);
+            // Can't lease from the past
+            assert!(Slots::lease_out(1.into(), &1, 1, 1, 1).is_err());
+            // Lease in the current period triggers onboarding
+            assert_ok!(Slots::lease_out(1.into(), &1, 1, 2, 1));
+            // Lease in the future doesn't
+            assert_ok!(Slots::lease_out(2.into(), &1, 1, 3, 1));
+
+            assert_eq!(
+                TestRegistrar::<Test>::operations(),
+                vec![(1.into(), 20, true),]
+            );
+        });
+    }
+
+    #[test]
+    fn trigger_onboard_works() {
+        new_test_ext().execute_with(|| {
+            run_to_block(1);
+            assert_ok!(TestRegistrar::<Test>::register(
+                1,
+                ParaId::from(1),
+                Default::default(),
+                Default::default()
+            ));
+            assert_ok!(TestRegistrar::<Test>::register(
+                1,
+                ParaId::from(2),
+                Default::default(),
+                Default::default()
+            ));
+            assert_ok!(TestRegistrar::<Test>::register(
+                1,
+                ParaId::from(3),
+                Default::default(),
+                Default::default()
+            ));
+
+            // We will directly manipulate leases to emulate some kind of failure in the system.
+            // Para 1 will have no leases
+            // Para 2 will have a lease period in the current index
+            Leases::<Test>::insert(ParaId::from(2), vec![Some((0, 0))]);
+            // Para 3 will have a lease period in a future index
+            Leases::<Test>::insert(ParaId::from(3), vec![None, None, Some((0, 0))]);
+
+            // Para 1 should fail cause they don't have any leases
+            assert_noop!(
+                Slots::trigger_onboard(Origin::signed(1), 1.into()),
+                Error::<Test>::ParaNotOnboarding
+            );
+
+            // Para 2 should succeed
+            assert_ok!(Slots::trigger_onboard(Origin::signed(1), 2.into()));
+
+            // Para 3 should fail cause their lease is in the future
+            assert_noop!(
+                Slots::trigger_onboard(Origin::signed(1), 3.into()),
+                Error::<Test>::ParaNotOnboarding
+            );
+
+            // Trying Para 2 again should fail cause they are not currently a parathread
+            assert!(Slots::trigger_onboard(Origin::signed(1), 2.into()).is_err());
+
+            assert_eq!(
+                TestRegistrar::<Test>::operations(),
+                vec![(2.into(), 1, true),]
+            );
+        });
+    }
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -801,7 +930,7 @@ mod benchmarking {
     use frame_system::RawOrigin;
     use sp_runtime::traits::Bounded;
 
-    use frame_benchmarking::{account, benchmarks};
+    use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 
     use crate::slots::Module as Slots;
 
@@ -837,7 +966,7 @@ mod benchmarking {
             let leaser: T::AccountId = account("leaser", 0, 0);
             T::Currency::make_free_balance_be(&leaser, BalanceOf::<T>::max_value());
             let amount = T::Currency::minimum_balance();
-            let period_begin = 0u32.into();
+            let period_begin = 69u32.into();
             let period_count = 3u32.into();
         }: _(RawOrigin::Root, para, leaser.clone(), amount, period_begin, period_count)
         verify {
@@ -850,12 +979,18 @@ mod benchmarking {
             let c in 1 .. 100;
             let t in 1 .. 100;
 
-            let period_begin = 0u32.into();
-            let period_count = 3u32.into();
+            let period_begin = 1u32.into();
+            let period_count = 4u32.into();
+
+            // Make T parathreads
+            let paras_info = (0..t).map(|i| {
+                register_a_parathread::<T>(i)
+            }).collect::<Vec<_>>();
+
+            T::Registrar::execute_pending_transitions();
 
             // T parathread are upgrading to parachains
-            for i in 0 .. t {
-                let (para, leaser) = register_a_parathread::<T>(i);
+            for (para, leaser) in paras_info {
                 let amount = T::Currency::minimum_balance();
 
                 Slots::<T>::force_lease(RawOrigin::Root.into(), para, leaser, amount, period_begin, period_count)?;
@@ -890,26 +1025,53 @@ mod benchmarking {
                 assert!(T::Registrar::is_parathread(ParaId::from(i)));
             }
         }
-    }
 
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-        use crate::integration_tests::{new_test_ext, Test};
-        use frame_support::assert_ok;
+        // Assume that at most 8 people have deposits for leases on a parachain.
+        // This would cover at least 4 years of leases in the worst case scenario.
+        clear_all_leases {
+            let max_people = 8;
+            let (para, _) = register_a_parathread::<T>(1);
 
-        #[test]
-        fn force_lease_benchmark() {
-            new_test_ext().execute_with(|| {
-                assert_ok!(test_benchmark_force_lease::<Test>());
-            });
+            for i in 0 .. max_people {
+                let leaser = account("lease_deposit", i, 0);
+                let amount = T::Currency::minimum_balance();
+                T::Currency::make_free_balance_be(&leaser, BalanceOf::<T>::max_value());
+
+                // Average slot has 4 lease periods.
+                let period_count: LeasePeriodOf<T> = 4u32.into();
+                let period_begin = period_count * i.into();
+                Slots::<T>::force_lease(RawOrigin::Root.into(), para, leaser, amount, period_begin, period_count)?;
+            }
+
+            for i in 0 .. max_people {
+                let leaser = account("lease_deposit", i, 0);
+                assert_eq!(T::Currency::reserved_balance(&leaser), T::Currency::minimum_balance());
+            }
+
+        }: _(RawOrigin::Root, para)
+        verify {
+            for i in 0 .. max_people {
+                let leaser = account("lease_deposit", i, 0);
+                assert_eq!(T::Currency::reserved_balance(&leaser), 0u32.into());
+            }
         }
 
-        #[test]
-        fn manage_lease_period_start_benchmark() {
-            new_test_ext().execute_with(|| {
-                assert_ok!(test_benchmark_manage_lease_period_start::<Test>());
-            });
+        trigger_onboard {
+            // get a parachain into a bad state where they did not onboard
+            let (para, _) = register_a_parathread::<T>(1);
+            Leases::<T>::insert(para, vec![Some((T::AccountId::default(), BalanceOf::<T>::default()))]);
+            assert!(T::Registrar::is_parathread(para));
+            let caller = whitelisted_caller();
+        }: _(RawOrigin::Signed(caller), para)
+        verify {
+            T::Registrar::execute_pending_transitions();
+            assert!(T::Registrar::is_parachain(para));
         }
     }
+
+    impl_benchmark_test_suite!(
+        Slots,
+        crate::integration_tests::new_test_ext(),
+        crate::integration_tests::Test,
+    );
 }
