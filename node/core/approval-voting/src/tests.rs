@@ -312,6 +312,8 @@ fn add_block(db: &mut TestStore, block_hash: Hash, session: SessionIndex, slot: 
         block_hash,
         approval_db::v1::BlockEntry {
             block_hash,
+            parent_hash: Default::default(),
+            block_number: 0,
             session,
             slot,
             candidates: Vec::new(),

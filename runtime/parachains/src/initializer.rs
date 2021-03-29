@@ -23,13 +23,14 @@ use crate::{
     configuration::{self, HostConfiguration},
     dmp, hrmp, inclusion, paras, scheduler, session_info, shared, ump,
 };
-use frame_support::weights::Weight;
+use frame_support::traits::EnsureOrigin;
+use frame_support::weights::{DispatchClass, Weight};
 use frame_support::{
     decl_error, decl_module, decl_storage,
     traits::{OneSessionHandler, Randomness},
 };
 use parity_scale_codec::{Decode, Encode};
-use primitives::v1::{SessionIndex, ValidatorId};
+use primitives::v1::{BlockNumber, ConsensusLog, SessionIndex, ValidatorId};
 use sp_std::prelude::*;
 
 /// Information about a session change that has just occurred.
@@ -83,6 +84,8 @@ pub trait Config:
 {
     /// A randomness beacon.
     type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
+    /// An origin which is allowed to force updates to parachains.
+    type ForceOrigin: EnsureOrigin<<Self as frame_system::Config>::Origin>;
 }
 
 decl_storage! {
@@ -168,6 +171,16 @@ decl_module! {
             }
 
             HasInitialized::take();
+        }
+
+        /// Issue a signal to the consensus engine to forcibly act as though all parachain
+        /// blocks in all relay chain blocks up to and including the given number in the current
+        /// chain are valid and should be finalized.
+        #[weight = (0, DispatchClass::Operational)]
+        fn force_approve(origin, up_to: BlockNumber) {
+            T::ForceOrigin::ensure_origin(origin)?;
+
+            frame_system::Pallet::<T>::deposit_log(ConsensusLog::ForceApprove(up_to).into());
         }
     }
 }
