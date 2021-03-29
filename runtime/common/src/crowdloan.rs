@@ -100,6 +100,7 @@ pub trait WeightInfo {
     fn withdraw() -> Weight;
     fn dissolve(k: u32) -> Weight;
     fn edit() -> Weight;
+    fn add_memo() -> Weight;
     fn on_initialize(n: u32) -> Weight;
 }
 
@@ -118,6 +119,9 @@ impl WeightInfo for TestWeightInfo {
         0
     }
     fn edit() -> Weight {
+        0
+    }
+    fn add_memo() -> Weight {
         0
     }
     fn on_initialize(_n: u32) -> Weight {
@@ -158,6 +162,9 @@ pub trait Config: frame_system::Config {
         BlockNumber = Self::BlockNumber,
         LeasePeriod = Self::BlockNumber,
     >;
+
+    /// The maximum length for the memo attached to a crowdloan contribution.
+    type MaxMemoLength: Get<u8>;
 
     /// Weight Information for the Extrinsics in the Pallet
     type WeightInfo: WeightInfo;
@@ -253,6 +260,8 @@ decl_event! {
         HandleBidResult(ParaId, DispatchResult),
         /// The configuration to a crowdloan has been edited. [fund_index]
         Edited(ParaId),
+        /// A memo has been updated. [who, fund_index, memo]
+        MemoUpdated(AccountId, ParaId, Vec<u8>),
     }
 }
 
@@ -298,6 +307,8 @@ decl_error! {
         NotReadyToDissolve,
         /// Invalid signature.
         InvalidSignature,
+        /// The provided memo is too large.
+        MemoTooLarge,
     }
 }
 
@@ -368,7 +379,7 @@ decl_module! {
         pub fn contribute(origin,
             #[compact] index: ParaId,
             #[compact] value: BalanceOf<T>,
-            signature: Option<MultiSignature>
+            signature: Option<MultiSignature>,
         ) {
             let who = ensure_signed(origin)?;
 
@@ -381,7 +392,7 @@ decl_module! {
             let now = <frame_system::Pallet<T>>::block_number();
             ensure!(now < fund.end, Error::<T>::ContributionPeriodOver);
 
-            let old_balance = Self::contribution_get(fund.trie_index, &who);
+            let (old_balance, memo) = Self::contribution_get(fund.trie_index, &who);
 
             if let Some(ref verifier) = fund.verifier {
                 let signature = signature.ok_or(Error::<T>::InvalidSignature)?;
@@ -393,7 +404,7 @@ decl_module! {
             CurrencyOf::<T>::transfer(&who, &Self::fund_account_id(index), value, AllowDeath)?;
 
             let balance = old_balance.saturating_add(value);
-            Self::contribution_put(fund.trie_index, &who, &balance);
+            Self::contribution_put(fund.trie_index, &who, &balance, &memo);
 
             if T::Auctioneer::is_ending(now).is_some() {
                 match fund.last_contribution {
@@ -454,7 +465,7 @@ decl_module! {
             let fund_account = Self::fund_account_id(index);
             Self::ensure_crowdloan_ended(now, &fund_account, &fund)?;
 
-            let balance = Self::contribution_get(fund.trie_index, &who);
+            let (balance, _) = Self::contribution_get(fund.trie_index, &who);
             ensure!(balance > Zero::zero(), Error::<T>::NoContributions);
 
             CurrencyOf::<T>::transfer(&fund_account, &who, balance, AllowDeath)?;
@@ -542,6 +553,23 @@ decl_module! {
             Self::deposit_event(RawEvent::Edited(index));
         }
 
+        /// Add an optional memo to an existing crowdloan contribution.
+        ///
+        /// Origin must be Signed, and the user must have contributed to the crowdloan.
+        #[weight = T::WeightInfo::add_memo()]
+        pub fn add_memo(origin, index: ParaId, memo: Vec<u8>) {
+            let who = ensure_signed(origin)?;
+
+            ensure!(memo.len() <= T::MaxMemoLength::get().into(), Error::<T>::MemoTooLarge);
+            let fund = Self::funds(index).ok_or(Error::<T>::InvalidParaId)?;
+
+            let (balance, _) = Self::contribution_get(fund.trie_index, &who);
+            ensure!(balance > Zero::zero(), Error::<T>::NoContributions);
+
+            Self::contribution_put(fund.trie_index, &who, &balance, &memo);
+            Self::deposit_event(RawEvent::MemoUpdated(who, index, memo));
+        }
+
         fn on_initialize(n: T::BlockNumber) -> frame_support::weights::Weight {
             if let Some(n) = T::Auctioneer::is_ending(n) {
                 if n.is_zero() {
@@ -587,12 +615,19 @@ impl<T: Config> Module<T> {
         child::ChildInfo::new_default(T::Hashing::hash(&buf[..]).as_ref())
     }
 
-    pub fn contribution_put(index: TrieIndex, who: &T::AccountId, balance: &BalanceOf<T>) {
-        who.using_encoded(|b| child::put(&Self::id_from_index(index), b, balance));
+    pub fn contribution_put(
+        index: TrieIndex,
+        who: &T::AccountId,
+        balance: &BalanceOf<T>,
+        memo: &[u8],
+    ) {
+        who.using_encoded(|b| child::put(&Self::id_from_index(index), b, &(balance, memo)));
     }
 
-    pub fn contribution_get(index: TrieIndex, who: &T::AccountId) -> BalanceOf<T> {
-        who.using_encoded(|b| child::get_or_default::<BalanceOf<T>>(&Self::id_from_index(index), b))
+    pub fn contribution_get(index: TrieIndex, who: &T::AccountId) -> (BalanceOf<T>, Vec<u8>) {
+        who.using_encoded(|b| {
+            child::get_or_default::<(BalanceOf<T>, Vec<u8>)>(&Self::id_from_index(index), b)
+        })
     }
 
     pub fn contribution_kill(index: TrieIndex, who: &T::AccountId) {
@@ -821,6 +856,7 @@ mod tests {
         pub const RetirementPeriod: u64 = 5;
         pub const CrowdloanModuleId: ModuleId = ModuleId(*b"py/cfund");
         pub const RemoveKeysLimit: u32 = 10;
+        pub const MaxMemoLength: u8 = 32;
     }
 
     impl Config for Test {
@@ -833,6 +869,7 @@ mod tests {
         type RemoveKeysLimit = RemoveKeysLimit;
         type Registrar = TestRegistrar<Test>;
         type Auctioneer = TestAuctioneer;
+        type MaxMemoLength = MaxMemoLength;
         type WeightInfo = crate::crowdloan::TestWeightInfo;
     }
 
@@ -891,7 +928,7 @@ mod tests {
             assert_eq!(Crowdloan::funds(ParaId::from(0)), None);
             let empty: Vec<ParaId> = Vec::new();
             assert_eq!(Crowdloan::new_raise(), empty);
-            assert_eq!(Crowdloan::contribution_get(0u32, &1), 0);
+            assert_eq!(Crowdloan::contribution_get(0u32, &1).0, 0);
             assert_eq!(Crowdloan::endings_count(), 0);
 
             assert_ok!(TestAuctioneer::new_auction(5, 0));
@@ -1058,14 +1095,14 @@ mod tests {
             ));
 
             // No contributions yet
-            assert_eq!(Crowdloan::contribution_get(u32::from(para), &1), 0);
+            assert_eq!(Crowdloan::contribution_get(u32::from(para), &1).0, 0);
 
             // User 1 contributes to their own crowdloan
             assert_ok!(Crowdloan::contribute(Origin::signed(1), para, 49, None));
             // User 1 has spent some funds to do this, transfer fees **are** taken
             assert_eq!(Balances::free_balance(1), 950);
             // Contributions are stored in the trie
-            assert_eq!(Crowdloan::contribution_get(u32::from(para), &1), 49);
+            assert_eq!(Crowdloan::contribution_get(u32::from(para), &1).0, 49);
             // Contributions appear in free balance of crowdloan
             assert_eq!(Balances::free_balance(Crowdloan::fund_account_id(para)), 49);
             // Crowdloan is added to NewRaise
@@ -1096,7 +1133,7 @@ mod tests {
             ));
 
             // No contributions yet
-            assert_eq!(Crowdloan::contribution_get(u32::from(para), &1), 0);
+            assert_eq!(Crowdloan::contribution_get(u32::from(para), &1).0, 0);
 
             // Missing signature
             assert_noop!(
@@ -1624,6 +1661,52 @@ mod tests {
             assert!(old_crowdloan.last_slot != new_crowdloan.last_slot);
         });
     }
+
+    #[test]
+    fn add_memo_works() {
+        new_test_ext().execute_with(|| {
+            let para_1 = new_para();
+
+            assert_ok!(Crowdloan::create(
+                Origin::signed(1),
+                para_1,
+                1000,
+                1,
+                1,
+                9,
+                None
+            ));
+            // Cant add a memo before you have contributed.
+            assert_noop!(
+                Crowdloan::add_memo(Origin::signed(1), para_1, b"hello, world".to_vec()),
+                Error::<Test>::NoContributions,
+            );
+            // Make a contribution. Initially no memo.
+            assert_ok!(Crowdloan::contribute(Origin::signed(1), para_1, 100, None));
+            assert_eq!(Crowdloan::contribution_get(0u32, &1), (100, vec![]));
+            // Can't place a memo that is too large.
+            assert_noop!(
+                Crowdloan::add_memo(Origin::signed(1), para_1, vec![123; 123]),
+                Error::<Test>::MemoTooLarge,
+            );
+            // Adding a memo to an existing contribution works
+            assert_ok!(Crowdloan::add_memo(
+                Origin::signed(1),
+                para_1,
+                b"hello, world".to_vec()
+            ));
+            assert_eq!(
+                Crowdloan::contribution_get(0u32, &1),
+                (100, b"hello, world".to_vec())
+            );
+            // Can contribute again and data persists
+            assert_ok!(Crowdloan::contribute(Origin::signed(1), para_1, 100, None));
+            assert_eq!(
+                Crowdloan::contribution_get(0u32, &1),
+                (200, b"hello, world".to_vec())
+            );
+        });
+    }
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -1798,6 +1881,20 @@ mod benchmarking {
         }: _(RawOrigin::Root, para_id, cap, first_slot, last_slot, end, Some(verifier))
         verify {
             assert_last_event::<T>(RawEvent::Edited(para_id).into())
+        }
+
+        add_memo {
+            let fund_index = create_fund::<T>(1, 100u32.into());
+            let caller: T::AccountId = whitelisted_caller();
+            contribute_fund::<T>(&caller, fund_index);
+            let worst_memo = vec![42; T::MaxMemoLength::get().into()];
+        }: _(RawOrigin::Signed(caller.clone()), fund_index, worst_memo.clone())
+        verify {
+            let fund = Funds::<T>::get(fund_index).expect("fund was created...");
+            assert_eq!(
+                Crowdloan::<T>::contribution_get(fund.trie_index, &caller),
+                (T::MinContribution::get(), worst_memo),
+            );
         }
 
         // Worst case scenario: N funds are all in the `NewRaise` list, we are
