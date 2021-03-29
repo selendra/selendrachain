@@ -94,7 +94,6 @@ indracore-node-core-candidate-validation = { path = "../core/candidate-validatio
 indracore-node-core-chain-api = { path = "../core/chain-api", optional = true }
 indracore-node-core-provisioner = { path = "../core/provisioner", optional = true }
 indracore-node-core-runtime-api = { path = "../core/runtime-api", optional = true }
-indracore-pov-distribution = { path = "../network/pov-distribution", optional = true }
 indracore-statement-distribution = { path = "../network/statement-distribution", optional = true }
 indracore-approval-distribution = { path = "../network/approval-distribution", optional = true }
 indracore-node-core-approval-voting = { path = "../core/approval-voting", optional = true }
@@ -136,7 +135,6 @@ real-overseer = [
 	"indracore-node-core-chain-api",
 	"indracore-node-core-provisioner",
 	"indracore-node-core-runtime-api",
-	"indracore-pov-distribution",
 	"indracore-statement-distribution",
 	"indracore-approval-distribution",
 ]

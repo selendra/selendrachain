@@ -710,8 +710,7 @@ mod tests {
     use indracore_node_subsystem_util::metered;
     use indracore_primitives::v1::AuthorityDiscoveryId;
     use indracore_subsystem::messages::{
-        ApprovalDistributionMessage, BitfieldDistributionMessage, PoVDistributionMessage,
-        StatementDistributionMessage,
+        ApprovalDistributionMessage, BitfieldDistributionMessage, StatementDistributionMessage,
     };
     use indracore_subsystem::{jaeger, ActiveLeavesUpdate, FromOverseer, OverseerSignal};
     use sc_network::config::RequestResponseConfig;
@@ -924,13 +923,6 @@ mod tests {
             virtual_overseer.recv().await,
             AllMessages::BitfieldDistribution(
                 BitfieldDistributionMessage::NetworkBridgeUpdateV1(e)
-            ) if e == event.focus().expect("could not focus message")
-        );
-
-        assert_matches!(
-            virtual_overseer.recv().await,
-            AllMessages::PoVDistribution(
-                PoVDistributionMessage::NetworkBridgeUpdateV1(e)
             ) if e == event.focus().expect("could not focus message")
         );
 
@@ -1209,11 +1201,12 @@ mod tests {
                 .await;
             }
 
-            let pov_distribution_message =
-                protocol_v1::PoVDistributionMessage::Awaiting([0; 32].into(), vec![[1; 32].into()]);
+            let approval_distribution_message =
+                protocol_v1::ApprovalDistributionMessage::Approvals(Vec::new());
 
-            let message =
-                protocol_v1::ValidationProtocol::PoVDistribution(pov_distribution_message.clone());
+            let message = protocol_v1::ValidationProtocol::ApprovalDistribution(
+                approval_distribution_message.clone(),
+            );
 
             network_handle
                 .peer_message(
@@ -1227,18 +1220,18 @@ mod tests {
                 .disconnect_peer(peer.clone(), PeerSet::Validation)
                 .await;
 
-            // PoV distribution message comes first, and the message is only sent to that subsystem.
+            // Approval distribution message comes first, and the message is only sent to that subsystem.
             // then a disconnection event arises that is sent to all validation networking subsystems.
 
             assert_matches!(
                 virtual_overseer.recv().await,
-                AllMessages::PoVDistribution(
-                    PoVDistributionMessage::NetworkBridgeUpdateV1(
+                AllMessages::ApprovalDistribution(
+                    ApprovalDistributionMessage::NetworkBridgeUpdateV1(
                         NetworkBridgeEvent::PeerMessage(p, m)
                     )
                 ) => {
                     assert_eq!(p, peer);
-                    assert_eq!(m, pov_distribution_message);
+                    assert_eq!(m, approval_distribution_message);
                 }
             );
 
@@ -1659,13 +1652,11 @@ mod tests {
             // send a validation protocol message.
 
             {
-                let pov_distribution_message = protocol_v1::PoVDistributionMessage::Awaiting(
-                    [0; 32].into(),
-                    vec![[1; 32].into()],
-                );
+                let approval_distribution_message =
+                    protocol_v1::ApprovalDistributionMessage::Approvals(Vec::new());
 
-                let message = protocol_v1::ValidationProtocol::PoVDistribution(
-                    pov_distribution_message.clone(),
+                let message = protocol_v1::ValidationProtocol::ApprovalDistribution(
+                    approval_distribution_message.clone(),
                 );
 
                 virtual_overseer
@@ -1724,7 +1715,7 @@ mod tests {
     fn spread_event_to_subsystems_is_up_to_date() {
         // Number of subsystems expected to be interested in a network event,
         // and hence the network event broadcasted to.
-        const EXPECTED_COUNT: usize = 4;
+        const EXPECTED_COUNT: usize = 3;
 
         let mut cnt = 0_usize;
         for msg in
@@ -1758,9 +1749,6 @@ mod tests {
                 }
                 AllMessages::BitfieldSigning(_) => unreachable!("Not interested in network events"),
                 AllMessages::Provisioner(_) => unreachable!("Not interested in network events"),
-                AllMessages::PoVDistribution(_) => {
-                    cnt += 1;
-                }
                 AllMessages::RuntimeApi(_) => unreachable!("Not interested in network events"),
                 AllMessages::AvailabilityStore(_) => {
                     unreachable!("Not interested in network events")

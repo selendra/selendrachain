@@ -437,7 +437,6 @@ where
     use indracore_node_core_chain_api::ChainApiSubsystem;
     use indracore_node_core_provisioner::ProvisioningSubsystem as ProvisionerSubsystem;
     use indracore_node_core_runtime_api::RuntimeApiSubsystem;
-    use indracore_pov_distribution::PoVDistribution as PoVDistributionSubsystem;
     use indracore_statement_distribution::StatementDistribution as StatementDistributionSubsystem;
 
     let all_subsystems = AllSubsystems {
@@ -491,7 +490,6 @@ where
             authority_discovery,
             request_multiplexer,
         ),
-        pov_distribution: PoVDistributionSubsystem::new(Metrics::register(registry)?),
         provisioner: ProvisionerSubsystem::new(spawner.clone(), (), Metrics::register(registry)?),
         runtime_api: RuntimeApiSubsystem::new(
             runtime_client.clone(),
