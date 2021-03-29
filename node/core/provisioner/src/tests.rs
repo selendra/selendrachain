@@ -1,3 +1,19 @@
+// Copyright 2020 Parity Technologies (UK) Ltd.
+// This file is part of Polkadot.
+
+// Polkadot is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Polkadot is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
+
 use super::*;
 use bitvec::bitvec;
 use indracore_primitives::v1::{OccupiedCore, ScheduledCore};
@@ -238,13 +254,13 @@ mod select_availability_bitfields {
 mod select_candidates {
     use super::super::*;
     use super::{build_occupied_core, default_bitvec, occupied_core, scheduled_core};
-    use futures_timer::Delay;
     use indracore_node_subsystem::messages::{
         AllMessages, RuntimeApiMessage,
         RuntimeApiRequest::{
             AvailabilityCores, PersistedValidationData as PersistedValidationDataReq,
         },
     };
+    use indracore_node_subsystem_test_helpers::TestSubsystemSender;
     use indracore_primitives::v1::{
         BlockNumber, CandidateCommitments, CandidateDescriptor, CommittedCandidateReceipt,
         PersistedValidationData,
@@ -256,12 +272,12 @@ mod select_candidates {
         overseer_factory: OverseerFactory,
         test_factory: TestFactory,
     ) where
-        OverseerFactory: FnOnce(mpsc::Receiver<FromJobCommand>) -> Overseer,
+        OverseerFactory: FnOnce(mpsc::UnboundedReceiver<AllMessages>) -> Overseer,
         Overseer: Future<Output = ()>,
-        TestFactory: FnOnce(mpsc::Sender<FromJobCommand>) -> Test,
+        TestFactory: FnOnce(TestSubsystemSender) -> Test,
         Test: Future<Output = ()>,
     {
-        let (tx, rx) = mpsc::channel(64);
+        let (tx, rx) = indracore_node_subsystem_test_helpers::sender_receiver();
         let overseer = overseer_factory(rx);
         let test = test_factory(tx);
 
@@ -347,7 +363,7 @@ mod select_candidates {
     }
 
     async fn mock_overseer(
-        mut receiver: mpsc::Receiver<FromJobCommand>,
+        mut receiver: mpsc::UnboundedReceiver<AllMessages>,
         expected: Vec<BackedCandidate>,
     ) {
         use ChainApiMessage::BlockNumber;
@@ -355,20 +371,20 @@ mod select_candidates {
 
         while let Some(from_job) = receiver.next().await {
             match from_job {
-                FromJobCommand::SendMessage(AllMessages::ChainApi(BlockNumber(
-                    _relay_parent,
-                    tx,
-                ))) => tx.send(Ok(Some(BLOCK_UNDER_PRODUCTION - 1))).unwrap(),
-                FromJobCommand::SendMessage(AllMessages::RuntimeApi(Request(
+                AllMessages::ChainApi(BlockNumber(_relay_parent, tx)) => {
+                    tx.send(Ok(Some(BLOCK_UNDER_PRODUCTION - 1))).unwrap()
+                }
+                AllMessages::RuntimeApi(Request(
                     _parent_hash,
                     PersistedValidationDataReq(_para_id, _assumption, tx),
-                ))) => tx.send(Ok(Some(Default::default()))).unwrap(),
-                FromJobCommand::SendMessage(AllMessages::RuntimeApi(Request(
-                    _parent_hash,
-                    AvailabilityCores(tx),
-                ))) => tx.send(Ok(mock_availability_cores())).unwrap(),
-                FromJobCommand::SendMessage(AllMessages::CandidateBacking(
-                    CandidateBackingMessage::GetBackedCandidates(_, _, sender),
+                )) => tx.send(Ok(Some(Default::default()))).unwrap(),
+                AllMessages::RuntimeApi(Request(_parent_hash, AvailabilityCores(tx))) => {
+                    tx.send(Ok(mock_availability_cores())).unwrap()
+                }
+                AllMessages::CandidateBacking(CandidateBackingMessage::GetBackedCandidates(
+                    _,
+                    _,
+                    sender,
                 )) => {
                     let _ = sender.send(expected.clone());
                 }
@@ -378,30 +394,10 @@ mod select_candidates {
     }
 
     #[test]
-    fn handles_overseer_failure() {
-        let overseer = |rx: mpsc::Receiver<FromJobCommand>| async move {
-            // drop the receiver so it closes and the sender can't send, then just sleep long enough that
-            // this is almost certainly not the first of the two futures to complete
-            std::mem::drop(rx);
-            Delay::new(std::time::Duration::from_secs(1)).await;
-        };
-
-        let test = |mut tx: mpsc::Sender<FromJobCommand>| async move {
-            // wait so that the overseer can drop the rx before we attempt to send
-            Delay::new(std::time::Duration::from_millis(50)).await;
-            let result = select_candidates(&[], &[], &[], Default::default(), &mut tx).await;
-            println!("{:?}", result);
-            assert!(std::matches!(result, Err(Error::ChainApiMessageSend(_))));
-        };
-
-        test_harness(overseer, test);
-    }
-
-    #[test]
     fn can_succeed() {
         test_harness(
             |r| mock_overseer(r, Vec::new()),
-            |mut tx: mpsc::Sender<FromJobCommand>| async move {
+            |mut tx: TestSubsystemSender| async move {
                 select_candidates(&[], &[], &[], Default::default(), &mut tx)
                     .await
                     .unwrap();
@@ -473,7 +469,7 @@ mod select_candidates {
 
         test_harness(
             |r| mock_overseer(r, expected_backed),
-            |mut tx: mpsc::Sender<FromJobCommand>| async move {
+            |mut tx: TestSubsystemSender| async move {
                 let result =
                     select_candidates(&mock_cores, &[], &candidates, Default::default(), &mut tx)
                         .await
@@ -539,7 +535,7 @@ mod select_candidates {
 
         test_harness(
             |r| mock_overseer(r, expected_backed),
-            |mut tx: mpsc::Sender<FromJobCommand>| async move {
+            |mut tx: TestSubsystemSender| async move {
                 let result =
                     select_candidates(&mock_cores, &[], &candidates, Default::default(), &mut tx)
                         .await

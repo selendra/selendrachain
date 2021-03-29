@@ -29,15 +29,16 @@ use indracore_node_subsystem::{
     errors::{ChainApiError, RuntimeApiError},
     jaeger,
     messages::{
-        AllMessages, CandidateBackingMessage, ChainApiMessage, ProvisionableData,
-        ProvisionerInherentData, ProvisionerMessage,
+        CandidateBackingMessage, ChainApiMessage, ProvisionableData, ProvisionerInherentData,
+        ProvisionerMessage,
     },
-    PerLeafSpan,
+    PerLeafSpan, SubsystemSender,
 };
 use indracore_node_subsystem_util::{
-    self as util, delegated_subsystem,
+    self as util,
     metrics::{self, prometheus},
-    request_availability_cores, request_persisted_validation_data, FromJobCommand, JobTrait,
+    request_availability_cores, request_persisted_validation_data, JobSender, JobSubsystem,
+    JobTrait,
 };
 use indracore_primitives::v1::{
     BackedCandidate, BlockNumber, CandidateReceipt, CoreState, Hash, OccupiedCoreAssumption,
@@ -83,9 +84,9 @@ impl InherentAfter {
     }
 }
 
-struct ProvisioningJob {
+/// A per-relay-parent job for the provisioning subsystem.
+pub struct ProvisioningJob {
     relay_parent: Hash,
-    sender: mpsc::Sender<FromJobCommand>,
     receiver: mpsc::Receiver<ProvisionerMessage>,
     backed_candidates: Vec<CandidateReceipt>,
     signed_bitfields: Vec<SignedAvailabilityBitfield>,
@@ -94,8 +95,10 @@ struct ProvisioningJob {
     awaiting_inherent: Vec<oneshot::Sender<ProvisionerInherentData>>,
 }
 
+/// Errors in the provisioner.
 #[derive(Debug, Error)]
-enum Error {
+#[allow(missing_docs)]
+pub enum Error {
     #[error(transparent)]
     Util(#[from] util::Error),
 
@@ -144,33 +147,35 @@ impl JobTrait for ProvisioningJob {
     //
     // this function is in charge of creating and executing the job's main loop
     #[tracing::instrument(skip(span, _run_args, metrics, receiver, sender), fields(subsystem = LOG_TARGET))]
-    fn run(
+    fn run<S: SubsystemSender>(
         relay_parent: Hash,
         span: Arc<jaeger::Span>,
         _run_args: Self::RunArgs,
         metrics: Self::Metrics,
         receiver: mpsc::Receiver<ProvisionerMessage>,
-        sender: mpsc::Sender<FromJobCommand>,
+        mut sender: JobSender<S>,
     ) -> Pin<Box<dyn Future<Output = Result<(), Self::Error>> + Send>> {
         async move {
-            let job = ProvisioningJob::new(relay_parent, metrics, sender, receiver);
+            let job = ProvisioningJob::new(relay_parent, metrics, receiver);
 
-            job.run_loop(PerLeafSpan::new(span, "provisioner")).await
+            job.run_loop(
+                sender.subsystem_sender(),
+                PerLeafSpan::new(span, "provisioner"),
+            )
+            .await
         }
         .boxed()
     }
 }
 
 impl ProvisioningJob {
-    pub fn new(
+    fn new(
         relay_parent: Hash,
         metrics: Metrics,
-        sender: mpsc::Sender<FromJobCommand>,
         receiver: mpsc::Receiver<ProvisionerMessage>,
     ) -> Self {
         Self {
             relay_parent,
-            sender,
             receiver,
             backed_candidates: Vec::new(),
             signed_bitfields: Vec::new(),
@@ -180,7 +185,11 @@ impl ProvisioningJob {
         }
     }
 
-    async fn run_loop(mut self, span: PerLeafSpan) -> Result<(), Error> {
+    async fn run_loop(
+        mut self,
+        sender: &mut impl SubsystemSender,
+        span: PerLeafSpan,
+    ) -> Result<(), Error> {
         use ProvisionerMessage::{ProvisionableData, RequestInherentData};
         loop {
             futures::select! {
@@ -190,7 +199,7 @@ impl ProvisioningJob {
                         let _timer = self.metrics.time_request_inherent_data();
 
                         if self.inherent_after.is_ready() {
-                            self.send_inherent_data(vec![return_sender]).await;
+                            self.send_inherent_data(sender, vec![return_sender]).await;
                         } else {
                             self.awaiting_inherent.push(return_sender);
                         }
@@ -207,7 +216,7 @@ impl ProvisioningJob {
                     let _span = span.child("send-inherent-data");
                     let return_senders = std::mem::take(&mut self.awaiting_inherent);
                     if !return_senders.is_empty() {
-                        self.send_inherent_data(return_senders).await;
+                        self.send_inherent_data(sender, return_senders).await;
                     }
                 }
             }
@@ -218,6 +227,7 @@ impl ProvisioningJob {
 
     async fn send_inherent_data(
         &mut self,
+        sender: &mut impl SubsystemSender,
         return_senders: Vec<oneshot::Sender<ProvisionerInherentData>>,
     ) {
         if let Err(err) = send_inherent_data(
@@ -225,7 +235,7 @@ impl ProvisioningJob {
             &self.signed_bitfields,
             &self.backed_candidates,
             return_senders,
-            &mut self.sender,
+            sender,
         )
         .await
         {
@@ -282,10 +292,10 @@ async fn send_inherent_data(
     bitfields: &[SignedAvailabilityBitfield],
     candidates: &[CandidateReceipt],
     return_senders: Vec<oneshot::Sender<ProvisionerInherentData>>,
-    from_job: &mut mpsc::Sender<FromJobCommand>,
+    from_job: &mut impl SubsystemSender,
 ) -> Result<(), Error> {
     let availability_cores = request_availability_cores(relay_parent, from_job)
-        .await?
+        .await
         .await
         .map_err(|err| Error::CanceledAvailabilityCores(err))??;
 
@@ -359,7 +369,7 @@ async fn select_candidates(
     bitfields: &[SignedAvailabilityBitfield],
     candidates: &[CandidateReceipt],
     relay_parent: Hash,
-    sender: &mut mpsc::Sender<FromJobCommand>,
+    sender: &mut impl SubsystemSender,
 ) -> Result<Vec<BackedCandidate>, Error> {
     let block_number = get_block_number_under_construction(relay_parent, sender).await?;
 
@@ -397,7 +407,7 @@ async fn select_candidates(
             assumption,
             sender,
         )
-        .await?
+        .await
         .await
         .map_err(|err| Error::CanceledPersistedValidationData(err))??
         {
@@ -429,16 +439,15 @@ async fn select_candidates(
     // now get the backed candidates corresponding to these candidate receipts
     let (tx, rx) = oneshot::channel();
     sender
-        .send(
-            AllMessages::CandidateBacking(CandidateBackingMessage::GetBackedCandidates(
+        .send_message(
+            CandidateBackingMessage::GetBackedCandidates(
                 relay_parent,
                 selected_candidates.clone(),
                 tx,
-            ))
+            )
             .into(),
         )
-        .await
-        .map_err(|err| Error::GetBackedCandidatesSend(err))?;
+        .await;
     let mut candidates = rx
         .await
         .map_err(|err| Error::CanceledBackedCandidates(err))?;
@@ -493,13 +502,13 @@ async fn select_candidates(
 #[tracing::instrument(level = "trace", skip(sender), fields(subsystem = LOG_TARGET))]
 async fn get_block_number_under_construction(
     relay_parent: Hash,
-    sender: &mut mpsc::Sender<FromJobCommand>,
+    sender: &mut impl SubsystemSender,
 ) -> Result<BlockNumber, Error> {
     let (tx, rx) = oneshot::channel();
     sender
-        .send(AllMessages::from(ChainApiMessage::BlockNumber(relay_parent, tx)).into())
-        .await
-        .map_err(|e| Error::ChainApiMessageSend(e))?;
+        .send_message(ChainApiMessage::BlockNumber(relay_parent, tx).into())
+        .await;
+
     match rx.await.map_err(|err| Error::CanceledBlockNumber(err))? {
         Ok(Some(n)) => Ok(n + 1),
         Ok(None) => Ok(0),
@@ -623,7 +632,8 @@ impl metrics::Metrics for Metrics {
     }
 }
 
-delegated_subsystem!(ProvisioningJob((), Metrics) <- ProvisionerMessage as ProvisioningSubsystem);
+/// The provisioning subsystem.
+pub type ProvisioningSubsystem<Spawner> = JobSubsystem<ProvisioningJob, Spawner>;
 
 #[cfg(test)]
 mod tests;
