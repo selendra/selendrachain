@@ -28,7 +28,9 @@ use futures::{
     Future, FutureExt, SinkExt, StreamExt,
 };
 
-use indracore_node_primitives::{SignedFullStatement, Statement, ValidationResult};
+use indracore_node_primitives::{
+    AvailableData, PoV, SignedFullStatement, Statement, ValidationResult,
+};
 use indracore_node_subsystem_util::{
     self as util,
     metrics::{self, prometheus},
@@ -36,10 +38,9 @@ use indracore_node_subsystem_util::{
     request_validators, FromJobCommand, JobSender, Validator,
 };
 use indracore_primitives::v1::{
-    AvailableData, BackedCandidate, CandidateCommitments, CandidateDescriptor, CandidateHash,
-    CandidateReceipt, CollatorId, CommittedCandidateReceipt, CoreIndex, CoreState, Hash,
-    Id as ParaId, PoV, SigningContext, ValidatorId, ValidatorIndex, ValidatorSignature,
-    ValidityAttestation,
+    BackedCandidate, CandidateCommitments, CandidateDescriptor, CandidateHash, CandidateReceipt,
+    CollatorId, CommittedCandidateReceipt, CoreIndex, CoreState, Hash, Id as ParaId,
+    SigningContext, ValidatorId, ValidatorIndex, ValidatorSignature, ValidityAttestation,
 };
 use indracore_subsystem::{
     jaeger,
@@ -1415,9 +1416,9 @@ mod tests {
     use super::*;
     use assert_matches::assert_matches;
     use futures::{future, Future};
-    use indracore_node_primitives::InvalidCandidate;
+    use indracore_node_primitives::{BlockData, InvalidCandidate};
     use indracore_primitives::v1::{
-        BlockData, GroupRotationInfo, HeadData, PersistedValidationData, ScheduledCore,
+        GroupRotationInfo, HeadData, PersistedValidationData, ScheduledCore,
     };
     use indracore_subsystem::{
         messages::{RuntimeApiMessage, RuntimeApiRequest},
@@ -3005,7 +3006,7 @@ mod tests {
                 .await;
 
             // Not deterministic which message comes first:
-            for _ in 0..2 {
+            for _ in 0u32..2 {
                 match virtual_overseer.recv().await {
                     AllMessages::Provisioner(ProvisionerMessage::ProvisionableData(
                         _,

@@ -15,6 +15,7 @@ indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subs
 indracore-node-network-protocol = { path = "../../network/protocol" }
 indracore-node-subsystem-util = { path = "../../subsystem-util" }
 indracore-node-core-runtime-api = { path = "../../core/runtime-api" }
+indracore-node-primitives = { path = "../../primitives" }
 
 sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "master" }
 sp-core = { git = "https://github.com/selendra/substrate", branch = "master", features = ["std"]  }

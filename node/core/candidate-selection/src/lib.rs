@@ -23,7 +23,7 @@ use futures::{
     channel::{mpsc, oneshot},
     prelude::*,
 };
-use indracore_node_primitives::SignedFullStatement;
+use indracore_node_primitives::{PoV, SignedFullStatement};
 use indracore_node_subsystem::{
     errors::ChainApiError,
     jaeger,
@@ -39,7 +39,7 @@ use indracore_node_subsystem_util::{
     request_from_runtime, request_validator_groups, JobSender, JobSubsystem, JobTrait, Validator,
 };
 use indracore_primitives::v1::{
-    BlockNumber, CandidateReceipt, CollatorId, CoreIndex, CoreState, Hash, Id as ParaId, PoV,
+    BlockNumber, CandidateReceipt, CollatorId, CoreIndex, CoreState, Hash, Id as ParaId,
 };
 use sp_keystore::SyncCryptoStorePtr;
 use std::{pin::Pin, sync::Arc};
@@ -499,8 +499,8 @@ pub type CandidateSelectionSubsystem<Spawner> = JobSubsystem<CandidateSelectionJ
 mod tests {
     use super::*;
     use futures::lock::Mutex;
+    use indracore_node_primitives::BlockData;
     use indracore_node_subsystem::messages::AllMessages;
-    use indracore_primitives::v1::BlockData;
     use sp_core::crypto::Public;
     use std::sync::Arc;
 

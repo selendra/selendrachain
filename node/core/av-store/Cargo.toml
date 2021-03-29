@@ -19,6 +19,7 @@ indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subs
 indracore-node-subsystem-util = { path = "../../subsystem-util" }
 indracore-overseer = { path = "../../overseer" }
 indracore-primitives = { path = "../../../primitives" }
+indracore-node-primitives = { path = "../../primitives" }
 
 sc-service = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
 

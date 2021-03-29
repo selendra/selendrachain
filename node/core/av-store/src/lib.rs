@@ -32,10 +32,10 @@ use kvdb_rocksdb::{Database, DatabaseConfig};
 use parity_scale_codec::{Decode, Encode, Error as CodecError, Input};
 
 use bitvec::{order::Lsb0 as BitOrderLsb0, vec::BitVec};
+use indracore_node_primitives::{AvailableData, ErasureChunk};
 use indracore_node_subsystem_util::metrics::{self, prometheus};
 use indracore_primitives::v1::{
-    AvailableData, BlockNumber, CandidateEvent, CandidateHash, CandidateReceipt, ErasureChunk,
-    Hash, ValidatorIndex,
+    BlockNumber, CandidateEvent, CandidateHash, CandidateReceipt, Hash, ValidatorIndex,
 };
 use indracore_subsystem::messages::{
     AvailabilityStoreMessage, ChainApiMessage, RuntimeApiMessage, RuntimeApiRequest,

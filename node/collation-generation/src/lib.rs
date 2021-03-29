@@ -19,7 +19,7 @@
 #![deny(missing_docs)]
 
 use futures::{channel::mpsc, future::FutureExt, join, select, sink::SinkExt, stream::StreamExt};
-use indracore_node_primitives::CollationGenerationConfig;
+use indracore_node_primitives::{AvailableData, CollationGenerationConfig, PoV};
 use indracore_node_subsystem::{
     messages::{AllMessages, CollationGenerationMessage, CollatorProtocolMessage},
     FromOverseer, SpawnedSubsystem, Subsystem, SubsystemContext, SubsystemResult,
@@ -29,8 +29,8 @@ use indracore_node_subsystem_util::{
     request_availability_cores_ctx, request_persisted_validation_data_ctx, request_validators_ctx,
 };
 use indracore_primitives::v1::{
-    collator_signature_payload, AvailableData, CandidateCommitments, CandidateDescriptor,
-    CandidateReceipt, CoreState, Hash, OccupiedCoreAssumption, PersistedValidationData, PoV,
+    collator_signature_payload, CandidateCommitments, CandidateDescriptor, CandidateReceipt,
+    CoreState, Hash, OccupiedCoreAssumption, PersistedValidationData,
 };
 use sp_core::crypto::Pair;
 use std::sync::Arc;
@@ -480,7 +480,7 @@ mod tests {
             task::{Context as FuturesContext, Poll},
             Future,
         };
-        use indracore_node_primitives::{Collation, CollationResult};
+        use indracore_node_primitives::{BlockData, Collation, CollationResult, PoV};
         use indracore_node_subsystem::messages::{
             AllMessages, RuntimeApiMessage, RuntimeApiRequest,
         };
@@ -488,8 +488,7 @@ mod tests {
             subsystem_test_harness, TestSubsystemContextHandle,
         };
         use indracore_primitives::v1::{
-            BlockData, BlockNumber, CollatorPair, Id as ParaId, PersistedValidationData, PoV,
-            ScheduledCore,
+            BlockNumber, CollatorPair, Id as ParaId, PersistedValidationData, ScheduledCore,
         };
         use std::pin::Pin;
 

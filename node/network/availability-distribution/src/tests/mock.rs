@@ -23,10 +23,11 @@ use sp_application_crypto::AppKey;
 use sp_keyring::Sr25519Keyring;
 
 use indracore_erasure_coding::{branches, obtain_chunks_v1 as obtain_chunks};
+use indracore_node_primitives::{AvailableData, BlockData, ErasureChunk, PoV};
 use indracore_primitives::v1::{
-    AvailableData, BlockData, CandidateCommitments, CandidateDescriptor, CandidateHash,
-    CommittedCandidateReceipt, ErasureChunk, GroupIndex, Hash, HeadData, Id as ParaId,
-    OccupiedCore, PersistedValidationData, PoV, SessionInfo, ValidatorId, ValidatorIndex,
+    CandidateCommitments, CandidateDescriptor, CandidateHash, CommittedCandidateReceipt,
+    GroupIndex, Hash, HeadData, Id as ParaId, OccupiedCore, PersistedValidationData, SessionInfo,
+    ValidatorId, ValidatorIndex,
 };
 use sp_keystore::{SyncCryptoStore, SyncCryptoStorePtr};
 

@@ -24,9 +24,9 @@
 //! f is the maximum number of faulty validators in the system.
 //! The data is coded so any f+1 chunks can be used to reconstruct the full data.
 
+use indracore_node_primitives::AvailableData;
+use indracore_primitives::v0::{self, BlakeTwo256, Hash as H256, HashT};
 use parity_scale_codec::{Decode, Encode};
-use primitives::v0::{self, BlakeTwo256, Hash as H256, HashT};
-use primitives::v1;
 use sp_core::Blake2Hasher;
 use thiserror::Error;
 use trie::{
@@ -130,10 +130,7 @@ pub fn obtain_chunks_v0(
 /// Obtain erasure-coded chunks for v1 `AvailableData`, one for each validator.
 ///
 /// Works only up to 65536 validators, and `n_validators` must be non-zero.
-pub fn obtain_chunks_v1(
-    n_validators: usize,
-    data: &v1::AvailableData,
-) -> Result<Vec<Vec<u8>>, Error> {
+pub fn obtain_chunks_v1(n_validators: usize, data: &AvailableData) -> Result<Vec<Vec<u8>>, Error> {
     obtain_chunks(n_validators, data)
 }
 
@@ -180,7 +177,7 @@ where
 /// are provided, recovery is not possible.
 ///
 /// Works only up to 65536 validators, and `n_validators` must be non-zero.
-pub fn reconstruct_v1<'a, I: 'a>(n_validators: usize, chunks: I) -> Result<v1::AvailableData, Error>
+pub fn reconstruct_v1<'a, I: 'a>(n_validators: usize, chunks: I) -> Result<AvailableData, Error>
 where
     I: IntoIterator<Item = (&'a [u8], usize)>,
 {
@@ -391,7 +388,7 @@ impl<'a, I: Iterator<Item = &'a [u8]>> parity_scale_codec::Input for ShardInput<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use primitives::v0::{AvailableData, BlockData, PoVBlock};
+    use indracore_primitives::v0::{AvailableData, BlockData, PoVBlock};
 
     #[test]
     fn field_order_is_right_size() {

@@ -22,8 +22,8 @@ use futures::{channel::oneshot, pending, pin_mut, select, stream, FutureExt, Str
 use futures_timer::Delay;
 use std::time::Duration;
 
+use indracore_node_primitives::{BlockData, PoV};
 use indracore_overseer::{AllSubsystems, Overseer};
-use indracore_primitives::v1::{BlockData, PoV};
 
 use indracore_subsystem::messages::{
     AllMessages, CandidateBackingMessage, CandidateValidationMessage,

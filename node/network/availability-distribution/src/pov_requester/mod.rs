@@ -32,8 +32,9 @@ use indracore_node_network_protocol::{
     },
     PeerId,
 };
+use indracore_node_primitives::PoV;
 use indracore_primitives::v1::{
-    AuthorityDiscoveryId, CandidateHash, Hash, PoV, SessionIndex, ValidatorIndex,
+    AuthorityDiscoveryId, CandidateHash, Hash, SessionIndex, ValidatorIndex,
 };
 use indracore_subsystem::jaeger;
 use indracore_subsystem::{
@@ -268,7 +269,8 @@ mod tests {
     use parity_scale_codec::Encode;
     use sp_core::testing::TaskExecutor;
 
-    use indracore_primitives::v1::{BlockData, CandidateHash, CompressedPoV, Hash, ValidatorIndex};
+    use indracore_node_primitives::{BlockData, CompressedPoV};
+    use indracore_primitives::v1::{CandidateHash, Hash, ValidatorIndex};
     use indracore_subsystem::messages::{
         AvailabilityDistributionMessage, RuntimeApiMessage, RuntimeApiRequest,
     };

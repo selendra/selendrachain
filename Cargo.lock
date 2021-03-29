@@ -2884,6 +2884,7 @@ dependencies = [
  "indracore-erasure-coding",
  "indracore-node-core-runtime-api",
  "indracore-node-network-protocol",
+ "indracore-node-primitives",
  "indracore-node-subsystem",
  "indracore-node-subsystem-test-helpers",
  "indracore-node-subsystem-util",
@@ -2914,6 +2915,7 @@ dependencies = [
  "futures-timer 3.0.2",
  "indracore-erasure-coding",
  "indracore-node-network-protocol",
+ "indracore-node-primitives",
  "indracore-node-subsystem",
  "indracore-node-subsystem-test-helpers",
  "indracore-node-subsystem-util",
@@ -2991,6 +2993,7 @@ dependencies = [
 name = "indracore-erasure-coding"
 version = "0.4.0-dev"
 dependencies = [
+ "indracore-node-primitives",
  "indracore-primitives",
  "parity-scale-codec",
  "reed-solomon-novelpoly",
@@ -3098,6 +3101,7 @@ dependencies = [
  "futures 0.3.13",
  "futures-timer 3.0.2",
  "indracore-erasure-coding",
+ "indracore-node-primitives",
  "indracore-node-subsystem",
  "indracore-node-subsystem-test-helpers",
  "indracore-node-subsystem-util",
@@ -3268,6 +3272,7 @@ name = "indracore-node-jaeger"
 version = "0.1.0"
 dependencies = [
  "async-std",
+ "indracore-node-primitives",
  "indracore-primitives",
  "lazy_static",
  "log",
@@ -3298,16 +3303,19 @@ name = "indracore-node-primitives"
 version = "0.1.0"
 dependencies = [
  "futures 0.3.13",
+ "indracore-parachain",
  "indracore-primitives",
  "indracore-statement-table",
  "parity-scale-codec",
  "schnorrkel",
+ "serde",
  "sp-application-crypto",
  "sp-consensus-babe",
  "sp-consensus-vrf",
  "sp-core",
  "sp-runtime",
  "thiserror",
+ "zstd",
 ]
 
 [[package]]
@@ -3467,7 +3475,6 @@ dependencies = [
  "sp-trie",
  "sp-version",
  "thiserror",
- "zstd",
 ]
 
 [[package]]
@@ -3722,6 +3729,7 @@ dependencies = [
  "indracore-node-core-proposer",
  "indracore-node-core-provisioner",
  "indracore-node-core-runtime-api",
+ "indracore-node-primitives",
  "indracore-node-subsystem",
  "indracore-node-subsystem-util",
  "indracore-overseer",

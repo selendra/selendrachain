@@ -27,10 +27,9 @@ use parity_scale_codec::Encode;
 use super::*;
 
 use indracore_erasure_coding::{branches, obtain_chunks_v1 as obtain_chunks};
+use indracore_node_primitives::{BlockData, PoV};
 use indracore_node_subsystem_util::TimeoutExt;
-use indracore_primitives::v1::{
-    AuthorityDiscoveryId, BlockData, HeadData, PersistedValidationData, PoV,
-};
+use indracore_primitives::v1::{AuthorityDiscoveryId, HeadData, PersistedValidationData};
 use indracore_subsystem::{
     jaeger,
     messages::{RuntimeApiMessage, RuntimeApiRequest},

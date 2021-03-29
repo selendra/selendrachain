@@ -37,9 +37,10 @@ use indracore_node_network_protocol::{
     jaeger,
     request_response::{v1, IncomingRequest, OutgoingRequest, Requests},
 };
+use indracore_node_primitives::ErasureChunk;
 use indracore_primitives::v1::{
-    CandidateHash, CoreState, ErasureChunk, GroupIndex, Hash, Id as ParaId, ScheduledCore,
-    SessionInfo, ValidatorIndex,
+    CandidateHash, CoreState, GroupIndex, Hash, Id as ParaId, ScheduledCore, SessionInfo,
+    ValidatorIndex,
 };
 use indracore_subsystem::{
     messages::{

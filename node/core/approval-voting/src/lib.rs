@@ -25,7 +25,7 @@ use indracore_node_jaeger as jaeger;
 use indracore_node_primitives::approval::{
     ApprovalVote, DelayTranche, IndirectAssignmentCert, IndirectSignedApprovalVote,
 };
-use indracore_node_primitives::ValidationResult;
+use indracore_node_primitives::{PoV, ValidationResult};
 use indracore_node_subsystem::{
     errors::RecoveryError,
     messages::{
@@ -39,7 +39,7 @@ use indracore_node_subsystem::{
 use indracore_node_subsystem_util::metrics::{self, prometheus};
 use indracore_primitives::v1::{
     BlockNumber, CandidateDescriptor, CandidateHash, CandidateIndex, CandidateReceipt, GroupIndex,
-    Hash, PersistedValidationData, PoV, SessionIndex, SessionInfo, ValidationCode, ValidatorId,
+    Hash, PersistedValidationData, SessionIndex, SessionInfo, ValidationCode, ValidatorId,
     ValidatorIndex, ValidatorPair, ValidatorSignature,
 };
 use kvdb::KeyValueDB;

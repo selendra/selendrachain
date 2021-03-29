@@ -29,15 +29,15 @@ use indracore_node_network_protocol::{
     },
     v1 as protocol_v1, OurView, PeerId, View,
 };
-use indracore_node_primitives::{SignedFullStatement, Statement};
+use indracore_node_primitives::{CompressedPoV, PoV, SignedFullStatement, Statement};
 use indracore_node_subsystem_util::{
     metrics::{self, prometheus},
     request_availability_cores_ctx, request_validator_groups_ctx, request_validators_ctx,
     validator_discovery,
 };
 use indracore_primitives::v1::{
-    CandidateHash, CandidateReceipt, CollatorPair, CompressedPoV, CoreIndex, CoreState, Hash,
-    Id as ParaId, PoV, ValidatorId,
+    CandidateHash, CandidateReceipt, CollatorPair, CoreIndex, CoreState, Hash, Id as ParaId,
+    ValidatorId,
 };
 use indracore_subsystem::{
     jaeger,
@@ -976,10 +976,11 @@ mod tests {
     use indracore_node_network_protocol::{
         our_view, request_response::request::IncomingRequest, view,
     };
+    use indracore_node_primitives::BlockData;
     use indracore_node_subsystem_util::TimeoutExt;
     use indracore_primitives::v1::{
-        AuthorityDiscoveryId, BlockData, CandidateDescriptor, CollatorPair, GroupRotationInfo,
-        ScheduledCore, SessionIndex, SessionInfo, ValidatorIndex,
+        AuthorityDiscoveryId, CandidateDescriptor, CollatorPair, GroupRotationInfo, ScheduledCore,
+        SessionIndex, SessionInfo, ValidatorIndex,
     };
     use indracore_subsystem::{
         jaeger,

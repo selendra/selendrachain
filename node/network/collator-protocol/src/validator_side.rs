@@ -38,9 +38,9 @@ use indracore_node_network_protocol::{
     },
     v1 as protocol_v1, OurView, PeerId, UnifiedReputationChange as Rep, View,
 };
-use indracore_node_primitives::{SignedFullStatement, Statement};
+use indracore_node_primitives::{PoV, SignedFullStatement, Statement};
 use indracore_node_subsystem_util::metrics::{self, prometheus};
-use indracore_primitives::v1::{CandidateReceipt, CollatorId, Hash, Id as ParaId, PoV};
+use indracore_primitives::v1::{CandidateReceipt, CollatorId, Hash, Id as ParaId};
 use indracore_subsystem::{
     jaeger,
     messages::{
@@ -924,7 +924,8 @@ mod tests {
     use std::{iter, time::Duration};
 
     use indracore_node_network_protocol::{our_view, request_response::Requests, ObservedRole};
-    use indracore_primitives::v1::{BlockData, CollatorPair, CompressedPoV};
+    use indracore_node_primitives::{BlockData, CompressedPoV};
+    use indracore_primitives::v1::CollatorPair;
     use indracore_subsystem_testhelpers as test_helpers;
 
     const ACTIVITY_TIMEOUT: Duration = Duration::from_millis(50);

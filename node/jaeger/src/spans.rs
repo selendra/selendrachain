@@ -83,8 +83,9 @@
 //! # }
 //! ```
 
+use indracore_node_primitives::PoV;
 use indracore_primitives::v1::{
-    BlakeTwo256, CandidateHash, Hash, HashT, Id as ParaId, PoV, ValidatorIndex,
+    BlakeTwo256, CandidateHash, Hash, HashT, Id as ParaId, ValidatorIndex,
 };
 use parity_scale_codec::Encode;
 use sc_network::PeerId;

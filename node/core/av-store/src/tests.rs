@@ -19,11 +19,12 @@ use super::*;
 use assert_matches::assert_matches;
 use futures::{channel::oneshot, executor, future, Future};
 
+use indracore_node_primitives::{AvailableData, BlockData, PoV};
 use indracore_node_subsystem_test_helpers as test_helpers;
 use indracore_node_subsystem_util::TimeoutExt;
 use indracore_primitives::v1::{
-    AvailableData, BlockData, CandidateDescriptor, CandidateHash, CandidateReceipt, CoreIndex,
-    GroupIndex, HeadData, Header, Id as ParaId, PersistedValidationData, PoV, ValidatorId,
+    CandidateDescriptor, CandidateHash, CandidateReceipt, CoreIndex, GroupIndex, HeadData, Header,
+    Id as ParaId, PersistedValidationData, ValidatorId,
 };
 use indracore_subsystem::{
     errors::RuntimeApiError, jaeger, messages::AllMessages, ActivatedLeaf, ActiveLeavesUpdate,

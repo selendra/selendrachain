@@ -2985,9 +2985,9 @@ mod tests {
     use std::sync::atomic;
 
     use indracore_node_network_protocol::{PeerId, UnifiedReputationChange};
-    use indracore_node_primitives::{CollationGenerationConfig, CollationResult};
+    use indracore_node_primitives::{BlockData, CollationGenerationConfig, CollationResult, PoV};
     use indracore_node_subsystem_util::metered;
-    use indracore_primitives::v1::{BlockData, CandidateHash, CollatorPair, PoV};
+    use indracore_primitives::v1::{CandidateHash, CollatorPair};
     use indracore_subsystem::{jaeger, messages::NetworkBridgeEvent, messages::RuntimeApiRequest};
 
     use assert_matches::assert_matches;

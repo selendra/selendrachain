@@ -27,7 +27,8 @@ use sp_keyring::Sr25519Keyring;
 
 use indracore_node_network_protocol::request_response::v1;
 use indracore_node_network_protocol::request_response::Recipient;
-use indracore_primitives::v1::{BlockData, CandidateHash, PoV, ValidatorIndex};
+use indracore_node_primitives::{BlockData, PoV};
+use indracore_primitives::v1::{CandidateHash, ValidatorIndex};
 use indracore_subsystem::messages::AllMessages;
 
 use super::*;
@@ -242,7 +243,7 @@ impl TestRun {
                 let mut valid_responses = 0;
                 for req in reqs {
                     let req = match req {
-                        Requests::AvailabilityFetching(req) => req,
+                        Requests::ChunkFetching(req) => req,
                         _ => panic!("Unexpected request"),
                     };
                     let response = self
@@ -288,7 +289,7 @@ fn get_test_running_task() -> (RunningTask, mpsc::Receiver<FromFetchTask>) {
             session_index: 0,
             group_index: GroupIndex(0),
             group: Vec::new(),
-            request: AvailabilityFetchingRequest {
+            request: ChunkFetchingRequest {
                 candidate_hash: CandidateHash([43u8; 32].into()),
                 index: ValidatorIndex(0),
             },

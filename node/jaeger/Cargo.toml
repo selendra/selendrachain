@@ -14,5 +14,7 @@ parking_lot = "0.11.1"
 indracore-primitives = { path = "../../primitives" }
 sc-network = { git = "https://github.com/selendra/substrate", branch = "master" }
 sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
+indracore-node-primitives = { path = "../primitives" }
 thiserror = "1.0.23"
 log = "0.4.13"
+

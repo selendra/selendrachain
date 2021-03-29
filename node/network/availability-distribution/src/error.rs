@@ -22,8 +22,9 @@ use thiserror::Error;
 
 use futures::channel::oneshot;
 
+use indracore_node_primitives::CompressedPoVError;
 use indracore_node_subsystem_util::Error as UtilError;
-use indracore_primitives::v1::{CompressedPoVError, SessionIndex};
+use indracore_primitives::v1::SessionIndex;
 use indracore_subsystem::{errors::RuntimeApiError, SubsystemError};
 
 use crate::LOG_TARGET;

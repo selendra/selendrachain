@@ -19,9 +19,8 @@
 use futures::channel::oneshot;
 
 use indracore_node_network_protocol::request_response::{request::IncomingRequest, v1};
-use indracore_primitives::v1::{
-    AvailableData, CandidateHash, CompressedPoV, ErasureChunk, ValidatorIndex,
-};
+use indracore_node_primitives::{AvailableData, CompressedPoV, ErasureChunk};
+use indracore_primitives::v1::{CandidateHash, ValidatorIndex};
 use indracore_subsystem::{
     jaeger,
     messages::{AllMessages, AvailabilityStoreMessage},

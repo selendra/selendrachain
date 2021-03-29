@@ -23,7 +23,7 @@
 #![deny(unused_crate_dependencies, unused_results)]
 #![warn(missing_docs)]
 
-use indracore_node_primitives::{InvalidCandidate, ValidationResult};
+use indracore_node_primitives::{InvalidCandidate, PoV, ValidationResult};
 use indracore_node_subsystem_util::metrics::{self, prometheus};
 use indracore_parachain::primitives::{ValidationParams, ValidationResult as WasmValidationResult};
 use indracore_parachain::wasm_executor::{
@@ -31,7 +31,7 @@ use indracore_parachain::wasm_executor::{
 };
 use indracore_primitives::v1::{
     CandidateCommitments, CandidateDescriptor, Hash, OccupiedCoreAssumption,
-    PersistedValidationData, PoV, ValidationCode,
+    PersistedValidationData, ValidationCode,
 };
 use indracore_subsystem::errors::RuntimeApiError;
 use indracore_subsystem::{
@@ -51,7 +51,7 @@ use futures::prelude::*;
 
 use std::sync::Arc;
 
-const LOG_TARGET: &'static str = "parachain::candidate_validation";
+const LOG_TARGET: &'static str = "parachain::candidate-validation";
 
 /// The candidate validation subsystem.
 pub struct CandidateValidationSubsystem<S> {
@@ -597,8 +597,9 @@ mod tests {
     use super::*;
     use assert_matches::assert_matches;
     use futures::executor;
+    use indracore_node_primitives::BlockData;
     use indracore_node_subsystem_test_helpers as test_helpers;
-    use indracore_primitives::v1::{BlockData, HeadData, UpwardMessage};
+    use indracore_primitives::v1::{HeadData, UpwardMessage};
     use sp_core::testing::TaskExecutor;
     use sp_keyring::Sr25519Keyring;
 

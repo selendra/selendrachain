@@ -26,9 +26,9 @@ use indracore_node_network_protocol::request_response::{
     request::{OutgoingRequest, Recipient, RequestError, Requests},
     v1::{ChunkFetchingRequest, ChunkFetchingResponse},
 };
+use indracore_node_primitives::ErasureChunk;
 use indracore_primitives::v1::{
-    AuthorityDiscoveryId, BlakeTwo256, ErasureChunk, GroupIndex, Hash, HashT, OccupiedCore,
-    SessionIndex,
+    AuthorityDiscoveryId, BlakeTwo256, GroupIndex, Hash, HashT, OccupiedCore, SessionIndex,
 };
 use indracore_subsystem::messages::{
     AllMessages, AvailabilityStoreMessage, IfDisconnected, NetworkBridgeMessage,

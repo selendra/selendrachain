@@ -36,7 +36,7 @@ use std::borrow::Cow;
 use std::time::Duration;
 
 use futures::channel::mpsc;
-use indracore_primitives::v1::MAX_COMPRESSED_POV_SIZE;
+use indracore_node_primitives::MAX_COMPRESSED_POV_SIZE;
 use strum::EnumIter;
 
 pub use sc_network::config as network;
