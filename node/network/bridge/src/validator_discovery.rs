@@ -28,9 +28,9 @@ use indracore_node_network_protocol::peer_set::{PeerSet, PerPeerSet};
 use indracore_node_network_protocol::PeerId;
 use indracore_primitives::v1::{AuthorityDiscoveryId, Block, Hash};
 use sc_authority_discovery::Service as AuthorityDiscoveryService;
-use sc_network::multiaddr::{Multiaddr, Protocol};
+use sc_network::{config::parse_addr, multiaddr::Multiaddr};
 
-const LOG_TARGET: &str = "parachain::validator_discovery";
+const LOG_TARGET: &str = "parachain::validator-discovery";
 
 /// An abstraction over networking for the purposes of validator discovery service.
 #[async_trait]
@@ -162,16 +162,6 @@ fn on_revoke(
     None
 }
 
-pub(crate) fn peer_id_from_multiaddr(addr: &Multiaddr) -> Option<PeerId> {
-    addr.iter().last().and_then(|protocol| {
-        if let Protocol::P2p(multihash) = protocol {
-            PeerId::from_multihash(multihash).ok()
-        } else {
-            None
-        }
-    })
-}
-
 pub(super) struct Service<N, AD> {
     state: PerPeerSet<StatePerPeerSet>,
     // PhantomData used to make the struct generic instead of having generic methods
@@ -229,7 +219,7 @@ impl<N: Network, AD: AuthorityDiscovery> Service<N, AD> {
                 .get_addresses_by_authority_id(id.clone())
                 .await
             {
-                for peer_id in addresses.iter().filter_map(peer_id_from_multiaddr) {
+                for (peer_id, _) in addresses.into_iter().filter_map(|a| parse_addr(a).ok()) {
                     if let Some(ids) = state.connected_peers.get_mut(&peer_id) {
                         ids.insert(id.clone());
                         result.insert(id.clone(), peer_id);
@@ -418,6 +408,7 @@ mod tests {
     use super::*;
 
     use futures::stream::StreamExt as _;
+    use sc_network::multiaddr::Protocol;
 
     use sp_keyring::Sr25519Keyring;
 
