@@ -34,6 +34,7 @@ use {
 	indracore_overseer::{AllSubsystems, BlockInfo, Overseer, OverseerHandler},
 	indracore_primitives::v1::ParachainHost,
 	sc_authority_discovery::Service as AuthorityDiscoveryService,
+	sp_authority_discovery::AuthorityDiscoveryApi,
 	sp_blockchain::HeaderBackend,
 	sp_trie::PrefixedMemoryDB,
 	sc_client_api::{AuxStore, ExecutorProvider},
@@ -384,7 +385,7 @@ fn real_overseer<Spawner, RuntimeClient>(
 ) -> Result<(Overseer<Spawner>, OverseerHandler), Error>
 where
 	RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore,
-	RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block>,
+	RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
 	Spawner: 'static + SpawnNamed + Clone + Unpin,
 {
 	Overseer::new(
@@ -412,7 +413,7 @@ fn real_overseer<Spawner, RuntimeClient>(
 ) -> Result<(Overseer<Spawner>, OverseerHandler), Error>
 where
 	RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore,
-	RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block>,
+	RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
 	Spawner: 'static + SpawnNamed + Clone + Unpin,
 {
 	use indracore_node_subsystem_util::metrics::Metrics;
@@ -516,7 +517,10 @@ where
 			keystore.clone(),
 			Metrics::register(registry)?,
 		)?,
-		gossip_support: GossipSupportSubsystem::new(),
+		gossip_support: GossipSupportSubsystem::new(
+			keystore.clone(),
+			runtime_client.clone(),
+		),
 	};
 
 	Overseer::new(
