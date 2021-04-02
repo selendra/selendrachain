@@ -12,11 +12,11 @@ thiserror = "1.0.22"
 serde = { version = "1.0.123", features = ["derive"] }
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
 
-runtime_primitives = { package = "sp-runtime", git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
-sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "master" }
-sp-consensus-vrf = { git = "https://github.com/selendra/substrate", branch = "master" }
-sp-consensus-babe = { git = "https://github.com/selendra/substrate", branch = "master" }
+runtime_primitives = { package = "sp-runtime", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-consensus-vrf = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 indracore-primitives = { path = "../../primitives" }
 indracore-statement-table = { path = "../statement-table" }

@@ -24,18 +24,18 @@ futures = "0.3.12"
 service = { package = "indracore-service", path = "../node", default-features = false, optional = true }
 indracore-parachain = { path = "../parachains/parachain", optional = true }
 
-sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
-frame-benchmarking-cli = { git = "https://github.com/selendra/substrate", branch = "master", optional = true }
-try-runtime-cli = { git = "https://github.com/selendra/substrate", branch = "master", optional = true }
-sc-cli = { git = "https://github.com/selendra/substrate", branch = "master", optional = true }
-sc-service = { git = "https://github.com/selendra/substrate", branch = "master", optional = true }
-browser-utils = { package = "substrate-browser-utils", git = "https://github.com/selendra/substrate", branch = "master", optional = true }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
+frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
+try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
+browser-utils = { package = "substrate-browser-utils", git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
 
 # this crate is used only to enable `trie-memory-tracker` feature
-sp-trie = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 
 [build-dependencies]
-substrate-build-script-utils = { git = "https://github.com/selendra/substrate", branch = "master" }
+substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 [features]
 default = [ "wasmtime", "db", "cli", "full-node", "trie-memory-tracker", "indracore-parachain" ]

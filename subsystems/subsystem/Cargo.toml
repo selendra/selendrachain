@@ -28,9 +28,9 @@ indracore-statement-table = { path = "../statement-table" }
 indracore-node-jaeger = { path = "../jaeger" }
 indracore-procmacro-subsystem-dispatch-gen = { path = "dispatch-gen" }
 
-sc-network = { git = "https://github.com/selendra/substrate", branch = "master" }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
-substrate-prometheus-endpoint = { git = "https://github.com/selendra/substrate", branch = "master" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 [dev-dependencies]
 assert_matches = "1.4.0"

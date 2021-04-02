@@ -13,7 +13,7 @@ thiserror = "1.0.23"
 indracore-primitives = { path = "../../../primitives" }
 indracore-node-subsystem = { path = "../../subsystem" }
 indracore-node-subsystem-util = { path = "../../subsystem-util" }
-sp-keystore = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 [dev-dependencies]
 indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
