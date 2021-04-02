@@ -21,10 +21,6 @@
 pub mod auctions;
 pub mod crowdloan;
 pub mod impls;
-#[cfg(test)]
-mod integration_tests;
-#[cfg(test)]
-mod mock;
 pub mod paras_registrar;
 pub mod paras_sudo_wrapper;
 pub mod purchase;
@@ -32,6 +28,12 @@ pub mod slot_range;
 pub mod slots;
 pub mod traits;
 pub mod xcm_sender;
+pub mod mmr;
+
+#[cfg(test)]
+mod integration_tests;
+#[cfg(test)]
+mod mock;
 
 pub use frame_support::weights::constants::{
     BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight,

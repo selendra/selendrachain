@@ -69,6 +69,8 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
+use beefy_primitives::ecdsa::AuthorityId as BeefyId;
+use pallet_mmr_primitives as mmr;
 
 pub use pallet_balances::Call as BalancesCall;
 #[cfg(feature = "std")]
@@ -1324,6 +1326,38 @@ sp_api::impl_runtime_apis! {
         }
 
     }
+
+    impl beefy_primitives::BeefyApi<Block, BeefyId> for Runtime {
+		fn validator_set() -> beefy_primitives::ValidatorSet<BeefyId> {
+			// dummy implementation due to lack of BEEFY pallet.
+			beefy_primitives::ValidatorSet { validators: Vec::new(), id: 0 }
+		}
+	}
+
+	impl mmr::MmrApi<Block, Hash> for Runtime {
+		fn generate_proof(_leaf_index: u64)
+			-> Result<(mmr::EncodableOpaqueLeaf, mmr::Proof<Hash>), mmr::Error>
+		{
+			// dummy implementation due to lack of MMR pallet.
+			Err(mmr::Error::GenerateProof)
+		}
+
+		fn verify_proof(_leaf: mmr::EncodableOpaqueLeaf, _proof: mmr::Proof<Hash>)
+			-> Result<(), mmr::Error>
+		{
+			// dummy implementation due to lack of MMR pallet.
+			Err(mmr::Error::Verify)
+		}
+
+		fn verify_proof_stateless(
+			_root: Hash,
+			_leaf: mmr::EncodableOpaqueLeaf,
+			_proof: mmr::Proof<Hash>
+		) -> Result<(), mmr::Error> {
+			// dummy implementation due to lack of MMR pallet.
+			Err(mmr::Error::Verify)
+		}
+	}
 
     impl fg_primitives::GrandpaApi<Block> for Runtime {
         fn grandpa_authorities() -> Vec<(GrandpaId, u64)> {

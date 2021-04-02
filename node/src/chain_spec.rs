@@ -22,6 +22,7 @@ use indracore::constants::currency::SELS;
 use indracore_primitives::v1::{AccountId, AccountPublic, AssignmentId, ValidatorId};
 use indracore_runtime as indracore;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
+use beefy_primitives::ecdsa::AuthorityId as BeefyId;
 use pallet_staking::Forcing;
 use sc_chain_spec::{ChainSpecExtension, ChainType};
 use serde::{Deserialize, Serialize};
@@ -207,27 +208,47 @@ where
 
 /// Helper function to generate stash, controller and session key from seed
 pub fn get_authority_keys_from_seed(
-    seed: &str,
+	seed: &str,
 ) -> (
-    AccountId,
-    AccountId,
-    BabeId,
-    GrandpaId,
-    ImOnlineId,
-    ValidatorId,
-    AssignmentId,
-    AuthorityDiscoveryId,
+	AccountId,
+	AccountId,
+	BabeId,
+	GrandpaId,
+	ImOnlineId,
+	ValidatorId,
+	AssignmentId,
+	AuthorityDiscoveryId,
+	BeefyId,
 ) {
-    (
-        get_account_id_from_seed::<sr25519::Public>(&format!("{}//stash", seed)),
-        get_account_id_from_seed::<sr25519::Public>(seed),
-        get_from_seed::<BabeId>(seed),
-        get_from_seed::<GrandpaId>(seed),
-        get_from_seed::<ImOnlineId>(seed),
-        get_from_seed::<ValidatorId>(seed),
-        get_from_seed::<AssignmentId>(seed),
-        get_from_seed::<AuthorityDiscoveryId>(seed),
-    )
+	let keys = get_authority_keys_from_seed_no_beefy(seed);
+	(
+		keys.0, keys.1, keys.2, keys.3, keys.4, keys.5, keys.6, keys.7, get_from_seed::<BeefyId>(seed)
+	)
+}
+
+/// Helper function to generate stash, controller and session key from seed
+pub fn get_authority_keys_from_seed_no_beefy(
+	seed: &str,
+) -> (
+	AccountId,
+	AccountId,
+	BabeId,
+	GrandpaId,
+	ImOnlineId,
+	ValidatorId,
+	AssignmentId,
+	AuthorityDiscoveryId,
+) {
+	(
+		get_account_id_from_seed::<sr25519::Public>(&format!("{}//stash", seed)),
+		get_account_id_from_seed::<sr25519::Public>(seed),
+		get_from_seed::<BabeId>(seed),
+		get_from_seed::<GrandpaId>(seed),
+		get_from_seed::<ImOnlineId>(seed),
+		get_from_seed::<ValidatorId>(seed),
+		get_from_seed::<AssignmentId>(seed),
+		get_from_seed::<AuthorityDiscoveryId>(seed),
+	)
 }
 
 fn testnet_accounts() -> Vec<AccountId> {
@@ -351,7 +372,7 @@ pub fn indracore_testnet_genesis(
 fn indracore_development_config_genesis(wasm_binary: &[u8]) -> indracore::GenesisConfig {
     indracore_testnet_genesis(
         wasm_binary,
-        vec![get_authority_keys_from_seed("Alice")],
+        vec![get_authority_keys_from_seed_no_beefy("Alice")],
         get_account_id_from_seed::<sr25519::Public>("Alice"),
         None,
     )
@@ -386,8 +407,8 @@ fn indracore_local_testnet_genesis(wasm_binary: &[u8]) -> indracore::GenesisConf
     indracore_testnet_genesis(
         wasm_binary,
         vec![
-            get_authority_keys_from_seed("Alice"),
-            get_authority_keys_from_seed("Bob"),
+            get_authority_keys_from_seed_no_beefy("Alice"),
+            get_authority_keys_from_seed_no_beefy("Bob"),
         ],
         get_account_id_from_seed::<sr25519::Public>("Alice"),
         None,

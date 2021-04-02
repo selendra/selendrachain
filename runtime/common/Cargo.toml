@@ -8,12 +8,12 @@ edition = "2018"
 impl-trait-for-tuples = "0.2.0"
 bitvec = { version = "0.20.1", default-features = false, features = ["alloc"] }
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
-log = { version = "0.4.13", optional = true }
+log = { version = "0.4.13", default-features = false }
 rustc-hex = { version = "2.1.0", default-features = false }
 serde = { version = "1.0.123", default-features = false }
 serde_derive = { version = "1.0.117", optional = true }
 static_assertions = "1.1.0"
-libsecp256k1 = { version = "0.3.5", default-features = false, optional = true }
+libsecp256k1 = { version = "0.3.5", default-features = false }
 
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 inherents = { package = "sp-inherents", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
@@ -37,10 +37,14 @@ pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", 
 pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false, optional = true }
 pallet-babe = { git = "https://github.com/paritytech/substrate", branch = "master", default-features=false, optional = true }
+pallet-beefy = { git = "https://github.com/paritytech/grandpa-bridge-gadget", branch = "master", default-features = false }
+pallet-mmr = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 
 primitives = { package = "indracore-primitives", path = "../../primitives", default-features = false }
 runtime-parachains = { package = "indracore-runtime-parachains", path = "../../parachains/runtime-parachains", default-features = false }
 xcm = { path = "../../parachains/xcm", default-features = false }
+
+beefy-primitives = { git = "https://github.com/paritytech/grandpa-bridge-gadget", branch = "master", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.1"
@@ -62,8 +66,9 @@ default = ["std"]
 no_std = []
 std = [
 	"bitvec/std",
+	"libsecp256k1/std",
 	"parity-scale-codec/std",
-	"log",
+	"log/std",
 	"rustc-hex/std",
 	"serde_derive",
 	"serde/std",
@@ -84,8 +89,11 @@ std = [
 	"frame-system/std",
 	"pallet-timestamp/std",
 	"pallet-vesting/std",
+	"pallet-beefy/std",
+	"pallet-mmr/std",
 	"pallet-transaction-payment/std",
 	"runtime-parachains/std",
+	"beefy-primitives/std",
 	"xcm/std",
 ]
 runtime-benchmarks = [

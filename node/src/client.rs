@@ -30,6 +30,7 @@ use sp_runtime::{
 };
 use sp_storage::{ChildInfo, PrefixedStorageKey, StorageData, StorageKey};
 use std::sync::Arc;
+use beefy_primitives::ecdsa::AuthorityId as BeefyId;
 
 /// A set of APIs that indracore-like runtimes must implement.
 pub trait RuntimeApiCollection:
@@ -40,12 +41,14 @@ pub trait RuntimeApiCollection:
     + ParachainHost<Block>
     + sp_block_builder::BlockBuilder<Block>
     + frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
+    + pallet_mmr_primitives::MmrApi<Block, <Block as BlockT>::Hash>
     + pallet_contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber>
     + pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
     + sp_api::Metadata<Block>
     + sp_offchain::OffchainWorkerApi<Block>
     + sp_session::SessionKeys<Block>
     + sp_authority_discovery::AuthorityDiscoveryApi<Block>
+    + beefy_primitives::BeefyApi<Block, BeefyId>
 where
     <Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
@@ -61,11 +64,13 @@ where
         + sp_block_builder::BlockBuilder<Block>
         + frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
         + pallet_contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber>
+        + pallet_mmr_primitives::MmrApi<Block, <Block as BlockT>::Hash>
         + pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
         + sp_api::Metadata<Block>
         + sp_offchain::OffchainWorkerApi<Block>
         + sp_session::SessionKeys<Block>
-        + sp_authority_discovery::AuthorityDiscoveryApi<Block>,
+        + sp_authority_discovery::AuthorityDiscoveryApi<Block>
+		+ beefy_primitives::BeefyApi<Block, BeefyId>,
     <Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
 }

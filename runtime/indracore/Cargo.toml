@@ -17,7 +17,6 @@ smallvec = "1.6.1"
 
 authority-discovery-primitives = { package = "sp-authority-discovery", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 babe-primitives = { package = "sp-consensus-babe", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-# beefy-primitives = { git = "https://github.com/paritytech/grandpa-bridge-gadget", branch = "master", default-features = false }
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 inherents = { package = "sp-inherents", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 offchain-primitives = { package = "sp-offchain", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
@@ -71,6 +70,7 @@ pallet-contracts = { git = "https://github.com/paritytech/substrate", branch = "
 pallet-contracts-primitives = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 pallet-contracts-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 pallet-recovery = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+pallet-mmr-primitives = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false, optional = true }
 frame-try-runtime = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false, optional = true }
@@ -81,6 +81,8 @@ hex-literal = { version = "0.3.1", optional = true }
 
 runtime-common = { package = "indracore-runtime-common", path = "../common", default-features = false }
 primitives = { package = "indracore-primitives", path = "../../primitives", default-features = false }
+
+beefy-primitives = { git = "https://github.com/paritytech/grandpa-bridge-gadget", branch = "master", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.1"
@@ -160,6 +162,8 @@ std = [
 	"pallet-contracts-rpc-runtime-api/std",
 	"pallet-recovery/std",
 	"sp-npos-elections/std",
+	"beefy-primitives/std",
+	"pallet-mmr-primitives/std",
 ]
 runtime-benchmarks = [
 	"runtime-common/runtime-benchmarks",
