@@ -1,0 +1,16 @@
+[package]
+name = "xcm"
+version = "0.2.0"
+authors = ["Selendra <info@selendra.org>"]
+description = "The basic XCM datastructures."
+edition = "2018"
+
+[dependencies]
+parity-scale-codec = { version = "2.0.0", default-features = false, features = [ "derive" ] }
+
+[features]
+default = ["std"]
+wasm-api = []
+std = [
+	"parity-scale-codec/std",
+]

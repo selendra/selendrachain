@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Indracore types shared between the runtime and the Node-side code.
+//! Polkadot types shared between the runtime and the Node-side code.
 
 #![warn(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]

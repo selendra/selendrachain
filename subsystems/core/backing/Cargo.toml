@@ -1,0 +1,30 @@
+[package]
+name = "indracore-node-core-backing"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+futures = "0.3.12"
+bitvec = { version = "0.20.1", default-features = false, features = ["alloc"] }
+tracing = "0.1.25"
+thiserror = "1.0.23"
+
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "master" }
+
+indracore-primitives = { path = "../../../primitives" }
+indracore-node-primitives = { path = "../../primitives" }
+indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
+indracore-node-subsystem-util = { path = "../../subsystem-util" }
+erasure-coding = { package = "indracore-erasure-coding", path = "../../erasure-coding" }
+statement-table = { package = "indracore-statement-table", path = "../../statement-table" }
+
+[dev-dependencies]
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-keyring = { git = "https://github.com/selendra/substrate", branch = "master" }
+sc-keystore = { git = "https://github.com/selendra/substrate", branch = "master" }
+sp-tracing = { git = "https://github.com/selendra/substrate", branch = "master" }
+futures = { version = "0.3.12", features = ["thread-pool"] }
+assert_matches = "1.4.0"
+indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }

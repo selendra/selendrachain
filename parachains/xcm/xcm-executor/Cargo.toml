@@ -1,0 +1,34 @@
+[package]
+name = "xcm-executor"
+version = "0.2.0"
+authors = ["Selendra <info@selendra.org>"]
+description = "An abstract and configurable XCM message executor."
+edition = "2018"
+
+[dependencies]
+impl-trait-for-tuples = "0.2.0"
+log = { version = "0.4.14", default-features = false }
+parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
+
+frame-support = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
+sp-std = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
+sp-io = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
+sp-arithmetic = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
+sp-runtime = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
+
+xcm = { path = "..", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+	"parity-scale-codec/std",
+	"xcm/std",
+	"sp-std/std",
+	"sp-io/std",
+	"sp-arithmetic/std",
+	"sp-core/std",
+	"sp-runtime/std",
+	"frame-support/std",
+	"log/std",
+]

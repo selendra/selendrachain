@@ -13,6 +13,7 @@ rustc-hex = { version = "2.1.0", default-features = false }
 serde = { version = "1.0.123", default-features = false }
 serde_derive = { version = "1.0.117", optional = true }
 static_assertions = "1.1.0"
+libsecp256k1 = { version = "0.3.5", default-features = false, optional = true }
 
 sp-api = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
 inherents = { package = "sp-inherents", git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
@@ -38,10 +39,8 @@ frame-benchmarking = { git = "https://github.com/selendra/substrate", branch = "
 pallet-babe = { git = "https://github.com/selendra/substrate", branch = "master", default-features=false, optional = true }
 
 primitives = { package = "indracore-primitives", path = "../../primitives", default-features = false }
-libsecp256k1 = { version = "0.3.5", default-features = false, optional = true }
-runtime-parachains = { package = "indracore-runtime-parachains", path = "../parachains", default-features = false }
-
-xcm = { path = "../../xcm", default-features = false }
+runtime-parachains = { package = "indracore-runtime-parachains", path = "../../parachains/runtime-parachains", default-features = false }
+xcm = { path = "../../parachains/xcm", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.1"

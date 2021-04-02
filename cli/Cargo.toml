@@ -1,6 +1,6 @@
 [package]
 name = "indracore-cli"
-version = "0.4.0-dev"
+version = "0.4.0"
 authors = ["Selendra <info@selendra.org>"]
 description = "Indracore Relay-chain Client Node"
 edition = "2018"
@@ -21,11 +21,10 @@ wasm-bindgen = { version = "0.2.70", optional = true }
 wasm-bindgen-futures = { version = "0.4.19", optional = true }
 futures = "0.3.12"
 
-service = { package = "indracore-service", path = "../node/service", default-features = false, optional = true }
-indracore-parachain = { path = "../parachain", optional = true }
+service = { package = "indracore-service", path = "../node", default-features = false, optional = true }
+indracore-parachain = { path = "../parachains/parachain", optional = true }
 
 sp-core = { git = "https://github.com/selendra/substrate", branch = "master" }
-
 frame-benchmarking-cli = { git = "https://github.com/selendra/substrate", branch = "master", optional = true }
 try-runtime-cli = { git = "https://github.com/selendra/substrate", branch = "master", optional = true }
 sc-cli = { git = "https://github.com/selendra/substrate", branch = "master", optional = true }
@@ -33,7 +32,6 @@ sc-service = { git = "https://github.com/selendra/substrate", branch = "master",
 browser-utils = { package = "substrate-browser-utils", git = "https://github.com/selendra/substrate", branch = "master", optional = true }
 
 # this crate is used only to enable `trie-memory-tracker` feature
-# see https://github.com/paritytech/substrate/pull/6745
 sp-trie = { git = "https://github.com/selendra/substrate", branch = "master", default-features = false }
 
 [build-dependencies]

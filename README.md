@@ -1,9 +1,5 @@
 # Selendra Node &middot; [![GitHub license](https://img.shields.io/badge/license-GPL3%2FApache2-blue)](LICENSE-APACHE2) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
 
-<p align="center">
-  <img src="https://github.com/selendra/indracore/raw/main/docs/media/selendra.png">
-</p>
-
 Codebase for Selendra a multi-use cases blockchain super-app for the Internet 2.0
 
 A special solution for identity management, ownership of assets distribution & management, decentralized e-commerce, finance, decentralize computing and storage, and IoT applications and more.

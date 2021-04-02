@@ -1,12 +1,14 @@
 [package]
 name = "indracore-rpc"
-version = "0.4.0-dev"
+version = "0.4.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
 jsonrpc-core = "15.1.0"
+parity-scale-codec = { version = "2.0.0", default-features = false }
 indracore-primitives = { path = "../primitives" }
+
 sc-client-api = { git = "https://github.com/selendra/substrate", branch = "master" }
 sp-blockchain = { git = "https://github.com/selendra/substrate", branch = "master" }
 sp-keystore = { git = "https://github.com/selendra/substrate", branch = "master" }
@@ -26,6 +28,5 @@ sc-sync-state-rpc = { git = "https://github.com/selendra/substrate", branch = "m
 txpool-api = { package = "sp-transaction-pool", git = "https://github.com/selendra/substrate", branch = "master" }
 frame-rpc-system = { package = "substrate-frame-rpc-system", git = "https://github.com/selendra/substrate", branch = "master" }
 pallet-transaction-payment-rpc = { git = "https://github.com/selendra/substrate", branch = "master" }
-parity-scale-codec = { version = "2.0.0", default-features = false }
 sp-block-builder = { git = "https://github.com/selendra/substrate", branch = "master" }
 pallet-contracts-rpc = { git = "https://github.com/selendra/substrate", branch = "master" }
