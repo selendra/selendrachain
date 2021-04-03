@@ -24,7 +24,7 @@ use sp_runtime::traits::Header as _;
 
 #[cfg(feature = "real-overseer")]
 use {
-	indracore_primitives::v1::{Block as IndracoreBlock, Header as IndracoreHeader, BlockNumber},
+	indracore_primitives::v1::{Block as IndracoreBlock, Header as IndracoreHeader},
 	indracore_subsystem::messages::ApprovalVotingMessage,
 	prometheus_endpoint::{self, Registry},
 	indracore_overseer::OverseerHandler,
@@ -39,18 +39,18 @@ use {
 /// approval checking would indicate.
 #[cfg(feature = "real-overseer")]
 #[derive(Clone)]
-pub(crate) struct ApprovalCheckingDiagnostic {
+pub(crate) struct ApprovalCheckingVotingRule {
 	checking_lag: Option<prometheus_endpoint::Gauge<prometheus_endpoint::U64>>,
 	overseer: OverseerHandler,
 }
 
 #[cfg(feature = "real-overseer")]
-impl ApprovalCheckingDiagnostic {
+impl ApprovalCheckingVotingRule {
 	/// Create a new approval checking diagnostic voting rule.
 	pub fn new(overseer: OverseerHandler, registry: Option<&Registry>)
 		-> Result<Self, prometheus_endpoint::PrometheusError>
 	{
-		Ok(ApprovalCheckingDiagnostic {
+		Ok(ApprovalCheckingVotingRule {
 			checking_lag: if let Some(registry) = registry {
 				Some(prometheus_endpoint::register(
 					prometheus_endpoint::Gauge::with_opts(
@@ -70,67 +70,25 @@ impl ApprovalCheckingDiagnostic {
 }
 
 #[cfg(feature = "real-overseer")]
-impl<B> grandpa::VotingRule<IndracoreBlock, B> for ApprovalCheckingDiagnostic
+impl<B> grandpa::VotingRule<IndracoreBlock, B> for ApprovalCheckingVotingRule
 	where B: sp_blockchain::HeaderBackend<IndracoreBlock>
 {
 	fn restrict_vote(
 		&self,
-		backend: Arc<B>,
+		_backend: Arc<B>,
 		base: &IndracoreHeader,
 		best_target: &IndracoreHeader,
 		current_target: &IndracoreHeader,
 	) -> grandpa::VotingRuleResult<IndracoreBlock> {
-		// always wait 50 blocks behind the head to finalize.
-		const DIAGNOSTIC_GRANDPA_DELAY: BlockNumber = 50;
-
-		let aux = || {
-			let find_target = |target_number: BlockNumber, current_header: &IndracoreHeader| {
-				let mut target_hash = current_header.hash();
-				let mut target_header = current_header.clone();
-
-				loop {
-					if *target_header.number() < target_number {
-						unreachable!(
-							"we are traversing backwards from a known block; \
-							blocks are stored contiguously; \
-							qed"
-						);
-					}
-
-					if *target_header.number() == target_number {
-						return Some((target_hash, target_number));
-					}
-
-					target_hash = *target_header.parent_hash();
-					target_header = backend.header(BlockId::Hash(target_hash)).ok()?
-						.expect("Header known to exist due to the existence of one of its descendents; qed");
-				}
-			};
-
-			// delay blocks behind the head, but make sure we're not ahead of the current
-			// target.
-			let target_number = std::cmp::min(
-				best_target.number().saturating_sub(DIAGNOSTIC_GRANDPA_DELAY),
-				current_target.number().clone(),
-			);
-
-			// don't go below base
-			let target_number = std::cmp::max(
-				target_number,
-				base.number().clone(),
-			);
-
-			find_target(target_number, current_target)
-		};
-
-		let actual_vote_target = aux();
-
 		// Query approval checking and issue metrics.
 		let mut overseer = self.overseer.clone();
 		let checking_lag = self.checking_lag.clone();
 
 		let best_hash = best_target.hash();
 		let best_number = best_target.number.clone();
+
+		let current_hash = current_target.hash();
+		let current_number = current_target.number.clone();
 
 		let base_number = base.number;
 
@@ -155,14 +113,18 @@ impl<B> grandpa::VotingRule<IndracoreBlock, B> for ApprovalCheckingDiagnostic
 				checking_lag.set(approval_checking_subsystem_lag as _);
 			}
 
-			tracing::debug!(
+			tracing::trace!(
 				target: "parachain::approval-voting",
 				"GRANDPA: voting on {:?}. Approval-checking lag behind best is {}",
-				actual_vote_target,
+				approval_checking_subsystem_vote,
 				approval_checking_subsystem_lag,
 			);
 
-			actual_vote_target
+			if approval_checking_subsystem_vote.map_or(false, |v| current_number < v.1) {
+				Some((current_hash, current_number))
+			} else {
+				approval_checking_subsystem_vote
+			}
 		})
 	}
 }
@@ -240,3 +202,4 @@ where
 		Box::pin(async move { target })
 	}
 }
+
