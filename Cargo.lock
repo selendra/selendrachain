@@ -2859,9 +2859,7 @@ dependencies = [
  "indracore-node-subsystem",
  "indracore-node-subsystem-util",
  "indracore-primitives",
- "sp-api",
  "sp-application-crypto",
- "sp-authority-discovery",
  "sp-keystore",
  "tracing",
 ]
@@ -3112,6 +3110,7 @@ dependencies = [
  "memory-lru",
  "parity-util-mem",
  "sp-api",
+ "sp-authority-discovery",
  "sp-consensus-babe",
  "sp-core",
  "tracing",
