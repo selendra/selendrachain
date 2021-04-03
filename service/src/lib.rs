@@ -525,7 +525,6 @@ where
 		), 
 		gossip_support: GossipSupportSubsystem::new(
 			keystore.clone(),
-			runtime_client.clone(),
 		),
 	};
 
