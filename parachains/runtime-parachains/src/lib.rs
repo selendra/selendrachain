@@ -25,7 +25,6 @@
 pub mod configuration;
 pub mod shared;
 pub mod inclusion;
-pub mod inclusion_inherent;
 pub mod initializer;
 pub mod paras;
 pub mod scheduler;
@@ -35,6 +34,7 @@ pub mod dmp;
 pub mod ump;
 pub mod hrmp;
 pub mod reward_points;
+pub mod paras_inherent;
 
 pub mod runtime_api_impl;
 
