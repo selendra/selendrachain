@@ -23,4 +23,4 @@ indracore-statement-table = { path = "../statement-table" }
 indracore-parachain = { path = "../../parachains/parachain", default-features = false }
 
 [target.'cfg(not(target_os = "unknown"))'.dependencies]
-zstd = "0.5.0"
+zstd = "0.6.0"
