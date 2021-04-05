@@ -18,10 +18,10 @@ sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "mast
 indracore-primitives = { path = "../../../primitives" }
 indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
 indracore-node-network-protocol = { path = "../protocol" }
+indracore-node-subsystem-util = { path = "../../subsystem-util"}
 
 [dev-dependencies]
 assert_matches = "1.4.0"
 indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
-indracore-node-subsystem-util = { path = "../../subsystem-util"}
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "master" }
