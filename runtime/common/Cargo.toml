@@ -43,11 +43,15 @@ pallet-mmr = { git = "https://github.com/paritytech/substrate", branch = "master
 primitives = { package = "indracore-primitives", path = "../../primitives", default-features = false }
 runtime-parachains = { package = "indracore-runtime-parachains", path = "../../parachains/runtime-parachains", default-features = false }
 xcm = { path = "../../parachains/xcm", default-features = false }
+slot-range-helper = { path = "slot_range_helper", default-features = false }
 
 beefy-primitives = { git = "https://github.com/paritytech/grandpa-bridge-gadget", branch = "master", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.1"
+trie-db = "0.22.3"
+serde_json = "1.0.61"
+libsecp256k1 = "0.3.5"
 keyring = { package = "sp-keyring", git = "https://github.com/paritytech/substrate", branch = "master" }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "master" }
 pallet-babe = { git = "https://github.com/paritytech/substrate", branch = "master" }
@@ -57,9 +61,6 @@ frame-support-test = { git = "https://github.com/paritytech/substrate", branch =
 pallet-staking-reward-curve = { git = "https://github.com/paritytech/substrate", branch = "master" }
 pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "master" }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
-trie-db = "0.22.3"
-serde_json = "1.0.61"
-libsecp256k1 = "0.3.5"
 
 [features]
 default = ["std"]
@@ -92,6 +93,7 @@ std = [
 	"pallet-beefy/std",
 	"pallet-mmr/std",
 	"pallet-transaction-payment/std",
+	"slot-range-helper/std",
 	"runtime-parachains/std",
 	"beefy-primitives/std",
 	"xcm/std",

@@ -16,209 +16,183 @@
 
 //! Mocking utilities for testing.
 
-use crate::traits::Registrar;
-use frame_support::dispatch::{DispatchError, DispatchResult};
-use parity_scale_codec::{Decode, Encode};
-use primitives::v1::{HeadData, Id as ParaId, ValidationCode};
-use sp_runtime::traits::SaturatedConversion;
 use std::{cell::RefCell, collections::HashMap};
+use parity_scale_codec::{Encode, Decode};
+use sp_runtime::traits::SaturatedConversion;
+use frame_support::dispatch::{DispatchError, DispatchResult};
+use primitives::v1::{HeadData, ValidationCode, Id as ParaId};
+use crate::traits::Registrar;
 
 thread_local! {
-    static OPERATIONS: RefCell<Vec<(ParaId, u32, bool)>> = RefCell::new(Vec::new());
-    static PARACHAINS: RefCell<Vec<ParaId>> = RefCell::new(Vec::new());
-    static PARATHREADS: RefCell<Vec<ParaId>> = RefCell::new(Vec::new());
-    static MANAGERS: RefCell<HashMap<ParaId, Vec<u8>>> = RefCell::new(HashMap::new());
+	static OPERATIONS: RefCell<Vec<(ParaId, u32, bool)>> = RefCell::new(Vec::new());
+	static PARACHAINS: RefCell<Vec<ParaId>> = RefCell::new(Vec::new());
+	static PARATHREADS: RefCell<Vec<ParaId>> = RefCell::new(Vec::new());
+	static MANAGERS: RefCell<HashMap<ParaId, Vec<u8>>> = RefCell::new(HashMap::new());
 }
 
 pub struct TestRegistrar<T>(sp_std::marker::PhantomData<T>);
 
 impl<T: frame_system::Config> Registrar for TestRegistrar<T> {
-    type AccountId = T::AccountId;
+	type AccountId = T::AccountId;
 
-    fn manager_of(id: ParaId) -> Option<Self::AccountId> {
-        MANAGERS.with(|x| {
-            x.borrow()
-                .get(&id)
-                .and_then(|v| T::AccountId::decode(&mut &v[..]).ok())
-        })
-    }
+	fn manager_of(id: ParaId) -> Option<Self::AccountId> {
+		MANAGERS.with(|x| x.borrow().get(&id).and_then(|v| T::AccountId::decode(&mut &v[..]).ok()))
+	}
 
-    fn parachains() -> Vec<ParaId> {
-        PARACHAINS.with(|x| x.borrow().clone())
-    }
+	fn parachains() -> Vec<ParaId> {
+		PARACHAINS.with(|x| x.borrow().clone())
+	}
 
-    fn is_parathread(id: ParaId) -> bool {
-        PARATHREADS.with(|x| x.borrow().binary_search(&id).is_ok())
-    }
+	fn is_parathread(id: ParaId) -> bool {
+		PARATHREADS.with(|x| x.borrow().binary_search(&id).is_ok())
+	}
 
-    fn register(
-        manager: Self::AccountId,
-        id: ParaId,
-        _genesis_head: HeadData,
-        _validation_code: ValidationCode,
-    ) -> DispatchResult {
-        // Should not be parachain.
-        PARACHAINS.with(|x| {
-            let parachains = x.borrow_mut();
-            match parachains.binary_search(&id) {
-                Ok(_) => Err(DispatchError::Other("Already Parachain")),
-                Err(_) => Ok(()),
-            }
-        })?;
-        // Should not be parathread, then make it.
-        PARATHREADS.with(|x| {
-            let mut parathreads = x.borrow_mut();
-            match parathreads.binary_search(&id) {
-                Ok(_) => Err(DispatchError::Other("Already Parathread")),
-                Err(i) => {
-                    parathreads.insert(i, id);
-                    Ok(())
-                }
-            }
-        })?;
-        MANAGERS.with(|x| x.borrow_mut().insert(id, manager.encode()));
-        Ok(())
-    }
+	fn register(
+		manager: Self::AccountId,
+		id: ParaId,
+		_genesis_head: HeadData,
+		_validation_code: ValidationCode,
+	) -> DispatchResult {
+		// Should not be parachain.
+		PARACHAINS.with(|x| {
+			let parachains = x.borrow_mut();
+			match parachains.binary_search(&id) {
+				Ok(_) => Err(DispatchError::Other("Already Parachain")),
+				Err(_) => Ok(()),
+			}
+		})?;
+		// Should not be parathread, then make it.
+		PARATHREADS.with(|x| {
+			let mut parathreads = x.borrow_mut();
+			match parathreads.binary_search(&id) {
+				Ok(_) => Err(DispatchError::Other("Already Parathread")),
+				Err(i) => {
+					parathreads.insert(i, id);
+					Ok(())
+				},
+			}
+		})?;
+		MANAGERS.with(|x| x.borrow_mut().insert(id, manager.encode()));
+		Ok(())
+	}
 
-    fn deregister(id: ParaId) -> DispatchResult {
-        // Should not be parachain.
-        PARACHAINS.with(|x| {
-            let parachains = x.borrow_mut();
-            match parachains.binary_search(&id) {
-                Ok(_) => Err(DispatchError::Other("cannot deregister parachain")),
-                Err(_) => Ok(()),
-            }
-        })?;
-        // Remove from parathread.
-        PARATHREADS.with(|x| {
-            let mut parathreads = x.borrow_mut();
-            match parathreads.binary_search(&id) {
-                Ok(i) => {
-                    parathreads.remove(i);
-                    Ok(())
-                }
-                Err(_) => Err(DispatchError::Other(
-                    "not parathread, so cannot `deregister`",
-                )),
-            }
-        })?;
-        MANAGERS.with(|x| x.borrow_mut().remove(&id));
-        Ok(())
-    }
+	fn deregister(id: ParaId) -> DispatchResult {
+		// Should not be parachain.
+		PARACHAINS.with(|x| {
+			let parachains = x.borrow_mut();
+			match parachains.binary_search(&id) {
+				Ok(_) => Err(DispatchError::Other("cannot deregister parachain")),
+				Err(_) => Ok(()),
+			}
+		})?;
+		// Remove from parathread.
+		PARATHREADS.with(|x| {
+			let mut parathreads = x.borrow_mut();
+			match parathreads.binary_search(&id) {
+				Ok(i) => {
+					parathreads.remove(i);
+					Ok(())
+				},
+				Err(_) => Err(DispatchError::Other("not parathread, so cannot `deregister`")),
+			}
+		})?;
+		MANAGERS.with(|x| x.borrow_mut().remove(&id));
+		Ok(())
+	}
 
-    fn make_parachain(id: ParaId) -> DispatchResult {
-        PARATHREADS.with(|x| {
-            let mut parathreads = x.borrow_mut();
-            match parathreads.binary_search(&id) {
-                Ok(i) => {
-                    parathreads.remove(i);
-                    Ok(())
-                }
-                Err(_) => Err(DispatchError::Other(
-                    "not parathread, so cannot `make_parachain`",
-                )),
-            }
-        })?;
-        PARACHAINS.with(|x| {
-            let mut parachains = x.borrow_mut();
-            match parachains.binary_search(&id) {
-                Ok(_) => Err(DispatchError::Other(
-                    "already parachain, so cannot `make_parachain`",
-                )),
-                Err(i) => {
-                    parachains.insert(i, id);
-                    Ok(())
-                }
-            }
-        })?;
-        OPERATIONS.with(|x| {
-            x.borrow_mut().push((
-                id,
-                frame_system::Pallet::<T>::block_number().saturated_into(),
-                true,
-            ))
-        });
-        Ok(())
-    }
-    fn make_parathread(id: ParaId) -> DispatchResult {
-        PARACHAINS.with(|x| {
-            let mut parachains = x.borrow_mut();
-            match parachains.binary_search(&id) {
-                Ok(i) => {
-                    parachains.remove(i);
-                    Ok(())
-                }
-                Err(_) => Err(DispatchError::Other(
-                    "not parachain, so cannot `make_parathread`",
-                )),
-            }
-        })?;
-        PARATHREADS.with(|x| {
-            let mut parathreads = x.borrow_mut();
-            match parathreads.binary_search(&id) {
-                Ok(_) => Err(DispatchError::Other(
-                    "already parathread, so cannot `make_parathread`",
-                )),
-                Err(i) => {
-                    parathreads.insert(i, id);
-                    Ok(())
-                }
-            }
-        })?;
-        OPERATIONS.with(|x| {
-            x.borrow_mut().push((
-                id,
-                frame_system::Pallet::<T>::block_number().saturated_into(),
-                false,
-            ))
-        });
-        Ok(())
-    }
+	fn make_parachain(id: ParaId) -> DispatchResult {
+		PARATHREADS.with(|x| {
+			let mut parathreads = x.borrow_mut();
+			match parathreads.binary_search(&id) {
+				Ok(i) => {
+					parathreads.remove(i);
+					Ok(())
+				},
+				Err(_) => Err(DispatchError::Other("not parathread, so cannot `make_parachain`")),
+			}
+		})?;
+		PARACHAINS.with(|x| {
+			let mut parachains = x.borrow_mut();
+			match parachains.binary_search(&id) {
+				Ok(_) => Err(DispatchError::Other("already parachain, so cannot `make_parachain`")),
+				Err(i) => {
+					parachains.insert(i, id);
+					Ok(())
+				},
+			}
+		})?;
+		OPERATIONS.with(|x| x.borrow_mut().push(
+			(id, frame_system::Pallet::<T>::block_number().saturated_into(), true)
+		));
+		Ok(())
+	}
+	fn make_parathread(id: ParaId) -> DispatchResult {
+		PARACHAINS.with(|x| {
+			let mut parachains = x.borrow_mut();
+			match parachains.binary_search(&id) {
+				Ok(i) => {
+					parachains.remove(i);
+					Ok(())
+				},
+				Err(_) => Err(DispatchError::Other("not parachain, so cannot `make_parathread`")),
+			}
+		})?;
+		PARATHREADS.with(|x| {
+			let mut parathreads = x.borrow_mut();
+			match parathreads.binary_search(&id) {
+				Ok(_) => Err(DispatchError::Other("already parathread, so cannot `make_parathread`")),
+				Err(i) => {
+					parathreads.insert(i, id);
+					Ok(())
+				},
+			}
+		})?;
+		OPERATIONS.with(|x| x.borrow_mut().push(
+			(id, frame_system::Pallet::<T>::block_number().saturated_into(), false)
+		));
+		Ok(())
+	}
 
-    #[cfg(test)]
-    fn worst_head_data() -> HeadData {
-        vec![0u8; 1000].into()
-    }
+	#[cfg(test)]
+	fn worst_head_data() -> HeadData {
+		vec![0u8; 1000].into()
+	}
 
-    #[cfg(test)]
-    fn worst_validation_code() -> ValidationCode {
-        let mut validation_code = vec![0u8; 1000];
-        // Replace first bytes of code with "WASM_MAGIC" to pass validation test.
-        let _ = validation_code
-            .splice(..crate::WASM_MAGIC.len(), crate::WASM_MAGIC.iter().cloned())
-            .collect::<Vec<_>>();
-        validation_code.into()
-    }
+	#[cfg(test)]
+	fn worst_validation_code() -> ValidationCode {
+		let mut validation_code = vec![0u8; 1000];
+		// Replace first bytes of code with "WASM_MAGIC" to pass validation test.
+		let _ = validation_code.splice(
+			..crate::WASM_MAGIC.len(),
+			crate::WASM_MAGIC.iter().cloned(),
+		).collect::<Vec<_>>();
+		validation_code.into()
+	}
 
-    #[cfg(test)]
-    fn execute_pending_transitions() {}
+	#[cfg(test)]
+	fn execute_pending_transitions() {}
 }
 
 impl<T: frame_system::Config> TestRegistrar<T> {
-    pub fn operations() -> Vec<(ParaId, T::BlockNumber, bool)> {
-        OPERATIONS.with(|x| {
-            x.borrow()
-                .iter()
-                .map(|(p, b, c)| (*p, (*b).into(), *c))
-                .collect::<Vec<_>>()
-        })
-    }
+	pub fn operations() -> Vec<(ParaId, T::BlockNumber, bool)> {
+		OPERATIONS.with(|x| x.borrow().iter().map(|(p, b, c)| (*p, (*b).into(), *c)).collect::<Vec<_>>())
+	}
 
-    #[allow(dead_code)]
-    pub fn parachains() -> Vec<ParaId> {
-        PARACHAINS.with(|x| x.borrow().clone())
-    }
+	#[allow(dead_code)]
+	pub fn parachains() -> Vec<ParaId> {
+		PARACHAINS.with(|x| x.borrow().clone())
+	}
 
-    #[allow(dead_code)]
-    pub fn parathreads() -> Vec<ParaId> {
-        PARATHREADS.with(|x| x.borrow().clone())
-    }
+	#[allow(dead_code)]
+	pub fn parathreads() -> Vec<ParaId> {
+		PARATHREADS.with(|x| x.borrow().clone())
+	}
 
-    #[allow(dead_code)]
-    pub fn clear_storage() {
-        OPERATIONS.with(|x| x.borrow_mut().clear());
-        PARACHAINS.with(|x| x.borrow_mut().clear());
-        PARATHREADS.with(|x| x.borrow_mut().clear());
-        MANAGERS.with(|x| x.borrow_mut().clear());
-    }
+	#[allow(dead_code)]
+	pub fn clear_storage() {
+		OPERATIONS.with(|x| x.borrow_mut().clear());
+		PARACHAINS.with(|x| x.borrow_mut().clear());
+		PARATHREADS.with(|x| x.borrow_mut().clear());
+		MANAGERS.with(|x| x.borrow_mut().clear());
+	}
 }
