@@ -32,7 +32,7 @@ use futures::{
 
 use sp_keystore::SyncCryptoStorePtr;
 
-use indracore_node_subsystem_util::request_availability_cores_ctx;
+use indracore_node_subsystem_util::request_availability_cores;
 use indracore_primitives::v1::{CandidateHash, CoreState, Hash, OccupiedCore};
 use indracore_subsystem::{
 	messages::AllMessages, ActiveLeavesUpdate, SubsystemContext, ActivatedLeaf,
@@ -235,7 +235,7 @@ async fn query_occupied_cores<Context>(
 where
 	Context: SubsystemContext,
 {
-	let cores = recv_runtime(request_availability_cores_ctx(relay_parent, ctx).await).await?;
+	let cores = recv_runtime(request_availability_cores(relay_parent, ctx.sender()).await).await?;
 
 	Ok(cores
 		.into_iter()

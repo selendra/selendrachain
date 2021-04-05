@@ -2823,6 +2823,7 @@ dependencies = [
  "log",
  "sp-core",
  "sp-keyring",
+ "sp-keystore",
  "sp-runtime",
  "thiserror",
  "tracing",
