@@ -1,0 +1,15 @@
+[package]
+name = "indracore-node-core-bitfield-signing"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+futures = "0.3.12"
+tracing = "0.1.25"
+indracore-primitives = { path = "../../../../primitives" }
+indracore-node-subsystem = { path = "../../subsystem" }
+indracore-node-subsystem-util = { path = "../../subsystem-util" }
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+wasm-timer = "0.2.5"
+thiserror = "1.0.23"

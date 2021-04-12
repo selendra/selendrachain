@@ -21,10 +21,10 @@
 pub mod chain_spec;
 mod grandpa_support;
 mod client;
-mod parachains_db;
 
 #[cfg(feature = "full-node")]
 use {
+	std::convert::TryInto,
 	std::time::Duration,
 	tracing::info,
 	indracore_node_core_av_store::Config as AvailabilityConfig,
@@ -34,14 +34,12 @@ use {
 	indracore_overseer::{AllSubsystems, BlockInfo, Overseer, OverseerHandler},
 	indracore_primitives::v1::ParachainHost,
 	sc_authority_discovery::Service as AuthorityDiscoveryService,
-	sp_authority_discovery::AuthorityDiscoveryApi,
 	sp_blockchain::HeaderBackend,
 	sp_trie::PrefixedMemoryDB,
 	sc_client_api::{AuxStore, ExecutorProvider},
 	sc_keystore::LocalKeystore,
 	babe_primitives::BabeApi,
 	grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider},
-	beefy_primitives::ecdsa::AuthoritySignature as BeefySignature,
 	sp_runtime::traits::Header as HeaderT,
 };
 #[cfg(feature = "real-overseer")]
@@ -128,25 +126,6 @@ pub enum Error {
 	DatabasePathRequired,
 }
 
-/// Can be called for a `Configuration` to check if it is a configuration for  network.
-pub trait IdentifyVariant {
-
-	/// Returns if this is a configuration for the `Indracore` network.
-	fn is_indracore(&self) -> bool;
-
-	/// Returns true if this configuration is for a development network.
-	fn is_dev(&self) -> bool;
-}
-
-impl IdentifyVariant for Box<dyn ChainSpec> {
-	fn is_indracore(&self) -> bool {
-		self.id().starts_with("indracore") || self.id().starts_with("sel")
-	}
-	fn is_dev(&self) -> bool {
-		self.id().ends_with("dev")
-	}
-}
-
 // If we're using prometheus, use a registry with a prefix of `indracore`.
 fn set_prometheus_registry(config: &mut Configuration) -> Result<(), Error> {
 	if let Some(PrometheusConfig { registry, .. }) = config.prometheus_config.as_mut() {
@@ -204,8 +183,7 @@ fn new_partial<RuntimeApi, Executor>(
 					Block, FullClient<RuntimeApi, Executor>, FullGrandpaBlockImport<RuntimeApi, Executor>
 				>,
 				grandpa::LinkHalf<Block, FullClient<RuntimeApi, Executor>, FullSelectChain>,
-				babe::BabeLink<Block>,
-				beefy_gadget::notification::BeefySignedCommitmentSender<Block, BeefySignature>,
+				babe::BabeLink<Block>
 			),
 			grandpa::SharedVoterState,
 			std::time::Duration, // slot-duration
@@ -277,9 +255,6 @@ fn new_partial<RuntimeApi, Executor>(
 			grandpa_hard_forks,
 			telemetry.as_ref().map(|x| x.handle()),
 		)?;
-	
-	let (beefy_link, beefy_commitment_stream) =
-		beefy_gadget::notification::BeefySignedCommitmentStream::channel();
 
 	let justification_import = grandpa_block_import.clone();
 
@@ -311,7 +286,7 @@ fn new_partial<RuntimeApi, Executor>(
 		Some(shared_authority_set.clone()),
 	);
 
-	let import_setup = (block_import.clone(), grandpa_link, babe_link.clone(), beefy_link);
+	let import_setup = (block_import.clone(), grandpa_link, babe_link.clone());
 	let rpc_setup = shared_voter_state.clone();
 
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
@@ -324,9 +299,7 @@ fn new_partial<RuntimeApi, Executor>(
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
 
-		move |deny_unsafe, subscription_executor: indracore_rpc::SubscriptionTaskExecutor|
-		-> indracore_rpc::RpcExtension
-		{
+		move |deny_unsafe, subscription_executor| -> indracore_rpc::RpcExtension {
 			let deps = indracore_rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
@@ -342,12 +315,8 @@ fn new_partial<RuntimeApi, Executor>(
 					shared_voter_state: shared_voter_state.clone(),
 					shared_authority_set: shared_authority_set.clone(),
 					justification_stream: justification_stream.clone(),
-					subscription_executor: subscription_executor.clone(),
-					finality_provider: finality_proof_provider.clone(),
-				},
-				beefy: indracore_rpc::BeefyDeps {
-					beefy_commitment_stream: beefy_commitment_stream.clone(),
 					subscription_executor,
+					finality_provider: finality_proof_provider.clone(),
 				},
 			};
 
@@ -373,9 +342,7 @@ fn real_overseer<Spawner, RuntimeClient>(
 	leaves: impl IntoIterator<Item = BlockInfo>,
 	_: Arc<LocalKeystore>,
 	_: Arc<RuntimeClient>,
-	_parachains_db: (),
 	_: AvailabilityConfig,
-	_: ApprovalVotingConfig,
 	_: Arc<sc_network::NetworkService<Block, Hash>>,
 	_: AuthorityDiscoveryService,
 	_request_multiplexer: (),
@@ -383,10 +350,11 @@ fn real_overseer<Spawner, RuntimeClient>(
 	spawner: Spawner,
 	_: IsCollator,
 	_: IsolationStrategy,
+	_: ApprovalVotingConfig,
 ) -> Result<(Overseer<Spawner>, OverseerHandler), Error>
 where
 	RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore,
-	RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
+	RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block>,
 	Spawner: 'static + SpawnNamed + Clone + Unpin,
 {
 	Overseer::new(
@@ -402,9 +370,7 @@ fn real_overseer<Spawner, RuntimeClient>(
 	leaves: impl IntoIterator<Item = BlockInfo>,
 	keystore: Arc<LocalKeystore>,
 	runtime_client: Arc<RuntimeClient>,
-	parachains_db: Arc<dyn kvdb::KeyValueDB>,
 	availability_config: AvailabilityConfig,
-	approval_voting_config: ApprovalVotingConfig,
 	network_service: Arc<sc_network::NetworkService<Block, Hash>>,
 	authority_discovery: AuthorityDiscoveryService,
 	request_multiplexer: RequestMultiplexer,
@@ -412,10 +378,11 @@ fn real_overseer<Spawner, RuntimeClient>(
 	spawner: Spawner,
 	is_collator: IsCollator,
 	isolation_strategy: IsolationStrategy,
+	approval_voting_config: ApprovalVotingConfig,
 ) -> Result<(Overseer<Spawner>, OverseerHandler), Error>
 where
 	RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore,
-	RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
+	RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block>,
 	Spawner: 'static + SpawnNamed + Clone + Unpin,
 {
 	use indracore_node_subsystem_util::metrics::Metrics;
@@ -431,6 +398,7 @@ where
 	use indracore_node_collation_generation::CollationGenerationSubsystem;
 	use indracore_collator_protocol::{CollatorProtocolSubsystem, ProtocolSide};
 	use indracore_network_bridge::NetworkBridge as NetworkBridgeSubsystem;
+	use indracore_pov_distribution::PoVDistribution as PoVDistributionSubsystem;
 	use indracore_node_core_provisioner::ProvisioningSubsystem as ProvisionerSubsystem;
 	use indracore_node_core_runtime_api::RuntimeApiSubsystem;
 	use indracore_statement_distribution::StatementDistribution as StatementDistributionSubsystem;
@@ -446,11 +414,10 @@ where
 		),
 		availability_recovery: AvailabilityRecoverySubsystem::with_chunks_only(
 		),
-		availability_store: AvailabilityStoreSubsystem::new(
-			parachains_db.clone(),
+		availability_store: AvailabilityStoreSubsystem::new_on_disk(
 			availability_config,
 			Metrics::register(registry)?,
-		), 
+		)?,
 		bitfield_distribution: BitfieldDistributionSubsystem::new(
 			Metrics::register(registry)?,
 		),
@@ -488,21 +455,18 @@ where
 					collator_pair,
 					Metrics::register(registry)?,
 				),
-				IsCollator::No => ProtocolSide::Validator {
-					keystore: keystore.clone(),
-					eviction_policy: Default::default(),
-					metrics: Metrics::register(registry)?,
-				}, 
+				IsCollator::No => ProtocolSide::Validator(Default::default(),Metrics::register(registry)?),
 			};
 			CollatorProtocolSubsystem::new(
 				side,
 			)
 		},
 		network_bridge: NetworkBridgeSubsystem::new(
-			network_service.clone(),
+			network_service,
 			authority_discovery,
 			request_multiplexer,
-			Box::new(network_service.clone()),
+		),
+		pov_distribution: PoVDistributionSubsystem::new(
 			Metrics::register(registry)?,
 		),
 		provisioner: ProvisionerSubsystem::new(
@@ -523,14 +487,10 @@ where
 		),
 		approval_voting: ApprovalVotingSubsystem::with_config(
 			approval_voting_config,
-			parachains_db,
 			keystore.clone(),
-			Box::new(network_service.clone()),
 			Metrics::register(registry)?,
-		), 
-		gossip_support: GossipSupportSubsystem::new(
-			keystore.clone(),
-		),
+		)?,
+		gossip_support: GossipSupportSubsystem::new(),
 	};
 
 	Overseer::new(
@@ -700,11 +660,10 @@ pub fn new_full<RuntimeApi, Executor>(
 
 	let shared_voter_state = rpc_setup;
 
-	// Note: GrandPa is pushed before the Indracore-specific protocols. This doesn't change
+	// Note: GrandPa is pushed before the indracore-specific protocols. This doesn't change
 	// anything in terms of behaviour, but makes the logs more consistent with the other
 	// Substrate nodes.
 	config.network.extra_sets.push(grandpa::grandpa_peers_set_config());
-
 	#[cfg(feature = "real-overseer")]
 	{
 		use indracore_network_bridge::{peer_sets_info, IsAuthority};
@@ -796,26 +755,16 @@ pub fn new_full<RuntimeApi, Executor>(
 		);
 	}
 
-	#[cfg(feature = "real-overseer")]
-	let parachains_db = crate::parachains_db::open_creating(
-		config.database.path().ok_or(Error::DatabasePathRequired)?.into(),
-		crate::parachains_db::CacheSizes::default(),
-	)?;
-
-	#[cfg(not(feature = "real-overseer"))]
-	let parachains_db = ();
-
-	let availability_config = AvailabilityConfig {
-		col_data: crate::parachains_db::REAL_COLUMNS.col_availability_data,
-		col_meta: crate::parachains_db::REAL_COLUMNS.col_availability_meta,
-	};
+	let availability_config = config.database.clone().try_into().map_err(Error::Availability)?;
 
 	let approval_voting_config = ApprovalVotingConfig {
-		col_data: crate::parachains_db::REAL_COLUMNS.col_approval_data,
+		path: config.database.path()
+			.ok_or(Error::DatabasePathRequired)?
+			.join("parachains").join("approval-voting"),
 		slot_duration_millis: slot_duration.as_millis() as u64,
+		cache_size: None, // default is fine.
 	};
 
-	let _chain_spec = config.chain_spec.cloned_box();
 	let rpc_handlers = service::spawn_tasks(service::SpawnTasksParams {
 		config,
 		backend: backend.clone(),
@@ -832,7 +781,7 @@ pub fn new_full<RuntimeApi, Executor>(
 		telemetry: telemetry.as_mut(),
 	})?;
 
-	let (block_import, link_half, babe_link, _beefy_link) = import_setup;
+	let (block_import, link_half, babe_link) = import_setup;
 
 	let overseer_client = client.clone();
 	let spawner = task_manager.spawn_handle();
@@ -884,9 +833,7 @@ pub fn new_full<RuntimeApi, Executor>(
 			active_leaves,
 			keystore,
 			overseer_client.clone(),
-			parachains_db,
 			availability_config,
-			approval_voting_config,
 			network.clone(),
 			authority_discovery_service,
 			request_multiplexer,
@@ -894,6 +841,7 @@ pub fn new_full<RuntimeApi, Executor>(
 			spawner,
 			is_collator,
 			isolation_strategy,
+			approval_voting_config,
 		)?;
 		let overseer_handler_clone = overseer_handler.clone();
 
@@ -986,7 +934,7 @@ pub fn new_full<RuntimeApi, Executor>(
 
 		#[cfg(feature = "real-overseer")]
 		let builder = if let Some(ref overseer) = overseer_handler {
-			builder.add(grandpa_support::ApprovalCheckingVotingRule::new(
+			builder.add(grandpa_support::ApprovalCheckingDiagnostic::new(
 				overseer.clone(),
 				prometheus_registry.as_ref(),
 			)?)
@@ -1184,7 +1132,6 @@ pub fn new_chain_ops(
 	let service::PartialComponents { client, backend, import_queue, task_manager, .. }
 		= new_partial::<indracore_runtime::RuntimeApi, IndracoreExecutor>(config, jaeger_agent, None)?;
 	Ok((Arc::new(Client::Indracore(client)), backend, import_queue, task_manager))
-
 }
 
 /// Build a new light node.

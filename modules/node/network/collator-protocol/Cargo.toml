@@ -1,0 +1,31 @@
+[package]
+name = "indracore-collator-protocol"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+always-assert = "0.1.2"
+futures = "0.3.12"
+futures-timer = "3"
+thiserror = "1.0.23"
+tracing = "0.1.25"
+
+sp-core = { package = "sp-core", git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+sp-runtime = { package = "sp-runtime", git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+
+indracore-primitives = { path = "../../../../primitives" }
+indracore-node-network-protocol = { path = "../../network/protocol" }
+indracore-node-primitives = { path = "../../primitives" }
+indracore-node-subsystem-util = { path = "../../subsystem-util" }
+indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
+
+[dev-dependencies]
+log = "0.4.13"
+env_logger = "0.8.2"
+assert_matches = "1.4.0"
+
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", features = ["std"] }
+sp-keyring = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+
+indracore-subsystem-testhelpers = { package = "indracore-node-subsystem-test-helpers", path = "../../subsystem-test-helpers" }

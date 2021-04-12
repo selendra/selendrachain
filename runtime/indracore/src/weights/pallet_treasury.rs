@@ -33,6 +33,7 @@
 // --header=./file_header.txt
 // --output=./runtime/indracore/src/weights/
 
+
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
@@ -42,28 +43,28 @@ use sp_std::marker::PhantomData;
 /// Weight functions for pallet_treasury.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_treasury::WeightInfo for WeightInfo<T> {
-    fn propose_spend() -> Weight {
-        (41_733_000 as Weight)
-            .saturating_add(T::DbWeight::get().reads(1 as Weight))
-            .saturating_add(T::DbWeight::get().writes(2 as Weight))
-    }
-    fn reject_proposal() -> Weight {
-        (56_699_000 as Weight)
-            .saturating_add(T::DbWeight::get().reads(2 as Weight))
-            .saturating_add(T::DbWeight::get().writes(2 as Weight))
-    }
-    fn approve_proposal() -> Weight {
-        (8_440_000 as Weight)
-            .saturating_add(T::DbWeight::get().reads(2 as Weight))
-            .saturating_add(T::DbWeight::get().writes(1 as Weight))
-    }
-    fn on_initialize_proposals(p: u32) -> Weight {
-        (45_163_000 as Weight)
-            // Standard Error: 16_000
-            .saturating_add((61_739_000 as Weight).saturating_mul(p as Weight))
-            .saturating_add(T::DbWeight::get().reads(2 as Weight))
-            .saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(p as Weight)))
-            .saturating_add(T::DbWeight::get().writes(2 as Weight))
-            .saturating_add(T::DbWeight::get().writes((3 as Weight).saturating_mul(p as Weight)))
-    }
+	fn propose_spend() -> Weight {
+		(41_733_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+	}
+	fn reject_proposal() -> Weight {
+		(56_699_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(2 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+	}
+	fn approve_proposal() -> Weight {
+		(8_440_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(2 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
+	fn on_initialize_proposals(p: u32, ) -> Weight {
+		(45_163_000 as Weight)
+			// Standard Error: 16_000
+			.saturating_add((61_739_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add(T::DbWeight::get().reads(2 as Weight))
+			.saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(p as Weight)))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+			.saturating_add(T::DbWeight::get().writes((3 as Weight).saturating_mul(p as Weight)))
+	}
 }

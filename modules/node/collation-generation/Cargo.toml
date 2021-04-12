@@ -1,0 +1,19 @@
+[package]
+name = "indracore-node-collation-generation"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+futures = "0.3.12"
+tracing = "0.1.25"
+indracore-erasure-coding = { path = "../../erasure-coding" }
+indracore-node-primitives = { path = "../primitives" }
+indracore-node-subsystem = { path = "../subsystem" }
+indracore-node-subsystem-util = { path = "../subsystem-util" }
+indracore-primitives = { path = "../../../primitives" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+thiserror = "1.0.23"
+
+[dev-dependencies]
+indracore-node-subsystem-test-helpers = { path = "../subsystem-test-helpers" }

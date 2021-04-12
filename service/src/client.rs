@@ -16,103 +16,87 @@
 
 //! Indracore Client meta trait
 
-use consensus_common::BlockStatus;
-use indracore_primitives::v1::{
-    AccountId, Balance, Block, BlockNumber, Hash, Header, Nonce, ParachainHost,
-};
-use sc_client_api::{Backend as BackendT, BlockchainEvents, KeyIterator};
-use sp_api::{CallApiAt, NumberFor, ProvideRuntimeApi};
+use std::sync::Arc;
+use sp_api::{ProvideRuntimeApi, CallApiAt, NumberFor};
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{
-    generic::{BlockId, SignedBlock},
-    traits::{BlakeTwo256, Block as BlockT},
-    Justifications,
+	Justifications, generic::{BlockId, SignedBlock}, traits::{Block as BlockT, BlakeTwo256},
 };
-use sp_storage::{ChildInfo, PrefixedStorageKey, StorageData, StorageKey};
-use std::sync::Arc;
-use beefy_primitives::ecdsa::AuthorityId as BeefyId;
+use sc_client_api::{Backend as BackendT, BlockchainEvents, KeyIterator};
+use sp_storage::{StorageData, StorageKey, ChildInfo, PrefixedStorageKey};
+use indracore_primitives::v1::{Block, ParachainHost, AccountId, Nonce, Balance, Header, BlockNumber, Hash};
+use consensus_common::BlockStatus;
 
 /// A set of APIs that indracore-like runtimes must implement.
 pub trait RuntimeApiCollection:
-    sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
-    + sp_api::ApiExt<Block>
-    + babe_primitives::BabeApi<Block>
-    + grandpa_primitives::GrandpaApi<Block>
-    + ParachainHost<Block>
-    + sp_block_builder::BlockBuilder<Block>
-    + frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
-    + pallet_mmr_primitives::MmrApi<Block, <Block as BlockT>::Hash>
-    + pallet_contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber>
-    + pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
-    + sp_api::Metadata<Block>
-    + sp_offchain::OffchainWorkerApi<Block>
-    + sp_session::SessionKeys<Block>
-    + sp_authority_discovery::AuthorityDiscoveryApi<Block>
-    + beefy_primitives::BeefyApi<Block, BeefyId>
+	sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
+	+ sp_api::ApiExt<Block>
+	+ babe_primitives::BabeApi<Block>
+	+ grandpa_primitives::GrandpaApi<Block>
+	+ ParachainHost<Block>
+	+ sp_block_builder::BlockBuilder<Block>
+	+ frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
+	+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
+	+ sp_api::Metadata<Block>
+	+ sp_offchain::OffchainWorkerApi<Block>
+	+ sp_session::SessionKeys<Block>
+	+ sp_authority_discovery::AuthorityDiscoveryApi<Block>
 where
-    <Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
-{
-}
+	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
+{}
 
 impl<Api> RuntimeApiCollection for Api
 where
-    Api: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
-        + sp_api::ApiExt<Block>
-        + babe_primitives::BabeApi<Block>
-        + grandpa_primitives::GrandpaApi<Block>
-        + ParachainHost<Block>
-        + sp_block_builder::BlockBuilder<Block>
-        + frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
-        + pallet_contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber>
-        + pallet_mmr_primitives::MmrApi<Block, <Block as BlockT>::Hash>
-        + pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
-        + sp_api::Metadata<Block>
-        + sp_offchain::OffchainWorkerApi<Block>
-        + sp_session::SessionKeys<Block>
-        + sp_authority_discovery::AuthorityDiscoveryApi<Block>
-		+ beefy_primitives::BeefyApi<Block, BeefyId>,
-    <Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
-{
-}
+	Api: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
+		+ sp_api::ApiExt<Block>
+		+ babe_primitives::BabeApi<Block>
+		+ grandpa_primitives::GrandpaApi<Block>
+		+ ParachainHost<Block>
+		+ sp_block_builder::BlockBuilder<Block>
+		+ frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
+		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
+		+ sp_api::Metadata<Block>
+		+ sp_offchain::OffchainWorkerApi<Block>
+		+ sp_session::SessionKeys<Block>
+		+ sp_authority_discovery::AuthorityDiscoveryApi<Block>,
+	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
+{}
 
 /// Trait that abstracts over all available client implementations.
 ///
 /// For a concrete type there exists [`Client`].
 pub trait AbstractClient<Block, Backend>:
-    BlockchainEvents<Block>
-    + Sized
-    + Send
-    + Sync
-    + ProvideRuntimeApi<Block>
-    + HeaderBackend<Block>
-    + CallApiAt<Block, StateBackend = Backend::State>
-where
-    Block: BlockT,
-    Backend: BackendT<Block>,
-    Backend::State: sp_api::StateBackend<BlakeTwo256>,
-    Self::Api: RuntimeApiCollection<StateBackend = Backend::State>,
-{
-}
+	BlockchainEvents<Block> + Sized + Send + Sync
+	+ ProvideRuntimeApi<Block>
+	+ HeaderBackend<Block>
+	+ CallApiAt<
+		Block,
+		StateBackend = Backend::State
+	>
+	where
+		Block: BlockT,
+		Backend: BackendT<Block>,
+		Backend::State: sp_api::StateBackend<BlakeTwo256>,
+		Self::Api: RuntimeApiCollection<StateBackend = Backend::State>,
+{}
 
 impl<Block, Backend, Client> AbstractClient<Block, Backend> for Client
-where
-    Block: BlockT,
-    Backend: BackendT<Block>,
-    Backend::State: sp_api::StateBackend<BlakeTwo256>,
-    Client: BlockchainEvents<Block>
-        + ProvideRuntimeApi<Block>
-        + HeaderBackend<Block>
-        + Sized
-        + Send
-        + Sync
-        + CallApiAt<Block, StateBackend = Backend::State>,
-    Client::Api: RuntimeApiCollection<StateBackend = Backend::State>,
-{
-}
+	where
+		Block: BlockT,
+		Backend: BackendT<Block>,
+		Backend::State: sp_api::StateBackend<BlakeTwo256>,
+		Client: BlockchainEvents<Block> + ProvideRuntimeApi<Block> + HeaderBackend<Block>
+			+ Sized + Send + Sync
+			+ CallApiAt<
+				Block,
+				StateBackend = Backend::State
+			>,
+		Client::Api: RuntimeApiCollection<StateBackend = Backend::State>,
+{}
 
 /// Execute something with the client instance.
 ///
-/// As there exist multiple chains inside Indracore, like Indracore itself, , Westend etc,
+/// As there exist multiple chains inside Indracore, like Indracore itself, etc,
 /// there can exist different kinds of client types. As these client types differ in the generics
 /// that are being used, we can not easily return them from a function. For returning them from a
 /// function there exists [`Client`]. However, the problem on how to use this client instance still
@@ -122,17 +106,17 @@ where
 ///
 /// In a perfect world, we could make a closure work in this way.
 pub trait ExecuteWithClient {
-    /// The return type when calling this instance.
-    type Output;
+	/// The return type when calling this instance.
+	type Output;
 
-    /// Execute whatever should be executed with the given client instance.
-    fn execute_with_client<Client, Api, Backend>(self, client: Arc<Client>) -> Self::Output
-    where
-        <Api as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
-        Backend: sc_client_api::Backend<Block> + 'static,
-        Backend::State: sp_api::StateBackend<BlakeTwo256>,
-        Api: crate::RuntimeApiCollection<StateBackend = Backend::State>,
-        Client: AbstractClient<Block, Backend, Api = Api> + 'static;
+	/// Execute whatever should be executed with the given client instance.
+	fn execute_with_client<Client, Api, Backend>(self, client: Arc<Client>) -> Self::Output
+		where
+			<Api as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
+			Backend: sc_client_api::Backend<Block> + 'static,
+			Backend::State: sp_api::StateBackend<BlakeTwo256>,
+			Api: crate::RuntimeApiCollection<StateBackend = Backend::State>,
+			Client: AbstractClient<Block, Backend, Api = Api> + 'static;
 }
 
 /// A handle to a Indracore client instance.
@@ -144,8 +128,8 @@ pub trait ExecuteWithClient {
 ///
 /// See [`ExecuteWithClient`](trait.ExecuteWithClient.html) for more information.
 pub trait ClientHandle {
-    /// Execute the given something with the client.
-    fn execute_with<T: ExecuteWithClient>(&self, t: T) -> T::Output;
+	/// Execute the given something with the client.
+	fn execute_with<T: ExecuteWithClient>(&self, t: T) -> T::Output;
 }
 
 /// A client instance of Indracore.
@@ -153,212 +137,214 @@ pub trait ClientHandle {
 /// See [`ExecuteWithClient`] for more information.
 #[derive(Clone)]
 pub enum Client {
-    Indracore(Arc<crate::FullClient<indracore_runtime::RuntimeApi, crate::IndracoreExecutor>>),
+	Indracore(Arc<crate::FullClient<indracore_runtime::RuntimeApi, crate::IndracoreExecutor>>),
 }
 
 impl ClientHandle for Client {
-    fn execute_with<T: ExecuteWithClient>(&self, t: T) -> T::Output {
-        match self {
-            Self::Indracore(client) => {
-                T::execute_with_client::<_, _, crate::FullBackend>(t, client.clone())
-            }
-        }
-    }
+	fn execute_with<T: ExecuteWithClient>(&self, t: T) -> T::Output {
+		match self {
+			Self::Indracore(client) => {
+				T::execute_with_client::<_, _, crate::FullBackend>(t, client.clone())
+			}
+		}
+	}
 }
 
 impl sc_client_api::UsageProvider<Block> for Client {
-    fn usage_info(&self) -> sc_client_api::ClientInfo<Block> {
-        match self {
-            Self::Indracore(client) => client.usage_info(),
-        }
-    }
+	fn usage_info(&self) -> sc_client_api::ClientInfo<Block> {
+		match self {
+			Self::Indracore(client) => client.usage_info()
+		}
+	}
 }
 
 impl sc_client_api::BlockBackend<Block> for Client {
-    fn block_body(
-        &self,
-        id: &BlockId<Block>,
-    ) -> sp_blockchain::Result<Option<Vec<<Block as BlockT>::Extrinsic>>> {
-        match self {
-            Self::Indracore(client) => client.block_body(id),
-        }
-    }
+	fn block_body(
+		&self,
+		id: &BlockId<Block>
+	) -> sp_blockchain::Result<Option<Vec<<Block as BlockT>::Extrinsic>>> {
+		match self {
+			Self::Indracore(client) => client.block_body(id),
+		}
+	}
 
-    fn block(&self, id: &BlockId<Block>) -> sp_blockchain::Result<Option<SignedBlock<Block>>> {
-        match self {
-            Self::Indracore(client) => client.block(id),
-        }
-    }
+	fn block(&self, id: &BlockId<Block>) -> sp_blockchain::Result<Option<SignedBlock<Block>>> {
+		match self {
+			Self::Indracore(client) => client.block(id)
+		}
+	}
 
-    fn block_status(&self, id: &BlockId<Block>) -> sp_blockchain::Result<BlockStatus> {
-        match self {
-            Self::Indracore(client) => client.block_status(id),
-        }
-    }
+	fn block_status(&self, id: &BlockId<Block>) -> sp_blockchain::Result<BlockStatus> {
+		match self {
+			Self::Indracore(client) => client.block_status(id)
+		}
+	}
 
-    fn justifications(&self, id: &BlockId<Block>) -> sp_blockchain::Result<Option<Justifications>> {
-        match self {
-            Self::Indracore(client) => client.justifications(id),
-        }
-    }
+	fn justifications(
+		&self,
+		id: &BlockId<Block>
+	) -> sp_blockchain::Result<Option<Justifications>> {
+		match self {
+			Self::Indracore(client) => client.justifications(id)
+		}
+	}
 
-    fn block_hash(
-        &self,
-        number: NumberFor<Block>,
-    ) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
-        match self {
-            Self::Indracore(client) => client.block_hash(number),
-        }
-    }
+	fn block_hash(
+		&self,
+		number: NumberFor<Block>
+	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
+		match self {
+			Self::Indracore(client) => client.block_hash(number)
+		}
+	}
 
-    fn indexed_transaction(
-        &self,
-        id: &<Block as BlockT>::Hash,
-    ) -> sp_blockchain::Result<Option<Vec<u8>>> {
-        match self {
-            Self::Indracore(client) => client.indexed_transaction(id),
-        }
-    }
+	fn indexed_transaction(
+		&self,
+		id: &<Block as BlockT>::Hash
+	) -> sp_blockchain::Result<Option<Vec<u8>>> {
+		match self {
+			Self::Indracore(client) => client.indexed_transaction(id)
+		}
+	}
+
 }
 
 impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
-    fn storage(
-        &self,
-        id: &BlockId<Block>,
-        key: &StorageKey,
-    ) -> sp_blockchain::Result<Option<StorageData>> {
-        match self {
-            Self::Indracore(client) => client.storage(id, key),
-        }
-    }
+	fn storage(
+		&self,
+		id: &BlockId<Block>,
+		key: &StorageKey,
+	) -> sp_blockchain::Result<Option<StorageData>> {
+		match self {
+			Self::Indracore(client) => client.storage(id, key)
+		}
+	}
 
-    fn storage_keys(
-        &self,
-        id: &BlockId<Block>,
-        key_prefix: &StorageKey,
-    ) -> sp_blockchain::Result<Vec<StorageKey>> {
-        match self {
-            Self::Indracore(client) => client.storage_keys(id, key_prefix),
-        }
-    }
+	fn storage_keys(
+		&self,
+		id: &BlockId<Block>,
+		key_prefix: &StorageKey,
+	) -> sp_blockchain::Result<Vec<StorageKey>> {
+		match self {
+			Self::Indracore(client) => client.storage_keys(id, key_prefix)
+		}
+	}
 
-    fn storage_hash(
-        &self,
-        id: &BlockId<Block>,
-        key: &StorageKey,
-    ) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
-        match self {
-            Self::Indracore(client) => client.storage_hash(id, key),
-        }
-    }
+	fn storage_hash(
+		&self,
+		id: &BlockId<Block>,
+		key: &StorageKey,
+	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
+		match self {
+			Self::Indracore(client) => client.storage_hash(id, key)
+		}
+	}
 
-    fn storage_pairs(
-        &self,
-        id: &BlockId<Block>,
-        key_prefix: &StorageKey,
-    ) -> sp_blockchain::Result<Vec<(StorageKey, StorageData)>> {
-        match self {
-            Self::Indracore(client) => client.storage_pairs(id, key_prefix),
-        }
-    }
+	fn storage_pairs(
+		&self,
+		id: &BlockId<Block>,
+		key_prefix: &StorageKey,
+	) -> sp_blockchain::Result<Vec<(StorageKey, StorageData)>> {
+		match self {
+			Self::Indracore(client) => client.storage_pairs(id, key_prefix)
+		}
+	}
 
-    fn storage_keys_iter<'a>(
-        &self,
-        id: &BlockId<Block>,
-        prefix: Option<&'a StorageKey>,
-        start_key: Option<&StorageKey>,
-    ) -> sp_blockchain::Result<
-        KeyIterator<'a, <crate::FullBackend as sc_client_api::Backend<Block>>::State, Block>,
-    > {
-        match self {
-            Self::Indracore(client) => client.storage_keys_iter(id, prefix, start_key),
-        }
-    }
+	fn storage_keys_iter<'a>(
+		&self,
+		id: &BlockId<Block>,
+		prefix: Option<&'a StorageKey>,
+		start_key: Option<&StorageKey>,
+	) -> sp_blockchain::Result<KeyIterator<'a, <crate::FullBackend as sc_client_api::Backend<Block>>::State, Block>> {
+		match self {
+			Self::Indracore(client) => client.storage_keys_iter(id, prefix, start_key)
+		}
+	}
 
-    fn child_storage(
-        &self,
-        id: &BlockId<Block>,
-        child_info: &ChildInfo,
-        key: &StorageKey,
-    ) -> sp_blockchain::Result<Option<StorageData>> {
-        match self {
-            Self::Indracore(client) => client.child_storage(id, child_info, key),
-        }
-    }
+	fn child_storage(
+		&self,
+		id: &BlockId<Block>,
+		child_info: &ChildInfo,
+		key: &StorageKey,
+	) -> sp_blockchain::Result<Option<StorageData>> {
+		match self {
+			Self::Indracore(client) => client.child_storage(id, child_info, key)
+		}
+	}
 
-    fn child_storage_keys(
-        &self,
-        id: &BlockId<Block>,
-        child_info: &ChildInfo,
-        key_prefix: &StorageKey,
-    ) -> sp_blockchain::Result<Vec<StorageKey>> {
-        match self {
-            Self::Indracore(client) => client.child_storage_keys(id, child_info, key_prefix),
-        }
-    }
+	fn child_storage_keys(
+		&self,
+		id: &BlockId<Block>,
+		child_info: &ChildInfo,
+		key_prefix: &StorageKey,
+	) -> sp_blockchain::Result<Vec<StorageKey>> {
+		match self {
+			Self::Indracore(client) => client.child_storage_keys(id, child_info, key_prefix)
+		}
+	}
 
-    fn child_storage_hash(
-        &self,
-        id: &BlockId<Block>,
-        child_info: &ChildInfo,
-        key: &StorageKey,
-    ) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
-        match self {
-            Self::Indracore(client) => client.child_storage_hash(id, child_info, key),
-        }
-    }
+	fn child_storage_hash(
+		&self,
+		id: &BlockId<Block>,
+		child_info: &ChildInfo,
+		key: &StorageKey,
+	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
+		match self {
+			Self::Indracore(client) => client.child_storage_hash(id, child_info, key)
+		}
+	}
 
-    fn max_key_changes_range(
-        &self,
-        first: NumberFor<Block>,
-        last: BlockId<Block>,
-    ) -> sp_blockchain::Result<Option<(NumberFor<Block>, BlockId<Block>)>> {
-        match self {
-            Self::Indracore(client) => client.max_key_changes_range(first, last),
-        }
-    }
+	fn max_key_changes_range(
+		&self,
+		first: NumberFor<Block>,
+		last: BlockId<Block>,
+	) -> sp_blockchain::Result<Option<(NumberFor<Block>, BlockId<Block>)>> {
+		match self {
+			Self::Indracore(client) => client.max_key_changes_range(first, last)
+		}
+	}
 
-    fn key_changes(
-        &self,
-        first: NumberFor<Block>,
-        last: BlockId<Block>,
-        storage_key: Option<&PrefixedStorageKey>,
-        key: &StorageKey,
-    ) -> sp_blockchain::Result<Vec<(NumberFor<Block>, u32)>> {
-        match self {
-            Self::Indracore(client) => client.key_changes(first, last, storage_key, key),
-        }
-    }
+	fn key_changes(
+		&self,
+		first: NumberFor<Block>,
+		last: BlockId<Block>,
+		storage_key: Option<&PrefixedStorageKey>,
+		key: &StorageKey,
+	) -> sp_blockchain::Result<Vec<(NumberFor<Block>, u32)>> {
+		match self {
+			Self::Indracore(client) => client.key_changes(first, last, storage_key, key)
+		}
+	}
 }
 
 impl sp_blockchain::HeaderBackend<Block> for Client {
-    fn header(&self, id: BlockId<Block>) -> sp_blockchain::Result<Option<Header>> {
-        match self {
-            Self::Indracore(client) => client.header(&id),
-        }
-    }
+	fn header(&self, id: BlockId<Block>) -> sp_blockchain::Result<Option<Header>> {
+		match self {
+			Self::Indracore(client) => client.header(&id)
+		}
+	}
 
-    fn info(&self) -> sp_blockchain::Info<Block> {
-        match self {
-            Self::Indracore(client) => client.info(),
-        }
-    }
+	fn info(&self) -> sp_blockchain::Info<Block> {
+		match self {
+			Self::Indracore(client) => client.info()
+		}
+	}
 
-    fn status(&self, id: BlockId<Block>) -> sp_blockchain::Result<sp_blockchain::BlockStatus> {
-        match self {
-            Self::Indracore(client) => client.status(id),
-        }
-    }
+	fn status(&self, id: BlockId<Block>) -> sp_blockchain::Result<sp_blockchain::BlockStatus> {
+		match self {
+			Self::Indracore(client) => client.status(id)
+		}
+	}
 
-    fn number(&self, hash: Hash) -> sp_blockchain::Result<Option<BlockNumber>> {
-        match self {
-            Self::Indracore(client) => client.number(hash),
-        }
-    }
+	fn number(&self, hash: Hash) -> sp_blockchain::Result<Option<BlockNumber>> {
+		match self {
+			Self::Indracore(client) => client.number(hash)
+		}
+	}
 
-    fn hash(&self, number: BlockNumber) -> sp_blockchain::Result<Option<Hash>> {
-        match self {
-            Self::Indracore(client) => client.hash(number),
-        }
-    }
+	fn hash(&self, number: BlockNumber) -> sp_blockchain::Result<Option<Hash>> {
+		match self {
+			Self::Indracore(client) => client.hash(number)
+		}
+	}
 }

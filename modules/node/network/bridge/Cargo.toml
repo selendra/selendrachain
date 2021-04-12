@@ -1,0 +1,25 @@
+[package]
+name = "indracore-network-bridge"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+async-trait = "0.1.42"
+futures = "0.3.12"
+tracing = "0.1.25"
+indracore-primitives = { path = "../../../../primitives" }
+parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
+sc-authority-discovery = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
+indracore-node-network-protocol = { path = "../protocol" }
+strum = "0.20.0"
+
+[dev-dependencies]
+assert_matches = "1.4.0"
+parking_lot = "0.11.1"
+indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
+indracore-node-subsystem-util = { path = "../../subsystem-util"}
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+sp-keyring = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }

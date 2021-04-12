@@ -1,6 +1,6 @@
 [package]
 name = "indracore-runtime-common"
-version = "0.4.0-dev"
+version = "0.4.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
@@ -8,68 +8,64 @@ edition = "2018"
 impl-trait-for-tuples = "0.2.0"
 bitvec = { version = "0.20.1", default-features = false, features = ["alloc"] }
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
-log = { version = "0.4.13", default-features = false }
+log = { version = "0.4.13", optional = true }
 rustc-hex = { version = "2.1.0", default-features = false }
 serde = { version = "1.0.123", default-features = false }
 serde_derive = { version = "1.0.117", optional = true }
 static_assertions = "1.1.0"
-libsecp256k1 = { version = "0.3.5", default-features = false }
 
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-inherents = { package = "sp-inherents", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-std = { package = "sp-std", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-session = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-staking = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+sp-api = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+inherents = { package = "sp-inherents", git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+sp-std = { package = "sp-std", git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+sp-io = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+sp-runtime = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+sp-session = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+sp-staking = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
 
-pallet-authorship = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-session = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-staking = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-frame-system = {git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-vesting = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-offences = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false, optional = true }
-pallet-babe = { git = "https://github.com/paritytech/substrate", branch = "master", default-features=false, optional = true }
-pallet-beefy = { git = "https://github.com/paritytech/grandpa-bridge-gadget", branch = "master", default-features = false }
-pallet-mmr = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+pallet-authorship = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+pallet-balances = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+pallet-session = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+frame-support = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+pallet-staking = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+frame-system = {git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+pallet-timestamp = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+pallet-vesting = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+pallet-offences = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+pallet-transaction-payment = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+pallet-treasury = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+
+frame-benchmarking = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false, optional = true }
+pallet-babe = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features=false, optional = true }
 
 primitives = { package = "indracore-primitives", path = "../../primitives", default-features = false }
-runtime-parachains = { package = "indracore-runtime-parachains", path = "../../parachains/runtime-parachains", default-features = false }
-xcm = { path = "../../parachains/xcm", default-features = false }
-slot-range-helper = { path = "slot_range_helper", default-features = false }
+libsecp256k1 = { version = "0.3.5", default-features = false, optional = true }
+runtime-parachains = { package = "indracore-runtime-parachains", path = "../../modules/parachain/runtime-parachains", default-features = false }
 
-beefy-primitives = { git = "https://github.com/paritytech/grandpa-bridge-gadget", branch = "master", default-features = false }
+xcm = { path = "../../modules/xcm", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.1"
+keyring = { package = "sp-keyring", git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+sp-trie = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+frame-support-test = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+pallet-babe = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+pallet-randomness-collective-flip = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+pallet-staking-reward-curve = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+pallet-treasury = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
 trie-db = "0.22.3"
 serde_json = "1.0.61"
 libsecp256k1 = "0.3.5"
-keyring = { package = "sp-keyring", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-trie = { git = "https://github.com/paritytech/substrate", branch = "master" }
-pallet-babe = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "master" }
-pallet-randomness-collective-flip = { git = "https://github.com/paritytech/substrate", branch = "master" }
-frame-support-test = { git = "https://github.com/paritytech/substrate", branch = "master" }
-pallet-staking-reward-curve = { git = "https://github.com/paritytech/substrate", branch = "master" }
-pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 [features]
 default = ["std"]
 no_std = []
 std = [
 	"bitvec/std",
-	"libsecp256k1/std",
 	"parity-scale-codec/std",
-	"log/std",
+	"log",
 	"rustc-hex/std",
 	"serde_derive",
 	"serde/std",
@@ -82,20 +78,17 @@ std = [
 	"frame-support/std",
 	"pallet-authorship/std",
 	"pallet-balances/std",
+	"pallet-session/std",
+	"pallet-staking/std",
+	"pallet-timestamp/std",
+	"pallet-vesting/std",
+	"pallet-transaction-payment/std",
+	"pallet-treasury/std",
 	"sp-runtime/std",
 	"sp-session/std",
 	"sp-staking/std",
-	"pallet-session/std",
-	"pallet-staking/std",
 	"frame-system/std",
-	"pallet-timestamp/std",
-	"pallet-vesting/std",
-	"pallet-beefy/std",
-	"pallet-mmr/std",
-	"pallet-transaction-payment/std",
-	"slot-range-helper/std",
 	"runtime-parachains/std",
-	"beefy-primitives/std",
 	"xcm/std",
 ]
 runtime-benchmarks = [
@@ -106,7 +99,6 @@ runtime-benchmarks = [
 	"runtime-parachains/runtime-benchmarks",
 	"pallet-babe/runtime-benchmarks",
 ]
-
 try-runtime = [
 	"runtime-parachains/try-runtime",
 	"pallet-authorship/try-runtime",
