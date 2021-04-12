@@ -14,41 +14,41 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
 serde = { version = "1.0.101", optional = true, features = ["derive"] }
 
-frame-executive = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-frame-support = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-frame-system = {  default-features = false, package = "frame-system", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-frame-system-rpc-runtime-api = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
+frame-executive = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+frame-support = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+frame-system = {  default-features = false, package = "frame-system", git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+frame-system-rpc-runtime-api = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
 
 pallet-ethereum = { version = "0.1.0", default-features = false, path = "../../frame/ethereum" }
 pallet-evm = {  default-features = false, path = "../../frame/evm" }
 pallet-evm-precompile-simple = {  default-features = false, path = "../../frame/evm/precompile/simple" }
 pallet-evm-precompile-sha3fips = {  default-features = false, path = "../../frame/evm/precompile/sha3fips" }
-pallet-aura = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-pallet-balances = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-pallet-grandpa = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-pallet-randomness-collective-flip = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-pallet-sudo = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-pallet-timestamp = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-pallet-transaction-payment = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-pallet-transaction-payment-rpc-runtime-api = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
+pallet-aura = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+pallet-balances = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+pallet-grandpa = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+pallet-randomness-collective-flip = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+pallet-sudo = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+pallet-timestamp = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+pallet-transaction-payment = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+pallet-transaction-payment-rpc-runtime-api = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
 
-sp-api = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-sp-block-builder = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30"}
-sp-consensus-aura = { version = "0.9.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-sp-core = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-sp-inherents = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30"}
-sp-io = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-sp-offchain = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-sp-runtime = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-sp-session = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-sp-std = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-sp-transaction-pool = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
-sp-version = {  default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
+sp-api = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+sp-block-builder = { default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4"}
+sp-consensus-aura = { version = "0.9.0-dev", default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+sp-core = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+sp-inherents = { default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4"}
+sp-io = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+sp-offchain = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+sp-runtime = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+sp-session = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+sp-std = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+sp-transaction-pool = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
+sp-version = {  default-features = false, git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
 
 fp-rpc = { default-features = false, path = "../../primitives/rpc" }
 
 [build-dependencies]
-substrate-wasm-builder = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.8.30" }
+substrate-wasm-builder = { git = "https://github.com/selendra/substrate.git", branch = "v2.0.4" }
 
 [features]
 default = ["std", "aura"]
