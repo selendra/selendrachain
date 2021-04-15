@@ -5,7 +5,7 @@
 </p>
 
 
-Codebase for Selendra a multi-use cases blockchain super-app for the Internet 2.0
+Codebase for Selendra multi-use cases blockchain super-app for the Internet 2.0
 
 A special solution for identity management, ownership of assets distribution & management, decentralized e-commerce, finance, decentralize computing and storage, and IoT applications and more.
 
