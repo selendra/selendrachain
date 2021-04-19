@@ -21,7 +21,7 @@ use babe_primitives::AuthorityId as BabeId;
 use grandpa::AuthorityId as GrandpaId;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_staking::Forcing;
-use indracore::constants::currency::DOTS;
+use indracore::constants::currency::SELS;
 use indracore_primitives::v1::{AccountId, AccountPublic, AssignmentId, ValidatorId};
 use indracore_runtime as indracore;
 use sc_chain_spec::{ChainSpecExtension, ChainType};
@@ -87,8 +87,8 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
 		AuthorityDiscoveryId,
 	)> = vec![];
 
-	const ENDOWMENT: u128 = 1_000_000 * DOTS;
-	const STASH: u128 = 100 * DOTS;
+	const ENDOWMENT: u128 = 1_000_000 * SELS;
+	const STASH: u128 = 100 * SELS;
 
 	indracore::GenesisConfig {
 		frame_system: indracore::SystemConfig {
@@ -260,8 +260,8 @@ pub fn indracore_testnet_genesis(
 ) -> indracore::GenesisConfig {
 	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 
-	const ENDOWMENT: u128 = 1_000_000 * DOTS;
-	const STASH: u128 = 100 * DOTS;
+	const ENDOWMENT: u128 = 1_000_000 * SELS;
+	const STASH: u128 = 100 * SELS;
 
 	indracore::GenesisConfig {
 		frame_system: indracore::SystemConfig {
