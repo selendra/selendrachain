@@ -1070,7 +1070,7 @@ impl frame_support::traits::OnRuntimeUpgrade for FixPolkadotCouncilVotersDeposit
 		);
 
 		log::info!(
-			target: "runtime::polkadot",
+			target: "runtime::indracore",
 			"updated {} (updated) + {} (correct) + {} (skipped) voter's deposit.",
 			updated,
 			correct,
@@ -1340,7 +1340,7 @@ sp_api::impl_runtime_apis! {
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade() -> Result<(Weight, Weight), sp_runtime::RuntimeString> {
-			log::info!("try-runtime::on_runtime_upgrade polkadot.");
+			log::info!("try-runtime::on_runtime_upgrade indracore.");
 			let weight = Executive::try_runtime_upgrade()?;
 			Ok((weight, BlockWeights::get().max_block))
 		}
