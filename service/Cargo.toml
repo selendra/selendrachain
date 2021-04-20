@@ -66,7 +66,7 @@ indracore-node-core-proposer = { path = "../modules/node/core/proposer" }
 indracore-overseer = { path = "../modules/node/overseer" }
 indracore-parachain = { path = "../modules/parachain" }
 indracore-primitives = { path = "../primitives" }
-indracore-rpc = { path = "../modules/rpc" }
+indracore-rpc = { path = "rpc" }
 indracore-subsystem = { package = "indracore-node-subsystem", path = "../modules/node/subsystem" }
 indracore-node-subsystem-util = { path = "../modules/node/subsystem-util" }
 indracore-runtime-parachains = { path = "../modules/parachain/runtime-parachains" }
