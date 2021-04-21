@@ -29,8 +29,9 @@ use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::{traits::IdentifyAccount, Perbill};
 use telemetry::TelemetryEndpoints;
+use std::collections::BTreeMap;
 
-const INDRACORE_STAGING_TELEMETRY_URL: &str = "wss://telemetry.indracore.io/submit/";
+const INDRACORE_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 const DEFAULT_PROTOCOL_ID: &str = "sel";
 
 /// Node `ChainSpec` extensions.
@@ -161,6 +162,10 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
 		pallet_authority_discovery: indracore::AuthorityDiscoveryConfig { keys: vec![] },
 		pallet_vesting: indracore::VestingConfig { vesting: vec![] },
 		pallet_treasury: Default::default(),
+		pallet_evm: indracore::EVMConfig {
+            accounts: BTreeMap::new(),
+        },
+        pallet_ethereum: indracore::EthereumConfig {},
 	}
 }
 
@@ -180,7 +185,15 @@ pub fn indracore_staging_testnet_config() -> Result<IndracoreChainSpec, String> 
 				.expect("Indracore Staging telemetry url is valid; qed"),
 		),
 		Some(DEFAULT_PROTOCOL_ID),
-		None,
+		Some(
+            serde_json::from_str(
+                "{
+            \"tokenDecimals\": 18,
+            \"tokenSymbol\": \"SEL\"
+        	}",
+            )
+            .expect("Provided valid json map"),
+        ),
 		Default::default(),
 	))
 }
@@ -333,6 +346,10 @@ pub fn indracore_testnet_genesis(
 		pallet_authority_discovery: indracore::AuthorityDiscoveryConfig { keys: vec![] },
 		pallet_vesting: indracore::VestingConfig { vesting: vec![] },
 		pallet_treasury: Default::default(),
+		pallet_evm: indracore::EVMConfig {
+			accounts: BTreeMap::new(),
+		},
+		pallet_ethereum: indracore::EthereumConfig {},
 	}
 }
 
@@ -357,7 +374,15 @@ pub fn indracore_development_config() -> Result<IndracoreChainSpec, String> {
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
-		None,
+		Some(
+            serde_json::from_str(
+                "{
+            \"tokenDecimals\": 18,
+            \"tokenSymbol\": \"SEL\"
+        	}",
+            )
+            .expect("Provided valid json map"),
+        ),
 		Default::default(),
 	))
 }
@@ -386,7 +411,15 @@ pub fn indracore_local_testnet_config() -> Result<IndracoreChainSpec, String> {
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
-		None,
+		Some(
+            serde_json::from_str(
+                "{
+            \"tokenDecimals\": 18,
+            \"tokenSymbol\": \"SEL\"
+        	}",
+            )
+            .expect("Provided valid json map"),
+        ),
 		Default::default(),
 	))
 }

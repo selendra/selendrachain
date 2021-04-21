@@ -76,6 +76,13 @@ hex-literal = { version = "0.3.1", optional = true }
 runtime-common = { package = "indracore-runtime-common", path = "../common", default-features = false }
 primitives = { package = "indracore-primitives", path = "../../primitives", default-features = false }
 
+# frontier
+pallet-evm = { path = "../../modules/frontier/frame/evm", default-features = false }
+pallet-ethereum = { path = "../../modules/frontier/frame/ethereum", default-features = false }
+pallet-evm-precompile-simple = { default-features = false, path = "../../modules/frontier/frame/evm/precompile/simple" }
+pallet-evm-precompile-sha3fips = { default-features = false, path = "../../modules/frontier/frame/evm/precompile/sha3fips" }
+fp-rpc = { path = "../../modules/frontier/primitives/rpc", default-features = false }
+
 [dev-dependencies]
 hex-literal = "0.3.1"
 libsecp256k1 = "0.3.5"
@@ -137,6 +144,11 @@ std = [
 	"pallet-randomness-collective-flip/std",
 	"pallet-vesting/std",
 	"pallet-utility/std",
+	"pallet-ethereum/std",
+	"pallet-evm/std",
+	"pallet-evm-precompile-sha3fips/std",
+	"pallet-evm-precompile-simple/std",
+	"fp-rpc/std",
 	"sp-runtime/std",
 	"sp-staking/std",
 	"frame-system/std",

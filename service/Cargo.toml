@@ -59,14 +59,24 @@ futures = "0.3.12"
 hex-literal = "0.3.1"
 tracing = "0.1.25"
 serde = { version = "1.0.123", features = ["derive"] }
+serde_json = "1.0.64"
 thiserror = "1.0.23"
 
+#frontier
+fp-consensus = { path = "../modules/frontier/primitives/consensus" }
+fc-consensus = { path = "../modules/frontier/client/consensus" }
+fc-rpc-core= { path = "../modules/frontier/client/rpc-core" }
+fc-db = { path = "../modules/frontier/client/db" }
+fc-rpc = { path = "../modules/frontier/client/rpc" }
+fp-rpc = { path = "../modules/frontier/primitives/rpc" }
+pallet-evm = { path = "../modules/frontier/frame/evm" }
+
 # Indracore
+indracore-rpc = { path = "rpc" }
+indracore-primitives = { path = "../primitives" }
 indracore-node-core-proposer = { path = "../modules/node/core/proposer" }
 indracore-overseer = { path = "../modules/node/overseer" }
 indracore-parachain = { path = "../modules/parachain" }
-indracore-primitives = { path = "../primitives" }
-indracore-rpc = { path = "rpc" }
 indracore-subsystem = { package = "indracore-node-subsystem", path = "../modules/node/subsystem" }
 indracore-node-subsystem-util = { path = "../modules/node/subsystem-util" }
 indracore-runtime-parachains = { path = "../modules/parachain/runtime-parachains" }

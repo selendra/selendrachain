@@ -18,7 +18,11 @@
 
 #![warn(missing_docs)]
 
-use std::sync::Arc;
+use std::{sync::Arc, collections::BTreeMap};
+use fc_rpc_core::types::{PendingTransactions, FilterPool};
+use jsonrpc_pubsub::manager::SubscriptionManager;
+use pallet_ethereum::EthereumStorageSchema;
+use fc_rpc::{StorageOverride, SchemaV1Override};
 
 use indracore_primitives::v0::{Block, BlockNumber, AccountId, Nonce, Balance, Hash};
 use sp_api::ProvideRuntimeApi;
@@ -28,11 +32,12 @@ use sp_blockchain::{HeaderBackend, HeaderMetadata, Error as BlockChainError};
 use sp_consensus::SelectChain;
 use sp_consensus_babe::BabeApi;
 use sp_keystore::SyncCryptoStorePtr;
-use sc_client_api::AuxStore;
+use sc_client_api::{AuxStore, StorageProvider};
 use sc_client_api::light::{Fetcher, RemoteBlockchain};
 use sc_consensus_babe::Epoch;
 use sc_finality_grandpa::FinalityProofProvider;
 use sc_sync_state_rpc::{SyncStateRpcApi, SyncStateRpcHandler};
+use sc_transaction_graph::{ChainApi, Pool};
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 
 /// A type representing all RPC extensions.
@@ -75,7 +80,7 @@ pub struct GrandpaDeps<B> {
 }
 
 /// Full client dependencies
-pub struct FullDeps<C, P, SC, B> {
+pub struct FullDeps<C, P, SC, B, A: ChainApi> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
@@ -90,25 +95,53 @@ pub struct FullDeps<C, P, SC, B> {
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
 	pub grandpa: GrandpaDeps<B>,
+	/// Graph pool instance.
+	pub graph: Arc<Pool<A>>,
+	/// The Node authority flag
+	pub is_authority: bool,
+	/// Network service
+	pub network: Arc<sc_network::NetworkService<Block, Hash>>,
+	/// Ethereum pending transactions.
+	pub pending_transactions: PendingTransactions,
+	/// EthFilterApi pool.
+	pub filter_pool: Option<FilterPool>,
+	/// Backend.
+	pub backend: Arc<fc_db::Backend<Block>>,
 }
 
 /// Instantiate all RPC extensions.
-pub fn create_full<C, P, SC, B>(deps: FullDeps<C, P, SC, B>) -> RpcExtension where
-	C: ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore +
-		HeaderMetadata<Block, Error=BlockChainError> + Send + Sync + 'static,
+pub fn create_full<C, P, SC, B, A>(
+	deps: FullDeps<C, P, SC, B, A>,
+	subscription_task_executor: SubscriptionTaskExecutor,
+) -> RpcExtension where
+	C: ProvideRuntimeApi<Block> 
+		+ HeaderBackend<Block> 
+		+ StorageProvider<Block, B>
+		+ AuxStore
+		+ sc_client_api::client::BlockchainEvents<Block>
+		+ HeaderMetadata<Block, Error=BlockChainError> 
+		+ Send 
+		+ Sync 
+		+ 'static,
 	C::Api: frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
+	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: BabeApi<Block>,
 	C::Api: BlockBuilder<Block>,
-	P: TransactionPool + Sync + Send + 'static,
+	P: TransactionPool<Block = Block> + 'static,
 	SC: SelectChain<Block> + 'static,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	B::State: sc_client_api::StateBackend<sp_runtime::traits::HashFor<Block>>,
+	A: ChainApi<Block = Block> + 'static,
 {
 	use frame_rpc_system::{FullSystem, SystemApi};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use sc_finality_grandpa_rpc::{GrandpaApi, GrandpaRpcHandler};
 	use sc_consensus_babe_rpc::BabeRpcHandler;
+	use fc_rpc::{
+		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, NetApi, NetApiServer,
+		EthPubSubApi, EthPubSubApiServer, Web3Api, Web3ApiServer, HexEncodedIdProvider,
+	};
 
 	let mut io = jsonrpc_core::IoHandler::default();
 	let FullDeps {
@@ -119,6 +152,12 @@ pub fn create_full<C, P, SC, B>(deps: FullDeps<C, P, SC, B>) -> RpcExtension whe
 		deny_unsafe,
 		babe,
 		grandpa,
+		graph,
+		is_authority,
+		network,
+		pending_transactions,
+		filter_pool,
+		backend,
 	} = deps;
 	let BabeDeps {
 		keystore,
@@ -134,7 +173,7 @@ pub fn create_full<C, P, SC, B>(deps: FullDeps<C, P, SC, B>) -> RpcExtension whe
 	} = grandpa;
 
 	io.extend_with(
-		SystemApi::to_delegate(FullSystem::new(client.clone(), pool, deny_unsafe))
+		SystemApi::to_delegate(FullSystem::new(client.clone(), pool.clone(), deny_unsafe))
 	);
 	io.extend_with(
 		TransactionPaymentApi::to_delegate(TransactionPayment::new(client.clone()))
@@ -163,12 +202,58 @@ pub fn create_full<C, P, SC, B>(deps: FullDeps<C, P, SC, B>) -> RpcExtension whe
 	io.extend_with(
 		SyncStateRpcApi::to_delegate(SyncStateRpcHandler::new(
 			chain_spec,
-			client,
+			client.clone(),
 			shared_authority_set,
 			shared_epoch_changes,
 			deny_unsafe,
 		))
 	);
+
+	let signers = Vec::new();
+
+	let mut overrides = BTreeMap::new();
+	overrides.insert(
+		EthereumStorageSchema::V1,
+		Box::new(SchemaV1Override::new(client.clone()))
+			as Box<dyn StorageOverride<_> + Send + Sync>,
+	);
+
+	io.extend_with(EthApiServer::to_delegate(EthApi::new(
+		client.clone(),
+		pool.clone(),
+		graph,
+		indracore_runtime::TransactionConverter,
+		network.clone(),
+		pending_transactions,
+		signers,
+		overrides,
+		backend.clone(),
+		is_authority,
+	)));
+
+	if let Some(filter_pool) = filter_pool {
+		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
+			client.clone(),
+			filter_pool.clone(),
+			500 as usize, // max stored filters
+		)));
+	}
+
+	io.extend_with(NetApiServer::to_delegate(NetApi::new(
+		client.clone(),
+		network.clone(),
+	)));
+	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client.clone())));
+	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
+		pool.clone(),
+		client.clone(),
+		network,
+		SubscriptionManager::<HexEncodedIdProvider>::with_id_provider(
+			HexEncodedIdProvider::default(),
+			Arc::new(subscription_task_executor),
+		),
+	)));
+
 	io
 }
 

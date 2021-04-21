@@ -49,12 +49,17 @@ use sp_core::traits::SpawnNamed;
 
 use indracore_subsystem::jaeger;
 
-use std::sync::Arc;
+use std::{
+    collections::{BTreeMap, HashMap},
+    sync::{Arc, Mutex},
+};
 
 use prometheus_endpoint::Registry;
 use sc_executor::native_executor_instance;
 use service::RpcHandlers;
 use telemetry::{Telemetry, TelemetryWorker, TelemetryWorkerHandle};
+use fc_consensus::FrontierBlockImport;
+use fc_rpc_core::types::{FilterPool, PendingTransactions};
 
 pub use self::client::{AbstractClient, Client, ClientHandle, ExecuteWithClient, RuntimeApiCollection};
 pub use chain_spec::IndracoreChainSpec;
@@ -135,6 +140,24 @@ fn set_prometheus_registry(config: &mut Configuration) -> Result<(), Error> {
 	Ok(())
 }
 
+pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backend<Block>>, String> {
+	let config_dir = config.base_path.as_ref()
+		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
+		.unwrap_or_else(|| {
+			service::BasePath::from_project("", "", "indracore")
+				.config_dir(config.chain_spec.id())
+		});
+	let database_dir = config_dir.join("frontier").join("db");
+
+	Ok(Arc::new(fc_db::Backend::<Block>::new(&fc_db::DatabaseSettings {
+		source: fc_db::DatabaseSettingsSrc::RocksDb {
+			path: database_dir,
+			cache_size: 0,
+		}
+	})?))
+}
+
+
 /// Initialize the `Jeager` collector. The destination must listen
 /// on the given address and port for `UDP` packets.
 fn jaeger_launch_collector_with_agent(spawner: impl SpawnNamed, config: &Configuration, agent: Option<std::net::SocketAddr>) -> Result<(), Error> {
@@ -177,15 +200,26 @@ fn new_partial<RuntimeApi, Executor>(
 			impl Fn(
 				indracore_rpc::DenyUnsafe,
 				indracore_rpc::SubscriptionTaskExecutor,
+				Arc<sc_network::NetworkService<Block, Hash>>,
 			) -> indracore_rpc::RpcExtension,
 			(
-				babe::BabeBlockImport<
-					Block, FullClient<RuntimeApi, Executor>, FullGrandpaBlockImport<RuntimeApi, Executor>
-				>,
-				grandpa::LinkHalf<Block, FullClient<RuntimeApi, Executor>, FullSelectChain>,
-				babe::BabeLink<Block>
-			),
-			grandpa::SharedVoterState,
+                babe::BabeBlockImport<
+                    Block,
+                    FullClient<RuntimeApi, Executor>,
+                    FrontierBlockImport<
+                        Block,
+                        FullGrandpaBlockImport<RuntimeApi, Executor>,
+                        FullClient<RuntimeApi, Executor>,
+                    >,
+                >,
+                grandpa::LinkHalf<Block, FullClient<RuntimeApi, Executor>, FullSelectChain>,
+                babe::BabeLink<Block>,
+            ),
+			(
+                grandpa::SharedVoterState,
+                PendingTransactions,
+				Option<FilterPool>,
+            ),
 			std::time::Duration, // slot-duration
 			Option<Telemetry>,
 		)
@@ -245,8 +279,10 @@ fn new_partial<RuntimeApi, Executor>(
 		client.clone(),
 	);
 
-	let grandpa_hard_forks = Vec::new();
+	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
+	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 
+	let grandpa_hard_forks = Vec::new();
 	let (grandpa_block_import, grandpa_link) =
 		grandpa::block_import_with_authority_set_hard_forks(
 			client.clone(),
@@ -258,10 +294,18 @@ fn new_partial<RuntimeApi, Executor>(
 
 	let justification_import = grandpa_block_import.clone();
 
+	let frontier_backend = open_frontier_backend(config).unwrap();
+	let frontier_block_import =
+		FrontierBlockImport::new(
+			grandpa_block_import.clone(),
+			client.clone(),
+			frontier_backend.clone()
+		);
+
 	let babe_config = babe::Config::get_or_compute(&*client)?;
 	let (block_import, babe_link) = babe::block_import(
 		babe_config.clone(),
-		grandpa_block_import,
+		frontier_block_import,
 		client.clone(),
 	)?;
 
@@ -291,15 +335,26 @@ fn new_partial<RuntimeApi, Executor>(
 
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
 	let slot_duration = babe_config.slot_duration();
+	let is_authority = config.role.is_authority();
+    let subscription_task_executor =
+        indracore_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
+
+    let pending = pending_transactions.clone();
+	let filter_pool_clone = filter_pool.clone();
 
 	let rpc_extensions_builder = {
 		let client = client.clone();
+		let pool = transaction_pool.clone();
 		let keystore = keystore_container.sync_keystore();
 		let transaction_pool = transaction_pool.clone();
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
+		let frontier_backend = frontier_backend.clone();
 
-		move |deny_unsafe, subscription_executor| -> indracore_rpc::RpcExtension {
+		move |deny_unsafe,
+		_subscription_executor: indracore_rpc::SubscriptionTaskExecutor,
+		network: Arc<sc_network::NetworkService<Block, <Block as BlockT>::Hash>>|
+		-> indracore_rpc::RpcExtension {
 			let deps = indracore_rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
@@ -315,12 +370,18 @@ fn new_partial<RuntimeApi, Executor>(
 					shared_voter_state: shared_voter_state.clone(),
 					shared_authority_set: shared_authority_set.clone(),
 					justification_stream: justification_stream.clone(),
-					subscription_executor,
+					subscription_executor: _subscription_executor,
 					finality_provider: finality_proof_provider.clone(),
 				},
+				is_authority,
+				graph: pool.pool().clone(),
+				pending_transactions: pending.clone(),
+				filter_pool: filter_pool_clone.clone(),
+				backend: frontier_backend.clone(),
+				network: network,
 			};
 
-			indracore_rpc::create_full(deps)
+			indracore_rpc::create_full(deps, subscription_task_executor.clone())
 		}
 	};
 
@@ -333,7 +394,12 @@ fn new_partial<RuntimeApi, Executor>(
 		import_queue,
 		transaction_pool,
 		inherent_data_providers,
-		other: (rpc_extensions_builder, import_setup, rpc_setup, slot_duration, telemetry)
+		other: (
+			rpc_extensions_builder,
+			import_setup,
+			(rpc_setup, pending_transactions, filter_pool),
+			slot_duration,
+			telemetry)
 	})
 }
 
@@ -653,12 +719,34 @@ pub fn new_full<RuntimeApi, Executor>(
 		import_queue,
 		transaction_pool,
 		inherent_data_providers,
-		other: (rpc_extensions_builder, import_setup, rpc_setup, slot_duration, mut telemetry)
+		other: (
+			_rpc_extensions_builder,
+			import_setup,
+			(rpc_setup, pending_transactions, filter_pool),
+			slot_duration,
+			mut telemetry)
 	} = new_partial::<RuntimeApi, Executor>(&mut config, jaeger_agent, telemetry_worker_handle)?;
 
 	let prometheus_registry = config.prometheus_registry().cloned();
 
 	let shared_voter_state = rpc_setup;
+
+	let (network, network_status_sinks, system_rpc_tx, network_starter) =
+		service::build_network(service::BuildNetworkParams {
+			config: &config,
+			client: client.clone(),
+			transaction_pool: transaction_pool.clone(),
+			spawn_handle: task_manager.spawn_handle(),
+			import_queue,
+			on_demand: None,
+			block_announce_validator_builder: None,
+		})?;
+	
+	let network_clone = network.clone();
+
+	let rpc_extensions_builder = move |deny_unsafe, subscription_executor| {
+		_rpc_extensions_builder(deny_unsafe, subscription_executor, network_clone.clone())
+	};
 
 	// Note: GrandPa is pushed before the indracore-specific protocols. This doesn't change
 	// anything in terms of behaviour, but makes the logs more consistent with the other
@@ -715,17 +803,6 @@ pub fn new_full<RuntimeApi, Executor>(
 	#[cfg(not(feature = "real-overseer"))]
 	fn register_request_response(_: &mut sc_network::config::NetworkConfiguration) {}
 	let request_multiplexer = register_request_response(&mut config.network);
-
-	let (network, network_status_sinks, system_rpc_tx, network_starter) =
-		service::build_network(service::BuildNetworkParams {
-			config: &config,
-			client: client.clone(),
-			transaction_pool: transaction_pool.clone(),
-			spawn_handle: task_manager.spawn_handle(),
-			import_queue,
-			on_demand: None,
-			block_announce_validator_builder: None,
-		})?;
 
 	// See above. We have added a dummy collation set with the intent of printing an error if one
 	// tries to connect a collator to a node that isn't compiled with `--features real-overseer`.
@@ -865,6 +942,33 @@ pub fn new_full<RuntimeApi, Executor>(
 
 		Some(overseer_handler)
 	} else { None };
+
+	// Spawn Frontier EthFilterApi maintenance task.
+	if let Some(filter_pool) = filter_pool {
+		// Each filter is allowed to stay in the pool for 100 blocks.
+		const FILTER_RETAIN_THRESHOLD: u64 = 100;
+		task_manager.spawn_essential_handle().spawn(
+			"frontier-filter-pool",
+			fc_rpc::EthTask::filter_pool_task(
+					Arc::clone(&client),
+					filter_pool,
+					FILTER_RETAIN_THRESHOLD,
+			)
+		);
+	}
+
+	// Spawn Frontier pending transactions maintenance task (as essential, otherwise we leak).
+	if let Some(pending_transactions) = pending_transactions {
+		const TRANSACTION_RETAIN_THRESHOLD: u64 = 5;
+		task_manager.spawn_essential_handle().spawn(
+			"frontier-pending-transactions",
+			fc_rpc::EthTask::pending_transaction_task(
+				Arc::clone(&client),
+					pending_transactions,
+					TRANSACTION_RETAIN_THRESHOLD,
+				)
+		);
+	}
 
 	if role.is_authority() {
 		let can_author_with =
