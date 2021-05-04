@@ -2773,7 +2773,6 @@ dependencies = [
  "indracore-primitives",
  "log",
  "maplit",
- "parity-scale-codec",
  "sp-application-crypto",
  "sp-core",
  "sp-keystore",
