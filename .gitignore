@@ -23,9 +23,10 @@ rls*.log
 **/hfuzz_workspace/
 .cargo/
 IndraSpec.json
-indracore.json
 sel-key.key
 startnode.sh
 indracore.json.backup
 hfuzz_target/
 hfuzz_workspace/
+run.txt
+customSpec.json

@@ -32,7 +32,7 @@ use sp_runtime::{traits::IdentifyAccount, Perbill};
 use telemetry::TelemetryEndpoints;
 
 const INDRACORE_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
-const DEFAULT_PROTOCOL_ID: &str = "dot";
+const DEFAULT_PROTOCOL_ID: &str = "sel";
 
 /// Node `ChainSpec` extensions.
 ///
@@ -51,7 +51,7 @@ pub struct Extensions {
 pub type IndracoreChainSpec = service::GenericChainSpec<indracore::GenesisConfig, Extensions>;
 
 pub fn indracore_config() -> Result<IndracoreChainSpec, String> {
-	IndracoreChainSpec::from_json_bytes(&include_bytes!("../res/indracore.json")[..])
+	IndracoreChainSpec::from_json_bytes(&include_bytes!("../res/indracore_sel.json")[..])
 }
 
 fn indracore_session_keys(
@@ -181,7 +181,15 @@ pub fn indracore_staging_testnet_config() -> Result<IndracoreChainSpec, String> 
 				.expect("Indracore Staging telemetry url is valid; qed"),
 		),
 		Some(DEFAULT_PROTOCOL_ID),
-		None,
+		Some(
+            serde_json::from_str(
+                "{
+            \"tokenDecimals\": 18,
+            \"tokenSymbol\": \"SEL\"
+        	}",
+            )
+            .expect("Provided valid json map"),
+        ),
 		Default::default(),
 	))
 }
@@ -379,7 +387,15 @@ pub fn indracore_development_config() -> Result<IndracoreChainSpec, String> {
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
-		None,
+		Some(
+            serde_json::from_str(
+                "{
+            \"tokenDecimals\": 18,
+            \"tokenSymbol\": \"SEL\"
+        	}",
+            )
+            .expect("Provided valid json map"),
+        ),
 		Default::default(),
 	))
 }
@@ -408,7 +424,15 @@ pub fn indracore_local_testnet_config() -> Result<IndracoreChainSpec, String> {
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
-		None,
+		Some(
+            serde_json::from_str(
+                "{
+            \"tokenDecimals\": 18,
+            \"tokenSymbol\": \"SEL\"
+        	}",
+            )
+            .expect("Provided valid json map"),
+        ),
 		Default::default(),
 	))
 }
