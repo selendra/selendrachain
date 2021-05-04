@@ -17,7 +17,7 @@
 //! Indracore chain configurations.
 
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
-use babe_primitives::AuthorityId as BabeId;
+use sp_consensus_babe::AuthorityId as BabeId;
 use beefy_primitives::ecdsa::AuthorityId as BeefyId;
 use grandpa::AuthorityId as GrandpaId;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;

@@ -20,7 +20,7 @@ members = [
 	# "modules/node/core/candidate-selection",
 	# "modules/node/core/candidate-validation",
 	# "modules/node/core/chain-api",
-	# "modules/node/core/proposer",
+	# "modules/node/core/parachains-inherent",
 	# "modules/node/core/provisioner",
 	# "modules/node/core/pvf",
 	# "modules/node/core/runtime-api",

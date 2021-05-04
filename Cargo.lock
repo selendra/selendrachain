@@ -3122,26 +3122,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "indracore-node-core-proposer"
+name = "indracore-node-core-parachains-inherent"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "futures 0.3.14",
  "futures-timer 3.0.2",
  "indracore-node-subsystem",
  "indracore-overseer",
  "indracore-primitives",
- "sc-basic-authorship",
- "sc-block-builder",
- "sc-client-api",
- "sc-telemetry",
- "sp-api",
  "sp-blockchain",
- "sp-consensus",
- "sp-core",
  "sp-inherents",
  "sp-runtime",
- "sp-transaction-pool",
- "substrate-prometheus-endpoint",
+ "thiserror",
  "tracing",
 ]
 
@@ -3682,7 +3675,7 @@ dependencies = [
  "indracore-node-core-candidate-selection",
  "indracore-node-core-candidate-validation",
  "indracore-node-core-chain-api",
- "indracore-node-core-proposer",
+ "indracore-node-core-parachains-inherent",
  "indracore-node-core-provisioner",
  "indracore-node-core-runtime-api",
  "indracore-node-primitives",
@@ -3703,6 +3696,7 @@ dependencies = [
  "pallet-staking",
  "pallet-transaction-payment-rpc-runtime-api",
  "sc-authority-discovery",
+ "sc-basic-authorship",
  "sc-block-builder",
  "sc-chain-spec",
  "sc-client-api",
@@ -3710,6 +3704,7 @@ dependencies = [
  "sc-consensus",
  "sc-consensus-babe",
  "sc-consensus-slots",
+ "sc-consensus-uncles",
  "sc-executor",
  "sc-finality-grandpa",
  "sc-finality-grandpa-warp-sync",
@@ -3735,6 +3730,7 @@ dependencies = [
  "sp-session",
  "sp-state-machine",
  "sp-storage",
+ "sp-timestamp",
  "sp-transaction-pool",
  "sp-trie",
  "substrate-prometheus-endpoint",
