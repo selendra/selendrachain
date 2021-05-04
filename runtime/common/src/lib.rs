@@ -18,10 +18,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod claims;
 pub mod slots;
-pub mod auctions;
-pub mod crowdloan;
 pub mod purchase;
 pub mod impls;
 pub mod mmr;
@@ -33,8 +30,6 @@ pub mod xcm_sender;
 
 #[cfg(test)]
 mod mock;
-#[cfg(test)]
-mod integration_tests;
 
 use beefy_primitives::ecdsa::AuthorityId as BeefyId;
 use primitives::v1::{AccountId, AssignmentId, BlockNumber, ValidatorId};

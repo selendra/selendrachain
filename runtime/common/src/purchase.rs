@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Module to process purchase of DOTs.
+//! Module to process purchase of SELs.
 
 use parity_scale_codec::{Encode, Decode};
 use sp_runtime::{Permill, RuntimeDebug, DispatchResult, DispatchError, AnySignature};
@@ -41,9 +41,9 @@ pub trait Config: frame_system::Config {
 	type ConfigurationOrigin: EnsureOrigin<Self::Origin>;
 	/// The maximum statement length for the statement users to sign when creating an account.
 	type MaxStatementLength: Get<usize>;
-	/// The amount of purchased locked DOTs that we will unlock for basic actions on the chain.
+	/// The amount of purchased locked SELs that we will unlock for basic actions on the chain.
 	type UnlockedProportion: Get<Permill>;
-	/// The maximum amount of locked DOTs that we will unlock.
+	/// The maximum amount of locked SELs that we will unlock.
 	type MaxUnlocked: Get<BalanceOf<Self>>;
 }
 
@@ -85,15 +85,15 @@ impl AccountValidity {
 	}
 }
 
-/// All information about an account regarding the purchase of DOTs.
+/// All information about an account regarding the purchase of SELs.
 #[derive(Encode, Decode, Default, Clone, Eq, PartialEq, RuntimeDebug)]
 pub struct AccountStatus<Balance> {
 	/// The current validity status of the user. Will denote if the user has passed KYC,
 	/// how much they are able to purchase, and when their purchase process has completed.
 	validity: AccountValidity,
-	/// The amount of free DOTs they have purchased.
+	/// The amount of free SELs they have purchased.
 	free_balance: Balance,
-	/// The amount of locked DOTs they have purchased.
+	/// The amount of locked SELs they have purchased.
 	locked_balance: Balance,
 	/// Their sr25519/ed25519 signature verifying they have signed our required statement.
 	signature: Vec<u8>,
@@ -164,9 +164,9 @@ decl_module! {
 
 		/// The maximum statement length for the statement users to sign when creating an account.
 		const MaxStatementLength: u32 =  T::MaxStatementLength::get() as u32;
-		/// The amount of purchased locked DOTs that we will unlock for basic actions on the chain.
+		/// The amount of purchased locked SELs that we will unlock for basic actions on the chain.
 		const UnlockedProportion: Permill = T::UnlockedProportion::get();
-		/// The maximum amount of locked DOTs that we will unlock.
+		/// The maximum amount of locked SELs that we will unlock.
 		const MaxUnlocked: BalanceOf<T> = T::MaxUnlocked::get();
 
 		/// Deposit one of this module's events by using the default implementation.
@@ -277,7 +277,7 @@ decl_module! {
 
 				if !status.locked_balance.is_zero() {
 					let unlock_block = UnlockBlock::<T>::get();
-					// We allow some configurable portion of the purchased locked DOTs to be unlocked for basic usage.
+					// We allow some configurable portion of the purchased locked SELs to be unlocked for basic usage.
 					let unlocked = (T::UnlockedProportion::get() * status.locked_balance).min(T::MaxUnlocked::get());
 					let locked = status.locked_balance.saturating_sub(unlocked);
 					// We checked that this account has no existing vesting schedule. So this function should
@@ -326,7 +326,7 @@ decl_module! {
 			Self::deposit_event(RawEvent::StatementUpdated);
 		}
 
-		/// Set the block where locked DOTs will become unlocked.
+		/// Set the block where locked SELs will become unlocked.
 		///
 		/// Origin must match the `ConfigurationOrigin`
 		#[weight = T::DbWeight::get().writes(1)]
