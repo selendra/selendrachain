@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
+use service::{IdentifyVariant, self};
 use sc_cli::{SubstrateCli, RuntimeVersion, Role};
 use crate::cli::{Cli, Subcommand};
 use futures::future::TryFutureExt;
@@ -72,10 +73,10 @@ impl SubstrateCli for Cli {
 				.unwrap_or("indracore")
 		} else { id };
 		Ok(match id {
+			"indracore" => Box::new(service::chain_spec::indracore_config()?),
 			"indracore-dev" | "dev" => Box::new(service::chain_spec::indracore_development_config()?),
 			"indracore-local" => Box::new(service::chain_spec::indracore_local_testnet_config()?),
 			"indracore-staging" => Box::new(service::chain_spec::indracore_staging_testnet_config()?),
-			"indracore" => Box::new(service::chain_spec::indracore_config()?),
 			path => {
 				let path = std::path::PathBuf::from(path);
 				Box::new(service::IndracoreChainSpec::from_json_file(path)?)
@@ -90,8 +91,21 @@ impl SubstrateCli for Cli {
 
 fn set_default_ss58_version(_spec: &Box<dyn service::ChainSpec>) {
 	use sp_core::crypto::Ss58AddressFormat;
+
 	let ss58_version = Ss58AddressFormat::SubstrateAccount;
+
 	sp_core::crypto::set_default_ss58_version(ss58_version);
+}
+
+const DEV_ONLY_ERROR_PATTERN: &'static str =
+	"can only use subcommand with --chain [indracore-dev], got ";
+
+fn ensure_dev(spec: &Box<dyn service::ChainSpec>) -> std::result::Result<(), String> {
+	if spec.is_dev() {
+		Ok(())
+	} else {
+		Err(format!("{}{}", DEV_ONLY_ERROR_PATTERN, spec.id()))
+	}
 }
 
 /// Parses indracore specific CLI arguments and run the service.
@@ -197,31 +211,52 @@ pub fn run() -> Result<()> {
 				Ok((cmd.run(client, backend).map_err(Error::SubstrateCli), task_manager))
 			})?)
 		},
-		Some(Subcommand::ValidationWorker(cmd)) => {
+		Some(Subcommand::PvfPrepareWorker(cmd)) => {
 			let mut builder = sc_cli::LoggerBuilder::new("");
 			builder.with_colors(false);
 			let _ = builder.init();
 
-			if cfg!(feature = "browser") || cfg!(target_os = "android") {
-				Err(sc_cli::Error::Input("Cannot run validation worker in browser".into()).into())
-			} else {
-				#[cfg(not(any(target_os = "android", feature = "browser")))]
-				indracore_parachain::wasm_executor::run_worker(
-					&cmd.mem_id,
-					Some(cmd.cache_base_path.clone()),
-				)?;
+			#[cfg(any(target_os = "android", feature = "browser"))]
+			{
+				return Err(
+					sc_cli::Error::Input("PVF preparation workers are not supported under this platform".into()).into()
+				);
+			}
+
+			#[cfg(not(any(target_os = "android", feature = "browser")))]
+			{
+				indracore_node_core_pvf::prepare_worker_entrypoint(&cmd.socket_path);
+				Ok(())
+			}
+		},
+		Some(Subcommand::PvfExecuteWorker(cmd)) => {
+			let mut builder = sc_cli::LoggerBuilder::new("");
+			builder.with_colors(false);
+			let _ = builder.init();
+
+			#[cfg(any(target_os = "android", feature = "browser"))]
+			{
+				return Err(
+					sc_cli::Error::Input("PVF execution workers are not supported under this platform".into()).into()
+				);
+			}
+
+			#[cfg(not(any(target_os = "android", feature = "browser")))]
+			{
+				indracore_node_core_pvf::execute_worker_entrypoint(&cmd.socket_path);
 				Ok(())
 			}
 		},
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			let chain_spec = &runner.config().chain_spec;
-
 			set_default_ss58_version(chain_spec);
 
+			ensure_dev(chain_spec).map_err(Error::Other)?;
+			// else we assume it is indracore.
 			Ok(runner.sync_run(|config| {
 				cmd.run::<service::indracore_runtime::Block, service::IndracoreExecutor>(config)
-				.map_err(|e| Error::SubstrateCli(e))
+					.map_err(|e| Error::SubstrateCli(e))
 			})?)
 		},
 		Some(Subcommand::Key(cmd)) => Ok(cmd.run(&cli)?),
@@ -231,21 +266,20 @@ pub fn run() -> Result<()> {
 			let chain_spec = &runner.config().chain_spec;
 			set_default_ss58_version(chain_spec);
 
-			runner.async_run(|config| {
-				use sc_service::TaskManager;
-				let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
-				let task_manager = TaskManager::new(
-					config.task_executor.clone(),
-					registry,
-				).map_err(|e| Error::SubstrateService(sc_service::Error::Prometheus(e)))?;
+			use sc_service::TaskManager;
+			let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
+			let task_manager = TaskManager::new(
+				runner.config().task_executor.clone(),
+				*registry,
+			).map_err(|e| Error::SubstrateService(sc_service::Error::Prometheus(e)))?;
 
-				Ok((
-					cmd.run::<
-						service::indracore_runtime::Block,
-						service::IndracoreExecutor,
-					>(config).map_err(Error::SubstrateCli),
-					task_manager
-				))
+			ensure_dev(chain_spec).map_err(Error::Other)?;
+			// else we assume it is indracore.
+			runner.async_run(|config| {
+				Ok((cmd.run::<
+					service::indracore_runtime::Block,
+					service::IndracoreExecutor,
+				>(config).map_err(Error::SubstrateCli), task_manager))
 			})
 		}
 	}?;

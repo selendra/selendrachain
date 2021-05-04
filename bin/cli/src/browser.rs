@@ -32,9 +32,9 @@ async fn start_inner(chain_spec: String, log_directives: String) -> Result<Clien
 		service::IndracoreChainSpec::from_json_bytes(chain_spec.as_bytes().to_vec()).map_err(|e| format!("{:?}", e))?;
 	let config = browser_configuration(chain_spec).await?;
 
-	info!("Indracore browser node");
+	info!("Selendra browser node");
 	info!("  version {}", config.impl_version);
-	info!("  by Selendra 2020-2021");
+	info!("  by Selendra, 2020-2021");
 	info!("📋 Chain specification: {}", config.chain_spec.name());
 	info!("🏷  Node name: {}", config.network.node_name);
 	info!("👤 Role: {}", config.display_role());

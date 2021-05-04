@@ -12,9 +12,11 @@ futures-timer = "3.0.2"
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
 parking_lot = { version = "0.11.1", optional = true }
 pin-project = "1.0.4"
+rand = "0.8.3"
 streamunordered = "0.5.1"
 thiserror = "1.0.23"
 tracing = "0.1.25"
+lru = "0.6.5"
 
 indracore-node-primitives = { path = "../primitives" }
 indracore-node-subsystem = { path = "../subsystem" }
@@ -23,11 +25,11 @@ indracore-node-network-protocol = { path = "../network/protocol" }
 indracore-primitives = { path = "../../../primitives" }
 metered-channel = { path = "../metered-channel"}
 
-sc-network = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
-sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
-sp-keystore = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
-substrate-prometheus-endpoint = { git = "https://github.com/selendra/substrate", branch = "v2.0.4" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 [dev-dependencies]
 assert_matches = "1.4.0"

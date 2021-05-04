@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 indracore-erasure-coding = { path = ".." }
 honggfuzz = "0.5"
-primitives = { package = "indracore-primitives", path = "../../../primitives/" }
+primitives = { package = "indracore-node-primitives", path = "../../node/primitives/" }
 
 [[bin]]
 name = "reconstruct"

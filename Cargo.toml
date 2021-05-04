@@ -1,17 +1,15 @@
+
 [workspace]
 members = [
 	"bin",
-	# "service",
-	# "service/rpc",
-	# "runtime/common",
+	"bin/service",
 	"runtime/indracore",
-	# "primitives",
-	# "primitives/core-primitives",
+	# "modules/erasure-coding",
+	# "modules/statement-table",
 	# "modules/xcm",
 	# "modules/xcm/xcm-builder",
 	# "modules/xcm/xcm-executor",
-	# "modules/statement-table",
-	# "modules/erasure-coding",
+	# "modules/xcm/pallet-xcm",
 	# "modules/parachain",
 	# "modules/parachain/runtime-parachains",
 	# "modules/node/collation-generation",
@@ -24,10 +22,10 @@ members = [
 	# "modules/node/core/chain-api",
 	# "modules/node/core/proposer",
 	# "modules/node/core/provisioner",
+	# "modules/node/core/pvf",
 	# "modules/node/core/runtime-api",
 	# "modules/node/network/approval-distribution",
 	# "modules/node/network/bridge",
-	# "modules/node/network/pov-distribution",
 	# "modules/node/network/protocol",
 	# "modules/node/network/statement-distribution",
 	# "modules/node/network/bitfield-distribution",
@@ -53,3 +51,4 @@ opt-level = 3
 [profile.release]
 # Indracore runtime requires unwinding.
 panic = "unwind"
+

@@ -30,8 +30,8 @@ where
 {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
 		let numeric_amount = amount.peek();
-		let author = <pallet_authorship::Module<R>>::author();
-		<pallet_balances::Pallet<R>>::resolve_creating(&<pallet_authorship::Module<R>>::author(), amount);
+		let author = <pallet_authorship::Pallet<R>>::author();
+		<pallet_balances::Pallet<R>>::resolve_creating(&<pallet_authorship::Pallet<R>>::author(), amount);
 		<frame_system::Pallet<R>>::deposit_event(pallet_balances::Event::Deposit(author, numeric_amount));
 	}
 }
@@ -40,7 +40,7 @@ pub struct DealWithFees<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
 where
 	R: pallet_balances::Config + pallet_treasury::Config + pallet_authorship::Config,
-	pallet_treasury::Module<R>: OnUnbalanced<NegativeImbalance<R>>,
+	pallet_treasury::Pallet<R>: OnUnbalanced<NegativeImbalance<R>>,
 	<R as frame_system::Config>::AccountId: From<primitives::v1::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<primitives::v1::AccountId>,
 	<R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
@@ -65,11 +65,11 @@ where
 mod tests {
 	use super::*;
 	use frame_system::limits;
-	use frame_support::{parameter_types, weights::DispatchClass};
+	use frame_support::{parameter_types, PalletId, weights::DispatchClass};
 	use frame_support::traits::FindAuthor;
 	use sp_core::H256;
 	use sp_runtime::{
-		testing::Header, ModuleId,
+		testing::Header,
 		traits::{BlakeTwo256, IdentityLookup},
 		Perbill,
 	};
@@ -127,6 +127,7 @@ mod tests {
 		type OnKilledAccount = ();
 		type SystemWeightInfo = ();
 		type SS58Prefix = ();
+		type OnSetCode = ();
 	}
 
 	impl pallet_balances::Config for Test {
@@ -140,7 +141,8 @@ mod tests {
 	}
 
 	parameter_types! {
-		pub const TreasuryModuleId: ModuleId = ModuleId(*b"py/trsry");
+		pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+		pub const MaxApprovals: u32 = 100;
 	}
 
 	impl pallet_treasury::Config for Test {
@@ -154,8 +156,9 @@ mod tests {
 		type SpendPeriod = ();
 		type Burn = ();
 		type BurnDestination = ();
-		type ModuleId = TreasuryModuleId;
+		type PalletId = TreasuryPalletId;
 		type SpendFunds = ();
+		type MaxApprovals = MaxApprovals;
 		type WeightInfo = ();
 	}
 

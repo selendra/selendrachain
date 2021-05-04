@@ -1,9 +1,10 @@
 [package]
 name = "indracore"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Selendra <info@selendra.org>"]
-description = "Implementation of a in Indracore node in Rust based on the Substrate framework."
 edition = "2018"
+description = "Implementation of a node in Rust based on the Substrate framework."
+readme = "README.md"
 
 [[bin]]
 name = "indracore"
@@ -12,11 +13,19 @@ path = "src/main.rs"
 [dependencies]
 cli = { package = "indracore-cli", path = "cli" }
 color-eyre = "0.5.10"
+thiserror = "1.0.23"
+futures = "0.3.12"
+service = { package = "indracore-service", path = "service" }
 parity-util-mem = { version = "*", default-features = false, features = ["jemalloc-global"] }
 
-[badges]
-maintenance = { status = "actively-developed" }
+[dev-dependencies]
+assert_cmd = "1.0.2"
+nix = "0.19.1"
+tempfile = "3.2.0"
 
 [features]
 runtime-benchmarks=["cli/runtime-benchmarks"]
 try-runtime = ["cli/try-runtime"]
+
+[badges]
+maintenance = { status = "actively-developed" }

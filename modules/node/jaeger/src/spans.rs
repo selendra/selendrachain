@@ -41,7 +41,7 @@
 //! 		.with_string_fmt_debug_tag("foo", foo)
 //! 		// anything that implements `trait std::str::ToString`
 //! 		.with_string_tag("again", 1337_u32)
-//! 		// add a `Stage` for [`sel-jaeger`](https://github.com/paritytech/sel-jaeger)
+//! 		// add a `Stage` for [`dot-jaeger`](https://github.com/paritytech/dot-jaeger)
 //! 		.with_stage(jaeger::Stage::CandidateBacking);
 //! 		// complete by design, no completion required
 //! # }
@@ -84,7 +84,8 @@
 //! ```
 
 use parity_scale_codec::Encode;
-use indracore_primitives::v1::{BlakeTwo256, CandidateHash, Hash, HashT, Id as ParaId, PoV, ValidatorIndex};
+use indracore_primitives::v1::{BlakeTwo256, CandidateHash, Hash, HashT, Id as ParaId, ValidatorIndex};
+use indracore_node_primitives::PoV;
 use sc_network::PeerId;
 
 use std::fmt;
@@ -153,7 +154,8 @@ pub enum Stage {
 	// Expand as needed, numbers should be ascending according to the stage
 	// through the inclusion pipeline, or according to the descriptions
 	// in [the path of a para chain block]
-	// (https://polkadot.network/the-path-of-a-parachain-block/)
+	// (https://indracore.network/the-path-of-a-parachain-block/)
+	// see [issue](https://github.com/paritytech/indracore/issues/2389)
 }
 
 /// A wrapper type for a span.

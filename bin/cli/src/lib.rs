@@ -26,7 +26,8 @@ mod cli;
 mod command;
 
 pub use service::{
-	self, ProvideRuntimeApi, CoreApi,
+	self,
+	ProvideRuntimeApi, CoreApi, IdentifyVariant,
 	Block, RuntimeApiCollection, TFullClient
 };
 

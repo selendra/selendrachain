@@ -26,13 +26,19 @@ use futures::{
 };
 use futures_timer::Delay;
 
-use indracore_primitives::v1::{BlockData, PoV};
-use indracore_overseer::{Overseer, AllSubsystems};
+use indracore_node_primitives::{PoV, BlockData};
+use indracore_primitives::v1::Hash;
+use indracore_overseer::{Overseer, HeadSupportsParachains, AllSubsystems};
 
 use indracore_subsystem::{Subsystem, SubsystemContext, SpawnedSubsystem, FromOverseer};
 use indracore_subsystem::messages::{
 	CandidateValidationMessage, CandidateBackingMessage, AllMessages,
 };
+
+struct AlwaysSupportsParachains;
+impl HeadSupportsParachains for AlwaysSupportsParachains {
+	fn head_supports_parachains(&self, _head: &Hash) -> bool { true }
+}
 
 struct Subsystem1;
 
@@ -146,6 +152,7 @@ fn main() {
 			vec![],
 			all_subsystems,
 			None,
+			AlwaysSupportsParachains,
 			spawner,
 		).unwrap();
 		let overseer_fut = overseer.run().fuse();

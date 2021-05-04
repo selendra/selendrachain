@@ -43,8 +43,12 @@ pub enum Subcommand {
 	Revert(sc_cli::RevertCmd),
 
 	#[allow(missing_docs)]
-	#[structopt(name = "validation-worker", setting = structopt::clap::AppSettings::Hidden)]
-	ValidationWorker(ValidationWorkerCommand),
+	#[structopt(name = "prepare-worker", setting = structopt::clap::AppSettings::Hidden)]
+	PvfPrepareWorker(ValidationWorkerCommand),
+
+	#[allow(missing_docs)]
+	#[structopt(name = "execute-worker", setting = structopt::clap::AppSettings::Hidden)]
+	PvfExecuteWorker(ValidationWorkerCommand),
 
 	/// The custom benchmark subcommand benchmarking runtime pallets.
 	#[structopt(
@@ -64,11 +68,8 @@ pub enum Subcommand {
 #[allow(missing_docs)]
 #[derive(Debug, StructOpt)]
 pub struct ValidationWorkerCommand {
-	/// The path that the executor can use for its caching purposes.
-	pub cache_base_path: std::path::PathBuf,
-
-	#[allow(missing_docs)]
-	pub mem_id: String,
+	/// The path to the validation host's socket.
+	pub socket_path: String,
 }
 
 #[allow(missing_docs)]
@@ -77,18 +78,6 @@ pub struct RunCmd {
 	#[allow(missing_docs)]
 	#[structopt(flatten)]
 	pub base: sc_cli::RunCmd,
-
-	/// Force using Kusama native runtime.
-	#[structopt(long = "force-kusama")]
-	pub force_kusama: bool,
-
-	/// Force using Westend native runtime.
-	#[structopt(long = "force-westend")]
-	pub force_westend: bool,
-
-	/// Force using Rococo native runtime.
-	#[structopt(long = "force-rococo")]
-	pub force_rococo: bool,
 
 	/// Setup a GRANDPA scheduled voting pause.
 	///

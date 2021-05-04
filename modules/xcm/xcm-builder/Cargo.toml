@@ -1,27 +1,29 @@
 [package]
 name = "xcm-builder"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Selendra <info@selendra.org>"]
-description = "Tools & types for building with XCM and its executor."
 edition = "2018"
-
-
+description = "Tools & types for building with XCM and its executor."
 
 [dependencies]
+impl-trait-for-tuples = "0.2.0"
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
 xcm = { path = "..", default-features = false }
 xcm-executor = { path = "../xcm-executor", default-features = false }
-sp-std = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
-sp-arithmetic = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
-sp-io = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
-sp-runtime = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
-frame-support = { git = "https://github.com/selendra/substrate", branch = "v2.0.4", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 
 # Indracore dependencies
 indracore-parachain = { path = "../../parachain", default-features = false }
 
 [features]
 default = ["std"]
+runtime-benchmarks = []
 std = [
 	"parity-scale-codec/std",
 	"xcm/std",
@@ -32,4 +34,5 @@ std = [
 	"sp-runtime/std",
 	"frame-support/std",
 	"indracore-parachain/std",
+	"pallet-transaction-payment/std",
 ]
