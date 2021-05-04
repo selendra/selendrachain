@@ -30,3 +30,5 @@ hfuzz_target/
 hfuzz_workspace/
 run.txt
 customSpec.json
+node1
+node2

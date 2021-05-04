@@ -22,8 +22,10 @@
 
 use pallet_transaction_payment::CurrencyAdapter;
 use runtime_common::{
-	SlowAdjustingFeeUpdate, CurrencyToVote, paras_registrar, xcm_sender, slots, impls::DealWithFees,
-	BlockHashCount, RocksDbWeight, BlockWeights, BlockLength, OffchainSolutionWeightLimit, OffchainSolutionLengthLimit,
+	SlowAdjustingFeeUpdate, CurrencyToVote, paras_sudo_wrapper,
+	paras_registrar, xcm_sender, slots, impls::DealWithFees,
+	BlockHashCount, RocksDbWeight, BlockWeights, BlockLength, 
+	OffchainSolutionWeightLimit, OffchainSolutionLengthLimit,
 	ParachainSessionKeyPlaceholder, AssignmentSessionKeyPlaceholder, ToAuthor,
 };
 
@@ -117,13 +119,13 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("indracore"),
 	impl_name: create_runtime_str!("selendra-indracore"),
 	authoring_version: 0,
-	spec_version: 900,
+	spec_version: 5,
 	impl_version: 0,
 	#[cfg(not(feature = "disable-runtime-api"))]
 	apis: RUNTIME_API_VERSIONS,
 	#[cfg(feature = "disable-runtime-api")]
 	apis: version::create_apis_vec![[]],
-	transaction_version: 7,
+	transaction_version: 0,
 };
 
 /// The BABE epoch configuration at genesis.
@@ -907,7 +909,13 @@ impl InstanceFilter<Call> for ProxyType {
 				Call::Utility(..) |
 				Call::Identity(..) |
 				Call::Proxy(..) |
-				Call::Multisig(..)
+				Call::Multisig(..) |
+				Call::Recovery(pallet_recovery::Call::as_recovered(..)) |
+				Call::Recovery(pallet_recovery::Call::vouch_recovery(..)) |
+				Call::Recovery(pallet_recovery::Call::claim_recovery(..)) |
+				Call::Recovery(pallet_recovery::Call::close_recovery(..)) |
+				Call::Recovery(pallet_recovery::Call::remove_recovery(..)) |
+				Call::Recovery(pallet_recovery::Call::cancel_recovered(..)) 
 			),
 			ProxyType::Governance => matches!(c,
 				Call::Democracy(..) |
@@ -958,6 +966,31 @@ impl pallet_proxy::Config for Runtime {
 	type AnnouncementDepositBase = AnnouncementDepositBase;
 	type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
+
+parameter_types! {
+	pub const ConfigDepositBase: Balance = 500 * DOLLARS;
+	pub const FriendDepositFactor: Balance = 50 * DOLLARS;
+	pub const MaxFriends: u16 = 9;
+	pub const RecoveryDeposit: Balance = 500 * DOLLARS;
+}
+
+impl pallet_recovery::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type Currency = Balances;
+	type ConfigDepositBase = ConfigDepositBase;
+	type FriendDepositFactor = FriendDepositFactor;
+	type MaxFriends = MaxFriends;
+	type RecoveryDeposit = RecoveryDeposit;
+}
+
+
+impl pallet_sudo::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+}
+
+impl paras_sudo_wrapper::Config for Runtime {}
 
 impl parachains_origin::Config for Runtime {}
 
@@ -1035,14 +1068,14 @@ impl slots::Config for Runtime {
 }
 
 parameter_types! {
-	/// The location of the KSM token, from the context of this chain. Since this token is native to this
+	/// The location of the Sel token, from the context of this chain. Since this token is native to this
 	/// chain, we make it synonymous with it and thus it is the `Null` location, which means "equivalent to
 	/// the context".
-	pub const KsmLocation: MultiLocation = MultiLocation::Null;
-	/// The Kusama network ID. This is named.
-	pub const KusamaNetwork: NetworkId = NetworkId::Indracore;
+	pub const SelLocation: MultiLocation = MultiLocation::Null;
+	/// The Indracore network ID. This is named.
+	pub const IndracoreNetwork: NetworkId = NetworkId::Indracore;
 	/// Our XCM location ancestry - i.e. what, if anything, `Parent` means evaluated in our context. Since
-	/// Kusama is a top-level relay-chain, there is no ancestry.
+	/// Indracore is a top-level relay-chain, there is no ancestry.
 	pub const Ancestry: MultiLocation = MultiLocation::Null;
 }
 
@@ -1052,19 +1085,19 @@ pub type SovereignAccountOf = (
 	// We can convert a child parachain using the standard `AccountId` conversion.
 	ChildParachainConvertsVia<ParaId, AccountId>,
 	// We can directly alias an `AccountId32` into a local account.
-	AccountId32Aliases<KusamaNetwork, AccountId>,
+	AccountId32Aliases<IndracoreNetwork, AccountId>,
 );
 
 /// Our asset transactor. This is what allows us to interest with the runtime facilities from the point of
 /// view of XCM-only concepts like `MultiLocation` and `MultiAsset`.
 ///
-/// Ours is only aware of the Balances pallet, which is mapped to `KsmLocation`.
+/// Ours is only aware of the Balances pallet, which is mapped to `SelLocation`.
 pub type LocalAssetTransactor =
 	XcmCurrencyAdapter<
 		// Use this currency:
 		Balances,
 		// Use this currency when it is a fungible asset matching the given location or name:
-		IsConcrete<KsmLocation>,
+		IsConcrete<SelLocation>,
 		// We can convert the MultiLocations with our converter above:
 		SovereignAccountOf,
 		// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -1078,7 +1111,7 @@ type LocalOriginConverter = (
 	// A child parachain, natively expressed, has the `Parachain` origin.
 	ChildParachainAsNative<parachains_origin::Origin, Origin>,
 	// The AccountId32 location type can be expressed natively as a `Signed` origin.
-	SignedAccountId32AsNative<KusamaNetwork, Origin>,
+	SignedAccountId32AsNative<IndracoreNetwork, Origin>,
 	// A system child parachain, expressed as a Superuser, converts to the `Root` origin.
 	ChildSystemParachainAsSuperuser<ParaId, Origin>,
 );
@@ -1117,7 +1150,7 @@ impl xcm_executor::Config for XcmConfig {
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<BaseXcmWeight, Call>;
 	// The weight trader piggybacks on the existing transaction-fee conversion logic.
-	type Trader = UsingComponents<WeightToFee, KsmLocation, AccountId, Balances, ToAuthor<Runtime>>;
+	type Trader = UsingComponents<WeightToFee, SelLocation, AccountId, Balances, ToAuthor<Runtime>>;
 	type ResponseHandler = ();
 }
 
@@ -1146,8 +1179,10 @@ construct_runtime! {
 		PhragmenElection: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 17,
 		TechnicalMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 18,
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 19,
+		Sudo: pallet_sudo::{Pallet, Call, Storage, Event<T>, Config<T>} = 20,
 		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 25,
 		Utility: pallet_utility::{Pallet, Call, Event} = 26,
+		Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>} = 27,
 		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 28,
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 29,
 		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 30,
@@ -1171,7 +1206,7 @@ construct_runtime! {
 		ParasSessionInfo: parachains_session_info::{Pallet, Call, Storage} = 61,
 		Registrar: paras_registrar::{Pallet, Call, Storage, Event<T>} = 70,
 		Slots: slots::{Pallet, Call, Storage, Event<T>} = 71,
-
+		ParasSudoWrapper: paras_sudo_wrapper::{Pallet, Call} = 72,
 	}
 }
 

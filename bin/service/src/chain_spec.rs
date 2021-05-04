@@ -161,6 +161,9 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
 		pallet_authority_discovery: indracore::AuthorityDiscoveryConfig { keys: vec![] },
 		pallet_vesting: indracore::VestingConfig { vesting: vec![] },
 		pallet_treasury: Default::default(),
+		pallet_sudo: indracore::SudoConfig {
+			key: endowed_accounts[0].clone(),
+		},
 		parachains_configuration: Default::default(),
 	}
 }
@@ -362,6 +365,9 @@ pub fn indracore_testnet_genesis(
 		pallet_authority_discovery: indracore::AuthorityDiscoveryConfig { keys: vec![] },
 		pallet_vesting: indracore::VestingConfig { vesting: vec![] },
 		pallet_treasury: Default::default(),
+		pallet_sudo: indracore::SudoConfig {
+			key: endowed_accounts[0].clone(),
+		},
 		parachains_configuration: Default::default(),
 	}
 }

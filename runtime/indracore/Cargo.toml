@@ -67,6 +67,8 @@ pallet-tips = { git = "https://github.com/paritytech/substrate", branch = "maste
 pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 pallet-vesting = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 pallet-utility = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+pallet-recovery = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+pallet-sudo = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false, optional = true }
 frame-try-runtime = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false, optional = true }
@@ -142,7 +144,9 @@ std = [
 	"pallet-treasury/std",
 	"pallet-tips/std",
 	"pallet-babe/std",
+	"pallet-sudo/std",
 	"pallet-randomness-collective-flip/std",
+	"pallet-recovery/std",
 	"pallet-vesting/std",
 	"pallet-utility/std",
 	"sp-runtime/std",
