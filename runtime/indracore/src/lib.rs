@@ -25,8 +25,7 @@ use runtime_common::{
 	SlowAdjustingFeeUpdate, CurrencyToVote, paras_sudo_wrapper,
 	paras_registrar, xcm_sender, slots, impls::DealWithFees,
 	BlockHashCount, RocksDbWeight, BlockWeights, BlockLength, 
-	OffchainSolutionWeightLimit, OffchainSolutionLengthLimit,
-	ParachainSessionKeyPlaceholder, AssignmentSessionKeyPlaceholder, ToAuthor,
+	OffchainSolutionWeightLimit, OffchainSolutionLengthLimit, ToAuthor,
 };
 
 
@@ -305,8 +304,8 @@ impl_opaque_keys! {
 		pub grandpa: Grandpa,
 		pub babe: Babe,
 		pub im_online: ImOnline,
-		pub para_validator: ParachainSessionKeyPlaceholder<Runtime>,
-		pub para_assignment: AssignmentSessionKeyPlaceholder<Runtime>,
+		pub para_validator: ParasInitializer,
+		pub para_assignment: ParasSessionInfo,
 		pub authority_discovery: AuthorityDiscovery,
 	}
 }
