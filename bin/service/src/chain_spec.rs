@@ -144,11 +144,11 @@ fn indracore_staging_testnet_config_genesis(wasm_binary: &[u8]) -> indracore::Ge
 		pallet_elections_phragmen: Default::default(),
 		pallet_democracy: Default::default(),
 		pallet_collective_Instance1: indracore::CouncilConfig {
-			members: endowed_accounts.clone(),
+			members: vec![],
 			phantom: Default::default(),
 		},
 		pallet_collective_Instance2: indracore::TechnicalCommitteeConfig {
-			members: endowed_accounts.clone(),
+			members: vec![],
 			phantom: Default::default(),
 		},
 		pallet_membership_Instance1: Default::default(),
@@ -261,8 +261,16 @@ fn testnet_accounts() -> Vec<AccountId> {
 	vec![
 		get_account_id_from_seed::<sr25519::Public>("Alice"),
 		get_account_id_from_seed::<sr25519::Public>("Bob"),
+		get_account_id_from_seed::<sr25519::Public>("Charlie"),
+		get_account_id_from_seed::<sr25519::Public>("Dave"),
+		get_account_id_from_seed::<sr25519::Public>("Eve"),
+		get_account_id_from_seed::<sr25519::Public>("Ferdie"),
 		get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 		get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+		get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+		get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+		get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+		get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 	]
 }
 
@@ -340,11 +348,11 @@ pub fn indracore_testnet_genesis(
 		pallet_elections_phragmen: Default::default(),
 		pallet_democracy: indracore::DemocracyConfig::default(),
 		pallet_collective_Instance1: indracore::CouncilConfig {
-			members: endowed_accounts.clone(),
+			members: vec![],
 			phantom: Default::default(),
 		},
 		pallet_collective_Instance2: indracore::TechnicalCommitteeConfig {
-			members: endowed_accounts.clone(),
+			members: vec![],
 			phantom: Default::default(),
 		},
 		pallet_membership_Instance1: Default::default(),
