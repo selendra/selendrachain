@@ -627,6 +627,7 @@ pub fn new_full<RuntimeApi, Executor>(
 	mut config: Configuration,
 	is_collator: IsCollator,
 	grandpa_pause: Option<(u32, u32)>,
+	_disable_beefy: bool,
 	jaeger_agent: Option<std::net::SocketAddr>,
 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 	program_path: Option<std::path::PathBuf>,
@@ -905,6 +906,19 @@ pub fn new_full<RuntimeApi, Executor>(
 		None
 	};
 
+	// if !disable_beefy {
+	// 	let gadget = beefy_gadget::start_beefy_gadget::<_, beefy_primitives::ecdsa::AuthorityPair, _, _, _, _>(
+	// 		client.clone(),
+	// 		keystore_opt.clone(),
+	// 		network.clone(),
+	// 		beefy_link,
+	// 		network.clone(),
+	// 		if chain_spec.is_wococo() { 4 } else { 8 },
+	// 		prometheus_registry.clone()
+	// 	);
+	// 	task_manager.spawn_handle().spawn_blocking("beefy-gadget", gadget);
+	// }
+
 	let config = grandpa::Config {
 		// FIXME substrate#1578 make this available through chainspec
 		gossip_duration: Duration::from_millis(1000),
@@ -1154,6 +1168,7 @@ pub fn build_full(
 	config: Configuration,
 	is_collator: IsCollator,
 	grandpa_pause: Option<(u32, u32)>,
+	disable_beefy: bool,
 	jaeger_agent: Option<std::net::SocketAddr>,
 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 ) -> Result<NewFull<Client>, Error> {
@@ -1161,6 +1176,7 @@ pub fn build_full(
 		config,
 		is_collator,
 		grandpa_pause,
+		disable_beefy,
 		jaeger_agent,
 		telemetry_worker_handle,
 		None,
