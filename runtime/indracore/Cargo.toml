@@ -1,6 +1,6 @@
 [package]
 name = "indracore-runtime"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 build = "build.rs"

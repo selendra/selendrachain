@@ -2722,7 +2722,7 @@ dependencies = [
 
 [[package]]
 name = "indracore"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "assert_cmd",
  "color-eyre",
@@ -2837,7 +2837,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-cli"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "frame-benchmarking-cli",
  "futures 0.3.14",
@@ -2883,7 +2883,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-core-primitives"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "parity-scale-codec",
  "parity-util-mem",
@@ -2894,7 +2894,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-erasure-coding"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "indracore-node-primitives",
  "indracore-primitives",
@@ -3361,7 +3361,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-parachain"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "derive_more",
  "indracore-core-primitives",
@@ -3375,7 +3375,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-primitives"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "bitvec",
  "frame-system",
@@ -3427,7 +3427,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-rpc"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "beefy-gadget",
  "beefy-gadget-rpc",
@@ -3459,7 +3459,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-runtime"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "beefy-primitives",
  "bitvec",
@@ -3547,7 +3547,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-runtime-common"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "beefy-primitives",
  "bitvec",
@@ -3600,7 +3600,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-runtime-parachains"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "bitvec",
  "derive_more",
@@ -3651,7 +3651,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-service"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "beefy-gadget",
  "beefy-primitives",
@@ -3768,7 +3768,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-statement-table"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "indracore-primitives",
  "parity-scale-codec",
@@ -8444,7 +8444,7 @@ dependencies = [
 
 [[package]]
 name = "slot-range-helper"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "enumn",
  "parity-scale-codec",
@@ -10847,7 +10847,7 @@ dependencies = [
 
 [[package]]
 name = "xcm"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "derivative",
  "impl-trait-for-tuples",
@@ -10856,7 +10856,7 @@ dependencies = [
 
 [[package]]
 name = "xcm-builder"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -10874,7 +10874,7 @@ dependencies = [
 
 [[package]]
 name = "xcm-executor"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
