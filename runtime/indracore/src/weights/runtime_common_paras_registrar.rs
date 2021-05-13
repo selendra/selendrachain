@@ -43,23 +43,28 @@ use sp_std::marker::PhantomData;
 /// Weight functions for runtime_common::paras_registrar.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> runtime_common::paras_registrar::WeightInfo for WeightInfo<T> {
+	fn reserve() -> Weight {
+		(52_007_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+	}
 	fn register() -> Weight {
-		(8_427_766_000 as Weight)
+		(8_249_033_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 	fn force_register() -> Weight {
-		(8_394_534_000 as Weight)
+		(8_228_924_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 	fn deregister() -> Weight {
-		(88_992_000 as Weight)
+		(88_947_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 	fn swap() -> Weight {
-		(69_480_000 as Weight)
+		(69_868_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
