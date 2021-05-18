@@ -76,7 +76,7 @@ pub mod fee {
 			let p = super::currency::CENTS;
 			let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 			smallvec![WeightToFeeCoefficient {
-				degree: 1,
+				degree: 0,
 				negative: false,
 				coeff_frac: Perbill::from_rational(p % q, q),
 				coeff_integer: p / q,
