@@ -26,10 +26,10 @@ use parity_scale_codec::{Decode, Error as DecodingError};
 use sc_network::config as network;
 use sc_network::PeerId;
 
-use indracore_node_network_protocol::request_response::{
+use selendra_node_network_protocol::request_response::{
 	request::IncomingRequest, v1, Protocol, RequestResponseConfig,
 };
-use indracore_subsystem::messages::AllMessages;
+use selendra_subsystem::messages::AllMessages;
 
 /// Multiplex incoming network requests.
 ///

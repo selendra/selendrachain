@@ -16,7 +16,7 @@
 
 //! Time utilities for approval voting.
 
-use indracore_node_primitives::approval::DelayTranche;
+use selendra_node_primitives::approval::DelayTranche;
 use sp_consensus_slots::Slot;
 use futures::prelude::*;
 use std::time::{Duration, SystemTime};

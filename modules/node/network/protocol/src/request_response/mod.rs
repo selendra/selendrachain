@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Overview over request/responses as used in `Indracore`.
+//! Overview over request/responses as used in `Selendra`.
 //!
 //! enum  Protocol .... List of all supported protocols.
 //!
@@ -36,8 +36,8 @@ use std::{borrow::Cow, u64};
 use std::time::Duration;
 
 use futures::channel::mpsc;
-use indracore_node_primitives::MAX_POV_SIZE;
-use indracore_primitives::v1::MAX_CODE_SIZE;
+use selendra_node_primitives::MAX_POV_SIZE;
+use selendra_primitives::v1::MAX_CODE_SIZE;
 use strum::EnumIter;
 
 pub use sc_network::config as network;
@@ -158,7 +158,7 @@ impl Protocol {
 				max_response_size: MAX_CODE_SIZE as u64 + 1000,
 				// We need statement fetching to be fast and will try our best at the responding
 				// side to answer requests within that timeout, assuming a bandwidth of 500Mbit/s
-				// - which is the recommended minimum bandwidth for nodes on indracore as of April
+				// - which is the recommended minimum bandwidth for nodes on selendra as of April
 				// 2021.
 				// Responders will reject requests, if it is unlikely they can serve them within
 				// the timeout, so the requester can immediately try another node, instead of
@@ -219,11 +219,11 @@ impl Protocol {
 	/// Get the protocol name associated with each peer set as static str.
 	pub const fn get_protocol_name_static(self) -> &'static str {
 		match self {
-			Protocol::ChunkFetching => "/indracore/req_chunk/1",
-			Protocol::CollationFetching => "/indracore/req_collation/1",
-			Protocol::PoVFetching => "/indracore/req_pov/1",
-			Protocol::AvailableDataFetching => "/indracore/req_available_data/1",
-			Protocol::StatementFetching => "/indracore/req_statement/1",
+			Protocol::ChunkFetching => "/selendra/req_chunk/1",
+			Protocol::CollationFetching => "/selendra/req_collation/1",
+			Protocol::PoVFetching => "/selendra/req_pov/1",
+			Protocol::AvailableDataFetching => "/selendra/req_available_data/1",
+			Protocol::StatementFetching => "/selendra/req_statement/1",
 		}
 	}
 }

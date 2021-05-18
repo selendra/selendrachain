@@ -15,7 +15,7 @@
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::artifacts::ArtifactId;
-use indracore_core_primitives::Hash;
+use selendra_core_primitives::Hash;
 use sp_core::blake2_256;
 use std::{fmt, sync::Arc};
 

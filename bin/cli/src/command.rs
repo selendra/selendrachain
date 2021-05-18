@@ -22,7 +22,7 @@ use futures::future::TryFutureExt;
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
 	#[error(transparent)]
-	IndracoreService(#[from] service::Error),
+	SelendraService(#[from] service::Error),
 
 	#[error(transparent)]
 	SubstrateCli(#[from] sc_cli::Error),
@@ -50,7 +50,7 @@ fn get_exec_name() -> Option<String> {
 }
 
 impl SubstrateCli for Cli {
-	fn impl_name() -> String { "Selendra Indracore".into() }
+	fn impl_name() -> String { "Selendra".into() }
 
 	fn impl_version() -> String { env!("SUBSTRATE_CLI_IMPL_VERSION").into() }
 
@@ -58,34 +58,34 @@ impl SubstrateCli for Cli {
 
 	fn author() -> String { env!("CARGO_PKG_AUTHORS").into() }
 
-	fn support_url() -> String { "https://github.com/selendra/indracore/issues/new".into() }
+	fn support_url() -> String { "https://github.com/selendra/selendra-chain/issues/new".into() }
 
 	fn copyright_start_year() -> i32 { 2017 }
 
-	fn executable_name() -> String { "indracore".into() }
+	fn executable_name() -> String { "selendra".into() }
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		let id = if id == "" {
 			let n = get_exec_name().unwrap_or_default();
-			["indracore"].iter()
+			["selendra"].iter()
 				.cloned()
 				.find(|&chain| n.starts_with(chain))
-				.unwrap_or("indracore")
+				.unwrap_or("selendra")
 		} else { id };
 		Ok(match id {
-			"indracore" => Box::new(service::chain_spec::indracore_config()?),
-			"indracore-dev" | "dev" => Box::new(service::chain_spec::indracore_development_config()?),
-			"indracore-local" => Box::new(service::chain_spec::indracore_local_testnet_config()?),
-			"indracore-staging" => Box::new(service::chain_spec::indracore_staging_testnet_config()?),
+			"selendra" => Box::new(service::chain_spec::selendra_config()?),
+			"selendra-dev" | "dev" => Box::new(service::chain_spec::selendra_development_config()?),
+			"selendra-local" => Box::new(service::chain_spec::selendra_local_testnet_config()?),
+			"selendra-staging" => Box::new(service::chain_spec::selendra_staging_testnet_config()?),
 			path => {
 				let path = std::path::PathBuf::from(path);
-				Box::new(service::IndracoreChainSpec::from_json_file(path)?)
+				Box::new(service::SelendraChainSpec::from_json_file(path)?)
 			},
 		})
 	}
 
 	fn native_runtime_version(_spec: &Box<dyn service::ChainSpec>) -> &'static RuntimeVersion {
-		&service::indracore_runtime::VERSION
+		&service::selendra_runtime::VERSION
 	}
 }
 
@@ -98,7 +98,7 @@ fn set_default_ss58_version(_spec: &Box<dyn service::ChainSpec>) {
 }
 
 const DEV_ONLY_ERROR_PATTERN: &'static str =
-	"can only use subcommand with --chain [indracore-dev], got ";
+	"can only use subcommand with --chain [selendra-dev], got ";
 
 fn ensure_dev(spec: &Box<dyn service::ChainSpec>) -> std::result::Result<(), String> {
 	if spec.is_dev() {
@@ -108,7 +108,7 @@ fn ensure_dev(spec: &Box<dyn service::ChainSpec>) -> std::result::Result<(), Str
 	}
 }
 
-/// Parses indracore specific CLI arguments and run the service.
+/// Parses selendra specific CLI arguments and run the service.
 pub fn run() -> Result<()> {
 	let cli = Cli::from_args();
 
@@ -171,7 +171,7 @@ pub fn run() -> Result<()> {
 
 			Ok(runner.async_run(|mut config| {
 				let (client, _, _, task_manager) = service::new_chain_ops(&mut config, None)
-					.map_err(Error::IndracoreService)?;
+					.map_err(Error::SelendraService)?;
 				Ok((cmd.run(client, config.database).map_err(Error::SubstrateCli), task_manager))
 			})?)
 		},
@@ -226,7 +226,7 @@ pub fn run() -> Result<()> {
 
 			#[cfg(not(any(target_os = "android", feature = "browser")))]
 			{
-				indracore_node_core_pvf::prepare_worker_entrypoint(&cmd.socket_path);
+				selendra_node_core_pvf::prepare_worker_entrypoint(&cmd.socket_path);
 				Ok(())
 			}
 		},
@@ -244,7 +244,7 @@ pub fn run() -> Result<()> {
 
 			#[cfg(not(any(target_os = "android", feature = "browser")))]
 			{
-				indracore_node_core_pvf::execute_worker_entrypoint(&cmd.socket_path);
+				selendra_node_core_pvf::execute_worker_entrypoint(&cmd.socket_path);
 				Ok(())
 			}
 		},
@@ -254,9 +254,9 @@ pub fn run() -> Result<()> {
 			set_default_ss58_version(chain_spec);
 
 			ensure_dev(chain_spec).map_err(Error::Other)?;
-			// else we assume it is indracore.
+			// else we assume it is selendra.
 			Ok(runner.sync_run(|config| {
-				cmd.run::<service::indracore_runtime::Block, service::IndracoreExecutor>(config)
+				cmd.run::<service::selendra_runtime::Block, service::SelendraExecutor>(config)
 					.map_err(|e| Error::SubstrateCli(e))
 			})?)
 		},
@@ -275,11 +275,11 @@ pub fn run() -> Result<()> {
 			).map_err(|e| Error::SubstrateService(sc_service::Error::Prometheus(e)))?;
 
 			ensure_dev(chain_spec).map_err(Error::Other)?;
-			// else we assume it is indracore.
+			// else we assume it is selendra.
 			runner.async_run(|config| {
 				Ok((cmd.run::<
-					service::indracore_runtime::Block,
-					service::IndracoreExecutor,
+					service::selendra_runtime::Block,
+					service::SelendraExecutor,
 				>(config).map_err(Error::SubstrateCli), task_manager))
 			})
 		}

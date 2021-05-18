@@ -25,7 +25,7 @@ use futures_timer::Delay;
 
 use sp_keystore::SyncCryptoStorePtr;
 
-use indracore_node_network_protocol::{
+use selendra_node_network_protocol::{
 	request_response as req_res, v1 as protocol_v1,
 	peer_set::PeerSet,
 	request_response::{
@@ -35,10 +35,10 @@ use indracore_node_network_protocol::{
 	},
 	OurView, PeerId, UnifiedReputationChange as Rep, View,
 };
-use indracore_node_primitives::{SignedFullStatement, Statement, PoV};
-use indracore_node_subsystem_util::metrics::{self, prometheus};
-use indracore_primitives::v1::{CandidateReceipt, CollatorId, Hash, Id as ParaId};
-use indracore_subsystem::{
+use selendra_node_primitives::{SignedFullStatement, Statement, PoV};
+use selendra_node_subsystem_util::metrics::{self, prometheus};
+use selendra_primitives::v1::{CandidateReceipt, CollatorId, Hash, Id as ParaId};
+use selendra_subsystem::{
 	jaeger,
 	messages::{
 		AllMessages, CandidateSelectionMessage, CollatorProtocolMessage, IfDisconnected,
@@ -317,14 +317,14 @@ impl ActiveParas {
 		new_relay_parents: impl IntoIterator<Item = Hash>,
 	) {
 		for relay_parent in new_relay_parents {
-			let mv = indracore_node_subsystem_util::request_validators(relay_parent, sender)
+			let mv = selendra_node_subsystem_util::request_validators(relay_parent, sender)
 				.await
 				.await
 				.ok()
 				.map(|x| x.ok())
 				.flatten();
 
-			let mg = indracore_node_subsystem_util::request_validator_groups(relay_parent, sender)
+			let mg = selendra_node_subsystem_util::request_validator_groups(relay_parent, sender)
 				.await
 				.await
 				.ok()
@@ -332,7 +332,7 @@ impl ActiveParas {
 				.flatten();
 
 
-			let mc = indracore_node_subsystem_util::request_availability_cores(relay_parent, sender)
+			let mc = selendra_node_subsystem_util::request_availability_cores(relay_parent, sender)
 				.await
 				.await
 				.ok()
@@ -352,10 +352,10 @@ impl ActiveParas {
 				}
 			};
 
-			let (para_now, para_next) = match indracore_node_subsystem_util
+			let (para_now, para_next) = match selendra_node_subsystem_util
 				::signing_key_and_index(&validators, keystore)
 				.await
-				.and_then(|(_, index)| indracore_node_subsystem_util::find_validator_group(
+				.and_then(|(_, index)| selendra_node_subsystem_util::find_validator_group(
 					&groups,
 					index,
 				))
@@ -1210,15 +1210,15 @@ mod tests {
 	use sp_keyring::Sr25519Keyring;
 	use assert_matches::assert_matches;
 
-	use indracore_primitives::v1::{
+	use selendra_primitives::v1::{
 		CollatorPair, ValidatorId, ValidatorIndex, CoreState, CandidateDescriptor,
 		GroupRotationInfo, ScheduledCore, OccupiedCore, GroupIndex,
 	};
-	use indracore_node_primitives::BlockData;
-	use indracore_node_subsystem_util::TimeoutExt;
-	use indracore_subsystem_testhelpers as test_helpers;
-	use indracore_subsystem::messages::{RuntimeApiMessage, RuntimeApiRequest};
-	use indracore_node_network_protocol::{our_view, ObservedRole,
+	use selendra_node_primitives::BlockData;
+	use selendra_node_subsystem_util::TimeoutExt;
+	use selendra_subsystem_testhelpers as test_helpers;
+	use selendra_subsystem::messages::{RuntimeApiMessage, RuntimeApiRequest};
+	use selendra_node_network_protocol::{our_view, ObservedRole,
 		request_response::Requests
 	};
 
@@ -1316,7 +1316,7 @@ mod tests {
 		let _ = env_logger::builder()
 			.is_test(true)
 			.filter(
-				Some("indracore_collator_protocol"),
+				Some("selendra_collator_protocol"),
 				log::LevelFilter::Trace,
 			)
 			.filter(
@@ -1331,7 +1331,7 @@ mod tests {
 
 		let keystore = TestKeyStore::new();
 		keystore.sr25519_generate_new(
-			indracore_primitives::v1::PARACHAIN_KEY_TYPE_ID,
+			selendra_primitives::v1::PARACHAIN_KEY_TYPE_ID,
 			Some(&Sr25519Keyring::Alice.to_seed()),
 		).unwrap();
 

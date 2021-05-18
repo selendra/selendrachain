@@ -17,10 +17,10 @@
 use std::time::Duration;
 use futures::{future, Future, executor};
 use assert_matches::assert_matches;
-use indracore_node_subsystem_test_helpers as test_helpers;
-use indracore_node_subsystem_util::TimeoutExt as _;
-use indracore_node_network_protocol::{view, ObservedRole};
-use indracore_node_primitives::approval::{
+use selendra_node_subsystem_test_helpers as test_helpers;
+use selendra_node_subsystem_util::TimeoutExt as _;
+use selendra_node_network_protocol::{view, ObservedRole};
+use selendra_node_primitives::approval::{
 	AssignmentCertKind, RELAY_VRF_MODULO_CONTEXT, VRFOutput, VRFProof,
 };
 use super::*;

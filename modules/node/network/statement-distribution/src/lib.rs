@@ -25,7 +25,7 @@
 use error::{FatalResult, NonFatalResult, log_error};
 use parity_scale_codec::Encode;
 
-use indracore_subsystem::{
+use selendra_subsystem::{
 	ActiveLeavesUpdate, FromOverseer, OverseerSignal, PerLeafSpan, SpawnedSubsystem, Subsystem,
 	SubsystemContext, SubsystemError, jaeger,
 	messages::{
@@ -33,16 +33,16 @@ use indracore_subsystem::{
 		CandidateBackingMessage, NetworkBridgeEvent,
 	},
 };
-use indracore_node_subsystem_util::{
+use selendra_node_subsystem_util::{
 	metrics::{self, prometheus},
 	self as util, MIN_GOSSIP_PEERS,
 };
-use indracore_node_primitives::{SignedFullStatement, UncheckedSignedFullStatement, Statement};
-use indracore_primitives::v1::{
+use selendra_node_primitives::{SignedFullStatement, UncheckedSignedFullStatement, Statement};
+use selendra_primitives::v1::{
 	CandidateHash, CommittedCandidateReceipt, CompactStatement, Hash,
 	SigningContext, ValidatorId, ValidatorIndex, ValidatorSignature, AuthorityDiscoveryId,
 };
-use indracore_node_network_protocol::{
+use selendra_node_network_protocol::{
 	IfDisconnected, PeerId, UnifiedReputationChange as Rep, View,
 	peer_set::{
 		IsAuthority, PeerSet
@@ -2056,16 +2056,16 @@ mod tests {
 	use std::sync::Arc;
 	use sp_keyring::Sr25519Keyring;
 	use sp_application_crypto::{AppKey, sr25519::Pair, Pair as TraitPair};
-	use indracore_node_primitives::Statement;
-	use indracore_primitives::v1::{CommittedCandidateReceipt, ValidationCode, SessionInfo};
+	use selendra_node_primitives::Statement;
+	use selendra_primitives::v1::{CommittedCandidateReceipt, ValidationCode, SessionInfo};
 	use assert_matches::assert_matches;
 	use futures::executor::{self, block_on};
 	use futures_timer::Delay;
 	use sp_keystore::{CryptoStore, SyncCryptoStorePtr, SyncCryptoStore};
 	use sc_keystore::LocalKeystore;
-	use indracore_node_network_protocol::{view, ObservedRole, request_response::Recipient};
-	use indracore_subsystem::{jaeger, ActivatedLeaf, messages::{RuntimeApiMessage, RuntimeApiRequest}};
-	use indracore_node_network_protocol::request_response::{
+	use selendra_node_network_protocol::{view, ObservedRole, request_response::Recipient};
+	use selendra_subsystem::{jaeger, ActivatedLeaf, messages::{RuntimeApiMessage, RuntimeApiRequest}};
+	use selendra_node_network_protocol::request_response::{
 		Requests,
 		v1::{
 			StatementFetchingRequest,
@@ -2469,7 +2469,7 @@ mod tests {
 
 		let pool = sp_core::testing::TaskExecutor::new();
 		let (mut ctx, mut handle) =
-			indracore_node_subsystem_test_helpers
+			selendra_node_subsystem_test_helpers
 				::make_subsystem_context
 				::<StatementDistributionMessage,_>(pool);
 		let peer = PeerId::random();
@@ -2563,7 +2563,7 @@ mod tests {
 
 		let pool = sp_core::testing::TaskExecutor::new();
 		let (mut ctx, mut handle) =
-			indracore_node_subsystem_test_helpers
+			selendra_node_subsystem_test_helpers
 				::make_subsystem_context
 				::<StatementDistributionMessage,_>(pool);
 
@@ -2669,7 +2669,7 @@ mod tests {
 		let session_index = 1;
 
 		let pool = sp_core::testing::TaskExecutor::new();
-		let (ctx, mut handle) = indracore_node_subsystem_test_helpers::make_subsystem_context(pool);
+		let (ctx, mut handle) = selendra_node_subsystem_test_helpers::make_subsystem_context(pool);
 
 		let bg = async move {
 			let s = StatementDistribution { metrics: Default::default(), keystore: Arc::new(LocalKeystore::in_memory()) };
@@ -2838,7 +2838,7 @@ mod tests {
 		let session_index = 1;
 
 		let pool = sp_core::testing::TaskExecutor::new();
-		let (ctx, mut handle) = indracore_node_subsystem_test_helpers::make_subsystem_context(pool);
+		let (ctx, mut handle) = selendra_node_subsystem_test_helpers::make_subsystem_context(pool);
 
 		let bg = async move {
 			let s = StatementDistribution { metrics: Default::default(), keystore: make_ferdie_keystore()};
@@ -3309,7 +3309,7 @@ mod tests {
 		let session_index = 1;
 
 		let pool = sp_core::testing::TaskExecutor::new();
-		let (ctx, mut handle) = indracore_node_subsystem_test_helpers::make_subsystem_context(pool);
+		let (ctx, mut handle) = selendra_node_subsystem_test_helpers::make_subsystem_context(pool);
 
 		let bg = async move {
 			let s = StatementDistribution { metrics: Default::default(), keystore: make_ferdie_keystore()};
@@ -3564,7 +3564,7 @@ mod tests {
 		let session_index = 1;
 
 		let pool = sp_core::testing::TaskExecutor::new();
-		let (ctx, mut handle) = indracore_node_subsystem_test_helpers::make_subsystem_context(pool);
+		let (ctx, mut handle) = selendra_node_subsystem_test_helpers::make_subsystem_context(pool);
 
 		let bg = async move {
 			let s = StatementDistribution { metrics: Default::default(), keystore: make_ferdie_keystore()};

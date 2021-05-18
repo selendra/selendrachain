@@ -30,14 +30,14 @@ use application_crypto::KeyTypeId;
 pub use runtime_primitives::traits::{BlakeTwo256, Hash as HashT};
 
 // Export some core primitives.
-pub use indracore_core_primitives::v1::{
+pub use selendra_core_primitives::v1::{
 	BlockNumber, Moment, Signature, AccountPublic, AccountId, AccountIndex, ChainId, Hash, Nonce,
 	Balance, Header, Block, BlockId, UncheckedExtrinsic, Remark, DownwardMessage,
 	InboundDownwardMessage, CandidateHash, InboundHrmpMessage, OutboundHrmpMessage,
 };
 
-// Export some indracore-parachain primitives
-pub use indracore_parachain::primitives::{
+// Export some selendra-parachain primitives
+pub use selendra_parachain::primitives::{
 	Id, LOWEST_USER_ID, LOWEST_PUBLIC_ID, HrmpChannelId, UpwardMessage, HeadData, ValidationCode,
 };
 
@@ -157,7 +157,7 @@ pub mod well_known_keys {
 
 	/// The MQC head for the downward message queue of the given para. See more in the `Dmp` module.
 	///
-	/// The storage entry stores a `Hash`. This is indracore hash which is at the moment
+	/// The storage entry stores a `Hash`. This is selendra hash which is at the moment
 	/// `blake2b-256`.
 	pub fn dmq_mqc_head(para_id: Id) -> Vec<u8> {
 		let prefix = hex!["63f78c98723ddc9073523ef3beefda0c4d7fefc408aac59dbfe80a72ac8e3ce5"];
@@ -936,7 +936,7 @@ sp_api::decl_runtime_apis! {
 	}
 }
 
-/// Custom validity errors used in Indracore while validating transactions.
+/// Custom validity errors used in Selendra while validating transactions.
 #[repr(u8)]
 pub enum ValidityError {
 	/// The Ethereum signature is invalid.
@@ -1015,10 +1015,10 @@ pub struct AbridgedHrmpChannel {
 	pub mqc_head: Option<Hash>,
 }
 
-/// Consensus engine id for indracore v1 consensus engine.
-pub const INDRACORE_ENGINE_ID: runtime_primitives::ConsensusEngineId = *b"POL1";
+/// Consensus engine id for selendra v1 consensus engine.
+pub const SELENDRA_ENGINE_ID: runtime_primitives::ConsensusEngineId = *b"POL1";
 
-/// A consensus log item for indracore validation. To be used with [`INDRACORE_ENGINE_ID`].
+/// A consensus log item for selendra validation. To be used with [`SELENDRA_ENGINE_ID`].
 #[derive(Decode, Encode, Clone, PartialEq, Eq)]
 pub enum ConsensusLog {
 	/// A parachain or parathread upgraded its code.
@@ -1039,7 +1039,7 @@ impl ConsensusLog {
 		-> Result<Option<Self>, parity_scale_codec::Error>
 	{
 		match digest_item {
-			runtime_primitives::DigestItem::Consensus(id, encoded) if id == &INDRACORE_ENGINE_ID =>
+			runtime_primitives::DigestItem::Consensus(id, encoded) if id == &SELENDRA_ENGINE_ID =>
 				Ok(Some(Self::decode(&mut &encoded[..])?)),
 			_ => Ok(None),
 		}
@@ -1048,7 +1048,7 @@ impl ConsensusLog {
 
 impl<H> From<ConsensusLog> for runtime_primitives::DigestItem<H> {
 	fn from(c: ConsensusLog) -> runtime_primitives::DigestItem<H> {
-		Self::Consensus(INDRACORE_ENGINE_ID, c.encode())
+		Self::Consensus(SELENDRA_ENGINE_ID, c.encode())
 	}
 }
 

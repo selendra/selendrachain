@@ -15,13 +15,13 @@
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::*;
-use indracore_primitives::v1::{CoreIndex, GroupIndex, ValidatorSignature};
-use indracore_node_primitives::approval::{
+use selendra_primitives::v1::{CoreIndex, GroupIndex, ValidatorSignature};
+use selendra_node_primitives::approval::{
 	AssignmentCert, AssignmentCertKind, VRFOutput, VRFProof,
 	RELAY_VRF_MODULO_CONTEXT, DelayTranche,
 };
-use indracore_node_subsystem_test_helpers::make_subsystem_context;
-use indracore_node_subsystem::messages::AllMessages;
+use selendra_node_subsystem_test_helpers::make_subsystem_context;
+use selendra_node_subsystem::messages::AllMessages;
 use sp_core::testing::TaskExecutor;
 
 use parking_lot::Mutex;
@@ -124,34 +124,34 @@ struct MockAssignmentCriteria<Compute, Check>(Compute, Check);
 
 impl<Compute, Check> AssignmentCriteria for MockAssignmentCriteria<Compute, Check>
 where
-	Compute: Fn() -> HashMap<indracore_primitives::v1::CoreIndex, criteria::OurAssignment>,
+	Compute: Fn() -> HashMap<selendra_primitives::v1::CoreIndex, criteria::OurAssignment>,
 	Check: Fn() -> Result<DelayTranche, criteria::InvalidAssignment>
 {
 	fn compute_assignments(
 		&self,
 		_keystore: &LocalKeystore,
-		_relay_vrf_story: indracore_node_primitives::approval::RelayVRFStory,
+		_relay_vrf_story: selendra_node_primitives::approval::RelayVRFStory,
 		_config: &criteria::Config,
-		_leaving_cores: Vec<(CandidateHash, indracore_primitives::v1::CoreIndex, indracore_primitives::v1::GroupIndex)>,
-	) -> HashMap<indracore_primitives::v1::CoreIndex, criteria::OurAssignment> {
+		_leaving_cores: Vec<(CandidateHash, selendra_primitives::v1::CoreIndex, selendra_primitives::v1::GroupIndex)>,
+	) -> HashMap<selendra_primitives::v1::CoreIndex, criteria::OurAssignment> {
 		self.0()
 	}
 
 	fn check_assignment_cert(
 		&self,
-		_claimed_core_index: indracore_primitives::v1::CoreIndex,
+		_claimed_core_index: selendra_primitives::v1::CoreIndex,
 		_validator_index: ValidatorIndex,
 		_config: &criteria::Config,
-		_relay_vrf_story: indracore_node_primitives::approval::RelayVRFStory,
-		_assignment: &indracore_node_primitives::approval::AssignmentCert,
-		_backing_group: indracore_primitives::v1::GroupIndex,
-	) -> Result<indracore_node_primitives::approval::DelayTranche, criteria::InvalidAssignment> {
+		_relay_vrf_story: selendra_node_primitives::approval::RelayVRFStory,
+		_assignment: &selendra_node_primitives::approval::AssignmentCert,
+		_backing_group: selendra_primitives::v1::GroupIndex,
+	) -> Result<selendra_node_primitives::approval::DelayTranche, criteria::InvalidAssignment> {
 		self.1()
 	}
 }
 
 impl<F> MockAssignmentCriteria<
-	fn() -> HashMap<indracore_primitives::v1::CoreIndex, criteria::OurAssignment>,
+	fn() -> HashMap<selendra_primitives::v1::CoreIndex, criteria::OurAssignment>,
 	F,
 > {
 	fn check_only(f: F) -> Self {

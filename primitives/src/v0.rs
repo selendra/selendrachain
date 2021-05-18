@@ -33,10 +33,10 @@ use inherents::InherentIdentifier;
 use application_crypto::KeyTypeId;
 
 pub use runtime_primitives::traits::{BlakeTwo256, Hash as HashT, Verify, IdentifyAccount};
-pub use indracore_core_primitives::*;
+pub use selendra_core_primitives::*;
 pub use parity_scale_codec::Compact;
 
-pub use indracore_parachain::primitives::{
+pub use selendra_parachain::primitives::{
 	Id, LOWEST_USER_ID, UpwardMessage, HeadData, BlockData,
 	ValidationCode,
 };
@@ -854,7 +854,7 @@ pub mod id {
 	pub const PARACHAIN_HOST: ApiId = *b"parahost";
 }
 
-/// Custom validity errors used in Indracore while validating transactions.
+/// Custom validity errors used in Selendra while validating transactions.
 #[repr(u8)]
 pub enum ValidityError {
 	/// The Ethereum signature is invalid.

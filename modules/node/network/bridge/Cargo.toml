@@ -1,5 +1,5 @@
 [package]
-name = "indracore-network-bridge"
+name = "selendra-network-bridge"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
@@ -8,20 +8,20 @@ edition = "2018"
 async-trait = "0.1.42"
 futures = "0.3.12"
 tracing = "0.1.25"
-indracore-primitives = { path = "../../../../primitives" }
+selendra-primitives = { path = "../../../../primitives" }
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
-sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "master" }
-indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
-indracore-node-network-protocol = { path = "../protocol" }
-indracore-node-subsystem-util = { path = "../../subsystem-util"}
+sc-authority-discovery = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sp-consensus = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+selendra-subsystem = { package = "selendra-node-subsystem", path = "../../subsystem" }
+selendra-node-network-protocol = { path = "../protocol" }
+selendra-node-subsystem-util = { path = "../../subsystem-util"}
 strum = "0.20.0"
 parking_lot = "0.11.1"
 
 [dev-dependencies]
 assert_matches = "1.4.0"
-indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "master" }
+selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sp-keyring = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 futures-timer = "3"

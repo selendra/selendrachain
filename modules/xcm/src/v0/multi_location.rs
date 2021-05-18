@@ -30,7 +30,7 @@ use crate::VersionedMultiLocation;
 ///
 /// A very-much non-exhaustive list of types of location include:
 /// - A (normal, layer-1) block chain, e.g. the Bitcoin mainnet or a parachain.
-/// - A layer-0 super-chain, e.g. the Indracore Relay chain.
+/// - A layer-0 super-chain, e.g. the Selendra Relay chain.
 /// - A layer-2 smart contract, e.g. an ERC-20 on Ethereum.
 /// - A logical functional component of a chain, e.g. a single instance of a pallet on a Frame-based Substrate chain.
 /// - An account.

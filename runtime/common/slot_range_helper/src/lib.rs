@@ -25,7 +25,7 @@ pub use paste;
 pub use enumn::N;
 
 /// This macro generates a `SlotRange` enum of arbitrary length for use in the Slot Auction
-/// mechanism on Indracore.
+/// mechanism on Selendra.
 ///
 /// Usage:
 /// ```

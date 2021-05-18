@@ -23,7 +23,7 @@
 #![deny(unused_crate_dependencies, unused_results)]
 #![warn(missing_docs)]
 
-use indracore_subsystem::{
+use selendra_subsystem::{
 	Subsystem, SubsystemContext, SpawnedSubsystem, SubsystemResult, SubsystemError,
 	FromOverseer, OverseerSignal,
 	messages::{
@@ -31,17 +31,17 @@ use indracore_subsystem::{
 		ValidationFailed, RuntimeApiRequest,
 	},
 };
-use indracore_node_subsystem_util::metrics::{self, prometheus};
-use indracore_subsystem::errors::RuntimeApiError;
-use indracore_node_primitives::{
+use selendra_node_subsystem_util::metrics::{self, prometheus};
+use selendra_subsystem::errors::RuntimeApiError;
+use selendra_node_primitives::{
 	VALIDATION_CODE_BOMB_LIMIT, POV_BOMB_LIMIT, ValidationResult, InvalidCandidate, PoV, BlockData,
 };
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	ValidationCode, CandidateDescriptor, PersistedValidationData,
 	OccupiedCoreAssumption, Hash, CandidateCommitments,
 };
-use indracore_parachain::primitives::{ValidationParams, ValidationResult as WasmValidationResult};
-use indracore_node_core_pvf::{Pvf, ValidationHost, ValidationError, InvalidCandidate as WasmInvalidCandidate};
+use selendra_parachain::primitives::{ValidationParams, ValidationResult as WasmValidationResult};
+use selendra_node_core_pvf::{Pvf, ValidationHost, ValidationError, InvalidCandidate as WasmInvalidCandidate};
 
 use parity_scale_codec::Encode;
 
@@ -101,8 +101,8 @@ async fn run(
 	cache_path: PathBuf,
 	program_path: PathBuf,
 ) -> SubsystemResult<()> {
-	let (mut validation_host, task) = indracore_node_core_pvf::start(
-		indracore_node_core_pvf::Config::new(cache_path, program_path),
+	let (mut validation_host, task) = selendra_node_core_pvf::start(
+		selendra_node_core_pvf::Config::new(cache_path, program_path),
 	);
 	ctx.spawn_blocking("pvf-validation-host", task.boxed()).await?;
 
@@ -454,7 +454,7 @@ impl ValidationBackend for &'_ mut ValidationHost {
 		if let Err(err) = self.execute_pvf(
 			Pvf::from_code(raw_validation_code),
 			params.encode(),
-			indracore_node_core_pvf::Priority::Normal,
+			selendra_node_core_pvf::Priority::Normal,
 			tx,
 		).await {
 			return Err(ValidationError::InternalError(format!("cannot send pvf to the validation host: {:?}", err)));
@@ -593,8 +593,8 @@ impl metrics::Metrics for Metrics {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use indracore_node_subsystem_test_helpers as test_helpers;
-	use indracore_primitives::v1::{HeadData, UpwardMessage};
+	use selendra_node_subsystem_test_helpers as test_helpers;
+	use selendra_primitives::v1::{HeadData, UpwardMessage};
 	use sp_core::testing::TaskExecutor;
 	use futures::executor;
 	use assert_matches::assert_matches;
@@ -602,7 +602,7 @@ mod tests {
 
 	fn collator_sign(descriptor: &mut CandidateDescriptor, collator: Sr25519Keyring) {
 		descriptor.collator = collator.public().into();
-		let payload = indracore_primitives::v1::collator_signature_payload(
+		let payload = selendra_primitives::v1::collator_signature_payload(
 			&descriptor.relay_parent,
 			&descriptor.para_id,
 			&descriptor.persisted_validation_data_hash,

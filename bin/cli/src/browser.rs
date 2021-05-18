@@ -29,7 +29,7 @@ async fn start_inner(chain_spec: String, log_directives: String) -> Result<Clien
 	init_logging(&log_directives)?;
 
 	let chain_spec =
-		service::IndracoreChainSpec::from_json_bytes(chain_spec.as_bytes().to_vec()).map_err(|e| format!("{:?}", e))?;
+		service::SelendraChainSpec::from_json_bytes(chain_spec.as_bytes().to_vec()).map_err(|e| format!("{:?}", e))?;
 	let config = browser_configuration(chain_spec).await?;
 
 	info!("Selendra browser node");

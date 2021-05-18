@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-use indracore_node_subsystem_util::metrics::prometheus::{Counter, U64, Registry, PrometheusError, CounterVec, Opts};
-use indracore_node_subsystem_util::metrics::prometheus;
-use indracore_node_subsystem_util::metrics;
+use selendra_node_subsystem_util::metrics::prometheus::{Counter, U64, Registry, PrometheusError, CounterVec, Opts};
+use selendra_node_subsystem_util::metrics::prometheus;
+use selendra_node_subsystem_util::metrics;
 
 /// Label for success counters.
 pub const SUCCEEDED: &'static str = "succeeded";

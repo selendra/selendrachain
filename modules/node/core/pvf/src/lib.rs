@@ -23,7 +23,7 @@
 //!
 //! Then using the handle the client can send two types of requests:
 //!
-//! (a) PVF execution. This accepts the PVF [params][`indracore_parachain::primitives::ValidationParams`]
+//! (a) PVF execution. This accepts the PVF [params][`selendra_parachain::primitives::ValidationParams`]
 //!     and the PVF [code][`Pvf`], prepares (verifies and compiles) the code, and then executes PVF
 //!     with the params.
 //!
@@ -70,7 +70,7 @@
 //!
 //! The execute workers will be fed by the requests from the execution queue, which is basically a
 //! combination of a path to the compiled artifact and the
-//! [params][`indracore_parachain::primitives::ValidationParams`].
+//! [params][`selendra_parachain::primitives::ValidationParams`].
 //!
 //! Each fixed interval of time a pruning task will run. This task will remove all artifacts that
 //! weren't used or received a heads up signal for a while.

@@ -33,9 +33,9 @@ cargo build --release
 We'll start Alice's substrate node first on default TCP port 30333 with her chain database stored locally at /tmp/alice. The bootnode ID of her node is QmRpheLN4JWdAnY7HGJfWFNbfkQCb6tFf4vvA6hgjMZKrR, which is generated from the --node-key value that we specify below:
 
 ```
-./target/release/indracore \
+./target/release/selendra \
   --base-path /tmp/alice \
-  --chain indracore-local \
+  --chain selendra-local \
   --alice \
   --port 30333 \
   --ws-port 9944 \
@@ -48,9 +48,9 @@ We'll start Alice's substrate node first on default TCP port 30333 with her chai
 In the second terminal, we'll start Bob's substrate node on a different TCP port of 30334, and with his chain database stored locally at /tmp/bob. We'll specify a value for the --bootnodes option that will connect his node to Alice's bootnode ID on TCP port 30333:
 
 ```
-./target/release/indracore \
+./target/release/selendra \
   --base-path /tmp/bob \
-  --chain indracore-local \
+  --chain selendra-local \
   --bob \
   --port 30334 \
   --ws-port 9945 \
@@ -65,19 +65,19 @@ In the second terminal, we'll start Bob's substrate node on a different TCP port
 Purge any existing dev chain state:
 
 ```bash
-./target/release/indracore purge-chain --dev
+./target/release/selendra purge-chain --dev
 ```
 
 Start a dev chain:
 
 ```bash
-./target/release/indracore --dev
+./target/release/selendra --dev
 ```
 
 Or, start a dev chain with detailed logging:
 
 ```bash
-RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/indracore -lruntime=debug --dev
+RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/selendra -lruntime=debug --dev
 ```
 
 ### Multi-Node Local Testnet
@@ -88,7 +88,7 @@ If you want to see the multi-node consensus algorithm in action, refer to
 ### Validate on Testnet
 
 ```
-  ./target/release/indracore \
+  ./target/release/selendra \
   --base-path <Path to store chian db> \
   --chain ./indraSpecRaw.json \
   --port 30334 \
@@ -113,15 +113,15 @@ Then run the following command to start a single node development chain.
 ```
 
 This command will firstly compile your code, and then start a local development network. You can
-also replace the default command (`cargo build --release && ./target/release/node-indracore --dev --ws-external`)
+also replace the default command (`cargo build --release && ./target/release/node-selendra --dev --ws-external`)
 by appending your own. A few useful ones are as follow.
 
 ```bash
-# Run Indracore node without re-compiling
-./scripts/docker_run.sh ./target/release/node-indracore --dev --ws-external
+# Run Selendra node without re-compiling
+./scripts/docker_run.sh ./target/release/node-selendra --dev --ws-external
 
 # Purge the local dev chain
-./scripts/docker_run.sh ./target/release/node-indracore purge-chain --dev
+./scripts/docker_run.sh ./target/release/node-selendra purge-chain --dev
 
 # Check whether the code is compilable
 ./scripts/docker_run.sh cargo check
@@ -129,10 +129,10 @@ by appending your own. A few useful ones are as follow.
 
 ### Run Benchmarks
 ```bash
-$ cargo run --release --features=runtime-benchmarks -- benchmark --chain=indracore-dev --steps=50 --repeat=20 --pallet=<frame_system> --extrinsic=* --execution=wasm --wasm-execution=compiled --heap-pages=4096 --header=./file_header.txt --output=./runtime/indracore/src/weights/
+$ cargo run --release --features=runtime-benchmarks -- benchmark --chain=selendra-dev --steps=50 --repeat=20 --pallet=<frame_system> --extrinsic=* --execution=wasm --wasm-execution=compiled --heap-pages=4096 --header=./file_header.txt --output=./runtime/selendra/src/weights/
 
 ```
 
 ## License
 
-Indracore is implement from [Polkadot](https://github.com/paritytech/polkadot.git) under license [GPL 3.0 licensed](LICENSE-GPL3).
+Selendra is implement from [Polkadot](https://github.com/paritytech/polkadot.git) under license [GPL 3.0 licensed](LICENSE-GPL3).

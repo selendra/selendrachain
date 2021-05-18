@@ -75,11 +75,11 @@ use futures::{
 };
 use futures_timer::Delay;
 
-use indracore_primitives::v1::{Block, BlockId,BlockNumber, Hash, ParachainHost};
+use selendra_primitives::v1::{Block, BlockId,BlockNumber, Hash, ParachainHost};
 use client::{BlockImportNotification, BlockchainEvents, FinalityNotification};
 use sp_api::{ApiExt, ProvideRuntimeApi};
 
-use indracore_subsystem::messages::{
+use selendra_subsystem::messages::{
 	CandidateValidationMessage, CandidateBackingMessage,
 	CandidateSelectionMessage, ChainApiMessage, StatementDistributionMessage,
 	AvailabilityDistributionMessage, BitfieldSigningMessage, BitfieldDistributionMessage,
@@ -88,13 +88,13 @@ use indracore_subsystem::messages::{
 	CollatorProtocolMessage, AvailabilityRecoveryMessage, ApprovalDistributionMessage,
 	ApprovalVotingMessage, GossipSupportMessage,
 };
-pub use indracore_subsystem::{
+pub use selendra_subsystem::{
 	Subsystem, SubsystemContext, SubsystemSender, OverseerSignal, FromOverseer, SubsystemError,
 	SubsystemResult, SpawnedSubsystem, ActiveLeavesUpdate, ActivatedLeaf, DummySubsystem, jaeger,
 };
-use indracore_node_subsystem_util::{TimeoutExt, metrics::{self, prometheus}, metered, Metronome};
-use indracore_node_primitives::SpawnNamed;
-use indracore_procmacro_overseer_subsystems_gen::AllSubsystemsGen;
+use selendra_node_subsystem_util::{TimeoutExt, metrics::{self, prometheus}, metered, Metronome};
+use selendra_node_primitives::SpawnNamed;
+use selendra_procmacro_overseer_subsystems_gen::AllSubsystemsGen;
 
 // A capacity of bounded channels inside the overseer.
 const CHANNEL_CAPACITY: usize = 1024;
@@ -201,7 +201,7 @@ impl<CV, CB, CS, SD, AD, AR, BS, BD, P, RA, AS, NB, CA, CG, CP, ApD, ApV, GS>
 	/// you provide a "random" type for the first generic parameter:
 	///
 	/// ```
-	/// indracore_overseer::AllSubsystems::<()>::dummy();
+	/// selendra_overseer::AllSubsystems::<()>::dummy();
 	/// ```
 	pub fn dummy() -> AllSubsystems<
 		DummySubsystem,
@@ -1313,9 +1313,9 @@ where
 	/// # use std::time::Duration;
 	/// # use futures::{executor, pin_mut, select, FutureExt};
 	/// # use futures_timer::Delay;
-	/// # use indracore_overseer::{Overseer, HeadSupportsParachains, AllSubsystems};
-	/// # use indracore_primitives::v1::Hash;
-	/// # use indracore_subsystem::{
+	/// # use selendra_overseer::{Overseer, HeadSupportsParachains, AllSubsystems};
+	/// # use selendra_primitives::v1::Hash;
+	/// # use selendra_subsystem::{
 	/// #     Subsystem, DummySubsystem, SpawnedSubsystem, SubsystemContext,
 	/// #     messages::CandidateValidationMessage,
 	/// # };
@@ -2242,11 +2242,11 @@ mod tests {
 	use std::collections::HashMap;
 	use futures::{executor, pin_mut, select, FutureExt, pending};
 
-	use indracore_primitives::v1::{CollatorPair, CandidateHash};
-	use indracore_subsystem::{messages::RuntimeApiRequest, messages::NetworkBridgeEvent, jaeger};
-	use indracore_node_primitives::{CollationResult, CollationGenerationConfig, PoV, BlockData};
-	use indracore_node_network_protocol::{PeerId, UnifiedReputationChange};
-	use indracore_node_subsystem_util::metered;
+	use selendra_primitives::v1::{CollatorPair, CandidateHash};
+	use selendra_subsystem::{messages::RuntimeApiRequest, messages::NetworkBridgeEvent, jaeger};
+	use selendra_node_primitives::{CollationResult, CollationGenerationConfig, PoV, BlockData};
+	use selendra_node_network_protocol::{PeerId, UnifiedReputationChange};
+	use selendra_node_subsystem_util::metered;
 
 	use sp_core::crypto::Pair as _;
 	use assert_matches::assert_matches;

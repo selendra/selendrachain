@@ -26,11 +26,11 @@ use futures::task::{Poll, Context, noop_waker};
 use sc_network as network;
 use sp_keyring::Sr25519Keyring;
 
-use indracore_primitives::v1::{CandidateHash, ValidatorIndex};
-use indracore_node_primitives::{BlockData, PoV};
-use indracore_node_network_protocol::request_response::v1;
-use indracore_node_network_protocol::request_response::Recipient;
-use indracore_subsystem::messages::AllMessages;
+use selendra_primitives::v1::{CandidateHash, ValidatorIndex};
+use selendra_node_primitives::{BlockData, PoV};
+use selendra_node_network_protocol::request_response::v1;
+use selendra_node_network_protocol::request_response::Recipient;
+use selendra_subsystem::messages::AllMessages;
 
 use crate::metrics::Metrics;
 use crate::tests::mock::get_valid_chunk_data;

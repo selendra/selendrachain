@@ -24,17 +24,17 @@ use futures::{
 	Future,
 };
 
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	CandidateDescriptor, CandidateReceipt, HeadData,
 	PersistedValidationData, Id as ParaId, CandidateHash, Header, ValidatorId,
 	CoreIndex, GroupIndex,
 };
-use indracore_node_primitives::{AvailableData, BlockData, PoV};
-use indracore_node_subsystem_util::TimeoutExt;
-use indracore_subsystem::{
+use selendra_node_primitives::{AvailableData, BlockData, PoV};
+use selendra_node_subsystem_util::TimeoutExt;
+use selendra_subsystem::{
 	ActiveLeavesUpdate, errors::RuntimeApiError, jaeger, messages::AllMessages, ActivatedLeaf,
 };
-use indracore_node_subsystem_test_helpers as test_helpers;
+use selendra_node_subsystem_test_helpers as test_helpers;
 use sp_keyring::Sr25519Keyring;
 use parking_lot::Mutex;
 
@@ -146,7 +146,7 @@ fn test_harness<T: Future<Output=VirtualOverseer>>(
 	let _ = env_logger::builder()
 		.is_test(true)
 		.filter(
-			Some("indracore_node_core_av_store"),
+			Some("selendra_node_core_av_store"),
 			log::LevelFilter::Trace,
 		)
 		.filter(

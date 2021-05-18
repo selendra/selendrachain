@@ -1,5 +1,5 @@
 [package]
-name = "indracore-collator-protocol"
+name = "selendra-collator-protocol"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
@@ -11,22 +11,22 @@ futures-timer = "3"
 thiserror = "1.0.23"
 tracing = "0.1.25"
 
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sp-runtime = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 
-indracore-primitives = { path = "../../../../primitives" }
-indracore-node-network-protocol = { path = "../../network/protocol" }
-indracore-node-primitives = { path = "../../primitives" }
-indracore-node-subsystem-util = { path = "../../subsystem-util" }
-indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
+selendra-primitives = { path = "../../../../primitives" }
+selendra-node-network-protocol = { path = "../../network/protocol" }
+selendra-node-primitives = { path = "../../primitives" }
+selendra-node-subsystem-util = { path = "../../subsystem-util" }
+selendra-subsystem = { package = "selendra-node-subsystem", path = "../../subsystem" }
 
 [dev-dependencies]
 log = "0.4.13"
 env_logger = "0.8.2"
 assert_matches = "1.4.0"
 
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master", features = ["std"] }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", features = ["std"] }
+sp-keyring = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 
-indracore-subsystem-testhelpers = { package = "indracore-node-subsystem-test-helpers", path = "../../subsystem-test-helpers" }
+selendra-subsystem-testhelpers = { package = "selendra-node-subsystem-test-helpers", path = "../../subsystem-test-helpers" }

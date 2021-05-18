@@ -21,17 +21,17 @@ use futures::channel::oneshot;
 use futures::future::select;
 use futures::{FutureExt, SinkExt};
 
-use indracore_erasure_coding::branch_hash;
-use indracore_node_network_protocol::request_response::{
+use selendra_erasure_coding::branch_hash;
+use selendra_node_network_protocol::request_response::{
 	request::{OutgoingRequest, RequestError, Requests, Recipient},
 	v1::{ChunkFetchingRequest, ChunkFetchingResponse},
 };
-use indracore_primitives::v1::{AuthorityDiscoveryId, BlakeTwo256, CandidateHash, GroupIndex, Hash, HashT, OccupiedCore, SessionIndex};
-use indracore_node_primitives::ErasureChunk;
-use indracore_subsystem::messages::{
+use selendra_primitives::v1::{AuthorityDiscoveryId, BlakeTwo256, CandidateHash, GroupIndex, Hash, HashT, OccupiedCore, SessionIndex};
+use selendra_node_primitives::ErasureChunk;
+use selendra_subsystem::messages::{
 	AllMessages, AvailabilityStoreMessage, NetworkBridgeMessage, IfDisconnected,
 };
-use indracore_subsystem::{SubsystemContext, jaeger};
+use selendra_subsystem::{SubsystemContext, jaeger};
 
 use crate::{
 	error::{Fatal, Result},

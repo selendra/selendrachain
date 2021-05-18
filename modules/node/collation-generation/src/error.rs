@@ -19,15 +19,15 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum Error {
 	#[error(transparent)]
-	Subsystem(#[from] indracore_node_subsystem::SubsystemError),
+	Subsystem(#[from] selendra_node_subsystem::SubsystemError),
 	#[error(transparent)]
 	OneshotRecv(#[from] futures::channel::oneshot::Canceled),
 	#[error(transparent)]
-	Runtime(#[from] indracore_node_subsystem::errors::RuntimeApiError),
+	Runtime(#[from] selendra_node_subsystem::errors::RuntimeApiError),
 	#[error(transparent)]
-	Util(#[from] indracore_node_subsystem_util::Error),
+	Util(#[from] selendra_node_subsystem_util::Error),
 	#[error(transparent)]
-	Erasure(#[from] indracore_erasure_coding::Error),
+	Erasure(#[from] selendra_erasure_coding::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

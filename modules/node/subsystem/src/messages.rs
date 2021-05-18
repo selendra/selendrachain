@@ -18,7 +18,7 @@
 //!
 //! These messages are intended to define the protocol by which different subsystems communicate with each
 //! other and signals that they receive from an overseer to coordinate their work.
-//! This is intended for use with the `indracore-overseer` crate.
+//! This is intended for use with the `selendra-overseer` crate.
 //!
 //! Subsystems' APIs are defined separately from their implementation, leading to easier mocking.
 
@@ -27,19 +27,19 @@ use thiserror::Error;
 
 pub use sc_network::IfDisconnected;
 
-use indracore_node_network_protocol::{
+use selendra_node_network_protocol::{
 	PeerId, UnifiedReputationChange, peer_set::PeerSet,
 	request_response::{
 		Requests, request::IncomingRequest, v1 as req_res_v1
 	},
 	v1 as protocol_v1,
 };
-use indracore_node_primitives::{
+use selendra_node_primitives::{
 	CollationGenerationConfig, SignedFullStatement, ValidationResult,
 	approval::{BlockApprovalMeta, IndirectAssignmentCert, IndirectSignedApprovalVote},
 	BabeEpoch, AvailableData, PoV, ErasureChunk
 };
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	AuthorityDiscoveryId, BackedCandidate, BlockNumber, SessionInfo,
 	Header as BlockHeader, CandidateDescriptor, CandidateEvent, CandidateReceipt,
 	CollatorId, CommittedCandidateReceipt, CoreState,
@@ -49,8 +49,8 @@ use indracore_primitives::v1::{
 	ValidatorIndex, ValidatorSignature, InboundDownwardMessage, InboundHrmpMessage,
 	CandidateIndex, GroupIndex, MultiDisputeStatementSet, SignedAvailabilityBitfields,
 };
-use indracore_statement_table::v1::Misbehavior;
-use indracore_procmacro_subsystem_dispatch_gen::subsystem_dispatch_gen;
+use selendra_statement_table::v1::Misbehavior;
+use selendra_procmacro_subsystem_dispatch_gen::subsystem_dispatch_gen;
 use std::{sync::Arc, collections::btree_map::BTreeMap};
 
 
@@ -463,7 +463,7 @@ pub enum RuntimeApiRequest {
 	/// Sends back `true` if the validation outputs pass all acceptance criteria checks.
 	CheckValidationOutputs(
 		ParaId,
-		indracore_primitives::v1::CandidateCommitments,
+		selendra_primitives::v1::CandidateCommitments,
 		RuntimeApiSender<bool>,
 	),
 	/// Get the session index that a child of the block will have.

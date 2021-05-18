@@ -31,7 +31,7 @@ use async_std::{
 };
 use futures::FutureExt;
 use futures_timer::Delay;
-use indracore_parachain::primitives::ValidationResult;
+use selendra_parachain::primitives::ValidationResult;
 use parity_scale_codec::{Encode, Decode};
 
 const EXECUTION_TIMEOUT: Duration = Duration::from_secs(3);

@@ -1,5 +1,5 @@
 [package]
-name = "indracore-procmacro-subsystem-dispatch-gen"
+name = "selendra-procmacro-subsystem-dispatch-gen"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"

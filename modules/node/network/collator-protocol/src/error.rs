@@ -17,11 +17,11 @@
 
 //! Error handling related code and Error/Result definitions.
 
-use indracore_node_primitives::UncheckedSignedFullStatement;
-use indracore_subsystem::SubsystemError;
+use selendra_node_primitives::UncheckedSignedFullStatement;
+use selendra_subsystem::SubsystemError;
 use thiserror::Error;
 
-use indracore_node_subsystem_util::{Fault, runtime, unwrap_non_fatal};
+use selendra_node_subsystem_util::{Fault, runtime, unwrap_non_fatal};
 
 use crate::LOG_TARGET;
 

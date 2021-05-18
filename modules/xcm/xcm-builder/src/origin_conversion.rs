@@ -19,7 +19,7 @@ use xcm::v0::{MultiLocation, OriginKind, NetworkId, Junction, BodyId, BodyPart};
 use xcm_executor::traits::{Convert, ConvertOrigin};
 use frame_support::traits::{EnsureOrigin, Get, OriginTrait, GetBacking};
 use frame_system::RawOrigin as SystemRawOrigin;
-use indracore_parachain::primitives::IsSystem;
+use selendra_parachain::primitives::IsSystem;
 
 /// Sovereign accounts use the system's `Signed` origin with an account ID derived from the
 /// `LocationConverter`.

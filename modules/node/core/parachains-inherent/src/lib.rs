@@ -25,11 +25,11 @@
 #![deny(unused_crate_dependencies, unused_results)]
 
 use futures::{select, FutureExt};
-use indracore_node_subsystem::{
+use selendra_node_subsystem::{
 	messages::{AllMessages, ProvisionerMessage}, SubsystemError,
 };
-use indracore_overseer::OverseerHandler;
-use indracore_primitives::v1::{
+use selendra_overseer::OverseerHandler;
+use selendra_primitives::v1::{
 	Block, Hash, InherentData as ParachainsInherentData,
 };
 use sp_blockchain::HeaderBackend;
@@ -106,7 +106,7 @@ impl ParachainsInherentDataProvider {
 impl sp_inherents::InherentDataProvider for ParachainsInherentDataProvider {
 	fn provide_inherent_data(&self, inherent_data: &mut sp_inherents::InherentData) -> Result<(), sp_inherents::Error> {
 		inherent_data.put_data(
-			indracore_primitives::v1::PARACHAINS_INHERENT_IDENTIFIER,
+			selendra_primitives::v1::PARACHAINS_INHERENT_IDENTIFIER,
 			&self.inherent_data,
 		)
 	}

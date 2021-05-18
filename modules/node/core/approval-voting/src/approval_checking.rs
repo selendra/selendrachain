@@ -16,7 +16,7 @@
 
 //! Utilities for checking whether a candidate has been approved under a given block.
 
-use indracore_node_primitives::approval::DelayTranche;
+use selendra_node_primitives::approval::DelayTranche;
 use bitvec::slice::BitSlice;
 use bitvec::order::Lsb0 as BitOrderLsb0;
 
@@ -384,7 +384,7 @@ pub fn tranches_to_approve(
 mod tests {
 	use super::*;
 
-	use indracore_primitives::v1::{GroupIndex, ValidatorIndex};
+	use selendra_primitives::v1::{GroupIndex, ValidatorIndex};
 	use bitvec::bitvec;
 	use bitvec::order::Lsb0 as BitOrderLsb0;
 

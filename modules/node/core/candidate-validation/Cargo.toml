@@ -1,5 +1,5 @@
 [package]
-name = "indracore-node-core-candidate-validation"
+name = "selendra-node-core-candidate-validation"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
@@ -9,21 +9,21 @@ async-trait = "0.1.42"
 futures = "0.3.12"
 tracing = "0.1.25"
 
-sp-maybe-compressed-blob = { package = "sp-maybe-compressed-blob", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-maybe-compressed-blob = { package = "sp-maybe-compressed-blob", git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["bit-vec", "derive"] }
 
-indracore-primitives = { path = "../../../../primitives" }
-indracore-parachain = { path = "../../../parachain" }
-indracore-node-primitives = { path = "../../primitives" }
-indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
-indracore-node-subsystem-util = { path = "../../subsystem-util" }
+selendra-primitives = { path = "../../../../primitives" }
+selendra-parachain = { path = "../../../parachain" }
+selendra-node-primitives = { path = "../../primitives" }
+selendra-subsystem = { package = "selendra-node-subsystem", path = "../../subsystem" }
+selendra-node-subsystem-util = { path = "../../subsystem-util" }
 
 [target.'cfg(not(any(target_os = "android", target_os = "unknown")))'.dependencies]
-indracore-node-core-pvf = { path = "../pvf" }
+selendra-node-core-pvf = { path = "../pvf" }
 
 [dev-dependencies]
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-keyring = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 futures = { version = "0.3.12", features = ["thread-pool"] }
 assert_matches = "1.4.0"
-indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
+selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }

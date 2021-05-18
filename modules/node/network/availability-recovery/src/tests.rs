@@ -26,14 +26,14 @@ use parity_scale_codec::Encode;
 
 use super::*;
 
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	AuthorityDiscoveryId, PersistedValidationData, HeadData,
 };
-use indracore_node_primitives::{PoV, BlockData};
-use indracore_erasure_coding::{branches, obtain_chunks_v1 as obtain_chunks};
-use indracore_node_subsystem_util::TimeoutExt;
-use indracore_subsystem_testhelpers as test_helpers;
-use indracore_subsystem::{messages::{RuntimeApiMessage, RuntimeApiRequest}, jaeger, ActivatedLeaf};
+use selendra_node_primitives::{PoV, BlockData};
+use selendra_erasure_coding::{branches, obtain_chunks_v1 as obtain_chunks};
+use selendra_node_subsystem_util::TimeoutExt;
+use selendra_subsystem_testhelpers as test_helpers;
+use selendra_subsystem::{messages::{RuntimeApiMessage, RuntimeApiRequest}, jaeger, ActivatedLeaf};
 
 type VirtualOverseer = test_helpers::TestSubsystemContextHandle<AvailabilityRecoveryMessage>;
 
@@ -43,7 +43,7 @@ fn test_harness_fast_path<T: Future<Output = VirtualOverseer>>(
 	let _ = env_logger::builder()
 		.is_test(true)
 		.filter(
-			Some("indracore_availability_recovery"),
+			Some("selendra_availability_recovery"),
 			log::LevelFilter::Trace,
 		)
 		.try_init();
@@ -72,7 +72,7 @@ fn test_harness_chunks_only<T: Future<Output = VirtualOverseer>>(
 	let _ = env_logger::builder()
 		.is_test(true)
 		.filter(
-			Some("indracore_availability_recovery"),
+			Some("selendra_availability_recovery"),
 			log::LevelFilter::Trace,
 		)
 		.try_init();

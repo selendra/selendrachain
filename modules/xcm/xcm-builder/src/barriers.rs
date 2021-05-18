@@ -18,7 +18,7 @@ use sp_std::{result::Result, marker::PhantomData};
 use xcm::v0::{Xcm, Order, MultiLocation, Junction};
 use frame_support::{ensure, traits::Contains, weights::Weight};
 use xcm_executor::traits::{OnResponse, ShouldExecute};
-use indracore_parachain::primitives::IsSystem;
+use selendra_parachain::primitives::IsSystem;
 
 pub struct TakeWeightCredit;
 impl ShouldExecute for TakeWeightCredit {

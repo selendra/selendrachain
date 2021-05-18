@@ -19,21 +19,21 @@
 //! the gossiping subsystems on every new session.
 
 use futures::{channel::mpsc, FutureExt as _};
-use indracore_node_subsystem::{
+use selendra_node_subsystem::{
 	messages::{
 		GossipSupportMessage,
 	},
 	ActiveLeavesUpdate, FromOverseer, OverseerSignal,
 	Subsystem, SpawnedSubsystem, SubsystemContext,
 };
-use indracore_node_subsystem_util::{
+use selendra_node_subsystem_util::{
 	validator_discovery,
 	self as util,
 };
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	Hash, SessionIndex, AuthorityDiscoveryId,
 };
-use indracore_node_network_protocol::{peer_set::PeerSet, PeerId};
+use selendra_node_network_protocol::{peer_set::PeerSet, PeerId};
 use sp_keystore::{CryptoStore, SyncCryptoStorePtr};
 use sp_application_crypto::{Public, AppKey};
 

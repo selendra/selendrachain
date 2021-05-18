@@ -20,8 +20,8 @@
 use thiserror::Error;
 use futures::channel::oneshot;
 
-use indracore_node_subsystem::errors::RuntimeApiError;
-use indracore_primitives::v1::SessionIndex;
+use selendra_node_subsystem::errors::RuntimeApiError;
+use selendra_primitives::v1::SessionIndex;
 
 use crate::Fault;
 

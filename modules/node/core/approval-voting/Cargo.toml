@@ -1,5 +1,5 @@
 [package]
-name = "indracore-node-core-approval-voting"
+name = "selendra-node-core-approval-voting"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
@@ -15,29 +15,29 @@ schnorrkel = "0.9.1"
 kvdb = "0.9.0"
 derive_more = "0.99.1"
 
-indracore-node-subsystem = { path = "../../subsystem" }
-indracore-node-subsystem-util = { path = "../../subsystem-util" }
-indracore-overseer = { path = "../../overseer" }
-indracore-primitives = { path = "../../../../primitives" }
-indracore-node-primitives = { path = "../../primitives" }
-indracore-node-jaeger = { path = "../../jaeger" }
+selendra-node-subsystem = { path = "../../subsystem" }
+selendra-node-subsystem-util = { path = "../../subsystem-util" }
+selendra-overseer = { path = "../../overseer" }
+selendra-primitives = { path = "../../../../primitives" }
+selendra-node-primitives = { path = "../../primitives" }
+selendra-node-jaeger = { path = "../../jaeger" }
 
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-consensus-slots = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false, features = ["full_crypto"] }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+sc-client-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", default-features = false }
+sc-keystore = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", default-features = false }
+sp-consensus = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", default-features = false }
+sp-consensus-slots = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", default-features = false }
+sp-blockchain = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", default-features = false }
+sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", default-features = false, features = ["full_crypto"] }
+sp-runtime = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", default-features = false }
 
 [dev-dependencies]
 parking_lot = "0.11.1"
 rand_core = "0.5.1" # should match schnorrkel
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-keyring = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sp-consensus-babe = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 maplit = "1.0.2"
-indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
+selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
 assert_matches = "1.4.0"
 kvdb-memorydb = "0.9.0"

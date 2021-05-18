@@ -16,8 +16,8 @@
 
 use std::{collections::{HashMap, HashSet}, sync::Arc, time::Duration};
 
-use indracore_node_subsystem_util::TimeoutExt;
-use indracore_subsystem_testhelpers::TestSubsystemContextHandle;
+use selendra_node_subsystem_util::TimeoutExt;
+use selendra_subsystem_testhelpers::TestSubsystemContextHandle;
 use smallvec::smallvec;
 
 use futures::{FutureExt, channel::oneshot, SinkExt, channel::mpsc, StreamExt};
@@ -29,22 +29,22 @@ use sc_network as network;
 use sc_network::IfDisconnected;
 use sc_network::config as netconfig;
 
-use indracore_subsystem::{ActiveLeavesUpdate, FromOverseer, OverseerSignal, ActivatedLeaf,
+use selendra_subsystem::{ActiveLeavesUpdate, FromOverseer, OverseerSignal, ActivatedLeaf,
 	messages::{
 		AllMessages, AvailabilityDistributionMessage, AvailabilityStoreMessage, NetworkBridgeMessage,
 		RuntimeApiMessage, RuntimeApiRequest,
 	}
 };
-use indracore_primitives::v1::{CandidateHash, CoreState, GroupIndex, Hash, Id
+use selendra_primitives::v1::{CandidateHash, CoreState, GroupIndex, Hash, Id
 	as ParaId, ScheduledCore, SessionInfo,
 	ValidatorIndex
 };
-use indracore_node_primitives::ErasureChunk;
-use indracore_node_network_protocol::{
+use selendra_node_primitives::ErasureChunk;
+use selendra_node_network_protocol::{
 	jaeger,
 	request_response::{IncomingRequest, OutgoingRequest, Requests, v1}
 };
-use indracore_subsystem_testhelpers as test_helpers;
+use selendra_subsystem_testhelpers as test_helpers;
 use test_helpers::SingleItemSink;
 
 use super::mock::{make_session_info, OccupiedCoreBuilder, make_ferdie_keystore};

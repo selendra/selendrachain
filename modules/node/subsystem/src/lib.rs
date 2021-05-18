@@ -16,7 +16,7 @@
 
 //! Subsystem trait definitions and message types.
 //!
-//! Node-side logic for Indracore is mostly comprised of Subsystems, which are discrete components
+//! Node-side logic for Selendra is mostly comprised of Subsystems, which are discrete components
 //! that communicate via message-passing. They are coordinated by an overseer, provided by a
 //! separate crate.
 
@@ -28,14 +28,14 @@ use futures::prelude::*;
 use futures::channel::{mpsc, oneshot};
 use futures::future::BoxFuture;
 
-use indracore_primitives::v1::{Hash, BlockNumber};
+use selendra_primitives::v1::{Hash, BlockNumber};
 use async_trait::async_trait;
 use smallvec::SmallVec;
 
 pub mod errors;
 pub mod messages;
 
-pub use indracore_node_jaeger as jaeger;
+pub use selendra_node_jaeger as jaeger;
 pub use jaeger::*;
 
 use self::messages::AllMessages;

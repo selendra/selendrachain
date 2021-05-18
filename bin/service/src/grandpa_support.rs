@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Indracore-specific GRANDPA integration utilities.
+//! Selendra-specific GRANDPA integration utilities.
 
 use std::sync::Arc;
 
@@ -24,10 +24,10 @@ use sp_runtime::traits::Header as _;
 
 #[cfg(feature = "full-node")]
 use {
-	indracore_primitives::v1::{Block as IndracoreBlock, Header as IndracoreHeader},
-	indracore_subsystem::messages::ApprovalVotingMessage,
+	selendra_primitives::v1::{Block as SelendraBlock, Header as SelendraHeader},
+	selendra_subsystem::messages::ApprovalVotingMessage,
 	prometheus_endpoint::{self, Registry},
-	indracore_overseer::OverseerHandler,
+	selendra_overseer::OverseerHandler,
 	futures::channel::oneshot,
 };
 
@@ -70,16 +70,16 @@ impl ApprovalCheckingVotingRule {
 }
 
 #[cfg(feature = "full-node")]
-impl<B> grandpa::VotingRule<IndracoreBlock, B> for ApprovalCheckingVotingRule
-	where B: sp_blockchain::HeaderBackend<IndracoreBlock>
+impl<B> grandpa::VotingRule<SelendraBlock, B> for ApprovalCheckingVotingRule
+	where B: sp_blockchain::HeaderBackend<SelendraBlock>
 {
 	fn restrict_vote(
 		&self,
 		_backend: Arc<B>,
-		base: &IndracoreHeader,
-		best_target: &IndracoreHeader,
-		current_target: &IndracoreHeader,
-	) -> grandpa::VotingRuleResult<IndracoreBlock> {
+		base: &SelendraHeader,
+		best_target: &SelendraHeader,
+		current_target: &SelendraHeader,
+	) -> grandpa::VotingRuleResult<SelendraBlock> {
 		// Query approval checking and issue metrics.
 		let mut overseer = self.overseer.clone();
 		let checking_lag = self.checking_lag.clone();

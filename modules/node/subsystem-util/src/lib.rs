@@ -24,18 +24,18 @@
 
 #![warn(missing_docs)]
 
-use indracore_node_subsystem::{
+use selendra_node_subsystem::{
 	errors::RuntimeApiError,
 	messages::{AllMessages, RuntimeApiMessage, RuntimeApiRequest, RuntimeApiSender, BoundToRelayParent},
 	FromOverseer, SpawnedSubsystem, Subsystem, SubsystemContext, SubsystemError, SubsystemSender,
 	ActiveLeavesUpdate, OverseerSignal,
 };
-use indracore_node_jaeger as jaeger;
+use selendra_node_jaeger as jaeger;
 use futures::{channel::{mpsc, oneshot}, prelude::*, select, stream::Stream};
 use futures_timer::Delay;
 use parity_scale_codec::Encode;
 use pin_project::pin_project;
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	CandidateEvent, CommittedCandidateReceipt, CoreState, EncodeAs, PersistedValidationData,
 	GroupRotationInfo, Hash, Id as ParaId, OccupiedCoreAssumption,
 	SessionIndex, Signed, SigningContext, ValidationCode, ValidatorId, ValidatorIndex, SessionInfo,
@@ -53,7 +53,7 @@ use thiserror::Error;
 
 pub mod validator_discovery;
 pub use metered_channel as metered;
-pub use indracore_node_network_protocol::MIN_GOSSIP_PEERS;
+pub use selendra_node_network_protocol::MIN_GOSSIP_PEERS;
 
 mod error_handling;
 
@@ -63,7 +63,7 @@ pub use error_handling::{Fault, unwrap_non_fatal};
 /// These reexports are required so that external crates can use the `delegated_subsystem` macro properly.
 pub mod reexports {
 	pub use sp_core::traits::SpawnNamed;
-	pub use indracore_node_subsystem::{
+	pub use selendra_node_subsystem::{
 		SpawnedSubsystem,
 		Subsystem,
 		SubsystemContext,
@@ -866,15 +866,15 @@ mod tests {
 	use super::*;
 	use executor::block_on;
 	use thiserror::Error;
-	use indracore_node_jaeger as jaeger;
-	use indracore_node_subsystem::{
+	use selendra_node_jaeger as jaeger;
+	use selendra_node_subsystem::{
 		messages::{AllMessages, CandidateSelectionMessage}, ActiveLeavesUpdate, FromOverseer, OverseerSignal,
 		SpawnedSubsystem, ActivatedLeaf,
 	};
 	use assert_matches::assert_matches;
 	use futures::{channel::mpsc, executor, StreamExt, future, Future, FutureExt, SinkExt};
-	use indracore_primitives::v1::Hash;
-	use indracore_node_subsystem_test_helpers::{self as test_helpers, make_subsystem_context};
+	use selendra_primitives::v1::Hash;
+	use selendra_node_subsystem_test_helpers::{self as test_helpers, make_subsystem_context};
 	use std::{pin::Pin, sync::{Arc, atomic::{AtomicUsize, Ordering}}, time::Duration};
 
 	// basic usage: in a nutshell, when you want to define a subsystem, just focus on what its jobs do;

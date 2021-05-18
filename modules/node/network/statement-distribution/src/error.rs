@@ -17,12 +17,12 @@
 
 //! Error handling related code and Error/Result definitions.
 
-use indracore_node_network_protocol::PeerId;
-use indracore_primitives::v1::{CandidateHash, Hash};
-use indracore_subsystem::SubsystemError;
+use selendra_node_network_protocol::PeerId;
+use selendra_primitives::v1::{CandidateHash, Hash};
+use selendra_subsystem::SubsystemError;
 use thiserror::Error;
 
-use indracore_node_subsystem_util::{Fault, runtime, unwrap_non_fatal};
+use selendra_node_subsystem_util::{Fault, runtime, unwrap_non_fatal};
 
 use crate::LOG_TARGET;
 

@@ -22,7 +22,7 @@
 
 use futures::{channel::{mpsc, oneshot}, lock::Mutex, prelude::*, future, Future};
 use sp_keystore::{Error as KeystoreError, SyncCryptoStorePtr};
-use indracore_node_subsystem::{
+use selendra_node_subsystem::{
 	jaeger, PerLeafSpan, SubsystemSender,
 	messages::{
 		AvailabilityStoreMessage, BitfieldDistributionMessage,
@@ -30,11 +30,11 @@ use indracore_node_subsystem::{
 	},
 	errors::RuntimeApiError,
 };
-use indracore_node_subsystem_util::{
+use selendra_node_subsystem_util::{
 	self as util, JobSubsystem, JobTrait, Validator, metrics::{self, prometheus},
 	JobSender,
 };
-use indracore_primitives::v1::{AvailabilityBitfield, CoreState, Hash, ValidatorIndex};
+use selendra_primitives::v1::{AvailabilityBitfield, CoreState, Hash, ValidatorIndex};
 use std::{pin::Pin, time::Duration, iter::FromIterator, sync::Arc};
 use wasm_timer::{Delay, Instant};
 
@@ -318,8 +318,8 @@ pub type BitfieldSigningSubsystem<Spawner> = JobSubsystem<BitfieldSigningJob, Sp
 mod tests {
 	use super::*;
 	use futures::{pin_mut, executor::block_on};
-	use indracore_primitives::v1::{CandidateHash, OccupiedCore};
-	use indracore_node_subsystem::messages::AllMessages;
+	use selendra_primitives::v1::{CandidateHash, OccupiedCore};
+	use selendra_node_subsystem::messages::AllMessages;
 
 	fn occupied_core(para_id: u32, candidate_hash: CandidateHash) -> CoreState {
 		CoreState::Occupied(OccupiedCore {
@@ -340,7 +340,7 @@ mod tests {
 			let relay_parent = Hash::default();
 			let validator_index = ValidatorIndex(1u32);
 
-			let (mut sender, mut receiver) = indracore_node_subsystem_test_helpers::sender_receiver();
+			let (mut sender, mut receiver) = selendra_node_subsystem_test_helpers::sender_receiver();
 			let future = construct_availability_bitfield(
 				relay_parent,
 				&jaeger::Span::Disabled,

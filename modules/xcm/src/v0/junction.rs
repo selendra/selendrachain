@@ -26,8 +26,8 @@ pub enum NetworkId {
 	Any,
 	/// Some named network.
 	Named(Vec<u8>),
-	/// The Indracore Relay chain
-	Indracore,
+	/// The Selendra Relay chain
+	Selendra,
 }
 
 /// An identifier of a pluralistic body.
@@ -40,14 +40,14 @@ pub enum BodyId {
 	/// An indexed body.
 	// TODO: parity-scale-codec#262: Change to be a tuple.
 	Index { #[codec(compact)] id: u32 },
-	/// The unambiguous executive body (for Indracore, this would be the Indracore council).
+	/// The unambiguous executive body (for Selendra, this would be the Selendra council).
 	Executive,
-	/// The unambiguous technical body (for Indracore, this would be the Technical Committee).
+	/// The unambiguous technical body (for Selendra, this would be the Technical Committee).
 	Technical,
-	/// The unambiguous legislative body (for Indracore, this could be considered the opinion of a majority of
+	/// The unambiguous legislative body (for Selendra, this could be considered the opinion of a majority of
 	/// lock-voters).
 	Legislative,
-	/// The unambiguous judicial body (this doesn't exist on Indracore, but if it were to get a "grand oracle", it
+	/// The unambiguous judicial body (this doesn't exist on Selendra, but if it were to get a "grand oracle", it
 	/// may be considered as that).
 	Judicial,
 }
@@ -91,7 +91,7 @@ pub enum Junction {
 	Parent,
 	/// An indexed parachain belonging to and operated by the context.
 	///
-	/// Generally used when the context is a Indracore Relay-chain.
+	/// Generally used when the context is a Selendra Relay-chain.
 	Parachain(#[codec(compact)] u32),
 	/// A 32-byte identifier for an account of a specific network that is respected as a sovereign endpoint within
 	/// the context.

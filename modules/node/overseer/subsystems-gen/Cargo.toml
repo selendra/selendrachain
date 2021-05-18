@@ -1,5 +1,5 @@
 [package]
-name = "indracore-procmacro-overseer-subsystems-gen"
+name = "selendra-procmacro-overseer-subsystems-gen"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"

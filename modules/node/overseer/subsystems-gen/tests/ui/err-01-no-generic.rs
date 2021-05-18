@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use indracore_procmacro_overseer_subsystems_gen::AllSubsystemsGen;
+use selendra_procmacro_overseer_subsystems_gen::AllSubsystemsGen;
 
 #[derive(Clone, AllSubsystemsGen)]
 struct AllSubsystems {

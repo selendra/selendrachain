@@ -26,9 +26,9 @@ use futures::channel::mpsc;
 
 use sc_network::{config::parse_addr, multiaddr::Multiaddr};
 use sc_authority_discovery::Service as AuthorityDiscoveryService;
-use indracore_node_network_protocol::PeerId;
-use indracore_primitives::v1::AuthorityDiscoveryId;
-use indracore_node_network_protocol::peer_set::{PeerSet, PerPeerSet};
+use selendra_node_network_protocol::PeerId;
+use selendra_primitives::v1::AuthorityDiscoveryId;
+use selendra_node_network_protocol::peer_set::{PeerSet, PerPeerSet};
 
 const LOG_TARGET: &str = "parachain::validator-discovery";
 
@@ -343,7 +343,7 @@ mod tests {
 	use sc_network::multiaddr::Protocol;
 	use sc_network::{Event as NetworkEvent, IfDisconnected};
 	use sp_keyring::Sr25519Keyring;
-	use indracore_node_network_protocol::request_response::request::Requests;
+	use selendra_node_network_protocol::request_response::request::Requests;
 
 	fn new_service() -> Service<TestNetwork, TestAuthorityDiscovery> {
 		Service::new()
@@ -398,7 +398,7 @@ mod tests {
 		}
 
 		fn action_sink<'a>(&'a mut self)
-			-> Pin<Box<dyn Sink<NetworkAction, Error = indracore_subsystem::SubsystemError> + Send + 'a>>
+			-> Pin<Box<dyn Sink<NetworkAction, Error = selendra_subsystem::SubsystemError> + Send + 'a>>
 		{
 			panic!()
 		}

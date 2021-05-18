@@ -29,7 +29,7 @@ fn running_the_node_works_and_can_be_interrupted() {
 	fn run_command_and_kill(signal: Signal) {
 		let tmpdir = tempdir().expect("coult not create temp dir");
 
-		let mut cmd = Command::new(cargo_bin("indracore"))
+		let mut cmd = Command::new(cargo_bin("selendra"))
 			.args(&["--dev", "-d"])
 			.arg(tmpdir.path())
 			.spawn()

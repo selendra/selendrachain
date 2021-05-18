@@ -18,8 +18,8 @@ use std::convert::TryFrom;
 
 pub use sc_network::{ReputationChange, PeerId};
 
-use indracore_node_network_protocol::{WrongVariant, ObservedRole, OurView, View};
-use indracore_primitives::v1::AuthorityDiscoveryId;
+use selendra_node_network_protocol::{WrongVariant, ObservedRole, OurView, View};
+use selendra_primitives::v1::AuthorityDiscoveryId;
 
 /// Events from network.
 #[derive(Debug, Clone, PartialEq)]

@@ -19,7 +19,7 @@
 pub use sp_consensus_vrf::schnorrkel::{VRFOutput, VRFProof, Randomness};
 pub use sp_consensus_babe::Slot;
 
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	CandidateHash, Hash, ValidatorIndex, ValidatorSignature, CoreIndex,
 	Header, BlockNumber, CandidateIndex,
 };

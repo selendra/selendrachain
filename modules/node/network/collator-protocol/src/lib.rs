@@ -26,9 +26,9 @@ use futures::{FutureExt, TryFutureExt};
 
 use sp_keystore::SyncCryptoStorePtr;
 
-use indracore_node_network_protocol::{PeerId, UnifiedReputationChange as Rep};
-use indracore_primitives::v1::CollatorPair;
-use indracore_subsystem::{
+use selendra_node_network_protocol::{PeerId, UnifiedReputationChange as Rep};
+use selendra_primitives::v1::CollatorPair;
+use selendra_subsystem::{
 	messages::{AllMessages, CollatorProtocolMessage, NetworkBridgeMessage},
 	SpawnedSubsystem, Subsystem, SubsystemContext, SubsystemError,
 };

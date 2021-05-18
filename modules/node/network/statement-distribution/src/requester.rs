@@ -18,7 +18,7 @@ use std::time::Duration;
 
 use futures::{SinkExt, channel::{mpsc, oneshot}};
 
-use indracore_node_network_protocol::{
+use selendra_node_network_protocol::{
 	PeerId, UnifiedReputationChange,
 	request_response::{
 		OutgoingRequest, Recipient, Requests,
@@ -26,9 +26,9 @@ use indracore_node_network_protocol::{
 			StatementFetchingRequest, StatementFetchingResponse
 		}
 	}};
-use indracore_node_subsystem_util::TimeoutExt;
-use indracore_primitives::v1::{CandidateHash, CommittedCandidateReceipt, Hash};
-use indracore_subsystem::{Span, Stage};
+use selendra_node_subsystem_util::TimeoutExt;
+use selendra_primitives::v1::{CandidateHash, CommittedCandidateReceipt, Hash};
+use selendra_subsystem::{Span, Stage};
 
 use crate::{LOG_TARGET, Metrics, COST_WRONG_HASH};
 

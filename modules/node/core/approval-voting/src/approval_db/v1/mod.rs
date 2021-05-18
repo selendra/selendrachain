@@ -17,8 +17,8 @@
 //! Version 1 of the DB schema.
 
 use kvdb::{DBTransaction, KeyValueDB};
-use indracore_node_primitives::approval::{DelayTranche, AssignmentCert};
-use indracore_primitives::v1::{
+use selendra_node_primitives::approval::{DelayTranche, AssignmentCert};
+use selendra_primitives::v1::{
 	ValidatorIndex, GroupIndex, CandidateReceipt, SessionIndex, CoreIndex,
 	BlockNumber, Hash, CandidateHash, ValidatorSignature,
 };

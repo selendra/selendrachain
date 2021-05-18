@@ -20,10 +20,10 @@ use std::sync::Arc;
 
 use futures::channel::oneshot;
 
-use indracore_node_network_protocol::request_response::{request::IncomingRequest, v1};
-use indracore_primitives::v1::{CandidateHash, ValidatorIndex};
-use indracore_node_primitives::{AvailableData, ErasureChunk};
-use indracore_subsystem::{
+use selendra_node_network_protocol::request_response::{request::IncomingRequest, v1};
+use selendra_primitives::v1::{CandidateHash, ValidatorIndex};
+use selendra_node_primitives::{AvailableData, ErasureChunk};
+use selendra_subsystem::{
 	messages::{AllMessages, AvailabilityStoreMessage},
 	SubsystemContext, jaeger,
 };

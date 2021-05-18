@@ -14,4 +14,4 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-indracore_node_core_pvf::decl_puppet_worker_main!();
+selendra_node_core_pvf::decl_puppet_worker_main!();

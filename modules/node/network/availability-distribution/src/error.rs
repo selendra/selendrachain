@@ -17,13 +17,13 @@
 
 //! Error handling related code and Error/Result definitions.
 
-use indracore_node_network_protocol::request_response::request::RequestError;
+use selendra_node_network_protocol::request_response::request::RequestError;
 use thiserror::Error;
 
 use futures::channel::oneshot;
 
-use indracore_node_subsystem_util::{Fault, runtime, unwrap_non_fatal};
-use indracore_subsystem::SubsystemError;
+use selendra_node_subsystem_util::{Fault, runtime, unwrap_non_fatal};
+use selendra_subsystem::SubsystemError;
 
 use crate::LOG_TARGET;
 

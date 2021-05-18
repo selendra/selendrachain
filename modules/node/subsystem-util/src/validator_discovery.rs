@@ -27,15 +27,15 @@ use futures::{
 };
 use streamunordered::{StreamUnordered, StreamYield};
 
-use indracore_node_subsystem::{
+use selendra_node_subsystem::{
 	errors::RuntimeApiError,
 	messages::{AllMessages, NetworkBridgeMessage},
 	SubsystemContext,
 };
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	Hash, ValidatorId, AuthorityDiscoveryId, SessionIndex, Id as ParaId,
 };
-use indracore_node_network_protocol::peer_set::PeerSet;
+use selendra_node_network_protocol::peer_set::PeerSet;
 use sc_network::PeerId;
 use crate::Error;
 
@@ -283,7 +283,7 @@ impl stream::Stream for ConnectionRequest {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use indracore_primitives::v1::ValidatorPair;
+	use selendra_primitives::v1::ValidatorPair;
 	use sp_core::{Pair, Public};
 
 	use futures::{executor, poll, SinkExt};

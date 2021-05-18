@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Indracore Jaeger error definitions.
+//! Selendra Jaeger error definitions.
 
 /// A description of an error during jaeger initialization.
 #[derive(Debug, thiserror::Error)]

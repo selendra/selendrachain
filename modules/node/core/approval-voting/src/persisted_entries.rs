@@ -20,8 +20,8 @@
 //! Within that context, things are plain-old-data. Within this module,
 //! data and logic are intertwined.
 
-use indracore_node_primitives::approval::{DelayTranche, RelayVRFStory, AssignmentCert};
-use indracore_primitives::v1::{
+use selendra_node_primitives::approval::{DelayTranche, RelayVRFStory, AssignmentCert};
+use selendra_primitives::v1::{
 	ValidatorIndex, CandidateReceipt, SessionIndex, GroupIndex, CoreIndex,
 	Hash, CandidateHash, BlockNumber, ValidatorSignature,
 };

@@ -24,18 +24,18 @@
 
 use futures::{channel::oneshot, FutureExt};
 
-use indracore_subsystem::messages::*;
-use indracore_subsystem::{
+use selendra_subsystem::messages::*;
+use selendra_subsystem::{
 	PerLeafSpan, ActiveLeavesUpdate, FromOverseer, OverseerSignal, SpawnedSubsystem, Subsystem,
 	SubsystemContext, SubsystemResult,
 	jaeger,
 };
-use indracore_node_subsystem_util::{
+use selendra_node_subsystem_util::{
 	metrics::{self, prometheus},
 	self as util, MIN_GOSSIP_PEERS,
 };
-use indracore_primitives::v1::{Hash, SignedAvailabilityBitfield, SigningContext, ValidatorId};
-use indracore_node_network_protocol::{v1 as protocol_v1, PeerId, View, UnifiedReputationChange as Rep, OurView};
+use selendra_primitives::v1::{Hash, SignedAvailabilityBitfield, SigningContext, ValidatorId};
+use selendra_node_network_protocol::{v1 as protocol_v1, PeerId, View, UnifiedReputationChange as Rep, OurView};
 use std::collections::{HashMap, HashSet};
 
 const COST_SIGNATURE_INVALID: Rep = Rep::CostMajor("Bitfield signature invalid");
@@ -827,17 +827,17 @@ mod test {
 	use bitvec::bitvec;
 	use futures::executor;
 	use maplit::hashmap;
-	use indracore_primitives::v1::{Signed, AvailabilityBitfield, ValidatorIndex};
-	use indracore_node_subsystem_test_helpers::make_subsystem_context;
-	use indracore_node_subsystem_util::TimeoutExt;
+	use selendra_primitives::v1::{Signed, AvailabilityBitfield, ValidatorIndex};
+	use selendra_node_subsystem_test_helpers::make_subsystem_context;
+	use selendra_node_subsystem_util::TimeoutExt;
 	use sp_keystore::{SyncCryptoStorePtr, SyncCryptoStore};
 	use sp_application_crypto::AppKey;
 	use sp_keystore::testing::KeyStore;
 	use std::sync::Arc;
 	use std::time::Duration;
 	use assert_matches::assert_matches;
-	use indracore_node_network_protocol::{view, ObservedRole, our_view};
-	use indracore_subsystem::jaeger;
+	use selendra_node_network_protocol::{view, ObservedRole, our_view};
+	use selendra_subsystem::jaeger;
 
 	macro_rules! launch {
 		($fut:expr) => {

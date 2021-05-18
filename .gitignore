@@ -10,7 +10,6 @@ bin/node/runtime/wasm/target/
 **/._*
 **/.criterion/
 .vscode
-indracore.*
 .DS_Store
 .idea/
 nohup.out
@@ -22,13 +21,5 @@ rls*.log
 **/hfuzz_target/
 **/hfuzz_workspace/
 .cargo/
-IndraSpec.json
-sel-key.key
-startnode.sh
-indracore.json.backup
 hfuzz_target/
 hfuzz_workspace/
-run.txt
-customSpec.json
-node1
-node2

@@ -30,9 +30,9 @@ use futures::{
 	Stream,
 };
 
-use indracore_node_subsystem_util::runtime::{RuntimeInfo, get_occupied_cores};
-use indracore_primitives::v1::{CandidateHash, Hash, OccupiedCore};
-use indracore_subsystem::{
+use selendra_node_subsystem_util::runtime::{RuntimeInfo, get_occupied_cores};
+use selendra_primitives::v1::{CandidateHash, Hash, OccupiedCore};
+use selendra_subsystem::{
 	messages::AllMessages, ActiveLeavesUpdate, SubsystemContext, ActivatedLeaf,
 };
 

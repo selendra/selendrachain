@@ -33,7 +33,7 @@ use always_assert::never;
 use async_std::{
 	path::{Path, PathBuf},
 };
-use indracore_parachain::primitives::ValidationResult;
+use selendra_parachain::primitives::ValidationResult;
 use futures::{
 	Future, FutureExt, SinkExt, StreamExt,
 	channel::{mpsc, oneshot},

@@ -16,10 +16,10 @@
 
 //! Assignment criteria VRF generation and checking.
 
-use indracore_node_primitives::approval::{
+use selendra_node_primitives::approval::{
 	self as approval_types, AssignmentCert, AssignmentCertKind, DelayTranche, RelayVRFStory,
 };
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	CoreIndex, ValidatorIndex, SessionInfo, AssignmentPair, AssignmentId, GroupIndex, CandidateHash,
 };
 use sc_keystore::LocalKeystore;
@@ -525,8 +525,8 @@ mod tests {
 	use sp_keyring::sr25519::Keyring as Sr25519Keyring;
 	use sp_application_crypto::sr25519;
 	use sp_core::crypto::Pair as PairT;
-	use indracore_primitives::v1::{ASSIGNMENT_KEY_TYPE_ID, Hash};
-	use indracore_node_primitives::approval::{VRFOutput, VRFProof};
+	use selendra_primitives::v1::{ASSIGNMENT_KEY_TYPE_ID, Hash};
+	use selendra_node_primitives::approval::{VRFOutput, VRFProof};
 
 	// sets up a keystore with the given keyring accounts.
 	async fn make_keystore(accounts: &[Sr25519Keyring]) -> LocalKeystore {

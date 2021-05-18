@@ -18,10 +18,10 @@ use std::collections::HashSet;
 
 use futures::{executor, future, Future};
 
-use indracore_primitives::v1::CoreState;
+use selendra_primitives::v1::CoreState;
 use sp_keystore::SyncCryptoStorePtr;
 
-use indracore_subsystem_testhelpers as test_helpers;
+use selendra_subsystem_testhelpers as test_helpers;
 
 use super::*;
 

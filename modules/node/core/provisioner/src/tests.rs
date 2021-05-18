@@ -1,6 +1,6 @@
 use super::*;
 use bitvec::bitvec;
-use indracore_primitives::v1::{OccupiedCore, ScheduledCore};
+use selendra_primitives::v1::{OccupiedCore, ScheduledCore};
 
 pub fn occupied_core(para_id: u32) -> CoreState {
 	CoreState::Occupied(OccupiedCore {
@@ -45,7 +45,7 @@ mod select_availability_bitfields {
 	use super::{default_bitvec, occupied_core};
 	use futures::executor::block_on;
 	use std::sync::Arc;
-	use indracore_primitives::v1::{SigningContext, ValidatorIndex, ValidatorId};
+	use selendra_primitives::v1::{SigningContext, ValidatorIndex, ValidatorId};
 	use sp_application_crypto::AppKey;
 	use sp_keystore::{CryptoStore, SyncCryptoStorePtr, testing::KeyStore};
 
@@ -193,14 +193,14 @@ mod select_availability_bitfields {
 mod select_candidates {
 	use super::super::*;
 	use super::{build_occupied_core, occupied_core, scheduled_core, default_bitvec};
-	use indracore_node_subsystem::messages::{
+	use selendra_node_subsystem::messages::{
 		AllMessages, RuntimeApiMessage,
 		RuntimeApiRequest::{AvailabilityCores, PersistedValidationData as PersistedValidationDataReq},
 	};
-	use indracore_primitives::v1::{
+	use selendra_primitives::v1::{
 		BlockNumber, CandidateDescriptor, PersistedValidationData, CommittedCandidateReceipt, CandidateCommitments,
 	};
-	use indracore_node_subsystem_test_helpers::TestSubsystemSender;
+	use selendra_node_subsystem_test_helpers::TestSubsystemSender;
 
 	const BLOCK_UNDER_PRODUCTION: BlockNumber = 128;
 
@@ -213,7 +213,7 @@ mod select_candidates {
 		TestFactory: FnOnce(TestSubsystemSender) -> Test,
 		Test: Future<Output = ()>,
 	{
-		let (tx, rx) = indracore_node_subsystem_test_helpers::sender_receiver();
+		let (tx, rx) = selendra_node_subsystem_test_helpers::sender_receiver();
 		let overseer = overseer_factory(rx);
 		let test = test_factory(tx);
 

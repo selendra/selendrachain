@@ -23,7 +23,7 @@ use tempfile::tempdir;
 fn invalid_order_arguments() {
 	let tmpdir = tempdir().expect("could not create temp dir");
 
-	let status = Command::new(cargo_bin("indracore"))
+	let status = Command::new(cargo_bin("selendra"))
 		.args(&["--dev", "invalid_order_arguments", "-d"])
 		.arg(tmpdir.path())
 		.arg("-y")

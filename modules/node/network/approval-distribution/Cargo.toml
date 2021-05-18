@@ -1,24 +1,24 @@
 [package]
-name = "indracore-approval-distribution"
+name = "selendra-approval-distribution"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
-indracore-node-primitives = { path = "../../primitives" }
-indracore-node-network-protocol = { path = "../protocol" }
-indracore-node-subsystem = { path = "../../subsystem" }
-indracore-node-subsystem-util = { path = "../../subsystem-util" }
-indracore-primitives = { path = "../../../../primitives" }
+selendra-node-primitives = { path = "../../primitives" }
+selendra-node-network-protocol = { path = "../protocol" }
+selendra-node-subsystem = { path = "../../subsystem" }
+selendra-node-subsystem-util = { path = "../../subsystem-util" }
+selendra-primitives = { path = "../../../../primitives" }
 
 futures = "0.3.8"
 tracing = "0.1.25"
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master", features = ["std"] }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", features = ["std"] }
 
-indracore-node-subsystem-util = { path = "../../subsystem-util" }
-indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
+selendra-node-subsystem-util = { path = "../../subsystem-util" }
+selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
 
 assert_matches = "1.4.0"
 schnorrkel = { version = "0.9.1", default-features = false }

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Configuration manager for the Indracore runtime parachains logic.
+//! Configuration manager for the Selendra runtime parachains logic.
 //!
 //! Configuration can change only at session boundaries and is buffered until then.
 

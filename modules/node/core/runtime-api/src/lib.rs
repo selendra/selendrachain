@@ -22,7 +22,7 @@
 #![deny(unused_crate_dependencies)]
 #![warn(missing_docs)]
 
-use indracore_subsystem::{
+use selendra_subsystem::{
 	Subsystem, SpawnedSubsystem, SubsystemResult, SubsystemContext,
 	FromOverseer, OverseerSignal,
 	messages::{
@@ -30,8 +30,8 @@ use indracore_subsystem::{
 	},
 	errors::RuntimeApiError,
 };
-use indracore_node_subsystem_util::metrics::{self, prometheus};
-use indracore_primitives::v1::{Block, BlockId, Hash, ParachainHost};
+use selendra_node_subsystem_util::metrics::{self, prometheus};
+use selendra_primitives::v1::{Block, BlockId, Hash, ParachainHost};
 
 use sp_api::ProvideRuntimeApi;
 use sp_authority_discovery::AuthorityDiscoveryApi;
@@ -50,7 +50,7 @@ const LOG_TARGET: &str = "parachain::runtime-api";
 const MAX_PARALLEL_REQUESTS: usize = 4;
 
 /// The name of the blocking task that executes a runtime api request.
-const API_REQUEST_TASK_NAME: &str = "indracore-runtime-api-request";
+const API_REQUEST_TASK_NAME: &str = "selendra-runtime-api-request";
 
 /// The `RuntimeApiSubsystem`. See module docs for more details.
 pub struct RuntimeApiSubsystem<Client> {
@@ -418,17 +418,17 @@ impl metrics::Metrics for Metrics {
 mod tests {
 	use super::*;
 
-	use indracore_primitives::v1::{
+	use selendra_primitives::v1::{
 		ValidatorId, ValidatorIndex, GroupRotationInfo, CoreState, PersistedValidationData,
 		Id as ParaId, OccupiedCoreAssumption, SessionIndex, ValidationCode,
 		CommittedCandidateReceipt, CandidateEvent, InboundDownwardMessage,
 		BlockNumber, InboundHrmpMessage, SessionInfo, AuthorityDiscoveryId,
 	};
-	use indracore_node_subsystem_test_helpers as test_helpers;
+	use selendra_node_subsystem_test_helpers as test_helpers;
 	use sp_core::testing::TaskExecutor;
 	use std::{collections::{HashMap, BTreeMap}, sync::{Arc, Mutex}};
 	use futures::channel::oneshot;
-	use indracore_node_primitives::{
+	use selendra_node_primitives::{
 		BabeEpoch, BabeEpochConfiguration, BabeAllowedSlots,
 	};
 
@@ -493,7 +493,7 @@ mod tests {
 			fn check_validation_outputs(
 				&self,
 				para_id: ParaId,
-				_commitments: indracore_primitives::v1::CandidateCommitments,
+				_commitments: selendra_primitives::v1::CandidateCommitments,
 			) -> bool {
 				self.validation_outputs_results
 					.get(&para_id)
@@ -590,7 +590,7 @@ mod tests {
 			}
 
 			fn submit_report_equivocation_unsigned_extrinsic(
-				_equivocation_proof: sp_consensus_babe::EquivocationProof<indracore_primitives::v1::Header>,
+				_equivocation_proof: sp_consensus_babe::EquivocationProof<selendra_primitives::v1::Header>,
 				_key_owner_proof: sp_consensus_babe::OpaqueKeyOwnershipProof,
 			) -> Option<()> {
 				None
@@ -749,7 +749,7 @@ mod tests {
 		let relay_parent = [1; 32].into();
 		let para_a = 5.into();
 		let para_b = 6.into();
-		let commitments = indracore_primitives::v1::CandidateCommitments::default();
+		let commitments = selendra_primitives::v1::CandidateCommitments::default();
 		let spawner = sp_core::testing::TaskExecutor::new();
 
 		runtime_api.validation_outputs_results.insert(para_a, false);

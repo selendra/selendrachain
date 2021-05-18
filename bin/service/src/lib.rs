@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Indracore service. Specialized wrapper over substrate service.
+//! Selendra service. Specialized wrapper over substrate service.
 
 #![deny(unused_results)]
 
@@ -27,13 +27,13 @@ mod parachains_db;
 use {
 	std::time::Duration,
 	tracing::info,
-	indracore_network_bridge::RequestMultiplexer,
-	indracore_node_core_av_store::Config as AvailabilityConfig,
-	indracore_node_core_av_store::Error as AvailabilityError,
-	indracore_node_core_approval_voting::Config as ApprovalVotingConfig,
-	indracore_node_core_candidate_validation::Config as CandidateValidationConfig,
-	indracore_overseer::{AllSubsystems, BlockInfo, Overseer, OverseerHandler},
-	indracore_primitives::v1::ParachainHost,
+	selendra_network_bridge::RequestMultiplexer,
+	selendra_node_core_av_store::Config as AvailabilityConfig,
+	selendra_node_core_av_store::Error as AvailabilityError,
+	selendra_node_core_approval_voting::Config as ApprovalVotingConfig,
+	selendra_node_core_candidate_validation::Config as CandidateValidationConfig,
+	selendra_overseer::{AllSubsystems, BlockInfo, Overseer, OverseerHandler},
+	selendra_primitives::v1::ParachainHost,
 	sc_authority_discovery::Service as AuthorityDiscoveryService,
 	sp_authority_discovery::AuthorityDiscoveryApi,
 	sp_blockchain::HeaderBackend,
@@ -48,7 +48,7 @@ use {
 
 use sp_core::traits::SpawnNamed;
 
-use indracore_subsystem::jaeger;
+use selendra_subsystem::jaeger;
 
 use std::sync::Arc;
 
@@ -58,9 +58,9 @@ use service::RpcHandlers;
 use telemetry::{Telemetry, TelemetryWorker, TelemetryWorkerHandle};
 
 pub use self::client::{AbstractClient, Client, ClientHandle, ExecuteWithClient, RuntimeApiCollection};
-pub use chain_spec::IndracoreChainSpec;
+pub use chain_spec::SelendraChainSpec;
 pub use consensus_common::{Proposal, SelectChain, BlockImport, block_validation::Chain};
-pub use indracore_primitives::v1::{Block, BlockId, CollatorPair, Hash, Id as ParaId};
+pub use selendra_primitives::v1::{Block, BlockId, CollatorPair, Hash, Id as ParaId};
 pub use sc_client_api::{Backend, ExecutionStrategy, CallExecutor};
 pub use sc_consensus::LongestChain;
 pub use sc_executor::NativeExecutionDispatch;
@@ -73,15 +73,15 @@ pub use service::config::{DatabaseConfig, PrometheusConfig};
 pub use sp_api::{ApiRef, Core as CoreApi, ConstructRuntimeApi, ProvideRuntimeApi, StateBackend};
 pub use sp_runtime::traits::{DigestFor, HashFor, NumberFor, Block as BlockT, self as runtime_traits, BlakeTwo256};
 
-pub use indracore_runtime;
+pub use selendra_runtime;
 
 /// The maximum number of active leaves we forward to the [`Overseer`] on startup.
 const MAX_ACTIVE_LEAVES: usize = 4;
 
 native_executor_instance!(
-	pub IndracoreExecutor,
-	indracore_runtime::api::dispatch,
-	indracore_runtime::native_version,
+	pub SelendraExecutor,
+	selendra_runtime::api::dispatch,
+	selendra_runtime::native_version,
 	frame_benchmarking::benchmarking::HostFunctions,
 );
 
@@ -103,7 +103,7 @@ pub enum Error {
 	Consensus(#[from] consensus_common::Error),
 
 	#[error("Failed to create an overseer")]
-	Overseer(#[from] indracore_overseer::SubsystemError),
+	Overseer(#[from] selendra_overseer::SubsystemError),
 
 	#[error(transparent)]
 	Prometheus(#[from] prometheus_endpoint::PrometheusError),
@@ -112,7 +112,7 @@ pub enum Error {
 	Telemetry(#[from] telemetry::Error),
 
 	#[error(transparent)]
-	Jaeger(#[from] indracore_subsystem::jaeger::JaegerError),
+	Jaeger(#[from] selendra_subsystem::jaeger::JaegerError),
 
 	#[cfg(feature = "full-node")]
 	#[error(transparent)]
@@ -139,10 +139,10 @@ impl IdentifyVariant for Box<dyn ChainSpec> {
 }
 
 
-// If we're using prometheus, use a registry with a prefix of `indracore`.
+// If we're using prometheus, use a registry with a prefix of `selendra`.
 fn set_prometheus_registry(config: &mut Configuration) -> Result<(), Error> {
 	if let Some(PrometheusConfig { registry, .. }) = config.prometheus_config.as_mut() {
-		*registry = Registry::new_custom(Some("indracore".into()), None)?;
+		*registry = Registry::new_custom(Some("selendra".into()), None)?;
 	}
 
 	Ok(())
@@ -188,9 +188,9 @@ fn new_partial<RuntimeApi, Executor>(
 		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
 		(
 			impl Fn(
-				indracore_rpc::DenyUnsafe,
-				indracore_rpc::SubscriptionTaskExecutor,
-			) -> indracore_rpc::RpcExtension,
+				selendra_rpc::DenyUnsafe,
+				selendra_rpc::SubscriptionTaskExecutor,
+			) -> selendra_rpc::RpcExtension,
 			(
 				babe::BabeBlockImport<
 					Block, FullClient<RuntimeApi, Executor>, FullGrandpaBlockImport<RuntimeApi, Executor>
@@ -324,34 +324,34 @@ fn new_partial<RuntimeApi, Executor>(
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
 
-		move |deny_unsafe, subscription_executor: indracore_rpc::SubscriptionTaskExecutor|
-			-> indracore_rpc::RpcExtension
+		move |deny_unsafe, subscription_executor: selendra_rpc::SubscriptionTaskExecutor|
+			-> selendra_rpc::RpcExtension
 		{
-			let deps = indracore_rpc::FullDeps {
+			let deps = selendra_rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
 				select_chain: select_chain.clone(),
 				chain_spec: chain_spec.cloned_box(),
 				deny_unsafe,
-				babe: indracore_rpc::BabeDeps {
+				babe: selendra_rpc::BabeDeps {
 					babe_config: babe_config.clone(),
 					shared_epoch_changes: shared_epoch_changes.clone(),
 					keystore: keystore.clone(),
 				},
-				grandpa: indracore_rpc::GrandpaDeps {
+				grandpa: selendra_rpc::GrandpaDeps {
 					shared_voter_state: shared_voter_state.clone(),
 					shared_authority_set: shared_authority_set.clone(),
 					justification_stream: justification_stream.clone(),
 					subscription_executor: subscription_executor.clone(),
 					finality_provider: finality_proof_provider.clone(),
 				},
-				beefy: indracore_rpc::BeefyDeps {
+				beefy: selendra_rpc::BeefyDeps {
 					beefy_commitment_stream: beefy_commitment_stream.clone(),
 					subscription_executor,
 				},
 			};
 
-			indracore_rpc::create_full(deps)
+			selendra_rpc::create_full(deps)
 		}
 	};
 
@@ -388,26 +388,26 @@ where
 	RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
 	Spawner: 'static + SpawnNamed + Clone + Unpin,
 {
-	use indracore_node_subsystem_util::metrics::Metrics;
+	use selendra_node_subsystem_util::metrics::Metrics;
 
-	use indracore_availability_distribution::AvailabilityDistributionSubsystem;
-	use indracore_node_core_av_store::AvailabilityStoreSubsystem;
-	use indracore_availability_bitfield_distribution::BitfieldDistribution as BitfieldDistributionSubsystem;
-	use indracore_node_core_bitfield_signing::BitfieldSigningSubsystem;
-	use indracore_node_core_backing::CandidateBackingSubsystem;
-	use indracore_node_core_candidate_selection::CandidateSelectionSubsystem;
-	use indracore_node_core_candidate_validation::CandidateValidationSubsystem;
-	use indracore_node_core_chain_api::ChainApiSubsystem;
-	use indracore_node_collation_generation::CollationGenerationSubsystem;
-	use indracore_collator_protocol::{CollatorProtocolSubsystem, ProtocolSide};
-	use indracore_network_bridge::NetworkBridge as NetworkBridgeSubsystem;
-	use indracore_node_core_provisioner::ProvisioningSubsystem as ProvisionerSubsystem;
-	use indracore_node_core_runtime_api::RuntimeApiSubsystem;
-	use indracore_statement_distribution::StatementDistribution as StatementDistributionSubsystem;
-	use indracore_availability_recovery::AvailabilityRecoverySubsystem;
-	use indracore_approval_distribution::ApprovalDistribution as ApprovalDistributionSubsystem;
-	use indracore_node_core_approval_voting::ApprovalVotingSubsystem;
-	use indracore_gossip_support::GossipSupport as GossipSupportSubsystem;
+	use selendra_availability_distribution::AvailabilityDistributionSubsystem;
+	use selendra_node_core_av_store::AvailabilityStoreSubsystem;
+	use selendra_availability_bitfield_distribution::BitfieldDistribution as BitfieldDistributionSubsystem;
+	use selendra_node_core_bitfield_signing::BitfieldSigningSubsystem;
+	use selendra_node_core_backing::CandidateBackingSubsystem;
+	use selendra_node_core_candidate_selection::CandidateSelectionSubsystem;
+	use selendra_node_core_candidate_validation::CandidateValidationSubsystem;
+	use selendra_node_core_chain_api::ChainApiSubsystem;
+	use selendra_node_collation_generation::CollationGenerationSubsystem;
+	use selendra_collator_protocol::{CollatorProtocolSubsystem, ProtocolSide};
+	use selendra_network_bridge::NetworkBridge as NetworkBridgeSubsystem;
+	use selendra_node_core_provisioner::ProvisioningSubsystem as ProvisionerSubsystem;
+	use selendra_node_core_runtime_api::RuntimeApiSubsystem;
+	use selendra_statement_distribution::StatementDistribution as StatementDistributionSubsystem;
+	use selendra_availability_recovery::AvailabilityRecoverySubsystem;
+	use selendra_approval_distribution::ApprovalDistribution as ApprovalDistributionSubsystem;
+	use selendra_node_core_approval_voting::ApprovalVotingSubsystem;
+	use selendra_gossip_support::GossipSupport as GossipSupportSubsystem;
 
 	let all_subsystems = AllSubsystems {
 		availability_distribution: AvailabilityDistributionSubsystem::new(
@@ -664,13 +664,13 @@ pub fn new_full<RuntimeApi, Executor>(
 	let shared_voter_state = rpc_setup;
 	let auth_disc_publish_non_global_ips = config.network.allow_non_globals_in_dht;
 
-	// Note: GrandPa is pushed before the Indracore-specific protocols. This doesn't change
+	// Note: GrandPa is pushed before the Selendra-specific protocols. This doesn't change
 	// anything in terms of behaviour, but makes the logs more consistent with the other
 	// Substrate nodes.
 	config.network.extra_sets.push(grandpa::grandpa_peers_set_config());
 
 	{
-		use indracore_network_bridge::{peer_sets_info, IsAuthority};
+		use selendra_network_bridge::{peer_sets_info, IsAuthority};
 		let is_authority = if role.is_authority() {
 			IsAuthority::Yes
 		} else {
@@ -820,7 +820,7 @@ pub fn new_full<RuntimeApi, Executor>(
 		task_manager.spawn_essential_handle().spawn_blocking("overseer", Box::pin(async move {
 			use futures::{pin_mut, select, FutureExt};
 
-			let forward = indracore_overseer::forward_events(overseer_client, overseer_handler_clone);
+			let forward = selendra_overseer::forward_events(overseer_client, overseer_handler_clone);
 
 			let forward = forward.fuse();
 			let overseer_fut = overseer.run().fuse();
@@ -864,7 +864,7 @@ pub fn new_full<RuntimeApi, Executor>(
 				let client_clone = client_clone.clone();
 				let overseer_handler = overseer_handler.clone();
 				async move {
-					let parachain = indracore_node_core_parachains_inherent::ParachainsInherentDataProvider::create(
+					let parachain = selendra_node_core_parachains_inherent::ParachainsInherentDataProvider::create(
 						&*client_clone,
 						overseer_handler,
 						parent,
@@ -1108,14 +1108,14 @@ fn new_light<Runtime, Dispatch>(mut config: Configuration) -> Result<(
 		);
 	}
 
-	let light_deps = indracore_rpc::LightDeps {
+	let light_deps = selendra_rpc::LightDeps {
 		remote_blockchain: backend.remote_blockchain(),
 		fetcher: on_demand.clone(),
 		client: client.clone(),
 		pool: transaction_pool.clone(),
 	};
 
-	let rpc_extensions = indracore_rpc::create_light(light_deps);
+	let rpc_extensions = selendra_rpc::create_light(light_deps);
 
 	let rpc_handlers = service::spawn_tasks(service::SpawnTasksParams {
 		on_demand: Some(on_demand),
@@ -1155,8 +1155,8 @@ pub fn new_chain_ops(
 {
 	config.keystore = service::config::KeystoreConfig::InMemory;
 	let service::PartialComponents { client, backend, import_queue, task_manager, .. }
-		= new_partial::<indracore_runtime::RuntimeApi, IndracoreExecutor>(config, jaeger_agent, None)?;
-	Ok((Arc::new(Client::Indracore(client)), backend, import_queue, task_manager))
+		= new_partial::<selendra_runtime::RuntimeApi, SelendraExecutor>(config, jaeger_agent, None)?;
+	Ok((Arc::new(Client::Selendra(client)), backend, import_queue, task_manager))
 }
 
 /// Build a new light node.
@@ -1164,7 +1164,7 @@ pub fn build_light(config: Configuration) -> Result<(
 	TaskManager,
 	RpcHandlers,
 ), Error> {
-	new_light::<indracore_runtime::RuntimeApi, IndracoreExecutor>(config)
+	new_light::<selendra_runtime::RuntimeApi, SelendraExecutor>(config)
 }
 
 #[cfg(feature = "full-node")]
@@ -1176,7 +1176,7 @@ pub fn build_full(
 	jaeger_agent: Option<std::net::SocketAddr>,
 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 ) -> Result<NewFull<Client>, Error> {
-		new_full::<indracore_runtime::RuntimeApi, IndracoreExecutor>(
+		new_full::<selendra_runtime::RuntimeApi, SelendraExecutor>(
 		config,
 		is_collator,
 		grandpa_pause,
@@ -1184,5 +1184,5 @@ pub fn build_full(
 		jaeger_agent,
 		telemetry_worker_handle,
 		None,
-	).map(|full| full.with_client(Client::Indracore))
+	).map(|full| full.with_client(Client::Selendra))
 }

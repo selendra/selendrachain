@@ -19,11 +19,11 @@ use std::collections::HashSet;
 use lru::LruCache;
 use rand::{seq::SliceRandom, thread_rng};
 
-use indracore_node_subsystem_util::runtime::RuntimeInfo;
-use indracore_primitives::v1::{
+use selendra_node_subsystem_util::runtime::RuntimeInfo;
+use selendra_primitives::v1::{
 	AuthorityDiscoveryId, GroupIndex, Hash, SessionIndex, ValidatorIndex,
 };
-use indracore_subsystem::SubsystemContext;
+use selendra_subsystem::SubsystemContext;
 
 use crate::{
 	error::{Error, NonFatal},

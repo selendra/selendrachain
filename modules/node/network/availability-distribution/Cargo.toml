@@ -1,5 +1,5 @@
 [package]
-name = "indracore-availability-distribution"
+name = "selendra-availability-distribution"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
@@ -8,27 +8,27 @@ edition = "2018"
 futures = "0.3.12"
 tracing = "0.1.25"
 parity-scale-codec = { version = "2.0.0", features = ["std"]  }
-indracore-primitives = { path = "../../../../primitives" }
-indracore-erasure-coding = { path = "../../../erasure-coding" }
-indracore-subsystem = { package = "indracore-node-subsystem", path = "../../subsystem" }
-indracore-node-network-protocol = { path = "../../network/protocol" }
-indracore-node-subsystem-util = { path = "../../subsystem-util" }
-indracore-node-primitives = { path = "../../primitives" }
-indracore-node-core-runtime-api = { path = "../../core/runtime-api" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master", features = ["std"]  }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
+selendra-primitives = { path = "../../../../primitives" }
+selendra-erasure-coding = { path = "../../../erasure-coding" }
+selendra-subsystem = { package = "selendra-node-subsystem", path = "../../subsystem" }
+selendra-node-network-protocol = { path = "../../network/protocol" }
+selendra-node-subsystem-util = { path = "../../subsystem-util" }
+selendra-node-primitives = { path = "../../primitives" }
+selendra-node-core-runtime-api = { path = "../../core/runtime-api" }
+sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", features = ["std"]  }
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 thiserror = "1.0.23"
 rand = "0.8.3"
 lru = "0.6.5"
 
 [dev-dependencies]
-indracore-subsystem-testhelpers = { package = "indracore-node-subsystem-test-helpers", path = "../../subsystem-test-helpers" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master", features = ["std"] }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "master" }
+selendra-subsystem-testhelpers = { package = "selendra-node-subsystem-test-helpers", path = "../../subsystem-test-helpers" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", features = ["std"] }
+sp-keyring = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sp-tracing = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sc-keystore = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 futures-timer = "3.0.2"
 assert_matches = "1.4.0"
 maplit = "1.0"

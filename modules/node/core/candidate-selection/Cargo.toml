@@ -1,5 +1,5 @@
 [package]
-name = "indracore-node-core-candidate-selection"
+name = "selendra-node-core-candidate-selection"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
@@ -9,13 +9,13 @@ futures = "0.3.12"
 tracing = "0.1.25"
 thiserror = "1.0.23"
 
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 
-indracore-primitives = { path = "../../../../primitives" }
-indracore-node-subsystem = { path = "../../subsystem" }
-indracore-node-primitives = { path = "../../primitives" }
-indracore-node-subsystem-util = { path = "../../subsystem-util" }
+selendra-primitives = { path = "../../../../primitives" }
+selendra-node-subsystem = { path = "../../subsystem" }
+selendra-node-primitives = { path = "../../primitives" }
+selendra-node-subsystem-util = { path = "../../subsystem-util" }
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
-indracore-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }

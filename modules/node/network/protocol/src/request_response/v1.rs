@@ -18,9 +18,9 @@
 
 use parity_scale_codec::{Decode, Encode};
 
-use indracore_primitives::v1::{CandidateHash, CandidateReceipt, CommittedCandidateReceipt, Hash, ValidatorIndex};
-use indracore_primitives::v1::Id as ParaId;
-use indracore_node_primitives::{AvailableData, PoV, ErasureChunk};
+use selendra_primitives::v1::{CandidateHash, CandidateReceipt, CommittedCandidateReceipt, Hash, ValidatorIndex};
+use selendra_primitives::v1::Id as ParaId;
+use selendra_node_primitives::{AvailableData, PoV, ErasureChunk};
 
 use super::request::IsRequest;
 use super::Protocol;

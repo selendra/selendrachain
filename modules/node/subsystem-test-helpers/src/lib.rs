@@ -18,12 +18,12 @@
 
 #![warn(missing_docs)]
 
-use indracore_node_subsystem::messages::AllMessages;
-use indracore_node_subsystem::{
+use selendra_node_subsystem::messages::AllMessages;
+use selendra_node_subsystem::{
 	FromOverseer, SubsystemContext, SubsystemError, SubsystemResult, Subsystem,
 	SpawnedSubsystem, OverseerSignal, SubsystemSender,
 };
-use indracore_node_subsystem_util::TimeoutExt;
+use selendra_node_subsystem_util::TimeoutExt;
 
 use futures::channel::mpsc;
 use futures::poll;
@@ -360,10 +360,10 @@ impl<C: SubsystemContext<Message = Msg>, Msg: Send + 'static> Subsystem<C> for F
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use indracore_overseer::{Overseer, HeadSupportsParachains, AllSubsystems};
+	use selendra_overseer::{Overseer, HeadSupportsParachains, AllSubsystems};
 	use futures::executor::block_on;
-	use indracore_node_subsystem::messages::CandidateSelectionMessage;
-	use indracore_primitives::v1::Hash;
+	use selendra_node_subsystem::messages::CandidateSelectionMessage;
+	use selendra_primitives::v1::Hash;
 
 	struct AlwaysSupportsParachains;
 	impl HeadSupportsParachains for AlwaysSupportsParachains {

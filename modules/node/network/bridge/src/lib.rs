@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! The Network Bridge Subsystem - protocol multiplexer for Indracore.
+//! The Network Bridge Subsystem - protocol multiplexer for Selendra.
 
 #![deny(unused_crate_dependencies)]
 #![warn(missing_docs)]
@@ -27,26 +27,26 @@ use futures::channel::mpsc;
 use sc_network::Event as NetworkEvent;
 use sp_consensus::SyncOracle;
 
-use indracore_subsystem::{
+use selendra_subsystem::{
 	ActivatedLeaf, ActiveLeavesUpdate, FromOverseer, OverseerSignal, SpawnedSubsystem,
 	Subsystem, SubsystemContext, SubsystemError, SubsystemResult, SubsystemSender,
 	messages::StatementDistributionMessage
 };
-use indracore_subsystem::messages::{
+use selendra_subsystem::messages::{
 	NetworkBridgeMessage, AllMessages,
 	CollatorProtocolMessage, NetworkBridgeEvent,
 };
-use indracore_primitives::v1::{Hash, BlockNumber, AuthorityDiscoveryId};
-use indracore_node_network_protocol::{
+use selendra_primitives::v1::{Hash, BlockNumber, AuthorityDiscoveryId};
+use selendra_node_network_protocol::{
 	PeerId, peer_set::PeerSet, View, v1 as protocol_v1, OurView, UnifiedReputationChange as Rep,
 	ObservedRole,
 };
-use indracore_node_subsystem_util::metrics::{self, prometheus};
+use selendra_node_subsystem_util::metrics::{self, prometheus};
 
 /// Peer set infos for network initialization.
 ///
 /// To be added to [`NetworkConfiguration::extra_sets`].
-pub use indracore_node_network_protocol::peer_set::{peer_sets_info, IsAuthority};
+pub use selendra_node_network_protocol::peer_set::{peer_sets_info, IsAuthority};
 
 use std::collections::{HashMap, hash_map};
 use std::iter::ExactSizeIterator;
@@ -301,7 +301,7 @@ struct PeerData {
 #[derive(Debug)]
 enum UnexpectedAbort {
 	/// Received error from overseer:
-	SubsystemError(indracore_subsystem::SubsystemError),
+	SubsystemError(selendra_subsystem::SubsystemError),
 	/// The stream of incoming events concluded.
 	EventStreamConcluded,
 	/// The stream of incoming requests concluded.
@@ -1169,22 +1169,22 @@ mod tests {
 
 	use sc_network::{Event as NetworkEvent, IfDisconnected};
 
-	use indracore_subsystem::{jaeger, ActiveLeavesUpdate, FromOverseer, OverseerSignal};
-	use indracore_subsystem::messages::{
+	use selendra_subsystem::{jaeger, ActiveLeavesUpdate, FromOverseer, OverseerSignal};
+	use selendra_subsystem::messages::{
 		ApprovalDistributionMessage,
 		BitfieldDistributionMessage,
 		StatementDistributionMessage
 	};
-	use indracore_node_subsystem_test_helpers::{
+	use selendra_node_subsystem_test_helpers::{
 		SingleItemSink, SingleItemStream, TestSubsystemContextHandle,
 	};
-	use indracore_node_subsystem_util::metered;
-	use indracore_node_network_protocol::view;
+	use selendra_node_subsystem_util::metered;
+	use selendra_node_network_protocol::view;
 	use sc_network::Multiaddr;
 	use sc_network::config::RequestResponseConfig;
 	use sp_keyring::Sr25519Keyring;
-	use indracore_primitives::v1::AuthorityDiscoveryId;
-	use indracore_node_network_protocol::{ObservedRole, request_response::request::Requests};
+	use selendra_primitives::v1::AuthorityDiscoveryId;
+	use selendra_node_network_protocol::{ObservedRole, request_response::request::Requests};
 
 	use crate::network::{Network, NetworkAction};
 	use crate::validator_discovery::AuthorityDiscovery;
@@ -1212,7 +1212,7 @@ mod tests {
 		TestNetworkHandle,
 		TestAuthorityDiscovery,
 	) {
-		let (net_tx, net_rx) = indracore_node_subsystem_test_helpers::single_item_sink();
+		let (net_tx, net_rx) = selendra_node_subsystem_test_helpers::single_item_sink();
 		let (action_tx, action_rx) = metered::unbounded();
 
 		(
@@ -1392,7 +1392,7 @@ mod tests {
 		let pool = sp_core::testing::TaskExecutor::new();
 		let (request_multiplexer, req_configs) = RequestMultiplexer::new();
 		let (network, network_handle, discovery) = new_test_network(req_configs);
-		let (context, virtual_overseer) = indracore_node_subsystem_test_helpers::make_subsystem_context(pool);
+		let (context, virtual_overseer) = selendra_node_subsystem_test_helpers::make_subsystem_context(pool);
 
 		let bridge = NetworkBridge {
 			network_service: network,

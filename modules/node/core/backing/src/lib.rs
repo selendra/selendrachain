@@ -26,15 +26,15 @@ use bitvec::vec::BitVec;
 use futures::{channel::{mpsc, oneshot}, Future, FutureExt, SinkExt, StreamExt};
 
 use sp_keystore::SyncCryptoStorePtr;
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	BackedCandidate, CandidateCommitments, CandidateDescriptor, CandidateHash,
 	CandidateReceipt, CollatorId, CommittedCandidateReceipt, CoreIndex, CoreState, Hash, Id as ParaId,
 	SigningContext, ValidatorId, ValidatorIndex, ValidatorSignature, ValidityAttestation,
 };
-use indracore_node_primitives::{
+use selendra_node_primitives::{
 	Statement, SignedFullStatement, ValidationResult, PoV, AvailableData,
 };
-use indracore_subsystem::{
+use selendra_subsystem::{
 	PerLeafSpan, Stage, SubsystemSender,
 	jaeger,
 	messages::{
@@ -44,7 +44,7 @@ use indracore_subsystem::{
 		StatementDistributionMessage, ValidationFailed
 	}
 };
-use indracore_node_subsystem_util::{
+use selendra_node_subsystem_util::{
 	self as util,
 	request_session_index_for_child,
 	request_validator_groups,
@@ -324,7 +324,7 @@ async fn make_pov_available(
 	n_validators: usize,
 	pov: Arc<PoV>,
 	candidate_hash: CandidateHash,
-	validation_data: indracore_primitives::v1::PersistedValidationData,
+	validation_data: selendra_primitives::v1::PersistedValidationData,
 	expected_erasure_root: Hash,
 	span: Option<&jaeger::Span>,
 ) -> Result<Result<(), InvalidErasureRoot>, Error> {
@@ -1322,20 +1322,20 @@ impl metrics::Metrics for Metrics {
 
 /// The candidate backing subsystem.
 pub type CandidateBackingSubsystem<Spawner>
-	= indracore_node_subsystem_util::JobSubsystem<CandidateBackingJob, Spawner>;
+	= selendra_node_subsystem_util::JobSubsystem<CandidateBackingJob, Spawner>;
 
 #[cfg(test)]
 mod tests {
 	use super::*;
 	use assert_matches::assert_matches;
 	use futures::{future, Future};
-	use indracore_primitives::v1::{GroupRotationInfo, HeadData, PersistedValidationData, ScheduledCore};
-	use indracore_subsystem::{
+	use selendra_primitives::v1::{GroupRotationInfo, HeadData, PersistedValidationData, ScheduledCore};
+	use selendra_subsystem::{
 		messages::{RuntimeApiRequest, RuntimeApiMessage},
 		ActiveLeavesUpdate, FromOverseer, OverseerSignal, ActivatedLeaf,
 	};
-	use indracore_node_primitives::{InvalidCandidate, BlockData};
-	use indracore_node_subsystem_test_helpers as test_helpers;
+	use selendra_node_primitives::{InvalidCandidate, BlockData};
+	use selendra_node_subsystem_test_helpers as test_helpers;
 	use sp_keyring::Sr25519Keyring;
 	use sp_application_crypto::AppKey;
 	use sp_keystore::{CryptoStore, SyncCryptoStore};

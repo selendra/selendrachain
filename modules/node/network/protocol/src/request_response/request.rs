@@ -23,7 +23,7 @@ use sc_network as network;
 use sc_network::config as netconfig;
 use sc_network::PeerId;
 
-use indracore_primitives::v1::AuthorityDiscoveryId;
+use selendra_primitives::v1::AuthorityDiscoveryId;
 
 use crate::UnifiedReputationChange;
 

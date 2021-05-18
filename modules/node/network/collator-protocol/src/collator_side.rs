@@ -19,14 +19,14 @@ use std::collections::{HashMap, HashSet};
 use futures::{FutureExt, channel::oneshot, channel::mpsc};
 use sp_core::Pair;
 
-use indracore_primitives::v1::{AuthorityDiscoveryId, CandidateHash, CandidateReceipt, CollatorPair, CoreIndex, CoreState, GroupIndex, Hash, Id as ParaId};
-use indracore_subsystem::{
+use selendra_primitives::v1::{AuthorityDiscoveryId, CandidateHash, CandidateReceipt, CollatorPair, CoreIndex, CoreState, GroupIndex, Hash, Id as ParaId};
+use selendra_subsystem::{
 	FromOverseer, OverseerSignal, PerLeafSpan, SubsystemContext, jaeger,
 	messages::{
 		AllMessages, CollatorProtocolMessage, NetworkBridgeEvent, NetworkBridgeMessage,
 	},
 };
-use indracore_node_network_protocol::{
+use selendra_node_network_protocol::{
 	OurView, PeerId, View, peer_set::PeerSet,
 	request_response::{
 		IncomingRequest,
@@ -35,11 +35,11 @@ use indracore_node_network_protocol::{
 	v1 as protocol_v1,
 	UnifiedReputationChange as Rep,
 };
-use indracore_node_subsystem_util::{
+use selendra_node_subsystem_util::{
 	metrics::{self, prometheus},
 	runtime::{RuntimeInfo, get_availability_cores, get_group_rotation_info}
 };
-use indracore_node_primitives::{SignedFullStatement, Statement, PoV};
+use selendra_node_primitives::{SignedFullStatement, Statement, PoV};
 
 use crate::error::{Fatal, NonFatal, log_error};
 use super::{LOG_TARGET,  Result};
@@ -923,20 +923,20 @@ mod tests {
 	use sp_keyring::Sr25519Keyring;
 	use sp_runtime::traits::AppVerify;
 
-	use indracore_node_network_protocol::{
+	use selendra_node_network_protocol::{
 		our_view,
 		view,
 		request_response::request::IncomingRequest,
 	};
-	use indracore_node_subsystem_util::TimeoutExt;
-	use indracore_primitives::v1::{AuthorityDiscoveryId, CandidateDescriptor, CollatorPair, GroupRotationInfo, ScheduledCore, SessionIndex, SessionInfo, ValidatorId, ValidatorIndex};
-	use indracore_node_primitives::BlockData;
-	use indracore_subsystem::{
+	use selendra_node_subsystem_util::TimeoutExt;
+	use selendra_primitives::v1::{AuthorityDiscoveryId, CandidateDescriptor, CollatorPair, GroupRotationInfo, ScheduledCore, SessionIndex, SessionInfo, ValidatorId, ValidatorIndex};
+	use selendra_node_primitives::BlockData;
+	use selendra_subsystem::{
 		jaeger,
 		messages::{RuntimeApiMessage, RuntimeApiRequest},
 		ActiveLeavesUpdate, ActivatedLeaf,
 	};
-	use indracore_subsystem_testhelpers as test_helpers;
+	use selendra_subsystem_testhelpers as test_helpers;
 
 	#[derive(Default)]
 	struct TestCandidateBuilder {
@@ -1312,7 +1312,7 @@ mod tests {
 			CollatorProtocolMessage::NetworkBridgeUpdateV1(
 				NetworkBridgeEvent::PeerConnected(
 					peer.clone(),
-					indracore_node_network_protocol::ObservedRole::Authority,
+					selendra_node_network_protocol::ObservedRole::Authority,
 					authority_id,
 				),
 			),

@@ -24,7 +24,7 @@ pub enum ValidationError {
 }
 
 /// A description of an error raised during executing a PVF and can be attributed to the combination
-/// of the candidate [`indracore_parachain::primitives::ValidationParams`] and the PVF.
+/// of the candidate [`selendra_parachain::primitives::ValidationParams`] and the PVF.
 #[derive(Debug, Clone)]
 pub enum InvalidCandidate {
 	/// The failure is reported by the worker. The string contains the error message.

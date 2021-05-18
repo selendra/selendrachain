@@ -6,9 +6,9 @@
 
 set -e
 
-# chainspec defaults to indracore-local if no arguments are passed to this script;
+# chainspec defaults to selendra-local if no arguments are passed to this script;
 # if arguments are passed in, the first is the chainspec
-chainspec="${1:-indracore-local}"
+chainspec="${1:-selendra-local}"
 
 PROJECT_ROOT=$(git rev-parse --show-toplevel)
 # shellcheck disable=SC1090
@@ -23,10 +23,10 @@ last_modified_rust_file=$(
   cut -d' ' -f2-
 )
 
-indracore="target/release/indracore"
+selendra="target/release/selendra"
 
-# ensure the indracore binary exists and is up to date
-if [ ! -x "$indracore" ] || [ "$indracore" -ot "$last_modified_rust_file" ]; then
+# ensure the selendra binary exists and is up to date
+if [ ! -x "$selendra" ] || [ "$selendra" -ot "$last_modified_rust_file" ]; then
   cargo build --release
 fi
 
@@ -51,7 +51,7 @@ function flagify() {
 # start a node and label its output
 #
 # This function takes a single argument, the node name.
-# The name must be one of those which can be passed to the indracore binary, in un-flagged form,
+# The name must be one of those which can be passed to the selendra binary, in un-flagged form,
 # one of:
 #   alice, bob, charlie, dave, eve, ferdie, one, two
 function run_node() {
@@ -73,7 +73,7 @@ function run_node() {
   node_offset=$((node_offset+1))
 
   # start the node
-  "$indracore" \
+  "$selendra" \
     --chain "$chainspec" \
     --tmp \
     --port "$port" \

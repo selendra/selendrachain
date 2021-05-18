@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Availability Recovery Subsystem of Indracore.
+//! Availability Recovery Subsystem of Selendra.
 
 #![warn(missing_docs)]
 
@@ -27,13 +27,13 @@ use futures::task::{Context, Poll};
 use lru::LruCache;
 use rand::seq::SliceRandom;
 
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	AuthorityDiscoveryId, CandidateReceipt, CandidateHash,
 	Hash, ValidatorId, ValidatorIndex,
 	SessionInfo, SessionIndex, BlakeTwo256, HashT, GroupIndex, BlockNumber,
 };
-use indracore_node_primitives::{ErasureChunk, AvailableData};
-use indracore_subsystem::{
+use selendra_node_primitives::{ErasureChunk, AvailableData};
+use selendra_subsystem::{
 	SubsystemContext, SubsystemResult, SubsystemError, Subsystem, SpawnedSubsystem, FromOverseer,
 	OverseerSignal, ActiveLeavesUpdate, SubsystemSender,
 	errors::RecoveryError,
@@ -42,15 +42,15 @@ use indracore_subsystem::{
 		AvailabilityStoreMessage, AvailabilityRecoveryMessage, AllMessages, NetworkBridgeMessage,
 	},
 };
-use indracore_node_network_protocol::{
+use selendra_node_network_protocol::{
 	IfDisconnected,
 	request_response::{
 		self as req_res, OutgoingRequest, Recipient, Requests,
 		request::RequestError,
 	},
 };
-use indracore_node_subsystem_util::request_session_info;
-use indracore_erasure_coding::{branches, branch_hash, recovery_threshold, obtain_chunks_v1};
+use selendra_node_subsystem_util::request_session_info;
+use selendra_erasure_coding::{branches, branch_hash, recovery_threshold, obtain_chunks_v1};
 mod error;
 
 #[cfg(test)]
@@ -381,7 +381,7 @@ impl RequestChunksPhase {
 			// If that fails, or a re-encoding of it doesn't match the expected erasure root,
 			// return Err(RecoveryError::Invalid)
 			if self.received_chunks.len() >= params.threshold {
-				return match indracore_erasure_coding::reconstruct_v1(
+				return match selendra_erasure_coding::reconstruct_v1(
 					params.validators.len(),
 					self.received_chunks.values().map(|c| (&c.chunk[..], c.index.0 as usize)),
 				) {

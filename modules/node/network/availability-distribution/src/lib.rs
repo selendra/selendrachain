@@ -18,7 +18,7 @@ use futures::{future::Either, FutureExt, StreamExt, TryFutureExt};
 
 use sp_keystore::SyncCryptoStorePtr;
 
-use indracore_subsystem::{
+use selendra_subsystem::{
 	messages::AvailabilityDistributionMessage, FromOverseer, OverseerSignal, SpawnedSubsystem,
 	Subsystem, SubsystemContext, SubsystemError,
 };
@@ -28,7 +28,7 @@ mod error;
 use error::Fatal;
 use error::{Result, log_error};
 
-use indracore_node_subsystem_util::runtime::RuntimeInfo;
+use selendra_node_subsystem_util::runtime::RuntimeInfo;
 
 /// `Requester` taking care of requesting chunks for candidates pending availability.
 mod requester;

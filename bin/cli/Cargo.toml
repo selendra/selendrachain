@@ -1,8 +1,8 @@
 [package]
-name = "indracore-cli"
-version = "0.5.1"
+name = "selendra-cli"
+version = "0.1.0-tn1"
 authors = ["Selendra <info@selendra.org>"]
-description = "Indracore Relay-chain Client Node"
+description = "Selendra Relay-chain Client Node"
 edition = "2018"
 
 [package.metadata.wasm-pack.profile.release]
@@ -21,22 +21,22 @@ wasm-bindgen = { version = "0.2.70", optional = true }
 wasm-bindgen-futures = { version = "0.4.19", optional = true }
 futures = "0.3.12"
 
-service = { package = "indracore-service", path = "../service", default-features = false, optional = true }
-indracore-node-core-pvf = { path = "../../modules/node/core/pvf", optional = true }
+service = { package = "selendra-service", path = "../service", default-features = false, optional = true }
+selendra-node-core-pvf = { path = "../../modules/node/core/pvf", optional = true }
 
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
-frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
-try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
-browser-utils = { package = "substrate-browser-utils", git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+frame-benchmarking-cli = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", optional = true }
+try-runtime-cli = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", optional = true }
+sc-cli = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", optional = true }
+sc-service = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", optional = true }
+browser-utils = { package = "substrate-browser-utils", git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", optional = true }
 
 # this crate is used only to enable `trie-memory-tracker` feature
 # see https://github.com/paritytech/substrate/pull/6745
-sp-trie = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+sp-trie = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", default-features = false }
 
 [build-dependencies]
-substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "master" }
+substrate-build-script-utils = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 
 [features]
 default = [ "wasmtime", "db", "cli", "full-node", "trie-memory-tracker" ]
@@ -48,7 +48,7 @@ cli = [
 	"sc-service",
 	"frame-benchmarking-cli",
 	"try-runtime-cli",
-	"indracore-node-core-pvf",
+	"selendra-node-core-pvf",
 ]
 browser = [
 	"wasm-bindgen",

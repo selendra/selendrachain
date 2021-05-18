@@ -5,9 +5,9 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
-indracore-erasure-coding = { path = ".." }
+selendra-erasure-coding = { path = ".." }
 honggfuzz = "0.5"
-primitives = { package = "indracore-node-primitives", path = "../../node/primitives/" }
+primitives = { package = "selendra-node-primitives", path = "../../node/primitives/" }
 
 [[bin]]
 name = "reconstruct"

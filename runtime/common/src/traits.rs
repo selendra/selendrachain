@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Traits used across pallets for Indracore.
+//! Traits used across pallets for Selendra.
 
 use sp_std::vec::*;
 use primitives::v1::{HeadData, ValidationCode, Id as ParaId};

@@ -18,7 +18,7 @@ use futures::{SinkExt, StreamExt, channel::{mpsc, oneshot}, stream::FuturesUnord
 
 use parity_scale_codec::Decode;
 
-use indracore_node_network_protocol::{
+use selendra_node_network_protocol::{
 	PeerId, UnifiedReputationChange as Rep,
 	request_response::{
 		IncomingRequest, MAX_PARALLEL_STATEMENT_REQUESTS, request::OutgoingResponse,
@@ -27,7 +27,7 @@ use indracore_node_network_protocol::{
 		},
 	},
 };
-use indracore_primitives::v1::{CandidateHash, CommittedCandidateReceipt, Hash};
+use selendra_primitives::v1::{CandidateHash, CommittedCandidateReceipt, Hash};
 
 use crate::LOG_TARGET;
 

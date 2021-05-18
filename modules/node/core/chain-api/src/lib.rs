@@ -30,15 +30,15 @@
 #![deny(unused_crate_dependencies, unused_results)]
 #![warn(missing_docs)]
 
-use indracore_subsystem::{
+use selendra_subsystem::{
 	FromOverseer, OverseerSignal,
 	SpawnedSubsystem, Subsystem, SubsystemResult, SubsystemError, SubsystemContext,
 	messages::ChainApiMessage,
 };
-use indracore_node_subsystem_util::{
+use selendra_node_subsystem_util::{
 	metrics::{self, prometheus},
 };
-use indracore_primitives::v1::{Block, BlockId};
+use selendra_primitives::v1::{Block, BlockId};
 use sp_blockchain::HeaderBackend;
 use std::sync::Arc;
 
@@ -278,8 +278,8 @@ mod tests {
 	use std::collections::BTreeMap;
 	use futures::{future::BoxFuture, channel::oneshot};
 
-	use indracore_primitives::v1::{Hash, BlockNumber, BlockId, Header};
-	use indracore_node_subsystem_test_helpers::{make_subsystem_context, TestSubsystemContextHandle};
+	use selendra_primitives::v1::{Hash, BlockNumber, BlockId, Header};
+	use selendra_node_subsystem_test_helpers::{make_subsystem_context, TestSubsystemContextHandle};
 	use sp_blockchain::Info as BlockInfo;
 	use sp_core::testing::TaskExecutor;
 

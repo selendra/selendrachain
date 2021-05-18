@@ -1,5 +1,5 @@
 [package]
-name = "indracore-node-collation-generation"
+name = "selendra-node-collation-generation"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
@@ -7,15 +7,15 @@ edition = "2018"
 [dependencies]
 futures = "0.3.12"
 tracing = "0.1.25"
-indracore-erasure-coding = { path = "../../erasure-coding" }
-indracore-node-primitives = { path = "../primitives" }
-indracore-node-subsystem = { path = "../subsystem" }
-indracore-node-subsystem-util = { path = "../subsystem-util" }
-indracore-primitives = { path = "../../../primitives" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-maybe-compressed-blob  = { git = "https://github.com/paritytech/substrate", branch = "master" }
+selendra-erasure-coding = { path = "../../erasure-coding" }
+selendra-node-primitives = { path = "../primitives" }
+selendra-node-subsystem = { path = "../subsystem" }
+selendra-node-subsystem-util = { path = "../subsystem-util" }
+selendra-primitives = { path = "../../../primitives" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sp-maybe-compressed-blob  = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 thiserror = "1.0.23"
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["bit-vec", "derive"] }
 
 [dev-dependencies]
-indracore-node-subsystem-test-helpers = { path = "../subsystem-test-helpers" }
+selendra-node-subsystem-test-helpers = { path = "../subsystem-test-helpers" }

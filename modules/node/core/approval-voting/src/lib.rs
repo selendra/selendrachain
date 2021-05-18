@@ -21,7 +21,7 @@
 //! of others. It uses this information to determine when candidates and blocks have
 //! been sufficiently approved to finalize.
 
-use indracore_node_subsystem::{
+use selendra_node_subsystem::{
 	messages::{
 		AssignmentCheckResult, ApprovalCheckResult, ApprovalVotingMessage,
 		RuntimeApiMessage, RuntimeApiRequest, ChainApiMessage, ApprovalDistributionMessage,
@@ -31,21 +31,21 @@ use indracore_node_subsystem::{
 	Subsystem, SubsystemContext, SubsystemError, SubsystemResult, SpawnedSubsystem,
 	FromOverseer, OverseerSignal,
 };
-use indracore_node_subsystem_util::{
+use selendra_node_subsystem_util::{
 	metrics::{self, prometheus},
 };
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	ValidatorIndex, Hash, SessionIndex, SessionInfo, CandidateHash,
 	CandidateReceipt, BlockNumber, PersistedValidationData,
 	ValidationCode, CandidateDescriptor, ValidatorPair, ValidatorSignature, ValidatorId,
 	CandidateIndex, GroupIndex,
 };
-use indracore_node_primitives::{ValidationResult, PoV};
-use indracore_node_primitives::approval::{
+use selendra_node_primitives::{ValidationResult, PoV};
+use selendra_node_primitives::approval::{
 	IndirectAssignmentCert, IndirectSignedApprovalVote, ApprovalVote, DelayTranche,
 	BlockApprovalMeta,
 };
-use indracore_node_jaeger as jaeger;
+use selendra_node_jaeger as jaeger;
 use parity_scale_codec::Encode;
 use sc_keystore::LocalKeystore;
 use sp_consensus::SyncOracle;

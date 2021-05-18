@@ -1,4 +1,4 @@
-use indracore_erasure_coding::*;
+use selendra_erasure_coding::*;
 use primitives::{AvailableData, BlockData, PoV};
 use std::sync::Arc;
 use honggfuzz::fuzz;

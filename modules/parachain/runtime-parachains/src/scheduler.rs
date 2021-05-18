@@ -155,7 +155,7 @@ pub trait Config: frame_system::Config + configuration::Config + paras::Config {
 decl_storage! {
 	trait Store for Module<T: Config> as ParaScheduler {
 		/// All the validator groups. One for each core. Indices are into `ActiveValidators` - not the
-		/// broader set of Indracore validators, but instead just the subset used for parachains during
+		/// broader set of Selendra validators, but instead just the subset used for parachains during
 		/// this session.
 		///
 		/// Bound: The number of cores is the sum of the numbers of parachains and parathread multiplexers.

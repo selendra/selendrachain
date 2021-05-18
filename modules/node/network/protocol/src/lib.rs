@@ -19,13 +19,13 @@
 #![deny(unused_crate_dependencies)]
 #![warn(missing_docs)]
 
-use indracore_primitives::v1::{Hash, BlockNumber};
+use selendra_primitives::v1::{Hash, BlockNumber};
 use parity_scale_codec::{Encode, Decode};
 use std::{fmt, collections::HashMap};
 
 pub use sc_network::{PeerId, IfDisconnected};
 #[doc(hidden)]
-pub use indracore_node_jaeger as jaeger;
+pub use selendra_node_jaeger as jaeger;
 #[doc(hidden)]
 pub use std::sync::Arc;
 
@@ -35,7 +35,7 @@ pub use self::reputation::{ReputationChange, UnifiedReputationChange};
 /// Peer-sets and protocols used for parachains.
 pub mod peer_set;
 
-/// Request/response protocols used in Indracore.
+/// Request/response protocols used in Selendra.
 pub mod request_response;
 
 /// A version of the protocol.
@@ -168,8 +168,8 @@ impl std::ops::Deref for OurView {
 /// # Example
 ///
 /// ```
-/// # use indracore_node_network_protocol::our_view;
-/// # use indracore_primitives::v1::Hash;
+/// # use selendra_node_network_protocol::our_view;
+/// # use selendra_primitives::v1::Hash;
 /// let our_view = our_view![Hash::repeat_byte(1), Hash::repeat_byte(2)];
 /// ```
 #[macro_export]
@@ -202,8 +202,8 @@ pub struct View {
 /// # Example
 ///
 /// ```
-/// # use indracore_node_network_protocol::view;
-/// # use indracore_primitives::v1::Hash;
+/// # use selendra_node_network_protocol::view;
+/// # use selendra_primitives::v1::Hash;
 /// let view = view![Hash::repeat_byte(1), Hash::repeat_byte(2)];
 /// ```
 #[macro_export]
@@ -291,12 +291,12 @@ pub mod v1 {
 	use parity_scale_codec::{Encode, Decode};
 	use std::convert::TryFrom;
 
-	use indracore_primitives::v1::{
+	use selendra_primitives::v1::{
 		CandidateHash, CandidateIndex, CollatorId, CollatorSignature,
 		CompactStatement, Hash, Id as ParaId, UncheckedSignedAvailabilityBitfield,
 		ValidatorIndex, ValidatorSignature
 	};
-	use indracore_node_primitives::{
+	use selendra_node_primitives::{
 		approval::{IndirectAssignmentCert, IndirectSignedApprovalVote},
 		UncheckedSignedFullStatement,
 	};

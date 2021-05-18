@@ -17,7 +17,7 @@
 //! Tests for the aux-schema of approval voting.
 
 use super::*;
-use indracore_primitives::v1::Id as ParaId;
+use selendra_primitives::v1::Id as ParaId;
 
 const DATA_COL: u32 = 0;
 const NUM_COLUMNS: u32 = 1;

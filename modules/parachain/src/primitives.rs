@@ -32,10 +32,10 @@ use sp_core::bytes;
 #[cfg(feature = "std")]
 use parity_util_mem::MallocSizeOf;
 
-use indracore_core_primitives::{Hash, OutboundHrmpMessage};
+use selendra_core_primitives::{Hash, OutboundHrmpMessage};
 
 /// Block number type used by the relay chain.
-pub use indracore_core_primitives::BlockNumber as RelayChainBlockNumber;
+pub use selendra_core_primitives::BlockNumber as RelayChainBlockNumber;
 
 /// Parachain head data included in the chain.
 #[derive(PartialEq, Eq, Clone, PartialOrd, Ord, Encode, Decode, RuntimeDebug, derive_more::From)]

@@ -1,5 +1,5 @@
 [package]
-name = "indracore-node-subsystem-test-helpers"
+name = "selendra-node-subsystem-test-helpers"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
@@ -13,14 +13,14 @@ tracing = "0.1.25"
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
 parking_lot = "0.11.1"
 pin-project = "1.0.4"
-indracore-node-primitives = { path = "../primitives" }
-indracore-node-subsystem = { path = "../subsystem" }
-indracore-node-subsystem-util = { path = "../subsystem-util" }
-indracore-primitives = { path = "../../../primitives" }
-indracore-statement-table = { path = "../../statement-table" }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "master" }
+selendra-node-primitives = { path = "../primitives" }
+selendra-node-subsystem = { path = "../subsystem" }
+selendra-node-subsystem-util = { path = "../subsystem-util" }
+selendra-primitives = { path = "../../../primitives" }
+selendra-statement-table = { path = "../../statement-table" }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 smallvec = "1.6.1"
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 
 [dev-dependencies]
-indracore-overseer = { path = "../overseer" }
+selendra-overseer = { path = "../overseer" }

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Utilities for general error handling in Indracore.
+//! Utilities for general error handling in Selendra.
 //!
 //! Goals:
 //!
@@ -45,10 +45,10 @@ use thiserror::Error;
 ///
 /// ```
 /// use thiserror::Error;
-/// use indracore_node_subsystem::errors::RuntimeApiError;
-/// use indracore_primitives::v1::SessionIndex;
+/// use selendra_node_subsystem::errors::RuntimeApiError;
+/// use selendra_primitives::v1::SessionIndex;
 /// use futures::channel::oneshot;
-/// use indracore_node_subsystem_util::{Fault, runtime};
+/// use selendra_node_subsystem_util::{Fault, runtime};
 ///
 /// #[derive(Debug, Error)]
 /// #[error(transparent)]
@@ -162,8 +162,8 @@ impl<E, F> Fault<E, F>
 ///
 /// ```no_run
 /// # use thiserror::Error;
-/// # use indracore_node_subsystem_util::{Fault, unwrap_non_fatal};
-/// # use indracore_node_subsystem::SubsystemError;
+/// # use selendra_node_subsystem_util::{Fault, unwrap_non_fatal};
+/// # use selendra_node_subsystem::SubsystemError;
 /// # #[derive(Error, Debug)]
 /// # enum Fatal {
 /// # }

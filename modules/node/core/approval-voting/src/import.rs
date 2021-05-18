@@ -28,20 +28,20 @@
 //!
 //! We maintain a rolling window of session indices. This starts as empty
 
-use indracore_node_subsystem::{
+use selendra_node_subsystem::{
 	messages::{
 		RuntimeApiMessage, RuntimeApiRequest, ChainApiMessage, ApprovalDistributionMessage,
 	},
 	SubsystemContext, SubsystemError, SubsystemResult,
 };
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	Hash, SessionIndex, SessionInfo, CandidateEvent, Header, CandidateHash,
 	CandidateReceipt, CoreIndex, GroupIndex, BlockNumber, ConsensusLog,
 };
-use indracore_node_primitives::approval::{
+use selendra_node_primitives::approval::{
 	self as approval_types, BlockApprovalMeta, RelayVRFStory,
 };
-use indracore_node_jaeger as jaeger;
+use selendra_node_jaeger as jaeger;
 use sc_keystore::LocalKeystore;
 use sp_consensus_slots::Slot;
 use kvdb::KeyValueDB;
@@ -426,7 +426,7 @@ async fn imported_block_info(
 		// block in BABE has the epoch _it was authored in_ within its post-state. So we use the
 		// block, and not its parent.
 		//
-		// It's worth nothing that Indracore session changes, at least for the purposes of parachains,
+		// It's worth nothing that Selendra session changes, at least for the purposes of parachains,
 		// would function the same way, except for the fact that they're always delayed by one block.
 		// This gives us the opposite invariant for sessions - the parent block's post-state gives
 		// us the canonical information about the session index for any of its children, regardless
@@ -812,10 +812,10 @@ pub(crate) async fn handle_new_head(
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use indracore_node_subsystem_test_helpers::make_subsystem_context;
-	use indracore_node_primitives::approval::{VRFOutput, VRFProof};
-	use indracore_primitives::v1::ValidatorIndex;
-	use indracore_node_subsystem::messages::AllMessages;
+	use selendra_node_subsystem_test_helpers::make_subsystem_context;
+	use selendra_node_primitives::approval::{VRFOutput, VRFProof};
+	use selendra_primitives::v1::ValidatorIndex;
+	use selendra_node_subsystem::messages::AllMessages;
 	use sp_core::testing::TaskExecutor;
 	use sp_runtime::{Digest, DigestItem};
 	use sp_consensus_babe::{
@@ -990,22 +990,22 @@ mod tests {
 		fn compute_assignments(
 			&self,
 			_keystore: &LocalKeystore,
-			_relay_vrf_story: indracore_node_primitives::approval::RelayVRFStory,
+			_relay_vrf_story: selendra_node_primitives::approval::RelayVRFStory,
 			_config: &criteria::Config,
-			_leaving_cores: Vec<(CandidateHash, indracore_primitives::v1::CoreIndex, indracore_primitives::v1::GroupIndex)>,
-		) -> HashMap<indracore_primitives::v1::CoreIndex, criteria::OurAssignment> {
+			_leaving_cores: Vec<(CandidateHash, selendra_primitives::v1::CoreIndex, selendra_primitives::v1::GroupIndex)>,
+		) -> HashMap<selendra_primitives::v1::CoreIndex, criteria::OurAssignment> {
 			HashMap::new()
 		}
 
 		fn check_assignment_cert(
 			&self,
-			_claimed_core_index: indracore_primitives::v1::CoreIndex,
-			_validator_index: indracore_primitives::v1::ValidatorIndex,
+			_claimed_core_index: selendra_primitives::v1::CoreIndex,
+			_validator_index: selendra_primitives::v1::ValidatorIndex,
 			_config: &criteria::Config,
-			_relay_vrf_story: indracore_node_primitives::approval::RelayVRFStory,
-			_assignment: &indracore_node_primitives::approval::AssignmentCert,
-			_backing_group: indracore_primitives::v1::GroupIndex,
-		) -> Result<indracore_node_primitives::approval::DelayTranche, criteria::InvalidAssignment> {
+			_relay_vrf_story: selendra_node_primitives::approval::RelayVRFStory,
+			_assignment: &selendra_node_primitives::approval::AssignmentCert,
+			_backing_group: selendra_primitives::v1::GroupIndex,
+		) -> Result<selendra_node_primitives::approval::DelayTranche, criteria::InvalidAssignment> {
 			Ok(0)
 		}
 	}

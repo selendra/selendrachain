@@ -16,9 +16,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-//! Core Indracore types.
+//! Core Selendra types.
 //!
-//! These core Indracore types are used by the relay chain and the Parachains.
+//! These core Selendra types are used by the relay chain and the Parachains.
 
 use sp_runtime::{generic, MultiSignature, traits::{Verify, IdentifyAccount}};
 use parity_scale_codec::{Encode, Decode};
@@ -27,7 +27,7 @@ use parity_util_mem::MallocSizeOf;
 
 pub use sp_runtime::traits::{BlakeTwo256, Hash as HashT};
 
-/// The block number type used by Indracore.
+/// The block number type used by Selendra.
 /// 32-bits will allow for 136 years of blocks assuming 1 block per second.
 pub type BlockNumber = u32;
 

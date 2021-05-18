@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! The collation generation subsystem is the interface between indracore and the collators.
+//! The collation generation subsystem is the interface between selendra and the collators.
 
 #![deny(missing_docs)]
 
@@ -26,19 +26,19 @@ use futures::{
 	sink::SinkExt,
 	stream::StreamExt,
 };
-use indracore_node_primitives::{
+use selendra_node_primitives::{
 	CollationGenerationConfig, AvailableData, PoV,
 };
-use indracore_node_subsystem::{
+use selendra_node_subsystem::{
 	messages::{AllMessages, CollationGenerationMessage, CollatorProtocolMessage},
 	FromOverseer, SpawnedSubsystem, Subsystem, SubsystemContext, SubsystemResult,
 };
-use indracore_node_subsystem_util::{
+use selendra_node_subsystem_util::{
 	request_availability_cores, request_persisted_validation_data,
 	request_validators, request_validation_code,
 	metrics::{self, prometheus},
 };
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	collator_signature_payload, CandidateCommitments,
 	CandidateDescriptor, CandidateReceipt, CoreState, Hash, OccupiedCoreAssumption,
 	PersistedValidationData,
@@ -120,9 +120,9 @@ impl CollationGenerationSubsystem {
 	where
 		Context: SubsystemContext<Message = CollationGenerationMessage>,
 	{
-		use indracore_node_subsystem::ActiveLeavesUpdate;
-		use indracore_node_subsystem::FromOverseer::{Communication, Signal};
-		use indracore_node_subsystem::OverseerSignal::{ActiveLeaves, BlockFinalized, Conclude};
+		use selendra_node_subsystem::ActiveLeavesUpdate;
+		use selendra_node_subsystem::FromOverseer::{Communication, Signal};
+		use selendra_node_subsystem::OverseerSignal::{ActiveLeaves, BlockFinalized, Conclude};
 
 		match incoming {
 			Ok(Signal(ActiveLeaves(ActiveLeavesUpdate { activated, .. }))) => {
@@ -317,7 +317,7 @@ async fn handle_new_activations<Context: SubsystemContext>(
 
 				// Apply compression to the block data.
 				let pov = {
-					let pov = indracore_node_primitives::maybe_compress_pov(collation.proof_of_validity);
+					let pov = selendra_node_primitives::maybe_compress_pov(collation.proof_of_validity);
 					let encoded_size = pov.encoded_size();
 
 					// As long as `POV_BOMB_LIMIT` is at least `max_pov_size`, this ensures
@@ -429,8 +429,8 @@ fn erasure_root(
 		pov: Arc::new(pov),
 	};
 
-	let chunks = indracore_erasure_coding::obtain_chunks_v1(n_validators, &available_data)?;
-	Ok(indracore_erasure_coding::branches(&chunks).root())
+	let chunks = selendra_erasure_coding::obtain_chunks_v1(n_validators, &available_data)?;
+	Ok(selendra_erasure_coding::branches(&chunks).root())
 }
 
 #[derive(Clone)]
@@ -519,14 +519,14 @@ mod tests {
 			task::{Context as FuturesContext, Poll},
 			Future,
 		};
-		use indracore_node_primitives::{Collation, CollationResult, BlockData, PoV, POV_BOMB_LIMIT};
-		use indracore_node_subsystem::messages::{
+		use selendra_node_primitives::{Collation, CollationResult, BlockData, PoV, POV_BOMB_LIMIT};
+		use selendra_node_subsystem::messages::{
 			AllMessages, RuntimeApiMessage, RuntimeApiRequest,
 		};
-		use indracore_node_subsystem_test_helpers::{
+		use selendra_node_subsystem_test_helpers::{
 			subsystem_test_harness, TestSubsystemContextHandle,
 		};
-		use indracore_primitives::v1::{
+		use selendra_primitives::v1::{
 			CollatorPair, Id as ParaId, PersistedValidationData, ScheduledCore, ValidationCode,
 		};
 		use std::pin::Pin;

@@ -24,7 +24,7 @@ use futures::{
 	prelude::*,
 };
 use sp_keystore::SyncCryptoStorePtr;
-use indracore_node_subsystem::{
+use selendra_node_subsystem::{
 	jaeger, PerLeafSpan, SubsystemSender,
 	errors::ChainApiError,
 	messages::{
@@ -32,14 +32,14 @@ use indracore_node_subsystem::{
 		RuntimeApiRequest,
 	},
 };
-use indracore_node_subsystem_util::{
+use selendra_node_subsystem_util::{
 	self as util, request_from_runtime, request_validator_groups, JobSubsystem,
 	JobTrait, JobSender, Validator, metrics::{self, prometheus},
 };
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	CandidateReceipt, CollatorId, CoreState, CoreIndex, Hash, Id as ParaId, BlockNumber,
 };
-use indracore_node_primitives::{SignedFullStatement, PoV};
+use selendra_node_primitives::{SignedFullStatement, PoV};
 use std::{pin::Pin, sync::Arc};
 use thiserror::Error;
 
@@ -515,8 +515,8 @@ pub type CandidateSelectionSubsystem<Spawner> = JobSubsystem<CandidateSelectionJ
 mod tests {
 	use super::*;
 	use futures::lock::Mutex;
-	use indracore_node_primitives::BlockData;
-	use indracore_node_subsystem::messages::AllMessages;
+	use selendra_node_primitives::BlockData;
+	use selendra_node_subsystem::messages::AllMessages;
 	use sp_core::crypto::Public;
 	use std::sync::Arc;
 
@@ -531,7 +531,7 @@ mod tests {
 		Postconditions: FnOnce(CandidateSelectionJob, Result<(), Error>),
 	{
 		let (to_job_tx, to_job_rx) = mpsc::channel(0);
-		let (mut from_job_tx, from_job_rx) = indracore_node_subsystem_test_helpers::sender_receiver();
+		let (mut from_job_tx, from_job_rx) = selendra_node_subsystem_test_helpers::sender_receiver();
 		let mut job = CandidateSelectionJob {
 			assignment: 123.into(),
 			receiver: to_job_rx,

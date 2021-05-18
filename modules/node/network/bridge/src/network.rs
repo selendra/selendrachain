@@ -30,13 +30,13 @@ use sc_network::Event as NetworkEvent;
 use sc_network::{IfDisconnected, NetworkService, OutboundFailure, RequestFailure};
 use sc_network::{config::parse_addr, multiaddr::Multiaddr};
 
-use indracore_node_network_protocol::{
+use selendra_node_network_protocol::{
 	peer_set::PeerSet,
 	request_response::{OutgoingRequest, Requests, Recipient},
 	PeerId, UnifiedReputationChange as Rep,
 };
-use indracore_primitives::v1::{Block, Hash};
-use indracore_subsystem::{SubsystemError, SubsystemResult};
+use selendra_primitives::v1::{Block, Hash};
+use selendra_subsystem::{SubsystemError, SubsystemResult};
 
 use crate::validator_discovery::AuthorityDiscovery;
 
@@ -109,7 +109,7 @@ pub enum NetworkAction {
 #[async_trait]
 pub trait Network: Clone + Send + 'static {
 	/// Get a stream of all events occurring on the network. This may include events unrelated
-	/// to the Indracore protocol - the user of this function should filter only for events related
+	/// to the Selendra protocol - the user of this function should filter only for events related
 	/// to the [`VALIDATION_PROTOCOL_NAME`](VALIDATION_PROTOCOL_NAME)
 	/// or [`COLLATION_PROTOCOL_NAME`](COLLATION_PROTOCOL_NAME)
 	fn event_stream(&mut self) -> BoxStream<'static, NetworkEvent>;
@@ -181,7 +181,7 @@ pub trait Network: Clone + Send + 'static {
 #[async_trait]
 impl Network for Arc<NetworkService<Block, Hash>> {
 	fn event_stream(&mut self) -> BoxStream<'static, NetworkEvent> {
-		NetworkService::event_stream(self, "indracore-network-bridge").boxed()
+		NetworkService::event_stream(self, "selendra-network-bridge").boxed()
 	}
 
 	async fn add_to_peers_set(&mut self, protocol: Cow<'static, str>, multiaddresses: HashSet<Multiaddr>) -> Result<(), String> {

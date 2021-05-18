@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! As part of Indracore's availability system, certain pieces of data
+//! As part of Selendra's availability system, certain pieces of data
 //! for each block are required to be kept available.
 //!
 //! The way we accomplish this is by erasure coding the data into n pieces
@@ -25,8 +25,8 @@
 //! The data is coded so any f+1 chunks can be used to reconstruct the full data.
 
 use parity_scale_codec::{Encode, Decode};
-use indracore_primitives::v0::{self, Hash as H256, BlakeTwo256, HashT};
-use indracore_node_primitives::AvailableData;
+use selendra_primitives::v0::{self, Hash as H256, BlakeTwo256, HashT};
+use selendra_node_primitives::AvailableData;
 use sp_core::Blake2Hasher;
 use trie::{EMPTY_PREFIX, MemoryDB, Trie, TrieMut, trie_types::{TrieDBMut, TrieDB}};
 use thiserror::Error;
@@ -368,7 +368,7 @@ impl<'a, I: Iterator<Item=&'a [u8]>> parity_scale_codec::Input for ShardInput<'a
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use indracore_primitives::v0::{AvailableData, BlockData, PoVBlock};
+	use selendra_primitives::v0::{AvailableData, BlockData, PoVBlock};
 
 	#[test]
 	fn field_order_is_right_size() {

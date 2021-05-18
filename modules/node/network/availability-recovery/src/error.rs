@@ -23,7 +23,7 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum Error {
 	#[error(transparent)]
-	Subsystem(#[from] indracore_subsystem::SubsystemError),
+	Subsystem(#[from] selendra_subsystem::SubsystemError),
 
 	#[error("failed to query full data from store")]
 	CanceledQueryFullData(#[source] oneshot::Canceled),
@@ -35,13 +35,13 @@ pub enum Error {
 	CanceledResponseSender,
 
 	#[error(transparent)]
-	Runtime(#[from] indracore_subsystem::errors::RuntimeApiError),
+	Runtime(#[from] selendra_subsystem::errors::RuntimeApiError),
 
 	#[error(transparent)]
-	Erasure(#[from] indracore_erasure_coding::Error),
+	Erasure(#[from] selendra_erasure_coding::Error),
 
 	#[error(transparent)]
-	Util(#[from] indracore_node_subsystem_util::Error),
+	Util(#[from] selendra_node_subsystem_util::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

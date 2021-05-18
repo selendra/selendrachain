@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Indracore Jaeger related primitives
+//! Selendra Jaeger related primitives
 //!
-//! Provides primitives used by Indracore for interfacing with Jaeger.
+//! Provides primitives used by Selendra for interfacing with Jaeger.
 //!
 //! # Integration
 //!
@@ -104,7 +104,7 @@ impl Jaeger {
 		log::info!("🐹 Collecting jaeger spans for {:?}", &jaeger_agent);
 
 		let (traces_in, mut traces_out) =
-			mick_jaeger::init(mick_jaeger::Config { service_name: format!("indracore-{}", cfg.node_name) });
+			mick_jaeger::init(mick_jaeger::Config { service_name: format!("selendra-{}", cfg.node_name) });
 
 		// Spawn a background task that pulls span information and sends them on the network.
 		spawner.spawn(

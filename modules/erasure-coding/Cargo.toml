@@ -1,14 +1,14 @@
 [package]
-name = "indracore-erasure-coding"
-version = "0.5.1"
+name = "selendra-erasure-coding"
+version = "0.1.0-tn1"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
-indracore-primitives = { path = "../../primitives" }
-indracore-node-primitives = { path = "../node/primitives" }
+selendra-primitives = { path = "../../primitives" }
+selendra-node-primitives = { path = "../node/primitives" }
 novelpoly = { package = "reed-solomon-novelpoly", version = "1.0.0" }
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["std", "derive"] }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
-trie = { package = "sp-trie", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+trie = { package = "sp-trie", git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 thiserror = "1.0.23"

@@ -26,24 +26,24 @@ mod tests;
 
 use std::collections::{BTreeMap, HashMap, HashSet, hash_map};
 use futures::{channel::oneshot, FutureExt as _};
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	Hash, BlockNumber, ValidatorIndex, ValidatorSignature, CandidateIndex,
 };
-use indracore_node_primitives::{
+use selendra_node_primitives::{
 	approval::{AssignmentCert, BlockApprovalMeta, IndirectSignedApprovalVote, IndirectAssignmentCert},
 };
-use indracore_node_subsystem::{
+use selendra_node_subsystem::{
 	messages::{
 		AllMessages, ApprovalDistributionMessage, ApprovalVotingMessage, NetworkBridgeMessage,
 		AssignmentCheckResult, ApprovalCheckResult, NetworkBridgeEvent,
 	},
 	ActiveLeavesUpdate, FromOverseer, OverseerSignal, SpawnedSubsystem, Subsystem, SubsystemContext,
 };
-use indracore_node_subsystem_util::{
+use selendra_node_subsystem_util::{
 	metrics::{self, prometheus},
 	self as util, MIN_GOSSIP_PEERS,
 };
-use indracore_node_network_protocol::{
+use selendra_node_network_protocol::{
 	PeerId, View, v1 as protocol_v1, UnifiedReputationChange as Rep,
 };
 

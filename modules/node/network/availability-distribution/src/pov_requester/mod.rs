@@ -19,21 +19,21 @@
 use futures::{FutureExt, channel::{mpsc, oneshot}, future::BoxFuture};
 use lru::LruCache;
 
-use indracore_subsystem::jaeger;
-use indracore_node_network_protocol::{
+use selendra_subsystem::jaeger;
+use selendra_node_network_protocol::{
 	PeerId, peer_set::PeerSet,
 	request_response::{OutgoingRequest, Recipient, request::{RequestError, Requests},
 	v1::{PoVFetchingRequest, PoVFetchingResponse}}
 };
-use indracore_primitives::v1::{
+use selendra_primitives::v1::{
 	AuthorityDiscoveryId, CandidateHash, Hash, SessionIndex, ValidatorIndex
 };
-use indracore_node_primitives::PoV;
-use indracore_subsystem::{
+use selendra_node_primitives::PoV;
+use selendra_subsystem::{
 	ActiveLeavesUpdate, SubsystemContext, ActivatedLeaf,
 	messages::{AllMessages, NetworkBridgeMessage, IfDisconnected}
 };
-use indracore_node_subsystem_util::runtime::{RuntimeInfo, ValidatorInfo};
+use selendra_node_subsystem_util::runtime::{RuntimeInfo, ValidatorInfo};
 
 use crate::error::{Fatal, NonFatal};
 use crate::LOG_TARGET;
@@ -247,10 +247,10 @@ mod tests {
 	use parity_scale_codec::Encode;
 	use sp_core::testing::TaskExecutor;
 
-	use indracore_primitives::v1::{CandidateHash, Hash, ValidatorIndex};
-	use indracore_node_primitives::BlockData;
-	use indracore_subsystem_testhelpers as test_helpers;
-	use indracore_subsystem::messages::{AvailabilityDistributionMessage, RuntimeApiMessage, RuntimeApiRequest};
+	use selendra_primitives::v1::{CandidateHash, Hash, ValidatorIndex};
+	use selendra_node_primitives::BlockData;
+	use selendra_subsystem_testhelpers as test_helpers;
+	use selendra_subsystem::messages::{AvailabilityDistributionMessage, RuntimeApiMessage, RuntimeApiRequest};
 
 	use super::*;
 	use crate::LOG_TARGET;
@@ -280,7 +280,7 @@ mod tests {
 		let (mut context, mut virtual_overseer) =
 			test_helpers::make_subsystem_context::<AvailabilityDistributionMessage, TaskExecutor>(pool.clone());
 		let keystore = make_ferdie_keystore();
-		let mut runtime = indracore_node_subsystem_util::runtime::RuntimeInfo::new(Some(keystore));
+		let mut runtime = selendra_node_subsystem_util::runtime::RuntimeInfo::new(Some(keystore));
 
 		let (tx, rx) = oneshot::channel();
 		let testee = async {

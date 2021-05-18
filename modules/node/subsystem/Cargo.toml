@@ -1,5 +1,5 @@
 [package]
-name = "indracore-node-subsystem"
+name = "selendra-node-subsystem"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
@@ -17,16 +17,16 @@ tracing = "0.1.25"
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
 parking_lot = "0.11.1"
 pin-project = "1.0.4"
-indracore-node-primitives = { path = "../primitives" }
-indracore-node-network-protocol = { path = "../network/protocol" }
-indracore-primitives = { path = "../../../primitives" }
-indracore-statement-table = { path = "../../statement-table" }
-indracore-node-jaeger = { path = "../jaeger" }
-indracore-procmacro-subsystem-dispatch-gen = { path = "dispatch-gen" }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "master" }
+selendra-node-primitives = { path = "../primitives" }
+selendra-node-network-protocol = { path = "../network/protocol" }
+selendra-primitives = { path = "../../../primitives" }
+selendra-statement-table = { path = "../../statement-table" }
+selendra-node-jaeger = { path = "../jaeger" }
+selendra-procmacro-subsystem-dispatch-gen = { path = "dispatch-gen" }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 smallvec = "1.6.1"
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
-substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+substrate-prometheus-endpoint = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 thiserror = "1.0.23"
 log = "0.4.13"
 
@@ -34,4 +34,4 @@ log = "0.4.13"
 assert_matches = "1.4.0"
 async-trait = "0.1.42"
 futures = { version = "0.3.12", features = ["thread-pool"] }
-indracore-node-subsystem-test-helpers = { path = "../subsystem-test-helpers" }
+selendra-node-subsystem-test-helpers = { path = "../subsystem-test-helpers" }

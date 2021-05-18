@@ -1,5 +1,5 @@
 [package]
-name = "indracore-node-subsystem-util"
+name = "selendra-node-subsystem-util"
 version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
@@ -18,18 +18,18 @@ thiserror = "1.0.23"
 tracing = "0.1.25"
 lru = "0.6.5"
 
-indracore-node-primitives = { path = "../primitives" }
-indracore-node-subsystem = { path = "../subsystem" }
-indracore-node-jaeger = { path = "../jaeger" }
-indracore-node-network-protocol = { path = "../network/protocol" }
-indracore-primitives = { path = "../../../primitives" }
+selendra-node-primitives = { path = "../primitives" }
+selendra-node-subsystem = { path = "../subsystem" }
+selendra-node-jaeger = { path = "../jaeger" }
+selendra-node-network-protocol = { path = "../network/protocol" }
+selendra-primitives = { path = "../../../primitives" }
 metered-channel = { path = "../metered-channel"}
 
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
-substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+substrate-prometheus-endpoint = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
 
 [dev-dependencies]
 assert_matches = "1.4.0"
@@ -38,4 +38,4 @@ env_logger = "0.8.2"
 futures = { version = "0.3.12", features = ["thread-pool"] }
 log = "0.4.13"
 parking_lot = "0.11.1"
-indracore-node-subsystem-test-helpers = { path = "../subsystem-test-helpers" }
+selendra-node-subsystem-test-helpers = { path = "../subsystem-test-helpers" }
