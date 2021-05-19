@@ -253,7 +253,7 @@ impl pallet_indices::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: Balance = 100 * CENTS;
+	pub const ExistentialDeposit: Balance = 100 * DOLLARS;
 	pub const MaxLocks: u32 = 50;
 }
 
@@ -268,7 +268,7 @@ impl pallet_balances::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 25 * MILLICENTS;
+	pub const TransactionByteFee: Balance = 7 * MILLICENTS;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -786,7 +786,7 @@ parameter_types! {
 }
 
 parameter_types! {
-	pub const MinVestedTransfer: Balance = 100 * DOLLARS;
+	pub const MinVestedTransfer: Balance = 1 * DOLLARS;
 }
 
 impl pallet_vesting::Config for Runtime {

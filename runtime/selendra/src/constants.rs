@@ -73,10 +73,10 @@ pub mod fee {
 		type Balance = Balance;
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 			// in Selendra, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 CENT:
-			let p = super::currency::CENTS;
+			let p = super::currency::MILLICENTS;
 			let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 			smallvec![WeightToFeeCoefficient {
-				degree: 0,
+				degree: 1,
 				negative: false,
 				coeff_frac: Perbill::from_rational(p % q, q),
 				coeff_integer: p / q,
