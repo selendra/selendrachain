@@ -20,11 +20,11 @@ use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
 use beefy_primitives::ecdsa::AuthorityId as BeefyId;
 use grandpa::AuthorityId as GrandpaId;
+use selendra_runtime as selendra;
+use selendra_runtime::constants::currency::SELS as SELS;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_staking::Forcing;
-use selendra::constants::currency::SELS;
 use selendra_primitives::v1::{AccountId, AccountPublic, AssignmentId, ValidatorId};
-use selendra_runtime as selendra;
 use sc_chain_spec::{ChainSpecExtension, ChainType};
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
@@ -32,7 +32,7 @@ use sp_runtime::{traits::IdentifyAccount, Perbill};
 use telemetry::TelemetryEndpoints;
 
 const SELENDRA_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
-const DEFAULT_PROTOCOL_ID: &str = "sel";
+const DEFAULT_PROTOCOL_ID: &str = "dot";
 
 /// Node `ChainSpec` extensions.
 ///
@@ -168,7 +168,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 	}
 }
 
-/// Selendra staging testnet config.
+/// Staging testnet config.
 pub fn selendra_staging_testnet_config() -> Result<SelendraChainSpec, String> {
 	let wasm_binary = selendra::WASM_BINARY.ok_or("Selendra development wasm not available")?;
 	let boot_nodes = vec![];

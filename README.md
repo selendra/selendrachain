@@ -117,7 +117,7 @@ also replace the default command (`cargo build --release && ./target/release/nod
 by appending your own. A few useful ones are as follow.
 
 ```bash
-# Run Selendra node without re-compiling
+# Run selendra node without re-compiling
 ./scripts/docker_run.sh ./target/release/node-selendra --dev --ws-external
 
 # Purge the local dev chain
@@ -135,4 +135,4 @@ $ cargo run --release --features=runtime-benchmarks -- benchmark --chain=selendr
 
 ## License
 
-Selendra is implement from [Polkadot](https://github.com/paritytech/polkadot.git) under license [GPL 3.0 licensed](LICENSE-GPL3).
+selendra is implement from [Polkadot](https://github.com/paritytech/polkadot.git) under license [GPL 3.0 licensed](LICENSE-GPL3).

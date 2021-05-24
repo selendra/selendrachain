@@ -1,74 +1,74 @@
 [package]
 name = "selendra-service"
-version = "0.1.0-tn1"
+version = "0.1.0-tn2"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
 # Substrate Client
-sc-authority-discovery = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-babe = { package = "sc-consensus-babe", git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-beefy-primitives = { git = "https://github.com/selendra/grandpa-bridge-gadget", branch = "0.1.0-tn1" }
-beefy-gadget = { git = "https://github.com/selendra/grandpa-bridge-gadget", branch = "0.1.0-tn1" }
-grandpa = { package = "sc-finality-grandpa", git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sc-block-builder = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sc-chain-spec = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sc-client-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sc-client-db = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sc-consensus-uncles = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sc-consensus = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sc-consensus-slots = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sc-executor = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sc-finality-grandpa-warp-sync = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", optional = true }
-sc-network = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sc-transaction-pool = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sc-keystore = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sc-basic-authorship = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-service = { package = "sc-service", git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1", default-features = false }
-telemetry = { package = "sc-telemetry", git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "master" }
+babe = { package = "sc-consensus-babe", git = "https://github.com/paritytech/substrate", branch = "master" }
+beefy-primitives = { git = "https://github.com/paritytech/grandpa-bridge-gadget", branch = "master" }
+beefy-gadget = { git = "https://github.com/paritytech/grandpa-bridge-gadget", branch = "master" }
+grandpa = { package = "sc-finality-grandpa", git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-block-builder = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-consensus-uncles = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-consensus-slots = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-finality-grandpa-warp-sync = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch = "master" }
+service = { package = "sc-service", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+telemetry = { package = "sc-telemetry", git = "https://github.com/paritytech/substrate", branch = "master" }
 
 # Substrate Primitives
-sp-authority-discovery = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sp-timestamp = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sp-consensus-babe = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-consensus_common = { package = "sp-consensus", git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-grandpa_primitives = { package = "sp-finality-grandpa", git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-inherents = { package = "sp-inherents", git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sp-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sp-block-builder = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sp-blockchain = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sp-io = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sp-keystore = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sp-offchain = { package = "sp-offchain", git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sp-runtime = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sp-session = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sp-storage = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sp-transaction-pool = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sp-trie = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sp-state-machine = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "master" }
+consensus_common = { package = "sp-consensus", git = "https://github.com/paritytech/substrate", branch = "master" }
+grandpa_primitives = { package = "sp-finality-grandpa", git = "https://github.com/paritytech/substrate", branch = "master" }
+inherents = { package = "sp-inherents", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-offchain = { package = "sp-offchain", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-session = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-storage = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 # Substrate Pallets
-pallet-babe = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-pallet-im-online = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-pallet-staking = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-pallet-mmr-primitives = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+pallet-babe = { git = "https://github.com/paritytech/substrate", branch = "master" }
+pallet-im-online = { git = "https://github.com/paritytech/substrate", branch = "master" }
+pallet-staking = { git = "https://github.com/paritytech/substrate", branch = "master" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
+pallet-mmr-primitives = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 # Substrate Other
-frame-benchmarking = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-frame-system-rpc-runtime-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "master" }
+frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/paritytech/substrate", branch = "master" }
 
 # External Crates
 futures = "0.3.12"
 hex-literal = "0.3.1"
 tracing = "0.1.25"
 serde = { version = "1.0.123", features = ["derive"] }
-serde_json = "1.0"
 thiserror = "1.0.23"
 kvdb = "0.9.0"
 kvdb-rocksdb = { version = "0.11.0", optional = true }
+serde_json = "1.0.64"
 
 # Selendra
 selendra-node-core-parachains-inherent = { path = "../../modules/node/core/parachains-inherent" }
@@ -104,6 +104,10 @@ selendra-statement-distribution = { path = "../../modules/node/network/statement
 selendra-approval-distribution = { path = "../../modules/node/network/approval-distribution", optional = true }
 selendra-node-core-approval-voting = { path = "../../modules/node/core/approval-voting", optional = true }
 
+[dev-dependencies]
+selendra-test-client = { path = "../test/client" }
+env_logger = "0.8.2"
+
 [features]
 default = ["db", "full-node"]
 db = ["service/db"]
@@ -134,5 +138,5 @@ runtime-benchmarks = [
 	"selendra-runtime/runtime-benchmarks",
 ]
 try-runtime = [
-	"selendra-runtime/try-runtime",
+	"selendra-runtime/try-runtime"
 ]

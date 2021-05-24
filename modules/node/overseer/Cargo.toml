@@ -6,8 +6,8 @@ edition = "2018"
 
 [dependencies]
 async-trait = "0.1.42"
-client = { package = "sc-client-api", git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
-sp-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+client = { package = "sc-client-api", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
 futures = "0.3.12"
 futures-timer = "3.0.2"
 selendra-node-primitives = { package = "selendra-node-primitives", path = "../primitives" }
@@ -18,7 +18,7 @@ selendra-subsystem = { package = "selendra-node-subsystem", path = "../subsystem
 tracing = "0.1.25"
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
 selendra-node-network-protocol = { path = "../network/protocol" }
 futures = { version = "0.3.12", features = ["thread-pool"] }
 femme = "2.1.1"

@@ -138,7 +138,6 @@ impl IdentifyVariant for Box<dyn ChainSpec> {
 	}
 }
 
-
 // If we're using prometheus, use a registry with a prefix of `selendra`.
 fn set_prometheus_registry(config: &mut Configuration) -> Result<(), Error> {
 	if let Some(PrometheusConfig { registry, .. }) = config.prometheus_config.as_mut() {
@@ -213,6 +212,7 @@ fn new_partial<RuntimeApi, Executor>(
 		Executor: NativeExecutionDispatch + 'static,
 {
 	set_prometheus_registry(config)?;
+
 
 	let telemetry = config.telemetry_endpoints.clone()
 		.filter(|x| !x.is_empty())
@@ -642,6 +642,14 @@ pub fn new_full<RuntimeApi, Executor>(
 	let force_authoring = config.force_authoring;
 	let backoff_authoring_blocks = {
 		let backoff = sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default();
+
+		// if config.chain_spec.is_rococo() || config.chain_spec.is_wococo() {
+		// 	// it's a testnet that's in flux, finality has stalled sometimes due
+		// 	// to operational issues and it's annoying to slow down block
+		// 	// production to 1 block per hour.
+		// 	backoff.max_interval = 10;
+		// }
+
 		Some(backoff)
 	};
 
@@ -664,10 +672,14 @@ pub fn new_full<RuntimeApi, Executor>(
 	let shared_voter_state = rpc_setup;
 	let auth_disc_publish_non_global_ips = config.network.allow_non_globals_in_dht;
 
-	// Note: GrandPa is pushed before the Selendra-specific protocols. This doesn't change
+	// Note: GrandPa is pushed before the selendra-specific protocols. This doesn't change
 	// anything in terms of behaviour, but makes the logs more consistent with the other
 	// Substrate nodes.
 	config.network.extra_sets.push(grandpa::grandpa_peers_set_config());
+
+	// if config.chain_spec.is_rococo() || config.chain_spec.is_wococo() {
+	// 	config.network.extra_sets.push(beefy_gadget::beefy_peers_set_config());
+	// }
 
 	{
 		use selendra_network_bridge::{peer_sets_info, IsAuthority};
@@ -731,7 +743,7 @@ pub fn new_full<RuntimeApi, Executor>(
 		},
 	};
 
-	let _chain_spec = config.chain_spec.cloned_box();
+	// let chain_spec = config.chain_spec.cloned_box();
 	let rpc_handlers = service::spawn_tasks(service::SpawnTasksParams {
 		config,
 		backend: backend.clone(),
@@ -836,7 +848,9 @@ pub fn new_full<RuntimeApi, Executor>(
 		}));
 
 		Some(overseer_handler)
-	} else { None };
+	} else {
+		None
+	};
 
 	if role.is_authority() {
 		let can_author_with =
@@ -906,21 +920,29 @@ pub fn new_full<RuntimeApi, Executor>(
 		None
 	};
 
-	// if !disable_beefy {
-		// let beefy_params = beefy_gadget::BeefyParams {
-		// 	client: client.clone(),
-		// 	backend: backend.clone(),
-		// 	key_store: keystore_opt.clone(),
-		// 	network: network.clone(),
-		// 	signed_commitment_sender: beefy_link,
-		// 	min_block_delta: if chain_spec.is_wococo() { 4 } else { 8 },
-		// 	prometheus_registry: prometheus_registry.clone(),
-		// };
+	// // We currently only run the BEEFY gadget on the Rococo and Wococo testnets.
+	// if !disable_beefy && (chain_spec.is_rococo() || chain_spec.is_wococo()) {
+	// 	let beefy_params = beefy_gadget::BeefyParams {
+	// 		client: client.clone(),
+	// 		backend: backend.clone(),
+	// 		key_store: keystore_opt.clone(),
+	// 		network: network.clone(),
+	// 		signed_commitment_sender: beefy_link,
+	// 		min_block_delta: if chain_spec.is_wococo() { 4 } else { 8 },
+	// 		prometheus_registry: prometheus_registry.clone(),
+	// 	};
 	
-		// let gadget = beefy_gadget::start_beefy_gadget::<_, beefy_primitives::ecdsa::AuthorityPair, _, _, _>(
-		// 	beefy_params
-		// );
-		// task_manager.spawn_handle().spawn_blocking("beefy-gadget", gadget);
+	// 	let gadget = beefy_gadget::start_beefy_gadget::<_, beefy_primitives::ecdsa::AuthorityPair, _, _, _>(
+	// 		beefy_params
+	// 	);
+
+	// 	// Wococo's purpose is to be a testbed for BEEFY, so if it fails we'll
+	// 	// bring the node down with it to make sure it is noticed.
+	// 	if chain_spec.is_wococo() {
+	// 		task_manager.spawn_essential_handle().spawn_blocking("beefy-gadget", gadget);
+	// 	} else {
+	// 		task_manager.spawn_handle().spawn_blocking("beefy-gadget", gadget);
+	// 	}
 	// }
 
 	let config = grandpa::Config {
@@ -1062,9 +1084,8 @@ fn new_light<Runtime, Dispatch>(mut config: Configuration) -> Result<(
 		client.clone(),
 	)?;
 
-	let slot_duration = babe_link.config().slot_duration();
-
 	// FIXME: pruning task isn't started since light client doesn't do `AuthoritySetup`.
+	let slot_duration = babe_link.config().slot_duration();
 	let import_queue = babe::import_queue(
 		babe_link,
 		babe_block_import,
@@ -1176,7 +1197,8 @@ pub fn build_full(
 	jaeger_agent: Option<std::net::SocketAddr>,
 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 ) -> Result<NewFull<Client>, Error> {
-		new_full::<selendra_runtime::RuntimeApi, SelendraExecutor>(
+	
+	new_full::<selendra_runtime::RuntimeApi, SelendraExecutor>(
 		config,
 		is_collator,
 		grandpa_pause,

@@ -1,8 +1,10 @@
-
 [workspace]
 members = [
-	"bin",
-	"bin/service",
+	"bin/cli",
+	"primitives",
+	"primitives/core-primitives",
+	"runtime/common",
+	"runtime/common/slot_range_helper",
 	"runtime/selendra",
 	"modules/erasure-coding",
 	"modules/statement-table",
@@ -10,8 +12,6 @@ members = [
 	"modules/xcm/xcm-builder",
 	"modules/xcm/xcm-executor",
 	"modules/xcm/pallet-xcm",
-	"modules/parachain",
-	"modules/parachain/runtime-parachains",
 	"modules/node/collation-generation",
 	"modules/node/core/approval-voting",
 	"modules/node/core/av-store",
@@ -41,6 +41,9 @@ members = [
 	"modules/node/subsystem-util",
 	"modules/node/jaeger",
 	"modules/node/metered-channel",
+	"modules/parachain/test-parachains",
+	"modules/parachain/test-parachains/adder",
+	"modules/parachain/test-parachains/adder/collator",
 ]
 
 # make sure dev builds with backtrace do
@@ -51,4 +54,3 @@ opt-level = 3
 [profile.release]
 # Selendra runtime requires unwinding.
 panic = "unwind"
-

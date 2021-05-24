@@ -50,7 +50,7 @@ fn get_exec_name() -> Option<String> {
 }
 
 impl SubstrateCli for Cli {
-	fn impl_name() -> String { "Selendra".into() }
+	fn impl_name() -> String { "Selendra Chain".into() }
 
 	fn impl_version() -> String { env!("SUBSTRATE_CLI_IMPL_VERSION").into() }
 
@@ -91,9 +91,7 @@ impl SubstrateCli for Cli {
 
 fn set_default_ss58_version(_spec: &Box<dyn service::ChainSpec>) {
 	use sp_core::crypto::Ss58AddressFormat;
-
 	let ss58_version = Ss58AddressFormat::SubstrateAccount;
-
 	sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 
@@ -254,7 +252,6 @@ pub fn run() -> Result<()> {
 			set_default_ss58_version(chain_spec);
 
 			ensure_dev(chain_spec).map_err(Error::Other)?;
-			// else we assume it is selendra.
 			Ok(runner.sync_run(|config| {
 				cmd.run::<service::selendra_runtime::Block, service::SelendraExecutor>(config)
 					.map_err(|e| Error::SubstrateCli(e))
@@ -275,7 +272,6 @@ pub fn run() -> Result<()> {
 			).map_err(|e| Error::SubstrateService(sc_service::Error::Prometheus(e)))?;
 
 			ensure_dev(chain_spec).map_err(Error::Other)?;
-			// else we assume it is selendra.
 			runner.async_run(|config| {
 				Ok((cmd.run::<
 					service::selendra_runtime::Block,

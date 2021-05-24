@@ -26,7 +26,7 @@ pub enum NetworkId {
 	Any,
 	/// Some named network.
 	Named(Vec<u8>),
-	/// The Selendra Relay chain
+	/// Selendra.
 	Selendra,
 }
 

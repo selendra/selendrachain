@@ -37,6 +37,7 @@ use selendra_subsystem::messages::AllMessages;
 /// type, useful for the network bridge to send them via the `Overseer` to other subsystems.
 ///
 /// The resulting stream will end once any of its input ends.
+
 pub struct RequestMultiplexer {
 	receivers: Vec<(Protocol, mpsc::Receiver<network::IncomingRequest>)>,
 	statement_fetching: Option<mpsc::Receiver<network::IncomingRequest>>,

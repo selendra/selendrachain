@@ -272,7 +272,7 @@ pub struct HrmpChannelId {
 pub type UpwardMessage = Vec<u8>;
 
 /// Validation parameters for evaluating the parachain validity function.
-// TODO: balance downloads 
+// TODO: balance downloads
 #[derive(PartialEq, Eq, Decode, Clone)]
 #[cfg_attr(feature = "std", derive(Debug, Encode))]
 pub struct ValidationParams {
@@ -287,7 +287,7 @@ pub struct ValidationParams {
 }
 
 /// The result of parachain validation.
-// TODO: balance uploads 
+// TODO: balance uploads
 #[derive(PartialEq, Eq, Clone, Encode)]
 #[cfg_attr(feature = "std", derive(Debug, Decode))]
 pub struct ValidationResult {

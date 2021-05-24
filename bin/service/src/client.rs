@@ -100,15 +100,6 @@ impl<Block, Backend, Client> AbstractClient<Block, Backend> for Client
 {}
 
 /// Execute something with the client instance.
-///
-/// As there exist multiple chains inside Selendra, like Selendra itself etc,
-/// there can exist different kinds of client types. As these client types differ in the generics
-/// that are being used, we can not easily return them from a function. For returning them from a
-/// function there exists [`Client`]. However, the problem on how to use this client instance still
-/// exists. This trait "solves" it in a dirty way. It requires a type to implement this trait and
-/// than the [`execute_with_client`](ExecuteWithClient::execute_with_client) function can be called
-/// with any possible client instance.
-///
 /// In a perfect world, we could make a closure work in this way.
 pub trait ExecuteWithClient {
 	/// The return type when calling this instance.
@@ -126,7 +117,7 @@ pub trait ExecuteWithClient {
 
 /// A handle to a Selendra client instance.
 ///
-/// The Selendra service supports multiple different runtimes (Westend, Selendra itself, etc). As each runtime has a
+/// The Selendra service supports multiple different runtimes (Selendra itself, etc). As each runtime has a
 /// specialized client, we need to hide them behind a trait. This is this trait.
 ///
 /// When wanting to work with the inner client, you need to use `execute_with`.
@@ -158,7 +149,7 @@ impl ClientHandle for Client {
 impl sc_client_api::UsageProvider<Block> for Client {
 	fn usage_info(&self) -> sc_client_api::ClientInfo<Block> {
 		match self {
-			Self::Selendra(client) => client.usage_info(),
+			Self::Selendra(client) => client.usage_info()
 		}
 	}
 }
@@ -175,13 +166,13 @@ impl sc_client_api::BlockBackend<Block> for Client {
 
 	fn block(&self, id: &BlockId<Block>) -> sp_blockchain::Result<Option<SignedBlock<Block>>> {
 		match self {
-			Self::Selendra(client) => client.block(id),
+			Self::Selendra(client) => client.block(id)
 		}
 	}
 
 	fn block_status(&self, id: &BlockId<Block>) -> sp_blockchain::Result<BlockStatus> {
 		match self {
-			Self::Selendra(client) => client.block_status(id),
+			Self::Selendra(client) => client.block_status(id)
 		}
 	}
 
@@ -190,7 +181,7 @@ impl sc_client_api::BlockBackend<Block> for Client {
 		id: &BlockId<Block>
 	) -> sp_blockchain::Result<Option<Justifications>> {
 		match self {
-			Self::Selendra(client) => client.justifications(id),
+			Self::Selendra(client) => client.justifications(id)
 		}
 	}
 
@@ -199,7 +190,7 @@ impl sc_client_api::BlockBackend<Block> for Client {
 		number: NumberFor<Block>
 	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
 		match self {
-			Self::Selendra(client) => client.block_hash(number),
+			Self::Selendra(client) => client.block_hash(number)
 		}
 	}
 
@@ -208,7 +199,7 @@ impl sc_client_api::BlockBackend<Block> for Client {
 		id: &<Block as BlockT>::Hash
 	) -> sp_blockchain::Result<Option<Vec<u8>>> {
 		match self {
-			Self::Selendra(client) => client.indexed_transaction(id),
+			Self::Selendra(client) => client.indexed_transaction(id)
 		}
 	}
 
@@ -221,7 +212,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<StorageData>> {
 		match self {
-			Self::Selendra(client) => client.storage(id, key),
+			Self::Selendra(client) => client.storage(id, key)
 		}
 	}
 
@@ -231,7 +222,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		key_prefix: &StorageKey,
 	) -> sp_blockchain::Result<Vec<StorageKey>> {
 		match self {
-			Self::Selendra(client) => client.storage_keys(id, key_prefix),
+			Self::Selendra(client) => client.storage_keys(id, key_prefix)
 		}
 	}
 
@@ -241,7 +232,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
 		match self {
-			Self::Selendra(client) => client.storage_hash(id, key),
+			Self::Selendra(client) => client.storage_hash(id, key)
 		}
 	}
 
@@ -251,7 +242,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		key_prefix: &StorageKey,
 	) -> sp_blockchain::Result<Vec<(StorageKey, StorageData)>> {
 		match self {
-			Self::Selendra(client) => client.storage_pairs(id, key_prefix),
+			Self::Selendra(client) => client.storage_pairs(id, key_prefix)
 		}
 	}
 
@@ -262,7 +253,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		start_key: Option<&StorageKey>,
 	) -> sp_blockchain::Result<KeyIterator<'a, <crate::FullBackend as sc_client_api::Backend<Block>>::State, Block>> {
 		match self {
-			Self::Selendra(client) => client.storage_keys_iter(id, prefix, start_key),
+			Self::Selendra(client) => client.storage_keys_iter(id, prefix, start_key)
 		}
 	}
 
@@ -273,7 +264,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<StorageData>> {
 		match self {
-			Self::Selendra(client) => client.child_storage(id, child_info, key),
+			Self::Selendra(client) => client.child_storage(id, child_info, key)
 		}
 	}
 
@@ -284,7 +275,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		key_prefix: &StorageKey,
 	) -> sp_blockchain::Result<Vec<StorageKey>> {
 		match self {
-			Self::Selendra(client) => client.child_storage_keys(id, child_info, key_prefix),
+			Self::Selendra(client) => client.child_storage_keys(id, child_info, key_prefix)
 		}
 	}
 
@@ -295,7 +286,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
 		match self {
-			Self::Selendra(client) => client.child_storage_hash(id, child_info, key),
+			Self::Selendra(client) => client.child_storage_hash(id, child_info, key)
 		}
 	}
 
@@ -305,7 +296,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		last: BlockId<Block>,
 	) -> sp_blockchain::Result<Option<(NumberFor<Block>, BlockId<Block>)>> {
 		match self {
-			Self::Selendra(client) => client.max_key_changes_range(first, last),
+			Self::Selendra(client) => client.max_key_changes_range(first, last)
 		}
 	}
 
@@ -317,7 +308,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Vec<(NumberFor<Block>, u32)>> {
 		match self {
-			Self::Selendra(client) => client.key_changes(first, last, storage_key, key),
+			Self::Selendra(client) => client.key_changes(first, last, storage_key, key)
 		}
 	}
 }
@@ -325,31 +316,31 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 impl sp_blockchain::HeaderBackend<Block> for Client {
 	fn header(&self, id: BlockId<Block>) -> sp_blockchain::Result<Option<Header>> {
 		match self {
-			Self::Selendra(client) => client.header(&id),
+			Self::Selendra(client) => client.header(&id)
 		}
 	}
 
 	fn info(&self) -> sp_blockchain::Info<Block> {
 		match self {
-			Self::Selendra(client) => client.info(),
+			Self::Selendra(client) => client.info()
 		}
 	}
 
 	fn status(&self, id: BlockId<Block>) -> sp_blockchain::Result<sp_blockchain::BlockStatus> {
 		match self {
-			Self::Selendra(client) => client.status(id),
+			Self::Selendra(client) => client.status(id)
 		}
 	}
 
 	fn number(&self, hash: Hash) -> sp_blockchain::Result<Option<BlockNumber>> {
 		match self {
-			Self::Selendra(client) => client.number(hash),
+			Self::Selendra(client) => client.number(hash)
 		}
 	}
 
 	fn hash(&self, number: BlockNumber) -> sp_blockchain::Result<Option<Hash>> {
 		match self {
-			Self::Selendra(client) => client.hash(number),
+			Self::Selendra(client) => client.hash(number)
 		}
 	}
 }

@@ -18,9 +18,9 @@ selendra-node-subsystem = { path = "../subsystem" }
 selendra-node-subsystem-util = { path = "../subsystem-util" }
 selendra-primitives = { path = "../../../primitives" }
 selendra-statement-table = { path = "../../statement-table" }
-sc-network = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "master" }
 smallvec = "1.6.1"
-sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn1" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 [dev-dependencies]
 selendra-overseer = { path = "../overseer" }

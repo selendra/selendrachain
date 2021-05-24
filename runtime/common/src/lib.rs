@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Common runtime code for Selendra .
+//! Common runtime code for Selendra Chain.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -30,6 +30,8 @@ pub mod xcm_sender;
 
 #[cfg(test)]
 mod mock;
+#[cfg(test)]
+mod integration_tests;
 
 use beefy_primitives::ecdsa::AuthorityId as BeefyId;
 use primitives::v1::{AccountId, AssignmentId, BlockNumber, ValidatorId};

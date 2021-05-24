@@ -1,0 +1,24 @@
+[package]
+name = "test-parachains"
+version = "0.1.0-tn2"
+authors = ["Selendra <info@selendra.org>"]
+description = "Integration tests using the test-parachains"
+edition = "2018"
+
+[dependencies]
+tiny-keccak = "2.0.2"
+parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
+
+parachain = { package = "selendra-parachain", path = ".." }
+adder = { package = "test-parachain-adder", path = "adder" }
+halt = { package = "test-parachain-halt", path = "halt" }
+
+[dev-dependencies]
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
+
+[features]
+default = [ "std" ]
+std = [
+	"adder/std",
+	"halt/std",
+]

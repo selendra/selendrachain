@@ -24,9 +24,9 @@ ROOT / STASH 2
   Account ID:       0x927fb6d773e8101c52d720fc4bfe2e52e132ce6331b2ed255c2602c6c2dbce15
   Babe:             5FNnnczJWQygRJpoYBrgVWkAV6dGSDcy5iTVZwDPCNdmz6TG
 
-./target/release/indracore \
+./target/release/selendra \
   --base-path node1 \
-  --chain indracore \
+  --chain selendra \
   --port 30333 \
   --ws-port 9945 \
   --rpc-port 9933 \
@@ -35,9 +35,9 @@ ROOT / STASH 2
   --rpc-methods Unsafe \
   --name MyNode01
 
-./target/release/indracore \
+./target/release/selendra \
   --base-path node2 \
-  --chain indracore \
+  --chain selendra \
   --port 30334 \
   --ws-port 9946 \
   --rpc-port 9934 \
@@ -47,16 +47,16 @@ ROOT / STASH 2
   --name MyNode02 \
   --bootnodes /ip4/192.168.1.138/tcp/30333/p2p/12D3KooWNi34aZxcLc5UAcYpVrFd7ke2Hu4pu1r8N6a47dMNrUsQ
 
-./target/release/indracore build-spec --disable-default-bootnode --chain indracore-local > customSpec.json
-./target/release/indracore build-spec --chain=customSpec.json --raw --disable-default-bootnode > indracore.json
+./target/release/selendra build-spec --disable-default-bootnode --chain selendra-local > customSpec.json
+./target/release/selendra build-spec --chain=customSpec.json --raw --disable-default-bootnode > selendra.json
 
 
-./target/release/indracore build-spec --chain indracore-local --disable-default-bootnode --raw > indracore.json
+./target/release/selendra build-spec --chain selendra-local --disable-default-bootnode --raw > selendra.json
 
 
 
 # Alice
-./target/release/indracore --chain indracore.json --alice --tmp
+./target/release/selendra --chain selendra.json --alice --tmp
 
 # Bob (In a separate terminal)
-./target/release/indracore --chain indracore.json --bob --tmp --port 30334
+./target/release/selendra --chain selendra.json --bob --tmp --port 30334

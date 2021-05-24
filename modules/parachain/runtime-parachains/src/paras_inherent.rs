@@ -31,7 +31,7 @@ use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
 	weights::{DispatchClass, Weight},
 	traits::Get,
-	inherent::{InherentIdentifier, InherentData, MakeFatalError, ProvideInherent}
+	inherent::{InherentIdentifier, InherentData, MakeFatalError, ProvideInherent},
 };
 use frame_system::ensure_none;
 use crate::{
