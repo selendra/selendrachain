@@ -23,3 +23,4 @@ rls*.log
 .cargo/
 hfuzz_target/
 hfuzz_workspace/
+run.txt
