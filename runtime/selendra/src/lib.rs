@@ -886,7 +886,11 @@ impl InstanceFilter<Call> for ProxyType {
 				// Specifically omitting Vesting `vested_transfer`, and `force_vested_transfer`
 				Call::Scheduler(..) |
 				Call::Proxy(..) |
-				Call::Multisig(..)
+				Call::Multisig(..) |
+				Call::Registrar(paras_registrar::Call::register(..)) |
+				Call::Registrar(paras_registrar::Call::deregister(..)) |
+				// Specifically omitting Registrar `swap`
+				Call::Registrar(paras_registrar::Call::reserve(..)) 
 			),
 			ProxyType::Governance => matches!(c,
 				Call::Democracy(..) |
