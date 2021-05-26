@@ -33,7 +33,7 @@ pub use selendra_test_service::{
 pub use selendra_test_runtime as runtime;
 
 /// Test client executor.
-pub type Executor = client::LocalCallExecutor<FullBackend, sc_executor::NativeExecutor<SelendraTestExecutor>>;
+pub type Executor = client::LocalCallExecutor<Block, FullBackend, sc_executor::NativeExecutor<SelendraTestExecutor>>;
 
 /// Test client builder for Selendra.
 pub type TestClientBuilder = substrate_test_client::TestClientBuilder<Block, Executor, FullBackend, GenesisParameters>;
