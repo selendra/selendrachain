@@ -952,7 +952,7 @@ pub fn new_full<RuntimeApi, Executor>(
 		name: Some(name),
 		observer_enabled: false,
 		keystore: keystore_opt,
-		is_authority: role.is_authority(),
+		local_role: role,
 		telemetry: telemetry.as_ref().map(|x| x.handle()),
 	};
 
@@ -1060,6 +1060,8 @@ fn new_light<Runtime, Dispatch>(mut config: Configuration) -> Result<(
 			telemetry
 		});
 
+	config.network.extra_sets.push(grandpa::grandpa_peers_set_config());
+
 	let select_chain = sc_consensus::LongestChain::new(backend.clone());
 
 	let transaction_pool = Arc::new(sc_transaction_pool::BasicPool::new_light(
@@ -1070,7 +1072,7 @@ fn new_light<Runtime, Dispatch>(mut config: Configuration) -> Result<(
 		on_demand.clone(),
 	));
 
-	let (grandpa_block_import, _) = grandpa::block_import(
+	let (grandpa_block_import, grandpa_link) = grandpa::block_import(
 		client.clone(),
 		&(client.clone() as Arc<_>),
 		select_chain.clone(),
@@ -1119,6 +1121,26 @@ fn new_light<Runtime, Dispatch>(mut config: Configuration) -> Result<(
 			on_demand: Some(on_demand.clone()),
 			block_announce_validator_builder: None,
 		})?;
+
+	let enable_grandpa = !config.disable_grandpa;
+	if enable_grandpa {
+		let name = config.network.node_name.clone();
+
+		let config = grandpa::Config {
+			gossip_duration: Duration::from_millis(1000),
+			justification_period: 512,
+			name: Some(name),
+			observer_enabled: false,
+			keystore: None,
+			local_role: config.role.clone(),
+			telemetry: telemetry.as_ref().map(|x| x.handle()),
+		};
+
+		task_manager.spawn_handle().spawn_blocking(
+			"grandpa-observer",
+			grandpa::run_grandpa_observer(config, grandpa_link, network.clone())?,
+		);
+	}	
 
 	if config.offchain_worker.enabled {
 		let _ = service::build_offchain_workers(
