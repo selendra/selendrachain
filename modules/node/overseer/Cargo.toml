@@ -15,7 +15,7 @@ selendra-node-subsystem-util = { path = "../subsystem-util" }
 selendra-procmacro-overseer-subsystems-gen = { path = "./subsystems-gen" }
 selendra-primitives = { path = "../../../primitives" }
 selendra-subsystem = { package = "selendra-node-subsystem", path = "../subsystem" }
-tracing = "0.1.25"
+tracing = "0.1.26"
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }

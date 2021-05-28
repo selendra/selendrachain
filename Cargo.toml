@@ -1,5 +1,6 @@
 [workspace]
 members = [
+	"bin",
 	"bin/cli",
 	"primitives",
 	"primitives/core-primitives",

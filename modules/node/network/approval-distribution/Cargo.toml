@@ -12,7 +12,7 @@ selendra-node-subsystem-util = { path = "../../subsystem-util" }
 selendra-primitives = { path = "../../../../primitives" }
 
 futures = "0.3.8"
-tracing = "0.1.25"
+tracing = "0.1.26"
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "master", features = ["std"] }
