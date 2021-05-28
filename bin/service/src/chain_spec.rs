@@ -32,7 +32,7 @@ use sp_runtime::{traits::IdentifyAccount, Perbill};
 use telemetry::TelemetryEndpoints;
 
 const SELENDRA_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
-const DEFAULT_PROTOCOL_ID: &str = "dot";
+const DEFAULT_PROTOCOL_ID: &str = "sel";
 
 /// Node `ChainSpec` extensions.
 ///

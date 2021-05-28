@@ -27,7 +27,7 @@ use sc_chain_spec::{ChainSpec, ChainType};
 use sp_core::sr25519;
 use sp_runtime::Perbill;
 
-const DEFAULT_PROTOCOL_ID: &str = "dot";
+const DEFAULT_PROTOCOL_ID: &str = "sel";
 
 /// The `ChainSpec` parametrized for selendra test runtime.
 pub type SelendraChainSpec =
