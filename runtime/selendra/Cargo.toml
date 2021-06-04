@@ -71,6 +71,7 @@ pallet-utility = { git = "https://github.com/paritytech/substrate", branch = "ma
 pallet-vesting = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 pallet-xcm = { path = "../../modules/xcm/pallet-xcm", default-features = false }
 pallet-sudo = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+max-encoded-len = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false, optional = true }
 frame-try-runtime = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false, optional = true }
@@ -170,6 +171,7 @@ std = [
 	"xcm/std",
 	"xcm-executor/std",
 	"xcm-builder/std",
+	"max-encoded-len/std",
 ]
 runtime-benchmarks = [
 	"runtime-common/runtime-benchmarks",
