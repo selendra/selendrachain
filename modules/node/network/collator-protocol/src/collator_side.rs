@@ -921,7 +921,7 @@ mod tests {
 	use selendra_subsystem::{
 		jaeger,
 		messages::{RuntimeApiMessage, RuntimeApiRequest},
-		ActiveLeavesUpdate, ActivatedLeaf,
+		ActiveLeavesUpdate, ActivatedLeaf, LeafStatus,
 	};
 	use selendra_subsystem_testhelpers as test_helpers;
 
@@ -1159,6 +1159,7 @@ mod tests {
 				activated: vec![ActivatedLeaf {
 					hash: test_state.relay_parent,
 					number: 1,
+					status: LeafStatus::Fresh,
 					span: Arc::new(jaeger::Span::Disabled),
 				}].into(),
 				deactivated: [][..].into(),

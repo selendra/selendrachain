@@ -7892,6 +7892,7 @@ dependencies = [
  "futures 0.3.14",
  "futures-timer 3.0.2",
  "kv-log-macro",
+ "lru",
  "sc-client-api",
  "selendra-node-network-protocol",
  "selendra-node-primitives",

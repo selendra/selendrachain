@@ -29,7 +29,7 @@ use sc_network as network;
 use sc_network::IfDisconnected;
 use sc_network::config as netconfig;
 
-use selendra_subsystem::{ActiveLeavesUpdate, FromOverseer, OverseerSignal, ActivatedLeaf,
+use selendra_subsystem::{ActiveLeavesUpdate, FromOverseer, OverseerSignal, ActivatedLeaf, LeafStatus,
 	messages::{
 		AllMessages, AvailabilityDistributionMessage, AvailabilityStoreMessage, NetworkBridgeMessage,
 		RuntimeApiMessage, RuntimeApiRequest,
@@ -173,6 +173,7 @@ impl TestState {
 				activated: smallvec![ActivatedLeaf {
 					hash: new.clone(),
 					number: 1,
+					status: LeafStatus::Fresh,
 					span: Arc::new(jaeger::Span::Disabled),
 				}],
 				deactivated: smallvec![old.clone()],

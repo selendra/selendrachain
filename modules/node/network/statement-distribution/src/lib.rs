@@ -902,7 +902,7 @@ async fn circulate_statement_and_dependents(
 
 fn statement_message(relay_parent: Hash, statement: SignedFullStatement)
 	-> protocol_v1::ValidationProtocol
-{ 
+{
 	let msg = if is_statement_large(&statement) {
 		protocol_v1::StatementDistributionMessage::LargeStatement(
 			StatementMetadata {
@@ -1197,7 +1197,7 @@ async fn retrieve_statement_from_message<'a>(
 					).await {
 						vacant.insert(new_status);
 					}
-				} 
+				}
 				protocol_v1::StatementDistributionMessage::Statement(_, s) => {
 					// No fetch in progress, safe to return any statement immediately (we don't bother
 					// about normal network jitter which might cause `Valid` statements to arrive early
@@ -1593,7 +1593,7 @@ impl StatementDistribution {
 					match result {
 						Ok(true) => break,
 						Ok(false) => {}
-						Err(Error(Fault::Fatal(f))) => return Err(f), 
+						Err(Error(Fault::Fatal(f))) => return Err(f),
 						Err(Error(Fault::Err(error))) =>
 							tracing::debug!(target: LOG_TARGET, ?error)
 					}
@@ -2071,7 +2071,9 @@ mod tests {
 	use sp_keystore::{CryptoStore, SyncCryptoStorePtr, SyncCryptoStore};
 	use sc_keystore::LocalKeystore;
 	use selendra_node_network_protocol::{view, ObservedRole, request_response::Recipient};
-	use selendra_subsystem::{jaeger, ActivatedLeaf, messages::{RuntimeApiMessage, RuntimeApiRequest}};
+	use selendra_subsystem::{
+		jaeger, ActivatedLeaf, messages::{RuntimeApiMessage, RuntimeApiRequest}, LeafStatus,
+	};
 	use selendra_node_network_protocol::request_response::{
 		Requests,
 		v1::{
@@ -2689,6 +2691,7 @@ mod tests {
 				activated: vec![ActivatedLeaf {
 					hash: hash_a,
 					number: 1,
+					status: LeafStatus::Fresh,
 					span: Arc::new(jaeger::Span::Disabled),
 				}].into(),
 				deactivated: vec![].into(),
@@ -2864,6 +2867,7 @@ mod tests {
 				activated: vec![ActivatedLeaf {
 					hash: hash_a,
 					number: 1,
+					status: LeafStatus::Fresh,
 					span: Arc::new(jaeger::Span::Disabled),
 				}].into(),
 				deactivated: vec![].into(),
@@ -3335,6 +3339,7 @@ mod tests {
 				activated: vec![ActivatedLeaf {
 					hash: hash_a,
 					number: 1,
+					status: LeafStatus::Fresh,
 					span: Arc::new(jaeger::Span::Disabled),
 				}].into(),
 				deactivated: vec![].into(),
@@ -3590,6 +3595,7 @@ mod tests {
 				activated: vec![ActivatedLeaf {
 					hash: hash_a,
 					number: 1,
+					status: LeafStatus::Fresh,
 					span: Arc::new(jaeger::Span::Disabled),
 				}].into(),
 				deactivated: vec![].into(),
@@ -3633,7 +3639,7 @@ mod tests {
 					NetworkBridgeEvent::PeerViewChange(peer_a.clone(), view![hash_a])
 				)
 			}).await;
-			
+
 			// receive a seconded statement from peer A.
 			let statement = {
 				let signing_context = SigningContext {
