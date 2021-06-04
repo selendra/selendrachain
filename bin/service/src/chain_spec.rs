@@ -165,6 +165,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 			key: endowed_accounts[0].clone(),
 		},
 		parachains_configuration: Default::default(),
+		parachains_paras: Default::default(),
 	}
 }
 
@@ -361,6 +362,7 @@ pub fn selendra_testnet_genesis(
 			key: endowed_accounts[0].clone(),
 		},
 		parachains_configuration: Default::default(),
+		parachains_paras: Default::default(),
 	}
 }
 
