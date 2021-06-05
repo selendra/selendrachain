@@ -1,6 +1,6 @@
 [package]
 name = "test-parachains"
-version = "0.1.0-tn2"
+version = "0.1.0-tn3"
 authors = ["Selendra <info@selendra.org>"]
 description = "Integration tests using the test-parachains"
 edition = "2018"
