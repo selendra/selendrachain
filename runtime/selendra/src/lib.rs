@@ -971,7 +971,8 @@ parameter_types! {
 }
 
 impl parachains_ump::Config for Runtime {
-	type UmpSink = crate::parachains_ump::XcmSink<XcmExecutor<XcmConfig>, Call>;
+	type Event = Event;
+	type UmpSink = crate::parachains_ump::XcmSink<XcmExecutor<XcmConfig>, Runtime>;
 	type FirstMessageFactorPercent = FirstMessageFactorPercent;
 }
 
@@ -1278,7 +1279,7 @@ construct_runtime! {
 		Paras: parachains_paras::{Pallet, Call, Storage, Event, Config<T>},
 		ParasInitializer: parachains_initializer::{Pallet, Call, Storage},
 		ParasDmp: parachains_dmp::{Pallet, Call, Storage},
-		ParasUmp: parachains_ump::{Pallet, Call, Storage},
+		ParasUmp: parachains_ump::{Pallet, Call, Storage, Event},
 		ParasHrmp: parachains_hrmp::{Pallet, Call, Storage, Event},
 		ParasSessionInfo: parachains_session_info::{Pallet, Call, Storage},
 
