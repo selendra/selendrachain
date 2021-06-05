@@ -132,8 +132,8 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		AuthorityDiscoveryId,
 	)> = vec![];
 
-	const ENDOWMENT: u128 = 1_000_000 * SELS;
-	const STASH: u128 = 100 * SELS;
+08[]	const ENDOWMENT: u128 = 1570700000 * SELS;
+	const STASH: u128 = 96327 * SELS;
 
 	selendra::GenesisConfig {
 		frame_system: selendra::SystemConfig {
