@@ -132,7 +132,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		AuthorityDiscoveryId,
 	)> = vec![];
 
-08[]	const ENDOWMENT: u128 = 1570700000 * SELS;
+	const ENDOWMENT: u128 = 1570700000 * SELS;
 	const STASH: u128 = 96327 * SELS;
 
 	selendra::GenesisConfig {
