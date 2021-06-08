@@ -1,0 +1,53 @@
+[package]
+name = "cumulus-client-pov-recovery"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+description = "Cumulus-specific networking protocol"
+edition = "2018"
+
+[dependencies]
+# Substrate deps
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
+
+# Selendra deps
+selendra-primitives = { path = "../../../../primitives" }
+selendra-statement-table = { path = "../../../statement-table" }
+selendra-node-primitives = { path = "../../../node/primitives" }
+selendra-service = { path = "../../../../bin/service" }
+selendra-parachain = { path = "../../../parachain" }
+selendra-overseer = { path = "../../../node/overseer" }
+selendra-node-subsystem = { path = "../../../node/subsystem" }
+
+# Cumulus deps
+cumulus-primitives-core = { path = "../../primitives/core" }
+
+# other deps
+codec = { package = "parity-scale-codec", version = "2.0.0", features = [ "derive" ] }
+futures = { version = "0.3.1", features = ["compat"] }
+futures-timer = "3.0.2"
+tracing = "0.1.22"
+rand = "0.8.3"
+
+[dev-dependencies]
+tokio = { version = "0.2.21", features = ["macros"] }
+
+# Cumulus deps
+cumulus-test-service = { path = "../../test/service" }
+
+# Selendra deps
+selendra-test-client = { path = "../../../../bin/test/client" }
+
+# substrate deps
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "master" }
+substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "master" }
