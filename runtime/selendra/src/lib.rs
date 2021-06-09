@@ -1093,11 +1093,11 @@ pub type XcmRouter = (
 );
 
 parameter_types! {
-	pub const SelendraForStatemint: (MultiAsset, MultiLocation) =
-		(AllConcreteFungible { id: Null }, X1(Parachain(1000)));
+	pub const SelendraForEvm: (MultiAsset, MultiLocation) =
+		(AllConcreteFungible { id: Null }, X1(Parachain(100)));
 }
 pub type TrustedTeleporters = (
-	xcm_builder::Case<SelendraForStatemint>,
+	xcm_builder::Case<SelendraForEvm>,
 );
 
 /// The barriers one of which must be passed for an XCM message to be executed.
