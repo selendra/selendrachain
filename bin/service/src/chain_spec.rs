@@ -22,7 +22,7 @@ use beefy_primitives::ecdsa::AuthorityId as BeefyId;
 use grandpa::AuthorityId as GrandpaId;
 use selendra_runtime as selendra;
 use selendra_runtime::constants::paras::{MAX_CODE_SIZE, MAX_POV_SIZE};
-use selendra_runtime::constants::currency::SELS as SELS;
+use selendra_runtime::constants::currency::SELS;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_staking::Forcing;
 use selendra_primitives::v1::{AccountId, AccountPublic, AssignmentId, ValidatorId, BlockNumber};
@@ -33,7 +33,7 @@ use sp_runtime::{traits::IdentifyAccount, Perbill};
 use telemetry::TelemetryEndpoints;
 
 const SELENDRA_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
-const DEFAULT_PROTOCOL_ID: &str = "dot";
+const DEFAULT_PROTOCOL_ID: &str = "sel";
 
 /// Node `ChainSpec` extensions.
 ///
