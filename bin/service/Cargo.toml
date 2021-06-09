@@ -95,7 +95,6 @@ selendra-node-collation-generation = { path = "../../modules/node/collation-gene
 selendra-node-core-av-store = { path = "../../modules/node/core/av-store", optional = true }
 selendra-node-core-backing = { path = "../../modules/node/core/backing", optional = true }
 selendra-node-core-bitfield-signing = { path = "../../modules/node/core/bitfield-signing", optional = true }
-selendra-node-core-candidate-selection = { path = "../../modules/node/core/candidate-selection", optional = true }
 selendra-node-core-candidate-validation = { path = "../../modules/node/core/candidate-validation", optional = true }
 selendra-node-core-chain-api = { path = "../../modules/node/core/chain-api", optional = true }
 selendra-node-core-provisioner = { path = "../../modules/node/core/provisioner", optional = true }
@@ -123,7 +122,6 @@ full-node = [
 	"selendra-node-collation-generation",
 	"selendra-node-core-backing",
 	"selendra-node-core-bitfield-signing",
-	"selendra-node-core-candidate-selection",
 	"selendra-node-core-candidate-validation",
 	"selendra-node-core-chain-api",
 	"selendra-node-core-provisioner",

@@ -18,7 +18,6 @@ members = [
 	"modules/node/core/av-store",
 	"modules/node/core/backing",
 	"modules/node/core/bitfield-signing",
-	"modules/node/core/candidate-selection",
 	"modules/node/core/candidate-validation",
 	"modules/node/core/chain-api",
 	"modules/node/core/parachains-inherent",

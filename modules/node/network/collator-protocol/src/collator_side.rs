@@ -570,28 +570,10 @@ async fn process_msg(
 				}
 			}
 		}
-		FetchCollation(_, _, _, _) => {
-			tracing::warn!(
-				target: LOG_TARGET,
-				"FetchCollation message is not expected on the collator side of the protocol",
-			);
-		}
 		ReportCollator(_) => {
 			tracing::warn!(
 				target: LOG_TARGET,
 				"ReportCollator message is not expected on the collator side of the protocol",
-			);
-		}
-		NoteGoodCollation(_) => {
-			tracing::warn!(
-				target: LOG_TARGET,
-				"NoteGoodCollation message is not expected on the collator side of the protocol",
-			);
-		}
-		NotifyCollationSeconded(_, _, _) => {
-			tracing::warn!(
-				target: LOG_TARGET,
-				"NotifyCollationSeconded message is not expected on the collator side of the protocol",
 			);
 		}
 		NetworkBridgeUpdateV1(event) => {
@@ -646,6 +628,7 @@ async fn process_msg(
 				}
 			}
 		}
+		_ => {},
 	}
 
 	Ok(())
@@ -1048,7 +1031,7 @@ mod tests {
 
 		/// Generate a new relay parent and inform the subsystem about the new view.
 		///
-		/// If `merge_views == true` it means the subsystem will be informed that we working on the old `relay_parent`
+		/// If `merge_views == true` it means the subsystem will be informed that we are working on the old `relay_parent`
 		/// and the new one.
 		async fn advance_to_new_round(&mut self, virtual_overseer: &mut VirtualOverseer, merge_views: bool) {
 			let old_relay_parent = self.relay_parent;
@@ -1340,7 +1323,7 @@ mod tests {
 		);
 	}
 
-	/// Check that the next received message is a collation advertisment message.
+	/// Check that the next received message is a collation advertisement message.
 	async fn expect_advertise_collation_msg(
 		virtual_overseer: &mut VirtualOverseer,
 		peer: &PeerId,

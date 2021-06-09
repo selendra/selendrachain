@@ -395,7 +395,6 @@ where
 	use selendra_availability_bitfield_distribution::BitfieldDistribution as BitfieldDistributionSubsystem;
 	use selendra_node_core_bitfield_signing::BitfieldSigningSubsystem;
 	use selendra_node_core_backing::CandidateBackingSubsystem;
-	use selendra_node_core_candidate_selection::CandidateSelectionSubsystem;
 	use selendra_node_core_candidate_validation::CandidateValidationSubsystem;
 	use selendra_node_core_chain_api::ChainApiSubsystem;
 	use selendra_node_collation_generation::CollationGenerationSubsystem;
@@ -430,11 +429,6 @@ where
 			Metrics::register(registry)?,
 		),
 		candidate_backing: CandidateBackingSubsystem::new(
-			spawner.clone(),
-			keystore.clone(),
-			Metrics::register(registry)?,
-		),
-		candidate_selection: CandidateSelectionSubsystem::new(
 			spawner.clone(),
 			keystore.clone(),
 			Metrics::register(registry)?,
