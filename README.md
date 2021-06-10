@@ -133,6 +133,41 @@ $ cargo run --release --features=runtime-benchmarks -- benchmark --chain=selendr
 
 ```
 
+## Relaychain and parachain
+
+### Launch the Relay Chain
+```bash
+# Generate a raw chain spec
+./target/release/selendra build-spec --chain selendra-local --disable-default-bootnode --raw > selendra-local.json
+
+# Alice
+./target/release/selendra --chain selendra-local.json--alice --tmp
+
+# Bob (In a separate terminal)
+./target/release/selendra --chain selendra-local.json --bob --tmp --port 30334
+```
+### Launch the Parachain
+
+```bash
+# Export genesis state
+./target/release/selendra-collator export-genesis-state --parachain-id 100 > genesis-state
+
+# Export genesis wasm
+./target/release/selendra-collator export-genesis-wasm > genesis-wasm
+
+# Collator
+./target/release/selendra-collator \
+-d /tmp/parachain/alice \
+--collator \
+--alice \
+--force-authoring \
+--ws-port 9946 \
+--parachain-id 100 \
+-- \
+--execution wasm \
+--chain selendra-local.json
+```
+
 ## License
 
 selendra is implement from [Polkadot](https://github.com/paritytech/polkadot.git) under license [GPL 3.0 licensed](LICENSE-GPL3).
