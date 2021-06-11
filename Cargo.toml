@@ -7,8 +7,6 @@ members = [
 	"runtime/common",
 	"runtime/common/slot_range_helper",
 	"runtime/selendra",
-	"selendra-parachain/runtime",
-	"selendra-parachain/node",
 	"modules/erasure-coding",
 	"modules/statement-table",
 	"modules/xcm",
