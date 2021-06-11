@@ -5,7 +5,7 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
-futures = "0.3.12"
+futures = "0.3.15"
 tracing = "0.1.26"
 sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "master" }
 selendra-primitives = { path = "../../../../primitives" }
@@ -13,7 +13,7 @@ selendra-subsystem = { package = "selendra-node-subsystem", path = "../../subsys
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 
 [dev-dependencies]
-futures = { version = "0.3.12", features = ["thread-pool"] }
+futures = { version = "0.3.15", features = ["thread-pool"] }
 maplit = "1.0.2"
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
