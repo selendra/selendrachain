@@ -66,13 +66,13 @@ fn selendra_genesis(
 ) -> selendra_parachain_runtime::GenesisConfig {
 
 	selendra_parachain_runtime::GenesisConfig {
-		frame_system: selendra_parachain_runtime::SystemConfig {
+		system: selendra_parachain_runtime::SystemConfig {
 			code: selendra_parachain_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		pallet_balances: selendra_parachain_runtime::BalancesConfig {
+		balances: selendra_parachain_runtime::BalancesConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
@@ -80,21 +80,21 @@ fn selendra_genesis(
 				.collect(),
 		},
 		parachain_info: selendra_parachain_runtime::ParachainInfoConfig { parachain_id: id },
-		pallet_collator_selection: selendra_parachain_runtime::CollatorSelectionConfig {
+		collator_selection: selendra_parachain_runtime::CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
 			candidacy_bond: SELENDRA_ED,
 			..Default::default()
 		},
-		pallet_session: selendra_parachain_runtime::SessionConfig {
+		session: selendra_parachain_runtime::SessionConfig {
 			keys: invulnerables.iter().cloned().map(|(acc, aura)| (
 				acc.clone(), // account id
 				acc.clone(), // validator id
 				selendra_session_keys(aura), // session keys
 			)).collect()
 		},
-		pallet_aura: Default::default(),
-		cumulus_pallet_aura_ext: Default::default(),
-		cumulus_pallet_parachain_system: Default::default(),
+		aura: Default::default(),
+		aura_ext: Default::default(),
+		parachain_system: Default::default(),
 	}
 }
 

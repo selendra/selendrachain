@@ -136,19 +136,19 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 	const STASH: u128 = 96327 * SELS;
 
 	selendra::GenesisConfig {
-		frame_system: selendra::SystemConfig {
+		system: selendra::SystemConfig {
 			code: wasm_binary.to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		pallet_balances: selendra::BalancesConfig {
+		balances: selendra::BalancesConfig {
 			balances: endowed_accounts
 				.iter()
 				.map(|k: &AccountId| (k.clone(), ENDOWMENT))
 				.chain(initial_authorities.iter().map(|x| (x.0.clone(), STASH)))
 				.collect(),
 		},
-		pallet_indices: selendra::IndicesConfig { indices: vec![] },
-		pallet_session: selendra::SessionConfig {
+		indices: selendra::IndicesConfig { indices: vec![] },
+		session: selendra::SessionConfig {
 			keys: initial_authorities
 				.iter()
 				.map(|x| {
@@ -167,7 +167,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 				})
 				.collect::<Vec<_>>(),
 		},
-		pallet_staking: selendra::StakingConfig {
+		staking: selendra::StakingConfig {
 			validator_count: 50,
 			minimum_validator_count: 4,
 			stakers: initial_authorities
@@ -186,33 +186,33 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 			slash_reward_fraction: Perbill::from_percent(10),
 			..Default::default()
 		},
-		pallet_elections_phragmen: Default::default(),
-		pallet_democracy: Default::default(),
-		pallet_collective_Instance1: selendra::CouncilConfig {
+		phragmen_election: Default::default(),
+		democracy: Default::default(),
+		council: selendra::CouncilConfig {
 			members: endowed_accounts.clone(),
 			phantom: Default::default(),
 		},
-		pallet_collective_Instance2: selendra::TechnicalCommitteeConfig {
+		technical_committee: selendra::TechnicalCommitteeConfig {
 			members: endowed_accounts.clone(),
 			phantom: Default::default(),
 		},
-		pallet_membership_Instance1: Default::default(),
-		pallet_babe: selendra::BabeConfig {
+		technical_membership: Default::default(),
+		babe: selendra::BabeConfig {
 			authorities: Default::default(),
 			epoch_config: Some(selendra::BABE_GENESIS_EPOCH_CONFIG),
 		},
-		pallet_grandpa: Default::default(),
-		pallet_im_online: Default::default(),
-		pallet_authority_discovery: selendra::AuthorityDiscoveryConfig { keys: vec![] },
-		pallet_vesting: selendra::VestingConfig { vesting: vec![] },
-		pallet_treasury: Default::default(),
-		pallet_sudo: selendra::SudoConfig {
+		grandpa: Default::default(),
+		im_online: Default::default(),
+		authority_discovery: selendra::AuthorityDiscoveryConfig { keys: vec![] },
+		vesting: selendra::VestingConfig { vesting: vec![] },
+		treasury: Default::default(),
+		sudo: selendra::SudoConfig {
 			key: endowed_accounts[0].clone(),
 		},
 		parachains_configuration: selendra::ParachainsConfigurationConfig {
 			config: default_parachains_host_configuration(),
 		},
-		parachains_paras: Default::default(),
+		paras: Default::default(),
 	}
 }
 
@@ -336,18 +336,18 @@ pub fn selendra_testnet_genesis(
 	const STASH: u128 = 96327 * SELS;
 
 	selendra::GenesisConfig {
-		frame_system: selendra::SystemConfig {
+		system: selendra::SystemConfig {
 			code: wasm_binary.to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		pallet_indices: selendra::IndicesConfig { indices: vec![] },
-		pallet_balances: selendra::BalancesConfig {
+		indices: selendra::IndicesConfig { indices: vec![] },
+		balances: selendra::BalancesConfig {
 			balances: endowed_accounts
 				.iter()
 				.map(|k| (k.clone(), ENDOWMENT))
 				.collect(),
 		},
-		pallet_session: selendra::SessionConfig {
+		session: selendra::SessionConfig {
 			keys: initial_authorities
 				.iter()
 				.map(|x| {
@@ -366,7 +366,7 @@ pub fn selendra_testnet_genesis(
 				})
 				.collect::<Vec<_>>(),
 		},
-		pallet_staking: selendra::StakingConfig {
+		staking: selendra::StakingConfig {
 			minimum_validator_count: 1,
 			validator_count: 2,
 			stakers: initial_authorities
@@ -385,33 +385,33 @@ pub fn selendra_testnet_genesis(
 			slash_reward_fraction: Perbill::from_percent(10),
 			..Default::default()
 		},
-		pallet_elections_phragmen: Default::default(),
-		pallet_democracy: selendra::DemocracyConfig::default(),
-		pallet_collective_Instance1: selendra::CouncilConfig {
+		phragmen_election: Default::default(),
+		democracy: selendra::DemocracyConfig::default(),
+		council: selendra::CouncilConfig {
 			members: endowed_accounts.clone(),
 			phantom: Default::default(),
 		},
-		pallet_collective_Instance2: selendra::TechnicalCommitteeConfig {
+		technical_committee: selendra::TechnicalCommitteeConfig {
 			members: endowed_accounts.clone(),
 			phantom: Default::default(),
 		},
-		pallet_membership_Instance1: Default::default(),
-		pallet_babe: selendra::BabeConfig {
+		technical_membership: Default::default(),
+		babe: selendra::BabeConfig {
 			authorities: Default::default(),
 			epoch_config: Some(selendra::BABE_GENESIS_EPOCH_CONFIG),
 		},
-		pallet_grandpa: Default::default(),
-		pallet_im_online: Default::default(),
-		pallet_authority_discovery: selendra::AuthorityDiscoveryConfig { keys: vec![] },
-		pallet_vesting: selendra::VestingConfig { vesting: vec![] },
-		pallet_treasury: Default::default(),
-		pallet_sudo: selendra::SudoConfig {
+		grandpa: Default::default(),
+		im_online: Default::default(),
+		authority_discovery: selendra::AuthorityDiscoveryConfig { keys: vec![] },
+		vesting: selendra::VestingConfig { vesting: vec![] },
+		treasury: Default::default(),
+		sudo: selendra::SudoConfig {
 			key: endowed_accounts[0].clone(),
 		},
 		parachains_configuration: selendra::ParachainsConfigurationConfig {
 			config: default_parachains_host_configuration(),
 		},
-		parachains_paras: Default::default(),
+		paras: Default::default(),
 	}
 }
 
