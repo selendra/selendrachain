@@ -279,6 +279,11 @@ pub fn run() -> Result<()> {
 				>(config).map_err(Error::SubstrateCli), task_manager))
 			})
 		}
+		#[cfg(not(feature = "try-runtime"))]
+		Some(Subcommand::TryRuntime) => {
+			Err(Error::Other("TryRuntime wasn't enabled when building the node. \
+				You can enable it with `--features try-runtime`.".into()).into())
+		},
 	}?;
 	Ok(())
 }
