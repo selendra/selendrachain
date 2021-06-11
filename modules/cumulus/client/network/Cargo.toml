@@ -7,12 +7,12 @@ edition = "2018"
 
 [dependencies]
 # Substrate deps
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-blockchain = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-consensus = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-runtime = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sc-client-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
 
 # Selendra deps
 selendra-primitives = { path = "../../../../primitives" }
@@ -40,11 +40,11 @@ cumulus-primitives-core = { path = "../../primitives/core" }
 selendra-test-client = { path = "../../../../bin/test/client" }
 
 # substrate deps
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "master" }
-substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-client-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-keyring = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-consensus = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sc-cli = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+substrate-test-utils = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sc-service = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }

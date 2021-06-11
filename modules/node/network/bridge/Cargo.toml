@@ -10,9 +10,9 @@ futures = "0.3.12"
 tracing = "0.1.26"
 selendra-primitives = { path = "../../../../primitives" }
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
-sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-authority-discovery = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-consensus = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
 selendra-subsystem = { package = "selendra-node-subsystem", path = "../../subsystem" }
 selendra-node-network-protocol = { path = "../protocol" }
 selendra-node-subsystem-util = { path = "../../subsystem-util"}
@@ -22,6 +22,6 @@ parking_lot = "0.11.1"
 [dev-dependencies]
 assert_matches = "1.4.0"
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-keyring = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
 futures-timer = "3"

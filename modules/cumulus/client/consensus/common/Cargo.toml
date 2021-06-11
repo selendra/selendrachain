@@ -7,16 +7,16 @@ edition = "2018"
 
 [dependencies]
 # Substrate deps
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-trie = { git = "https://github.com/paritytech/substrate", branch = "master" }
-substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-client-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-consensus = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-inherents = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-runtime = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-block-builder = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-blockchain = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-trie = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+substrate-prometheus-endpoint = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
 
 # Selendra deps
 selendra-primitives = { path = "../../../../../primitives" }
@@ -31,10 +31,10 @@ dyn-clone = "1.0.4"
 
 [dev-dependencies]
 # Substrate deps
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "master" }
-substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-tracing = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+substrate-test-utils = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sc-service = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sc-cli = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
 
 # Cumulus dependencies
 cumulus-test-runtime = { path = "../../../test/runtime" }

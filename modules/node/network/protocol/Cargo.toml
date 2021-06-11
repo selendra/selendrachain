@@ -10,7 +10,7 @@ selendra-primitives = { path = "../../../../primitives" }
 selendra-node-primitives = { path = "../../primitives" }
 selendra-node-jaeger = { path = "../../jaeger" }
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
 strum = { version = "0.20", features = ["derive"] }
 futures = "0.3.12"
 thiserror = "1.0.23"

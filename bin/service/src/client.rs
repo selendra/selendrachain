@@ -211,15 +211,6 @@ impl sc_client_api::BlockBackend<Block> for Client {
 		}
 	}
 
-	fn block_indexed_body(
-		&self,
-		id: &BlockId<Block>
-	) -> sp_blockchain::Result<Option<Vec<Vec<u8>>>> {
-		match self {
-			Self::Selendra(client) => client.block_indexed_body(id),
-		}
-	}
-
 }
 
 impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
