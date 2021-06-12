@@ -5615,6 +5615,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "parachain-info"
+version = "0.1.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+]
+
+[[package]]
 name = "parity-db"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
