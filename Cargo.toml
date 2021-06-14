@@ -54,6 +54,7 @@ members = [
 	"modules/cumulus/pallets/parachain-system",
 	"modules/cumulus/pallets/xcm",
 	"modules/cumulus/pallets/xcmp-queue",
+	"modules/cumulus/pallets/parachain-info",
 	"modules/cumulus/primitives/core",
 	"modules/cumulus/primitives/parachain-inherent",
 	"modules/cumulus/primitives/utility",
