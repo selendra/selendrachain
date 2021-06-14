@@ -373,7 +373,7 @@ pub mod pallet {
 		}
 
 		#[pallet::weight((1_000, DispatchClass::Operational))]
-		fn sudo_send_upward_message(
+		pub fn sudo_send_upward_message(
 			origin: OriginFor<T>,
 			message: UpwardMessage,
 		) -> DispatchResult {
