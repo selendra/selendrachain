@@ -54,6 +54,7 @@ members = [
 	"modules/cumulus/pallets/collator-selection",
 	"modules/cumulus/pallets/dmp-queue",
 	"modules/cumulus/pallets/parachain-system",
+	"modules/cumulus/pallets/parachain-system/proc-macro",
 	"modules/cumulus/pallets/xcm",
 	"modules/cumulus/pallets/xcmp-queue",
 	"modules/cumulus/primitives/core",

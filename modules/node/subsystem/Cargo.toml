@@ -16,7 +16,7 @@ lazy_static = "1.4"
 tracing = "0.1.26"
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
 parking_lot = "0.11.1"
-pin-project = "1.0.4"
+pin-project = "1.0.7"
 selendra-node-primitives = { path = "../primitives" }
 selendra-node-network-protocol = { path = "../network/protocol" }
 selendra-primitives = { path = "../../../primitives" }
