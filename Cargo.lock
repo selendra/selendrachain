@@ -7732,6 +7732,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-node-core-dispute-coordinator"
+version = "0.1.0"
+dependencies = [
+ "assert_matches",
+ "bitvec",
+ "derive_more",
+ "futures 0.3.15",
+ "kvdb",
+ "kvdb-memorydb",
+ "parity-scale-codec",
+ "sc-keystore",
+ "selendra-node-primitives",
+ "selendra-node-subsystem",
+ "selendra-node-subsystem-test-helpers",
+ "selendra-node-subsystem-util",
+ "selendra-primitives",
+ "sp-core",
+ "sp-keyring",
+ "sp-keystore",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
 name = "selendra-node-core-parachains-inherent"
 version = "0.1.0"
 dependencies = [
@@ -7861,6 +7885,7 @@ dependencies = [
  "sp-consensus-babe",
  "sp-consensus-vrf",
  "sp-core",
+ "sp-keystore",
  "sp-maybe-compressed-blob",
  "sp-runtime",
  "thiserror",

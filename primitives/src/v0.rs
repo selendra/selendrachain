@@ -184,7 +184,7 @@ pub const PARACHAIN_INFO: Info = Info {
 	scheduling: Scheduling::Always,
 };
 
-/// Auxilliary for when there's an attempt to swap two parachains/parathreads.
+/// Auxiliary for when there's an attempt to swap two parachains/parathreads.
 pub trait SwapAux {
 	/// Result describing whether it is possible to swap two parachains. Doesn't mutate state.
 	fn ensure_can_swap(one: Id, other: Id) -> Result<(), &'static str>;
@@ -434,7 +434,7 @@ pub struct AbridgedCandidateReceipt<H = Hash> {
 
 /// A candidate-receipt with commitments directly included.
 pub struct CommitedCandidateReceipt<H = Hash> {
-	/// The descriptor of the candidae.
+	/// The descriptor of the candidate.
 	pub descriptor: CandidateDescriptor,
 
 	/// The commitments of the candidate receipt.
@@ -668,6 +668,14 @@ pub enum CompactStatement {
 	Seconded(CandidateHash),
 	/// State that a parachain candidate is valid.
 	Valid(CandidateHash),
+}
+
+impl CompactStatement {
+	/// Yields the payload used for validator signatures on this kind
+	/// of statement.
+	pub fn signing_payload(&self, context: &SigningContext) -> Vec<u8> {
+		(self, context).encode()
+	}
 }
 
 // Inner helper for codec on `CompactStatement`.
