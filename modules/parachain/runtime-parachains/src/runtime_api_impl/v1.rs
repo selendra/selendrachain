@@ -85,7 +85,7 @@ pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::Hash, T:
 			Some(g) => g,
 			None =>  {
 				log::warn!(
-					target: "runtime::selendra-api::v1",
+					target: "runtime::polkadot-api::v1",
 					"Could not determine the group responsible for core extracted \
 					from list of cores for some prior block in same session",
 				);
@@ -272,14 +272,6 @@ pub fn validation_code<T: initializer::Config>(
 		assumption,
 		|| <paras::Module<T>>::current_code(&para_id),
 	)
-}
-
-/// Implementation for the `historical_validation_code` function of the runtime API.
-pub fn historical_validation_code<T: initializer::Config>(
-	para_id: ParaId,
-	context_height: T::BlockNumber,
-) -> Option<ValidationCode> {
-	<paras::Module<T>>::validation_code_at(para_id, context_height, None)
 }
 
 /// Implementation for the `candidate_pending_availability` function of the runtime API.
