@@ -7757,6 +7757,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-node-core-dispute-participation"
+version = "0.1.0"
+dependencies = [
+ "assert_matches",
+ "futures 0.3.15",
+ "parity-scale-codec",
+ "selendra-node-primitives",
+ "selendra-node-subsystem",
+ "selendra-node-subsystem-test-helpers",
+ "selendra-primitives",
+ "sp-core",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
 name = "selendra-node-core-parachains-inherent"
 version = "0.1.0"
 dependencies = [

@@ -23,6 +23,7 @@ members = [
 	"modules/node/core/parachains-inherent",
 	"modules/node/core/provisioner",
 	"modules/node/core/dispute-coordinator",
+	"modules/node/core/dispute-participation",
 	"modules/node/core/pvf",
 	"modules/node/core/runtime-api",
 	"modules/node/network/approval-distribution",
