@@ -6,14 +6,14 @@ edition = "2018"
 
 [dependencies]
 # Substrate dependencies
-sp-inherents = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
-sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
-sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
-sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
-sp-trie = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
+sp-inherents = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
+sp-core = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
+sc-client-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4", optional = true }
+sp-runtime = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4", optional = true }
+sp-std = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
+sp-state-machine = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4", optional = true }
+sp-trie = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
+sp-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4", optional = true }
 
 # Selendra dependencies
 selendra-service = { path = "../../../../bin/service", optional = true }

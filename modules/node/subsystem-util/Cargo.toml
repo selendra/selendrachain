@@ -25,11 +25,11 @@ selendra-node-network-protocol = { path = "../network/protocol" }
 selendra-primitives = { path = "../../../primitives" }
 metered-channel = { path = "../metered-channel"}
 
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
-substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
+sp-application-crypto = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
+sp-keystore = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
+substrate-prometheus-endpoint = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
 
 [dev-dependencies]
 assert_matches = "1.4.0"
