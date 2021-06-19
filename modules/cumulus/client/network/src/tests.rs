@@ -23,7 +23,7 @@ use selendra_primitives::v1::{
 	CommittedCandidateReceipt, CoreState, GroupRotationInfo, Hash as PHash, HeadData, Id as ParaId,
 	InboundDownwardMessage, InboundHrmpMessage, OccupiedCoreAssumption, ParachainHost,
 	PersistedValidationData, SessionIndex, SessionInfo, SigningContext, ValidationCode,
-	ValidatorId, ValidatorIndex,
+	ValidationCodeHash, ValidatorId, ValidatorIndex,
 };
 use selendra_test_client::{
 	Client as PClient, ClientBlockImportExt, DefaultTestClientBuilderExt, FullBackend as PBackend,
@@ -37,7 +37,6 @@ use sp_keyring::Sr25519Keyring;
 use sp_keystore::{testing::KeyStore, SyncCryptoStore, SyncCryptoStorePtr};
 use sp_runtime::RuntimeAppPublic;
 use std::collections::BTreeMap;
-use parking_lot::Mutex;
 
 fn check_error(error: crate::BoxedError, check_error: impl Fn(&BlockAnnounceError) -> bool) {
 	let error = *error
@@ -473,17 +472,13 @@ sp_api::mock_impl_runtime_apis! {
 			Vec::new()
 		}
 
-		fn historical_validation_code(_: ParaId, _: BlockNumber) -> Option<ValidationCode> {
-			None
-		}
-
 		fn inbound_hrmp_channels_contents(
 			_: ParaId,
 		) -> BTreeMap<ParaId, Vec<InboundHrmpMessage<BlockNumber>>> {
 			BTreeMap::new()
 		}
 
-		fn validation_code_by_hash(_: PHash) -> Option<ValidationCode> {
+		fn validation_code_by_hash(_: ValidationCodeHash) -> Option<ValidationCode> {
 			None
 		}
 	}
