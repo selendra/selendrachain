@@ -100,6 +100,8 @@ pub use sp_runtime::BuildStorage;
 pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_balances::Call as BalancesCall;
 
+mod precompiles;
+
 /// Constant values used within the runtime.
 pub mod constants;
 use constants::{time::*, currency::*, fee::*, paras::*};
