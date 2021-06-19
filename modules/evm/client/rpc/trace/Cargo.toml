@@ -1,0 +1,40 @@
+[package]
+name = "selendra-rpc-trace"
+version = '0.6.0'
+authors = ["Selendra <info@selendra.org>"]
+edition = '2018'
+
+
+[dependencies]
+# Utils
+serde = { version = "1.0", features = ["derive"] }
+sha3 = "0.8"
+ethereum-types = "0.11.0"
+ethereum = { version = "0.7.1", features = ["with-codec"] }
+
+# Async and logs
+tokio = { version = "0.2.13", features = ["sync", "time"] }
+futures = { version = "0.3", features = ["compat"] }
+tracing = "0.1.25"
+
+# Primitives
+sp-runtime = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-utils = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-io = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-std = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-blockchain = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-transaction-pool = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-block-builder = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+fp-rpc = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+selendra-rpc-primitives-debug = { path = "../../../rpc/debug" }
+
+# Client and RPC
+jsonrpc-core = "15.0.0"
+sc-client-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sc-transaction-graph = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+fc-rpc = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+fc-consensus = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+fc-rpc-core = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+selendra-rpc-core-trace = { path = "../../rpc-core/trace" }

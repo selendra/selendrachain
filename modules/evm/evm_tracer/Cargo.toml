@@ -1,0 +1,35 @@
+[package]
+name = "selendra-evm-tracer"
+version = '0.1.0'
+authors = ["Selendra <info@selendra.org>"]
+edition = '2018'
+
+
+[dependencies]
+fp-evm = { git = "https://github.com/selendra/frontier", default-features = false, branch = "0.1.0" }
+pallet-evm = { git = "https://github.com/selendra/frontier", default-features = false, branch = "0.1.0" }
+evm = { version = "0.27.0", default-features = false, features = ["with-codec", "tracing"] }
+evm-runtime = { version = "0.27.0", default-features = false, features = ["tracing"] }
+evm-gasometer = { version = "0.27.0", default-features = false, features = ["tracing"] }
+sp-core = { default-features = false, git = "https://github.com/selendra/substrate.git", branch = "0.1.0-tn3" }
+sp-std = { default-features = false, git = "https://github.com/selendra/substrate.git", branch = "0.1.0-tn3" }
+sp-io = { default-features = false, git = "https://github.com/selendra/substrate.git", branch = "0.1.0-tn3" }
+sp-runtime = { default-features = false, git = "https://github.com/selendra/substrate.git", branch = "0.1.0-tn3" }
+selendra-rpc-primitives-debug = { path = "../rpc/debug", default-features = false }
+ethereum-types = { version = "0.11.0", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+	"evm/std",
+	"evm-runtime/std",
+	"evm-gasometer/std",
+	"evm/with-serde",
+	"pallet-evm/std",
+	"sp-core/std",
+	"sp-std/std",
+	"sp-runtime/std",
+	"ethereum-types/std",
+	"fp-evm/std",
+	"selendra-rpc-primitives-debug/std",
+]

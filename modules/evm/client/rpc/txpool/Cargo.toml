@@ -1,0 +1,25 @@
+[package]
+name = "selendra-rpc-txpool"
+version = '0.6.0'
+authors = ["Selendra <info@selendra.org>"]
+edition = '2018'
+
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+sha3 = "0.8"
+jsonrpc-core = "15.0.0"
+ethereum-types = "0.11.0"
+ethereum = { version = "0.7.1", default-features = false, features = ["with-codec"] }
+sp-runtime = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-io = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-std = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-blockchain = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-transaction-pool = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sc-transaction-graph = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+frame-system = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+fc-rpc = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+
+selendra-rpc-core-txpool = { path = "../../rpc-core/txpool" }
+selendra-rpc-primitives-txpool = { path = "../../../rpc/txpool" }

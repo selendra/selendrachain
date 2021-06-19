@@ -58,6 +58,11 @@ members = [
 	"modules/cumulus/primitives/core",
 	"modules/cumulus/primitives/parachain-inherent",
 	"modules/cumulus/primitives/utility",
+
+	"modules/evm/client/rpc/*",
+	"modules/evm/client/rpc/*",
+	"modules/evm/rpc/*",
+	"modules/evm/evm_tracer",
 ]
 
 # make sure dev builds with backtrace do

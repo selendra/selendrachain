@@ -1,0 +1,29 @@
+[package]
+name = "selendra-rpc-debug"
+version = '0.1.0'
+authors = ["Selendra <info@selendra.org>"]
+edition = '2018'
+
+
+[dependencies]
+tokio = { version = "0.2.21", features = ["sync", "time"] }
+futures = { version = "0.3", features = ["compat"] }
+jsonrpc-core = "15.0.0"
+
+ethereum = { version = "0.7.1", default-features = false, features = ["with-codec"] }
+ethereum-types = "0.11.0"
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-io = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-blockchain = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sc-client-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-block-builder = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-runtime = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-utils = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+
+selendra-rpc-core-debug = { path = "../../rpc-core/debug" }
+selendra-rpc-primitives-debug = { path = "../../../rpc/debug" }
+fc-consensus = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+fc-db = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+fc-rpc = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+fp-rpc = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
