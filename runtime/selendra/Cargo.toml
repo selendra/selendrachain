@@ -80,8 +80,17 @@ pallet-session-benchmarking = { git = "https://github.com/selendra/substrate", b
 frame-system-benchmarking = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3", default-features = false, optional = true }
 hex-literal = { version = "0.3.1", optional = true }
 
+runtime-common = { package = "selendra-runtime-common", path = "../common", default-features = false }
+runtime-parachains = { package = "selendra-runtime-parachains", path = "../../modules/parachain/runtime-parachains", default-features = false }
+primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
+
+xcm = { package = "xcm", path = "../../modules/xcm", default-features = false }
+xcm-executor = { package = "xcm-executor", path = "../../modules/xcm/xcm-executor", default-features = false }
+xcm-builder = { package = "xcm-builder", path = "../../modules/xcm/xcm-builder", default-features = false }
+
 # evm
 evm = { version = "0.27.0", default-features = false, features = ["with-codec"] }
+fp-rpc = { git = "https://github.com/selendra/frontier", branch = "0.1.0", default-features = false }
 pallet-ethereum = { git = "https://github.com/selendra/frontier", branch = "0.1.0", default-features = false }
 pallet-evm = { git = "https://github.com/selendra/frontier", branch = "0.1.0", default-features = false }
 pallet-evm-precompile-simple = { git = "https://github.com/selendra/frontier", branch = "0.1.0", default-features = false }
@@ -93,13 +102,9 @@ pallet-evm-precompile-bn128= { git = "https://github.com/selendra/frontier", bra
 pallet-evm-precompile-curve25519= { git = "https://github.com/selendra/frontier", branch = "0.1.0", default-features = false }
 pallet-evm-precompile-dispatch= { git = "https://github.com/selendra/frontier", branch = "0.1.0", default-features = false }
 
-runtime-common = { package = "selendra-runtime-common", path = "../common", default-features = false }
-runtime-parachains = { package = "selendra-runtime-parachains", path = "../../modules/parachain/runtime-parachains", default-features = false }
-primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
-
-xcm = { package = "xcm", path = "../../modules/xcm", default-features = false }
-xcm-executor = { package = "xcm-executor", path = "../../modules/xcm/xcm-executor", default-features = false }
-xcm-builder = { package = "xcm-builder", path = "../../modules/xcm/xcm-builder", default-features = false }
+selendra-evm-tracer = { path = "../../modules/evm/evm_tracer", default-features = false }
+selendra-rpc-primitives-debug = { path = "../../modules/evm/rpc/debug", default-features = false }
+selendra-rpc-primitives-txpool = { path = "../../modules/evm/rpc/txpool", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.1"
@@ -187,6 +192,7 @@ std = [
 	"max-encoded-len/std",
 
 	"evm/std",
+	"fp-rpc/std",
 	"pallet-ethereum/std",
 	"pallet-evm/std",
 	"pallet-evm-precompile-simple/std",
@@ -197,6 +203,9 @@ std = [
 	"pallet-evm-precompile-bn128/std",
 	"pallet-evm-precompile-curve25519/std",
 	"pallet-evm-precompile-dispatch/std",
+	"selendra-evm-tracer/std",
+	"selendra-rpc-primitives-debug/std",
+	"selendra-rpc-primitives-txpool/std",
 ]
 runtime-benchmarks = [
 	"runtime-common/runtime-benchmarks",

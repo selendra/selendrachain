@@ -21,9 +21,10 @@
 #![recursion_limit = "256"]
 
 use pallet_transaction_payment::CurrencyAdapter;
-use sp_std::prelude::*;
-use sp_std::collections::btree_map::BTreeMap;
-use sp_core::u32_trait::{_1, _2, _3, _5};
+use sp_std::{
+	collections::btree_map::BTreeMap, convert::TryFrom,
+	prelude::*, marker::PhantomData,
+};
 use parity_scale_codec::{Encode, Decode};
 use primitives::v1::{
 	AccountId, AccountIndex, Balance, BlockNumber, CandidateEvent, CommittedCandidateReceipt,
@@ -77,12 +78,19 @@ use sp_version::RuntimeVersion;
 use pallet_grandpa::{AuthorityId as GrandpaId, fg_primitives};
 #[cfg(any(feature = "std", test))]
 use sp_version::NativeVersion;
-use sp_core::OpaqueMetadata;
+
+use sp_core::{
+	u32_trait::{_1, _2, _3, _4, _5}, H160, H256, U256, 
+	crypto::Public, OpaqueMetadata,
+};
 use sp_staking::SessionIndex;
 use frame_support::{
 	parameter_types, construct_runtime, RuntimeDebug, PalletId,
-	traits::{KeyOwnerProofSystem, LockIdentifier, Filter, InstanceFilter, All, MaxEncodedLen},
-	weights::Weight,
+	traits::{KeyOwnerProofSystem, LockIdentifier, Filter, 
+		InstanceFilter, All, MaxEncodedLen, FindAuthor,
+	},
+	weights::{Weight, constants::WEIGHT_PER_SECOND},
+	ConsensusEngineId,
 };
 use frame_system::{EnsureRoot, EnsureOneOf};
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
@@ -93,6 +101,14 @@ use static_assertions::const_assert;
 use beefy_primitives::ecdsa::AuthorityId as BeefyId;
 use pallet_mmr_primitives as mmr;
 
+use fp_rpc::TransactionStatus;
+use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
+use pallet_evm::{
+	Account as EVMAccount, EnsureAddressTruncated, 
+	HashedAddressMapping, Runner, FeeCalculator
+};
+use selendra_rpc_primitives_txpool::TxPoolResponse;
+
 #[cfg(feature = "std")]
 pub use pallet_staking::StakerStatus;
 #[cfg(any(feature = "std", test))]
@@ -100,7 +116,9 @@ pub use sp_runtime::BuildStorage;
 pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_balances::Call as BalancesCall;
 
+mod evm_config;
 mod precompiles;
+use precompiles::SelendraPrecompiles;
 
 /// Constant values used within the runtime.
 pub mod constants;
@@ -1202,6 +1220,98 @@ impl pallet_xcm::Config for Runtime {
 	type Weigher = FixedWeightBounds<BaseXcmWeight, Call>;
 }
 
+/// Current (safe) approximation of the gas/s consumption considering
+/// EVM execution over compiled WASM.
+pub const GAS_PER_SECOND: u64 = 8_000_000;
+
+/// Approximate ratio of the amount of Weight per Gas.
+/// u64 works for approximations because Weight is a very small unit compared to
+/// gas.
+pub const WEIGHT_PER_GAS: u64 = WEIGHT_PER_SECOND / GAS_PER_SECOND;
+
+pub struct SelendraGasWeightMapping;
+
+impl pallet_evm::GasWeightMapping for SelendraGasWeightMapping {
+	fn gas_to_weight(gas: u64) -> Weight {
+		Weight::try_from(gas.saturating_mul(WEIGHT_PER_GAS)).unwrap_or(Weight::MAX)
+	}
+
+	fn weight_to_gas(weight: Weight) -> u64 {
+		weight.wrapping_div(WEIGHT_PER_GAS)
+	}
+}
+
+parameter_types! {
+	pub BlockGasLimit: U256 = U256::from(u32::max_value());
+	pub const EthChainId: u64 = 1000;
+}
+
+pub struct FixedGasPrice;
+impl FeeCalculator for FixedGasPrice {
+	fn min_gas_price() -> U256 {
+		(1 * SELS).into()
+	}
+}
+
+static EVM_CONFIG: evm::Config = evm_config::SelendraEvmConfig::config();
+
+impl pallet_evm::Config for Runtime {
+	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	type BlockGasLimit = BlockGasLimit;
+	type CallOrigin = EnsureAddressTruncated;
+	type ChainId = EthChainId;
+	type Currency = Balances;
+	type Event = Event;
+	type FeeCalculator = FixedGasPrice;
+	type GasWeightMapping = SelendraGasWeightMapping;
+	type OnChargeTransaction = ();
+	type Precompiles = SelendraPrecompiles<Self>;
+	type Runner = pallet_evm::runner::stack::Runner<Self>;
+	type WithdrawOrigin = EnsureAddressTruncated;
+
+	/// EVM config used in the module.
+	fn config() -> &'static evm::Config {
+		&EVM_CONFIG
+	}
+}
+
+pub struct EthereumFindAuthor<F>(PhantomData<F>);
+impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
+	fn find_author<'a, I>(digests: I) -> Option<H160>
+	where
+		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
+	{
+		if let Some(author_index) = F::find_author(digests) {
+			let authority_id = Babe::authorities()[author_index as usize].clone();
+			return Some(H160::from_slice(&authority_id.0.to_raw_vec()[4..24]));
+		}
+		None
+	}
+}
+
+impl pallet_ethereum::Config for Runtime {
+	type Event = Event;
+	type FindAuthor = EthereumFindAuthor<Babe>;
+	type StateRoot = pallet_ethereum::IntermediateStateRoot;
+}
+
+pub struct TransactionConverter;
+
+impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
+	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> UncheckedExtrinsic {
+		UncheckedExtrinsic::new_unsigned(pallet_ethereum::Call::<Runtime>::transact(transaction).into())
+	}
+}
+
+impl fp_rpc::ConvertTransaction<sp_runtime::OpaqueExtrinsic> for TransactionConverter {
+	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> sp_runtime::OpaqueExtrinsic {
+		let extrinsic =
+			UncheckedExtrinsic::new_unsigned(pallet_ethereum::Call::<Runtime>::transact(transaction).into());
+		let encoded = extrinsic.encode();
+		sp_runtime::OpaqueExtrinsic::decode(&mut &encoded[..]).expect("Encoded extrinsic is always valid")
+	}
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -1292,6 +1402,10 @@ construct_runtime! {
 
 		// Pallet for sending XCM.
 		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>},
+
+		//evm
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned},
+		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 	}
 }
 
@@ -1644,6 +1758,340 @@ sp_api::impl_runtime_apis! {
 			log::info!("try-runtime::on_runtime_upgrade selendra.");
 			let weight = Executive::try_runtime_upgrade()?;
 			Ok((weight, BlockWeights::get().max_block))
+		}
+	}
+
+	impl fp_rpc::EthereumRuntimeRPCApi<Block> for Runtime {
+		fn chain_id() -> u64 {
+			<Runtime as pallet_evm::Config>::ChainId::get()
+		}
+
+		fn account_basic(address: H160) -> EVMAccount {
+			EVM::account_basic(&address)
+		}
+
+		fn gas_price() -> U256 {
+			<Runtime as pallet_evm::Config>::FeeCalculator::min_gas_price()
+		}
+
+		fn account_code_at(address: H160) -> Vec<u8> {
+			EVM::account_codes(address)
+		}
+
+		fn author() -> H160 {
+			<pallet_ethereum::Pallet<Runtime>>::find_author()
+		}
+
+		fn storage_at(address: H160, index: U256) -> H256 {
+			let mut tmp = [0u8; 32];
+			index.to_big_endian(&mut tmp);
+			EVM::account_storages(address, H256::from_slice(&tmp[..]))
+		}
+
+		fn call(
+			from: H160,
+			to: H160,
+			data: Vec<u8>,
+			value: U256,
+			gas_limit: U256,
+			gas_price: Option<U256>,
+			nonce: Option<U256>,
+			estimate: bool,
+		) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
+			let config = if estimate {
+				let mut config = <Runtime as pallet_evm::Config>::config().clone();
+				config.estimate = true;
+				Some(config)
+			} else {
+				None
+			};
+
+			<Runtime as pallet_evm::Config>::Runner::call(
+				from,
+				to,
+				data,
+				value,
+				gas_limit.low_u64(),
+				gas_price,
+				nonce,
+				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
+			).map_err(|err| err.into())
+		}
+
+		fn create(
+			from: H160,
+			data: Vec<u8>,
+			value: U256,
+			gas_limit: U256,
+			gas_price: Option<U256>,
+			nonce: Option<U256>,
+			estimate: bool,
+		) -> Result<pallet_evm::CreateInfo, sp_runtime::DispatchError> {
+			let config = if estimate {
+				let mut config = <Runtime as pallet_evm::Config>::config().clone();
+				config.estimate = true;
+				Some(config)
+			} else {
+				None
+			};
+
+			<Runtime as pallet_evm::Config>::Runner::create(
+				from,
+				data,
+				value,
+				gas_limit.low_u64(),
+				gas_price,
+				nonce,
+				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
+			).map_err(|err| err.into())
+		}
+
+		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
+			match Ethereum::current_transaction_statuses() {
+				Some(elt) => Some(elt.into()),
+				None => None,
+			}
+		}
+
+		fn current_block() -> Option<pallet_ethereum::Block> {
+			match Ethereum::current_block() {
+				Some(elt) => Some(elt.into()),
+				None => None,
+			}
+		}
+
+		fn current_receipts() -> Option<Vec<pallet_ethereum::Receipt>> {
+			match Ethereum::current_receipts() {
+				Some(elt) => Some(elt.into()),
+				None => None,
+			}
+		}
+
+		fn current_all() -> (
+			Option<pallet_ethereum::Block>,
+			Option<Vec<pallet_ethereum::Receipt>>,
+			Option<Vec<TransactionStatus>>
+		) {
+			(
+				Self::current_block(),
+				Self::current_receipts(),
+				Self::current_transaction_statuses(),
+			)
+		}
+	}
+
+	impl selendra_rpc_primitives_debug::DebugRuntimeApi<Block> for Runtime {
+		fn trace_transaction(
+			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+			transaction: &EthereumTransaction,
+			trace_type: selendra_rpc_primitives_debug::single::TraceType,
+		) -> Result<
+			selendra_rpc_primitives_debug::single::TransactionTrace,
+			sp_runtime::DispatchError,
+		> {
+			use selendra_evm_tracer::{CallListTracer, RawTracer};
+			use selendra_rpc_primitives_debug::single::TraceType;
+
+			// Apply the a subset of extrinsics: all the substrate-specific or ethereum
+			// transactions that preceded the requested transaction.
+			for ext in extrinsics.into_iter() {
+				let _ = match &ext.function {
+					Call::Ethereum(transact(t)) => {
+						if t == transaction {
+							return match trace_type {
+								TraceType::Raw {
+									disable_storage,
+									disable_memory,
+									disable_stack,
+								} => Ok(RawTracer::new(
+									disable_storage,
+									disable_memory,
+									disable_stack,
+								)
+								.trace(|| Executive::apply_extrinsic(ext))
+								.0
+								.into_tx_trace()),
+								TraceType::CallList => Ok(CallListTracer::default()
+									.trace(|| Executive::apply_extrinsic(ext))
+									.0
+									.into_tx_trace()),
+							};
+						} else {
+							Executive::apply_extrinsic(ext)
+						}
+					}
+					_ => Executive::apply_extrinsic(ext),
+				};
+			}
+
+			Err(sp_runtime::DispatchError::Other(
+				"Failed to find Ethereum transaction among the extrinsics.",
+			))
+		}
+
+		fn trace_block(
+			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+		) -> Result<
+			Vec<selendra_rpc_primitives_debug::block::TransactionTrace>,
+			sp_runtime::DispatchError,
+		> {
+			use selendra_evm_tracer::CallListTracer;
+			use selendra_rpc_primitives_debug::{
+				block, single, CallResult, CreateResult, CreateType,
+			};
+
+			let mut config = <Runtime as pallet_evm::Config>::config().clone();
+			config.estimate = true;
+
+			let mut traces = vec![];
+			let mut eth_tx_index = 0;
+
+			// Apply all extrinsics. Ethereum extrinsics are traced.
+			for ext in extrinsics.into_iter() {
+				match &ext.function {
+					Call::Ethereum(transact(_transaction)) => {
+						let tx_traces = CallListTracer::default()
+							.trace(|| Executive::apply_extrinsic(ext))
+							.0
+							.into_tx_trace();
+
+						let tx_traces = match tx_traces {
+							single::TransactionTrace::CallList(t) => t,
+							_ => return Err(
+								sp_runtime::DispatchError::Other("Runtime API error")
+							),
+						};
+
+						// Convert traces from "single" format to "block" format.
+						let mut tx_traces: Vec<_> = tx_traces
+							.into_iter()
+							.map(|trace| match trace.inner {
+								single::CallInner::Call {
+									input,
+									to,
+									res,
+									call_type,
+								} => block::TransactionTrace {
+									action: block::TransactionTraceAction::Call {
+										call_type,
+										from: trace.from,
+										gas: trace.gas,
+										input,
+										to,
+										value: trace.value,
+									},
+									// Can't be known here, must be inserted upstream.
+									block_hash: H256::default(),
+									// Can't be known here, must be inserted upstream.
+									block_number: 0,
+									output: match res {
+										CallResult::Output(output) => {
+											block::TransactionTraceOutput::Result(
+												block::TransactionTraceResult::Call {
+													gas_used: trace.gas_used,
+													output,
+												},
+											)
+										}
+										CallResult::Error(error) => {
+											block::TransactionTraceOutput::Error(error)
+										}
+									},
+									subtraces: trace.subtraces,
+									trace_address: trace.trace_address,
+									// Can't be known here, must be inserted upstream.
+									transaction_hash: H256::default(),
+									transaction_position: eth_tx_index,
+								},
+								single::CallInner::Create { init, res } => {
+									block::TransactionTrace {
+										action: block::TransactionTraceAction::Create {
+											creation_method: CreateType::Create,
+											from: trace.from,
+											gas: trace.gas,
+											init,
+											value: trace.value,
+										},
+										// Can't be known here, must be inserted upstream.
+										block_hash: H256::default(),
+										// Can't be known here, must be inserted upstream.
+										block_number: 0,
+										output: match res {
+											CreateResult::Success {
+												created_contract_address_hash,
+												created_contract_code,
+											} => block::TransactionTraceOutput::Result(
+												block::TransactionTraceResult::Create {
+													gas_used: trace.gas_used,
+													code: created_contract_code,
+													address: created_contract_address_hash,
+												},
+											),
+											CreateResult::Error { error } => {
+												block::TransactionTraceOutput::Error(error)
+											}
+										},
+										subtraces: trace.subtraces,
+										trace_address: trace.trace_address,
+										// Can't be known here, must be inserted upstream.
+										transaction_hash: H256::default(),
+										transaction_position: eth_tx_index,
+									}
+								}
+								single::CallInner::SelfDestruct {
+									balance,
+									refund_address,
+								} => block::TransactionTrace {
+									action: block::TransactionTraceAction::Suicide {
+										address: trace.from,
+										balance,
+										refund_address,
+									},
+									// Can't be known here, must be inserted upstream.
+									block_hash: H256::default(),
+									// Can't be known here, must be inserted upstream.
+									block_number: 0,
+									output: block::TransactionTraceOutput::Result(
+										block::TransactionTraceResult::Suicide,
+									),
+									subtraces: trace.subtraces,
+									trace_address: trace.trace_address,
+									// Can't be known here, must be inserted upstream.
+									transaction_hash: H256::default(),
+									transaction_position: eth_tx_index,
+								},
+							})
+							.collect();
+
+						traces.append(&mut tx_traces);
+
+						eth_tx_index += 1;
+					}
+					_ => {
+						let _ = Executive::apply_extrinsic(ext);
+					}
+				};
+			}
+
+			Ok(traces)
+		}
+	}
+
+	impl selendra_rpc_primitives_txpool::TxPoolRuntimeApi<Block> for Runtime {
+		fn extrinsic_filter(
+			xts_ready: Vec<<Block as BlockT>::Extrinsic>,
+			xts_future: Vec<<Block as BlockT>::Extrinsic>
+		) -> TxPoolResponse {
+			TxPoolResponse {
+				ready: xts_ready.into_iter().filter_map(|xt| match xt.function {
+					Call::Ethereum(transact(t)) => Some(t),
+					_ => None
+				}).collect(),
+				future: xts_future.into_iter().filter_map(|xt| match xt.function {
+					Call::Ethereum(transact(t)) => Some(t),
+					_ => None
+				}).collect(),
+			}
 		}
 	}
 
