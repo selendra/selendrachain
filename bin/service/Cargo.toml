@@ -56,7 +56,6 @@ pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/selendr
 pallet-mmr-primitives = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
 
 # Substrate Other
-frame-benchmarking = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
 frame-system-rpc-runtime-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
 prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
 
@@ -80,9 +79,18 @@ selendra-rpc = { path = "../rpc" }
 selendra-subsystem = { package = "selendra-node-subsystem", path = "../../modules/node/subsystem" }
 selendra-node-subsystem-util = { path = "../../modules/node/subsystem-util" }
 selendra-runtime-parachains = { path = "../../modules/parachain/runtime-parachains" }
+selendra-client = { path = "../client" }
+selendra-opt = { path = "../../modules/evm/opt" }
 
 # Selendra Runtimes
 selendra-runtime = { path = "../../runtime/selendra" }
+
+# Evm
+pallet-evm = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+fc-db = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+fc-consensus = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+fc-rpc-core = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+fc-rpc = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
 
 # Selendra Subsystems
 selendra-availability-bitfield-distribution = { path = "../../modules/node/network/bitfield-distribution", optional = true }
@@ -104,7 +112,7 @@ selendra-approval-distribution = { path = "../../modules/node/network/approval-d
 selendra-node-core-approval-voting = { path = "../../modules/node/core/approval-voting", optional = true }
 
 [dev-dependencies]
-selendra-test-client = { path = "../test/client" }
+# selendra-test-client = { path = "../test/client" }
 env_logger = "0.8.2"
 
 [features]
@@ -131,6 +139,8 @@ full-node = [
 	"sc-finality-grandpa-warp-sync",
 	"kvdb-rocksdb"
 ]
+
+light-node = []
 
 runtime-benchmarks = [
 	"selendra-runtime/runtime-benchmarks",

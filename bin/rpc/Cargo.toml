@@ -6,7 +6,13 @@ edition = "2018"
 
 [dependencies]
 jsonrpc-core = "15.1.0"
-selendra-primitives = { path = "../../primitives" }
+jsonrpc-pubsub = "15.1.0"
+tokio = { version = "0.2.13", features = ["macros", "sync"] }
+futures = { version = "0.3.1", features = ["compat"] }
+
+sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3"  }
+sc-service = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3"  }
+sc-network = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
 sc-client-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
 sp-blockchain = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
 sp-keystore = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
@@ -31,3 +37,19 @@ parity-scale-codec = { version = "2.0.0", default-features = false }
 sp-block-builder = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
 beefy-gadget = { git = "https://github.com/selendra/grandpa-bridge-gadget", branch = "0.1.0-tn3" }
 beefy-gadget-rpc = { git = "https://github.com/selendra/grandpa-bridge-gadget", branch = "0.1.0-tn3" }
+
+selendra-primitives = { path = "../../primitives" }
+selendra-runtime = { path = "../../runtime/selendra" }
+selendra-rpc-trace = { path = "../../modules/evm/client/rpc/trace" }
+selendra-rpc-debug = { path = "../../modules/evm/client/rpc/debug" }
+selendra-rpc-txpool = { path = "../../modules/evm/client/rpc/txpool" }
+selendra-rpc-primitives-debug = { path = "../../modules/evm/rpc/debug" }
+selendra-opt = { path = "../../modules/evm/opt" }
+selendra-client = { path = "../client" }
+
+fc-db = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+fc-mapping-sync = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+fc-rpc = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+fc-rpc-core = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+fp-rpc = { git = "https://github.com/selendra/frontier", branch = "0.1.0" } 
+pallet-ethereum = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }

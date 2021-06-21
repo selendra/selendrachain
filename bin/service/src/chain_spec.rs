@@ -16,6 +16,7 @@
 
 //! Selendra chain configurations.
 
+use std::collections::BTreeMap;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
 use beefy_primitives::ecdsa::AuthorityId as BeefyId;
@@ -213,6 +214,10 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 			config: default_parachains_host_configuration(),
 		},
 		parachains_paras: Default::default(),
+		pallet_evm: selendra::EVMConfig {
+			accounts: BTreeMap::new(),
+		},
+		pallet_ethereum: selendra::EthereumConfig {},
 	}
 }
 
@@ -412,6 +417,10 @@ pub fn selendra_testnet_genesis(
 			config: default_parachains_host_configuration(),
 		},
 		parachains_paras: Default::default(),
+		pallet_evm: selendra::EVMConfig {
+			accounts: BTreeMap::new(),
+		},
+		pallet_ethereum: selendra::EthereumConfig {},
 	}
 }
 

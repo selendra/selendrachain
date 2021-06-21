@@ -1,0 +1,37 @@
+[package]
+name = "selendra-client"
+version = "0.1.0-tn3"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+frame-benchmarking = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+frame-system-rpc-runtime-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+
+sp-consensus = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-storage = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-runtime = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-blockchain = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-session = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-authority-discovery = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-finality-grandpa = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-consensus-babe = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-transaction-pool = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-offchain = { package = "sp-offchain", git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sp-block-builder = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sc-executor = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sc-client-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+sc-service = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3", default-features = false }
+pallet-mmr-primitives = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn3" }
+beefy-primitives = { git = "https://github.com/selendra/grandpa-bridge-gadget", branch = "0.1.0-tn3" }
+ethereum = {version = "0.7.1", default-features = false, features = ["with-codec"] }
+
+fp-rpc = { git = "https://github.com/selendra/frontier", branch = "0.1.0" } 
+selendra-rpc-primitives-debug = { path = "../../modules/evm/rpc/debug" }
+selendra-rpc-primitives-txpool = { path = "../../modules/evm/rpc/txpool" }
+
+# Selendra Runtimes
+selendra-runtime = { path = "../../runtime/selendra" }
+selendra-primitives = { path = "../../primitives" }

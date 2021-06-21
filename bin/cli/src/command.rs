@@ -129,8 +129,11 @@ pub fn run() -> Result<()> {
 			runner.run_node_until_exit(move |config| async move {
 				let role = config.role.clone();
 
-				let task_manager = match role {
-					Role::Light => service::build_light(config).map(|(task_manager, _)| task_manager),
+				match role {
+					#[cfg(feature = "browser")]
+					Role::Light => service::build_light(config).map(|(task_manager, _)| task_manager).map_err(Into::into),
+					#[cfg(not(feature = "browser"))]
+					Role::Light => Err(Error::Other("Light client not enabled".into())),
 					_ => service::build_full(
 						config,
 						service::IsCollator::No,
@@ -138,9 +141,8 @@ pub fn run() -> Result<()> {
 						cli.run.no_beefy,
 						jaeger_agent,
 						None,
-					).map(|full| full.task_manager)
-				}?;
-				Ok::<_, Error>(task_manager)
+					).map(|full| full.task_manager).map_err(Into::into)
+				}
 			})
 		},
 		Some(Subcommand::BuildSpec(cmd)) => {
@@ -278,7 +280,12 @@ pub fn run() -> Result<()> {
 					service::SelendraExecutor,
 				>(config).map_err(Error::SubstrateCli), task_manager))
 			})
-		}
+		},
+		// #[cfg(not(feature = "try-runtime"))]
+		// Some(Subcommand::TryRuntime) => {
+		// 	Err(Error::Other("TryRuntime wasn't enabled when building the node. \
+		// 		You can enable it with `--features try-runtime`.".into()).into())
+		// },
 	}?;
 	Ok(())
 }

@@ -80,7 +80,7 @@ use pallet_grandpa::{AuthorityId as GrandpaId, fg_primitives};
 use sp_version::NativeVersion;
 
 use sp_core::{
-	u32_trait::{_1, _2, _3, _4, _5}, H160, H256, U256, 
+	u32_trait::{_1, _2, _3, _5}, H160, H256, U256, 
 	crypto::Public, OpaqueMetadata,
 };
 use sp_staking::SessionIndex;
