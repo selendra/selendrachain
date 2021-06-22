@@ -91,6 +91,7 @@ fc-db = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
 fc-consensus = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
 fc-rpc-core = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
 fc-rpc = { git = "https://github.com/selendra/frontier", branch = "0.1.0" }
+primitive-types = { version = "0.9", default-features = false, features = ["rlp", "byteorder"] }
 
 # Selendra Subsystems
 selendra-availability-bitfield-distribution = { path = "../../modules/node/network/bitfield-distribution", optional = true }

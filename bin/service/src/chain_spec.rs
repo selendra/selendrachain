@@ -29,9 +29,10 @@ use pallet_staking::Forcing;
 use selendra_primitives::v1::{AccountId, AccountPublic, AssignmentId, ValidatorId, BlockNumber};
 use sc_chain_spec::{ChainSpecExtension, ChainType};
 use serde::{Deserialize, Serialize};
-use sp_core::{sr25519, Pair, Public};
+use sp_core::{sr25519, Pair, Public, U256};
 use sp_runtime::{traits::IdentifyAccount, Perbill};
 use telemetry::TelemetryEndpoints;
+use primitive_types::H160;
 
 const SELENDRA_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 const DEFAULT_PROTOCOL_ID: &str = "sel";
@@ -418,7 +419,20 @@ pub fn selendra_testnet_genesis(
 		},
 		parachains_paras: Default::default(),
 		pallet_evm: selendra::EVMConfig {
-			accounts: BTreeMap::new(),
+			accounts: vec![(
+                H160::from(hex_literal::hex![
+                    "3Cd0A705a2DC65e5b1E1205896BaA2be8A07c6e0"
+                ]),
+                pallet_evm::GenesisAccount {
+                    balance: U256::from(321 * SELS),
+                    nonce: Default::default(),
+                    code: Default::default(),
+                    storage: Default::default(),
+                },
+            )]
+            .iter()
+            .cloned()
+            .collect(),
 		},
 		pallet_ethereum: selendra::EthereumConfig {},
 	}

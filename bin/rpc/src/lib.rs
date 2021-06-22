@@ -145,6 +145,7 @@ pub fn create_full<C, P, SC, B, BS>(
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: BabeApi<Block>,
 	C::Api: BlockBuilder<Block>,
+	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	P: TransactionPool<Block = Block> + Sync + Send  + 'static,
 	SC: SelectChain<Block> + 'static,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
@@ -240,6 +241,7 @@ pub fn create_full<C, P, SC, B, BS>(
 		network.clone(),
 		true,
 	)));
+
 	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client.clone())));
 	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
 		pool,

@@ -1222,7 +1222,7 @@ impl pallet_xcm::Config for Runtime {
 
 /// Current (safe) approximation of the gas/s consumption considering
 /// EVM execution over compiled WASM.
-pub const GAS_PER_SECOND: u64 = 8_000_000;
+pub const GAS_PER_SECOND: u64 = 16_000_000;
 
 /// Approximate ratio of the amount of Weight per Gas.
 /// u64 works for approximations because Weight is a very small unit compared to
@@ -1249,7 +1249,7 @@ parameter_types! {
 pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {
 	fn min_gas_price() -> U256 {
-		(1 * SELS).into()
+		1.into()
 	}
 }
 
