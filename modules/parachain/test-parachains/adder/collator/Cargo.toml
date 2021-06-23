@@ -38,7 +38,7 @@ sc-service = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn
 selendra-node-core-pvf = { path = "../../../../node/core/pvf" }
 
 [dev-dependencies]
-selendra-parachain = { path = "../../.." }
+selendra-parachain = { path = "../../../../parachain" }
 selendra-test-service = { path = "../../../../../bin/test/service" }
 
 substrate-test-utils = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }

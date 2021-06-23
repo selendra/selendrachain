@@ -16,10 +16,7 @@ sc-client-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0
 
 # Selendra deps
 selendra-primitives = { path = "../../../../primitives" }
-selendra-statement-table = { path = "../../../statement-table" }
 selendra-node-primitives = { path = "../../../node/primitives" }
-selendra-service = { path = "../../../../bin/service" }
-selendra-parachain = { path = "../../../parachain" }
 selendra-overseer = { path = "../../../node/overseer" }
 selendra-node-subsystem = { path = "../../../node/subsystem" }
 

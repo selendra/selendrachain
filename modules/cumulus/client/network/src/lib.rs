@@ -39,7 +39,7 @@ use selendra_primitives::v1::{
 	Block as PBlock, Hash as PHash, CandidateReceipt, CompactStatement, Id as ParaId,
 	OccupiedCoreAssumption, ParachainHost, UncheckedSigned, SigningContext,
 };
-use selendra_service::ClientHandle;
+use selendra_client::ClientHandle;
 
 use codec::{Decode, Encode};
 use futures::{
@@ -414,7 +414,7 @@ where
 ///
 /// Returns a boxed [`BlockAnnounceValidator`].
 pub fn build_block_announce_validator<Block: BlockT, B>(
-	relay_chain_client: selendra_service::Client,
+	relay_chain_client: selendra_client::Client,
 	para_id: ParaId,
 	relay_chain_sync_oracle: Box<dyn SyncOracle + Send>,
 	relay_chain_backend: Arc<B>,
@@ -436,12 +436,12 @@ where
 /// Block announce validator builder.
 ///
 /// Builds a [`BlockAnnounceValidator`] for a parachain. As this requires
-/// a concrete relay chain client instance, the builder takes a [`selendra_service::Client`]
-/// that wraps this concrete instanace. By using [`selendra_service::ExecuteWithClient`]
+/// a concrete relay chain client instance, the builder takes a [`selendra_client::Client`]
+/// that wraps this concrete instanace. By using [`selendra_client::ExecuteWithClient`]
 /// the builder gets access to this concrete instance.
 struct BlockAnnounceValidatorBuilder<Block, B> {
 	phantom: PhantomData<Block>,
-	relay_chain_client: selendra_service::Client,
+	relay_chain_client: selendra_client::Client,
 	para_id: ParaId,
 	relay_chain_sync_oracle: Box<dyn SyncOracle + Send>,
 	relay_chain_backend: Arc<B>,
@@ -455,7 +455,7 @@ where
 {
 	/// Create a new instance of the builder.
 	fn new(
-		relay_chain_client: selendra_service::Client,
+		relay_chain_client: selendra_client::Client,
 		para_id: ParaId,
 		relay_chain_sync_oracle: Box<dyn SyncOracle + Send>,
 		relay_chain_backend: Arc<B>,
@@ -475,7 +475,7 @@ where
 	}
 }
 
-impl<Block: BlockT, B> selendra_service::ExecuteWithClient
+impl<Block: BlockT, B> selendra_client::ExecuteWithClient
 	for BlockAnnounceValidatorBuilder<Block, B>
 where
 	B: Backend<PBlock> + Send + 'static,
@@ -490,8 +490,8 @@ where
 			sp_api::StateBackend<sp_runtime::traits::BlakeTwo256>,
 		PBackend: Backend<PBlock>,
 		PBackend::State: sp_api::StateBackend<sp_runtime::traits::BlakeTwo256>,
-		Api: selendra_service::RuntimeApiCollection<StateBackend = PBackend::State>,
-		PClient: selendra_service::AbstractClient<PBlock, PBackend, Api = Api> + 'static,
+		Api: selendra_client::RuntimeApiCollection<StateBackend = PBackend::State>,
+		PClient: selendra_client::AbstractClient<PBlock, PBackend, Api = Api> + 'static,
 	{
 		Box::new(BlockAnnounceValidator::new(
 			client.clone(),
