@@ -54,7 +54,7 @@ browser = [
 	"wasm-bindgen",
 	"wasm-bindgen-futures",
 	"browser-utils",
-	"service",
+	"service/light-node",
 ]
 runtime-benchmarks = [ "service/runtime-benchmarks" ]
 trie-memory-tracker = [ "sp-trie/memory-tracker" ]

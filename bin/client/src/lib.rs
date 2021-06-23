@@ -14,7 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Selendra Client meta trait
+//! Selendra Client
+//!
+//! Provides the [`AbstractClient`] trait that is a super trait that combines all the traits the client implements.
+//! There is also the [`Client`] enum that combines all the different clients into one common structure.
 
 use std::sync::Arc;
 use beefy_primitives::ecdsa::AuthorityId as BeefyId;
@@ -26,14 +29,26 @@ use sp_runtime::{
 use sc_client_api::{Backend as BackendT, BlockchainEvents, KeyIterator, AuxStore, UsageProvider};
 use sp_storage::{StorageData, StorageKey, ChildInfo, PrefixedStorageKey};
 use selendra_primitives::v1::{Block, ParachainHost, AccountId, Nonce, Balance, Header, BlockNumber, Hash};
-use consensus_common::BlockStatus;
+use sp_consensus::BlockStatus;
+use sc_executor::native_executor_instance;
+
+pub type FullBackend = sc_service::TFullBackend<Block>;
+
+pub type FullClient<RuntimeApi, Executor> = sc_service::TFullClient<Block, RuntimeApi, Executor>;
+
+native_executor_instance!(
+	pub SelendraExecutor,
+	selendra_runtime::api::dispatch,
+	selendra_runtime::native_version,
+	frame_benchmarking::benchmarking::HostFunctions,
+);
 
 /// A set of APIs that selendra-like runtimes must implement.
 pub trait RuntimeApiCollection:
 	sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 	+ sp_api::ApiExt<Block>
 	+ sp_consensus_babe::BabeApi<Block>
-	+ grandpa_primitives::GrandpaApi<Block>
+	+ sp_finality_grandpa::GrandpaApi<Block>
 	+ ParachainHost<Block>
 	+ sp_block_builder::BlockBuilder<Block>
 	+ frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
@@ -53,7 +68,7 @@ where
 	Api: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::ApiExt<Block>
 		+ sp_consensus_babe::BabeApi<Block>
-		+ grandpa_primitives::GrandpaApi<Block>
+		+ sp_finality_grandpa::GrandpaApi<Block>
 		+ ParachainHost<Block>
 		+ sp_block_builder::BlockBuilder<Block>
 		+ frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
@@ -108,6 +123,15 @@ impl<Block, Backend, Client> AbstractClient<Block, Backend> for Client
 {}
 
 /// Execute something with the client instance.
+///
+/// As there exist multiple chains inside Selendra, etc,
+/// there can exist different kinds of client types. As these client types differ in the generics
+/// that are being used, we can not easily return them from a function. For returning them from a
+/// function there exists [`Client`]. However, the problem on how to use this client instance still
+/// exists. This trait "solves" it in a dirty way. It requires a type to implement this trait and
+/// than the [`execute_with_client`](ExecuteWithClient::execute_with_client) function can be called
+/// with any possible client instance.
+///
 /// In a perfect world, we could make a closure work in this way.
 pub trait ExecuteWithClient {
 	/// The return type when calling this instance.
@@ -125,7 +149,7 @@ pub trait ExecuteWithClient {
 
 /// A handle to a Selendra client instance.
 ///
-/// The Selendra service supports multiple different runtimes (Selendra itself, etc). As each runtime has a
+/// The Selendra service supports multiple different runtimes (Westend, Selendra itself, etc). As each runtime has a
 /// specialized client, we need to hide them behind a trait. This is this trait.
 ///
 /// When wanting to work with the inner client, you need to use `execute_with`.
@@ -136,19 +160,35 @@ pub trait ClientHandle {
 	fn execute_with<T: ExecuteWithClient>(&self, t: T) -> T::Output;
 }
 
+macro_rules! with_client {
+	{
+		$self:ident,
+		$client:ident,
+		{
+			$( $code:tt )*
+		}
+	} => {
+		match $self {
+			Self::Selendra($client) => { $( $code )* },
+		}
+	}
+}
+
 /// A client instance of Selendra.
 ///
 /// See [`ExecuteWithClient`] for more information.
 #[derive(Clone)]
 pub enum Client {
-	Selendra(Arc<crate::FullClient<selendra_runtime::RuntimeApi, crate::SelendraExecutor>>)
+	Selendra(Arc<FullClient<selendra_runtime::RuntimeApi, SelendraExecutor>>),
 }
 
 impl ClientHandle for Client {
 	fn execute_with<T: ExecuteWithClient>(&self, t: T) -> T::Output {
-		match self {
-			Self::Selendra(client) => {
-				T::execute_with_client::<_, _, crate::FullBackend>(t, client.clone())
+		with_client! {
+			self,
+			client,
+			{
+				T::execute_with_client::<_, _, FullBackend>(t, client.clone())
 			}
 		}
 	}
@@ -156,8 +196,12 @@ impl ClientHandle for Client {
 
 impl UsageProvider<Block> for Client {
 	fn usage_info(&self) -> sc_client_api::ClientInfo<Block> {
-		match self {
-			Self::Selendra(client) => client.usage_info()
+		with_client! {
+			self,
+			client,
+			{
+				client.usage_info()
+			}
 		}
 	}
 }
@@ -167,20 +211,32 @@ impl sc_client_api::BlockBackend<Block> for Client {
 		&self,
 		id: &BlockId<Block>
 	) -> sp_blockchain::Result<Option<Vec<<Block as BlockT>::Extrinsic>>> {
-		match self {
-			Self::Selendra(client) => client.block_body(id),
+		with_client! {
+			self,
+			client,
+			{
+				client.block_body(id)
+			}
 		}
 	}
 
 	fn block(&self, id: &BlockId<Block>) -> sp_blockchain::Result<Option<SignedBlock<Block>>> {
-		match self {
-			Self::Selendra(client) => client.block(id)
+		with_client! {
+			self,
+			client,
+			{
+				client.block(id)
+			}
 		}
 	}
 
 	fn block_status(&self, id: &BlockId<Block>) -> sp_blockchain::Result<BlockStatus> {
-		match self {
-			Self::Selendra(client) => client.block_status(id)
+		with_client! {
+			self,
+			client,
+			{
+				client.block_status(id)
+			}
 		}
 	}
 
@@ -188,8 +244,12 @@ impl sc_client_api::BlockBackend<Block> for Client {
 		&self,
 		id: &BlockId<Block>
 	) -> sp_blockchain::Result<Option<Justifications>> {
-		match self {
-			Self::Selendra(client) => client.justifications(id)
+		with_client! {
+			self,
+			client,
+			{
+				client.justifications(id)
+			}
 		}
 	}
 
@@ -197,8 +257,12 @@ impl sc_client_api::BlockBackend<Block> for Client {
 		&self,
 		number: NumberFor<Block>
 	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
-		match self {
-			Self::Selendra(client) => client.block_hash(number)
+		with_client! {
+			self,
+			client,
+			{
+				client.block_hash(number)
+			}
 		}
 	}
 
@@ -206,8 +270,12 @@ impl sc_client_api::BlockBackend<Block> for Client {
 		&self,
 		id: &<Block as BlockT>::Hash
 	) -> sp_blockchain::Result<Option<Vec<u8>>> {
-		match self {
-			Self::Selendra(client) => client.indexed_transaction(id)
+		with_client! {
+			self,
+			client,
+			{
+				client.indexed_transaction(id)
+			}
 		}
 	}
 
@@ -215,11 +283,14 @@ impl sc_client_api::BlockBackend<Block> for Client {
 		&self,
 		id: &BlockId<Block>
 	) -> sp_blockchain::Result<Option<Vec<Vec<u8>>>> {
-		match self {
-			Self::Selendra(client) => client.block_indexed_body(id),
+		with_client! {
+			self,
+			client,
+			{
+				client.block_indexed_body(id)
+			}
 		}
 	}
-
 }
 
 impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
@@ -228,8 +299,12 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		id: &BlockId<Block>,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<StorageData>> {
-		match self {
-			Self::Selendra(client) => client.storage(id, key)
+		with_client! {
+			self,
+			client,
+			{
+				client.storage(id, key)
+			}
 		}
 	}
 
@@ -238,8 +313,12 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		id: &BlockId<Block>,
 		key_prefix: &StorageKey,
 	) -> sp_blockchain::Result<Vec<StorageKey>> {
-		match self {
-			Self::Selendra(client) => client.storage_keys(id, key_prefix)
+		with_client! {
+			self,
+			client,
+			{
+				client.storage_keys(id, key_prefix)
+			}
 		}
 	}
 
@@ -248,8 +327,12 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		id: &BlockId<Block>,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
-		match self {
-			Self::Selendra(client) => client.storage_hash(id, key)
+		with_client! {
+			self,
+			client,
+			{
+				client.storage_hash(id, key)
+			}
 		}
 	}
 
@@ -258,8 +341,12 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		id: &BlockId<Block>,
 		key_prefix: &StorageKey,
 	) -> sp_blockchain::Result<Vec<(StorageKey, StorageData)>> {
-		match self {
-			Self::Selendra(client) => client.storage_pairs(id, key_prefix)
+		with_client! {
+			self,
+			client,
+			{
+				client.storage_pairs(id, key_prefix)
+			}
 		}
 	}
 
@@ -269,8 +356,12 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		prefix: Option<&'a StorageKey>,
 		start_key: Option<&StorageKey>,
 	) -> sp_blockchain::Result<KeyIterator<'a, <crate::FullBackend as sc_client_api::Backend<Block>>::State, Block>> {
-		match self {
-			Self::Selendra(client) => client.storage_keys_iter(id, prefix, start_key)
+		with_client! {
+			self,
+			client,
+			{
+				client.storage_keys_iter(id, prefix, start_key)
+			}
 		}
 	}
 
@@ -280,8 +371,12 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		child_info: &ChildInfo,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<StorageData>> {
-		match self {
-			Self::Selendra(client) => client.child_storage(id, child_info, key)
+		with_client! {
+			self,
+			client,
+			{
+				client.child_storage(id, child_info, key)
+			}
 		}
 	}
 
@@ -291,8 +386,12 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		child_info: &ChildInfo,
 		key_prefix: &StorageKey,
 	) -> sp_blockchain::Result<Vec<StorageKey>> {
-		match self {
-			Self::Selendra(client) => client.child_storage_keys(id, child_info, key_prefix)
+		with_client! {
+			self,
+			client,
+			{
+				client.child_storage_keys(id, child_info, key_prefix)
+			}
 		}
 	}
 
@@ -302,8 +401,12 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		child_info: &ChildInfo,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
-		match self {
-			Self::Selendra(client) => client.child_storage_hash(id, child_info, key)
+		with_client! {
+			self,
+			client,
+			{
+				client.child_storage_hash(id, child_info, key)
+			}
 		}
 	}
 
@@ -312,8 +415,12 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		first: NumberFor<Block>,
 		last: BlockId<Block>,
 	) -> sp_blockchain::Result<Option<(NumberFor<Block>, BlockId<Block>)>> {
-		match self {
-			Self::Selendra(client) => client.max_key_changes_range(first, last)
+		with_client! {
+			self,
+			client,
+			{
+				client.max_key_changes_range(first, last)
+			}
 		}
 	}
 
@@ -324,40 +431,64 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
 		storage_key: Option<&PrefixedStorageKey>,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Vec<(NumberFor<Block>, u32)>> {
-		match self {
-			Self::Selendra(client) => client.key_changes(first, last, storage_key, key)
+		with_client! {
+			self,
+			client,
+			{
+				client.key_changes(first, last, storage_key, key)
+			}
 		}
 	}
 }
 
 impl sp_blockchain::HeaderBackend<Block> for Client {
 	fn header(&self, id: BlockId<Block>) -> sp_blockchain::Result<Option<Header>> {
-		match self {
-			Self::Selendra(client) => client.header(&id)
+		with_client! {
+			self,
+			client,
+			{
+				client.header(&id)
+			}
 		}
 	}
 
 	fn info(&self) -> sp_blockchain::Info<Block> {
-		match self {
-			Self::Selendra(client) => client.info()
+		with_client! {
+			self,
+			client,
+			{
+				client.info()
+			}
 		}
 	}
 
 	fn status(&self, id: BlockId<Block>) -> sp_blockchain::Result<sp_blockchain::BlockStatus> {
-		match self {
-			Self::Selendra(client) => client.status(id)
+		with_client! {
+			self,
+			client,
+			{
+				client.status(id)
+			}
 		}
 	}
 
 	fn number(&self, hash: Hash) -> sp_blockchain::Result<Option<BlockNumber>> {
-		match self {
-			Self::Selendra(client) => client.number(hash)
+		with_client! {
+			self,
+			client,
+			{
+				client.number(hash)
+			}
 		}
 	}
 
 	fn hash(&self, number: BlockNumber) -> sp_blockchain::Result<Option<Hash>> {
-		match self {
-			Self::Selendra(client) => client.hash(number)
+		with_client! {
+			self,
+			client,
+			{
+				client.hash(number)
+			}
 		}
 	}
 }

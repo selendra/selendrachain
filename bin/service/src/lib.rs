@@ -20,7 +20,6 @@
 
 pub mod chain_spec;
 mod grandpa_support;
-mod client;
 mod parachains_db;
 
 #[cfg(feature = "full-node")]
@@ -53,11 +52,9 @@ use selendra_subsystem::jaeger;
 use std::sync::Arc;
 
 use prometheus_endpoint::Registry;
-use sc_executor::native_executor_instance;
 use service::RpcHandlers;
 use telemetry::{Telemetry, TelemetryWorker, TelemetryWorkerHandle};
 
-pub use self::client::{AbstractClient, Client, ClientHandle, ExecuteWithClient, RuntimeApiCollection};
 pub use chain_spec::SelendraChainSpec;
 pub use consensus_common::{Proposal, SelectChain, BlockImport, block_validation::Chain};
 pub use selendra_primitives::v1::{Block, BlockId, CollatorPair, Hash, Id as ParaId};
@@ -69,6 +66,10 @@ pub use service::{
 	TFullClient, TLightClient, TFullBackend, TLightBackend, TFullCallExecutor, TLightCallExecutor,
 	Configuration, ChainSpec, TaskManager,
 };
+pub use selendra_client::{
+	SelendraExecutor, FullBackend, FullClient, AbstractClient, Client, ClientHandle, ExecuteWithClient,
+	RuntimeApiCollection,
+};
 pub use service::config::{DatabaseConfig, PrometheusConfig};
 pub use sp_api::{ApiRef, Core as CoreApi, ConstructRuntimeApi, ProvideRuntimeApi, StateBackend};
 pub use sp_runtime::traits::{DigestFor, HashFor, NumberFor, Block as BlockT, self as runtime_traits, BlakeTwo256};
@@ -77,13 +78,6 @@ pub use selendra_runtime;
 
 /// The maximum number of active leaves we forward to the [`Overseer`] on startup.
 const MAX_ACTIVE_LEAVES: usize = 4;
-
-native_executor_instance!(
-	pub SelendraExecutor,
-	selendra_runtime::api::dispatch,
-	selendra_runtime::native_version,
-	frame_benchmarking::benchmarking::HostFunctions,
-);
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -161,17 +155,17 @@ fn jaeger_launch_collector_with_agent(spawner: impl SpawnNamed, config: &Configu
 	Ok(())
 }
 
-pub type FullBackend = service::TFullBackend<Block>;
 #[cfg(feature = "full-node")]
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
-pub type FullClient<RuntimeApi, Executor> = service::TFullClient<Block, RuntimeApi, Executor>;
 #[cfg(feature = "full-node")]
 type FullGrandpaBlockImport<RuntimeApi, Executor> = grandpa::GrandpaBlockImport<
 	FullBackend, Block, FullClient<RuntimeApi, Executor>, FullSelectChain
 >;
 
+#[cfg(feature = "light-node")]
 type LightBackend = service::TLightBackendWithHash<Block, sp_runtime::traits::BlakeTwo256>;
 
+#[cfg(feature = "light-node")]
 type LightClient<RuntimeApi, Executor> =
 	service::TLightClientWithBackend<Block, RuntimeApi, Executor, LightBackend>;
 
@@ -1017,6 +1011,7 @@ pub fn new_full<RuntimeApi, Executor>(
 }
 
 /// Builds a new service for a light client.
+#[cfg(feature = "light-node")]
 fn new_light<Runtime, Dispatch>(mut config: Configuration) -> Result<(
 	TaskManager,
 	RpcHandlers,
@@ -1193,6 +1188,7 @@ pub fn new_chain_ops(
 }
 
 /// Build a new light node.
+#[cfg(feature = "light-node")]
 pub fn build_light(config: Configuration) -> Result<(
 	TaskManager,
 	RpcHandlers,

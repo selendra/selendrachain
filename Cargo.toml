@@ -60,6 +60,10 @@ members = [
 	# "modules/cumulus/primitives/core",
 	# "modules/cumulus/primitives/parachain-inherent",
 	# "modules/cumulus/primitives/utility",
+	# "modules/cumulus/primitives/timestamp",
+	# "modules/evm-module/traits",
+	# "modules/evm-module/utilities",
+	
 ]
 
 # make sure dev builds with backtrace do

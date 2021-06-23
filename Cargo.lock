@@ -7486,6 +7486,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-client"
+version = "0.1.0"
+dependencies = [
+ "beefy-primitives",
+ "frame-benchmarking",
+ "frame-system-rpc-runtime-api",
+ "pallet-mmr-primitives",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "sc-client-api",
+ "sc-executor",
+ "sc-service",
+ "selendra-primitives",
+ "selendra-runtime",
+ "sp-api",
+ "sp-authority-discovery",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-babe",
+ "sp-finality-grandpa",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-storage",
+ "sp-transaction-pool",
+]
+
+[[package]]
 name = "selendra-collator-protocol"
 version = "0.1.0"
 dependencies = [
@@ -8319,7 +8347,6 @@ dependencies = [
  "beefy-gadget",
  "beefy-primitives",
  "env_logger 0.8.2",
- "frame-benchmarking",
  "frame-system-rpc-runtime-api",
  "futures 0.3.15",
  "hex-literal",
@@ -8352,6 +8379,7 @@ dependencies = [
  "selendra-availability-bitfield-distribution",
  "selendra-availability-distribution",
  "selendra-availability-recovery",
+ "selendra-client",
  "selendra-collator-protocol",
  "selendra-gossip-support",
  "selendra-network-bridge",

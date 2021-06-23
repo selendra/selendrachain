@@ -56,7 +56,6 @@ pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/selendr
 pallet-mmr-primitives = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
 
 # Substrate Other
-frame-benchmarking = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
 frame-system-rpc-runtime-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
 prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
 
@@ -75,6 +74,7 @@ selendra-node-core-parachains-inherent = { path = "../../modules/node/core/parac
 selendra-overseer = { path = "../../modules/node/overseer" }
 selendra-parachain = { path = "../../modules/parachain" }
 selendra-primitives = { path = "../../primitives" }
+selendra-client = { path = "../client" }
 selendra-node-primitives = { path = "../../modules/node/primitives" }
 selendra-rpc = { path = "../rpc" }
 selendra-subsystem = { package = "selendra-node-subsystem", path = "../../modules/node/subsystem" }
@@ -138,3 +138,4 @@ runtime-benchmarks = [
 try-runtime = [
 	"selendra-runtime/try-runtime"
 ]
+light-node = []
