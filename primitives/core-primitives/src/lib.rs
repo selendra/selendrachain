@@ -20,6 +20,9 @@
 //!
 //! These core Selendra types are used by the relay chain and the Parachains.
 
+pub mod evm;
+pub mod currency;
+
 use sp_runtime::{generic, MultiSignature, traits::{Verify, IdentifyAccount}};
 use parity_scale_codec::{Encode, Decode};
 #[cfg(feature = "std")]
