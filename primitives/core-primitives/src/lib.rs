@@ -37,6 +37,9 @@ pub type BlockNumber = u32;
 /// An instant or duration in time.
 pub type Moment = u64;
 
+/// Signed version of Balance
+pub type Amount = i128;
+
 /// Alias to type for a signature for a transaction on the relay chain. This allows one of several
 /// kinds of underlying crypto to be used, so isn't a fixed size when encoded.
 pub type Signature = MultiSignature;

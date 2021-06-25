@@ -11,7 +11,6 @@ use sp_std::{
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-pub use auction::{Auction, AuctionHandler, AuctionInfo, OnNewBidResult};
 pub use currency::{
 	BalanceStatus, BasicCurrency, BasicCurrencyExtended, BasicLockableCurrency, BasicReservableCurrency,
 	LockIdentifier, MultiCurrency, MultiCurrencyExtended, MultiLockableCurrency, MultiReservableCurrency, OnDust,
@@ -23,7 +22,6 @@ pub use price::{DefaultPriceProvider, PriceProvider};
 pub use rewards::RewardHandler;
 
 pub mod arithmetic;
-pub mod auction;
 pub mod currency;
 pub mod data_provider;
 pub mod get_by_key;

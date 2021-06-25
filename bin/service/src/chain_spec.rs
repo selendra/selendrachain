@@ -25,7 +25,9 @@ use selendra_runtime::constants::paras::{MAX_CODE_SIZE, MAX_POV_SIZE};
 use selendra_runtime::constants::currency::SELS;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_staking::Forcing;
-use selendra_primitives::v1::{AccountId, AccountPublic, AssignmentId, ValidatorId, BlockNumber};
+use selendra_primitives::v1::{
+	AccountId, AccountPublic, AssignmentId, ValidatorId, BlockNumber,
+};
 use sc_chain_spec::{ChainSpecExtension, ChainType};
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
@@ -213,6 +215,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 			config: default_parachains_host_configuration(),
 		},
 		paras: Default::default(),
+		tokens: selendra::TokensConfig { balances: vec![] },
 	}
 }
 
@@ -412,6 +415,7 @@ pub fn selendra_testnet_genesis(
 			config: default_parachains_host_configuration(),
 		},
 		paras: Default::default(),
+		tokens: selendra::TokensConfig { balances: vec![] },
 	}
 }
 

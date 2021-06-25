@@ -47,6 +47,7 @@ sp-trie = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" 
 sp-timestamp = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
 sp-consensus-babe = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
 sp-state-machine = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
+sp-std = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
 
 # Substrate Pallets
 pallet-babe = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }

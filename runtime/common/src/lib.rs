@@ -33,6 +33,12 @@ mod mock;
 #[cfg(test)]
 mod integration_tests;
 
+pub mod precompile;
+pub use precompile::{
+	AllPrecompiles, MultiCurrencyPrecompile, ScheduleCallPrecompile, GasToWeight,
+	StateRentPrecompile, PrecompileCallerFilter, SystemContractsFilter
+};
+
 use beefy_primitives::ecdsa::AuthorityId as BeefyId;
 use primitives::v1::{AccountId, AssignmentId, BlockNumber, ValidatorId};
 use sp_runtime::{Perquintill, Perbill, FixedPointNumber};

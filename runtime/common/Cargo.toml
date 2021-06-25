@@ -8,11 +8,13 @@ edition = "2018"
 impl-trait-for-tuples = "0.2.0"
 bitvec = { version = "0.20.1", default-features = false, features = ["alloc"] }
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
+libsecp256k1 = { version = "0.3.5", default-features = false }
 log = { version = "0.4.13", default-features = false }
 rustc-hex = { version = "2.1.0", default-features = false }
 serde = { version = "1.0.123", default-features = false }
 serde_derive = { version = "1.0.117", optional = true }
 static_assertions = "1.1.0"
+num_enum = { version = "0.5.1", default-features = false }
 
 beefy-primitives = { git = "https://github.com/selendra/grandpa-bridge-gadget", branch = "0.1.0-tn4", default-features = false }
 sp-api = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4", default-features = false }
@@ -35,6 +37,7 @@ pallet-vesting = { git = "https://github.com/selendra/substrate", branch = "0.1.
 pallet-offences = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4", default-features = false }
 pallet-transaction-payment = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4", default-features = false }
 pallet-treasury = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4", default-features = false }
+pallet-scheduler = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4", default-features = false }
 
 pallet-beefy = { git = "https://github.com/selendra/grandpa-bridge-gadget", branch = "0.1.0-tn4", default-features = false }
 pallet-mmr = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4", default-features = false }
@@ -43,11 +46,15 @@ frame-benchmarking = { git = "https://github.com/selendra/substrate", branch = "
 pallet-babe = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4", default-features=false, optional = true }
 
 primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
-libsecp256k1 = { version = "0.3.5", default-features = false }
 runtime-parachains = { package = "selendra-runtime-parachains", path = "../../modules/parachain/runtime-parachains", default-features = false }
 
 slot-range-helper = { path = "slot_range_helper", default-features = false }
 xcm = { path = "../../modules/xcm", default-features = false }
+
+orml-traits = { path = "../../modules/orml/traits", default-features = false }
+module-evm = { path = "../../modules/evm-module/evm", default-features = false }
+module-support = { path = "../../modules/evm-module/support", default-features = false }
+module-transaction-payment = { path = "../../modules/evm-module/transaction-payment", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.1"
@@ -68,6 +75,7 @@ libsecp256k1 = "0.3.5"
 default = ["std"]
 no_std = []
 std = [
+	"num_enum/std",
 	"beefy-primitives/std",
 	"bitvec/std",
 	"parity-scale-codec/std",
@@ -92,6 +100,7 @@ std = [
 	"pallet-vesting/std",
 	"pallet-transaction-payment/std",
 	"pallet-treasury/std",
+	"pallet-scheduler/std",
 	"slot-range-helper/std",
 	"sp-runtime/std",
 	"sp-session/std",
@@ -100,6 +109,10 @@ std = [
 	"libsecp256k1/std",
 	"runtime-parachains/std",
 	"xcm/std",
+	"module-evm/std",
+	"orml-traits/std",
+	"module-support/std",
+	"module-transaction-payment/std",
 ]
 runtime-benchmarks = [
 	"libsecp256k1/hmac",

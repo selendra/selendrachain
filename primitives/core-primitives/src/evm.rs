@@ -75,8 +75,6 @@ pub enum ReserveIdentifier {
 	CollatorSelection,
 	EvmStorageDeposit,
 	EvmDeveloperDeposit,
-	Honzon,
-	Nft,
 	TransactionPayment,
 }
 

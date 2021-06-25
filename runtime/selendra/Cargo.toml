@@ -89,6 +89,16 @@ xcm = { package = "xcm", path = "../../modules/xcm", default-features = false }
 xcm-executor = { package = "xcm-executor", path = "../../modules/xcm/xcm-executor", default-features = false }
 xcm-builder = { package = "xcm-builder", path = "../../modules/xcm/xcm-builder", default-features = false }
 
+orml-traits = { path = "../../modules/orml/traits", default-features = false }
+orml-tokens = { path = "../../modules/orml/tokens", default-features = false }
+module-currencies = { path = "../../modules/evm-module/currencies", default-features = false }
+module-evm = { path = "../../modules/evm-module/evm", default-features = false }
+module-evm-accounts = { path = "../../modules/evm-module/evm-accounts", default-features = false }
+module-evm-bridge = { path = "../../modules/evm-module/evm-bridge", default-features = false }
+module-evm-rpc-runtime-api = { path = "../../modules/evm-module/evm/rpc/runtime_api",  default-features = false }
+module-transaction-payment = { path = "../../modules/evm-module/transaction-payment", default-features = false }
+module-support = { path = "../../modules/evm-module/support", default-features = false }
+
 [dev-dependencies]
 hex-literal = "0.3.1"
 libsecp256k1 = "0.3.5"
@@ -174,6 +184,14 @@ std = [
 	"xcm-executor/std",
 	"xcm-builder/std",
 	"max-encoded-len/std",
+	"orml-traits/std",
+	"orml-tokens/std",
+	"module-currencies/std",
+	"module-evm/std",
+	"module-evm-accounts/std",
+	"module-evm-bridge/std",
+	"module-transaction-payment/std",
+	"module-support/std",
 ]
 runtime-benchmarks = [
 	"runtime-common/runtime-benchmarks",

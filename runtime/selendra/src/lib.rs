@@ -20,22 +20,25 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-use pallet_transaction_payment::CurrencyAdapter;
 use sp_std::prelude::*;
 use sp_std::collections::btree_map::BTreeMap;
-use sp_core::u32_trait::{_1, _2, _3, _5};
+use sp_core::{
+	u32_trait::{_1, _2, _3, _5},
+	OpaqueMetadata, H160
+};
 use parity_scale_codec::{Encode, Decode};
 use primitives::v1::{
 	AccountId, AccountIndex, Balance, BlockNumber, CandidateEvent, CommittedCandidateReceipt,
 	CoreState, GroupRotationInfo, Hash, Id as ParaId, Moment, Nonce, OccupiedCoreAssumption,
 	PersistedValidationData, Signature, ValidationCode, ValidationCodeHash, ValidatorId,
-	ValidatorIndex, InboundDownwardMessage, InboundHrmpMessage, SessionInfo,
+	ValidatorIndex, InboundDownwardMessage, InboundHrmpMessage, SessionInfo, 
+	CurrencyId, Amount, TokenSymbol, EstimateResourcesRequest, ReserveIdentifier
 };
 use runtime_common::{
-	paras_registrar, xcm_sender, slots, paras_sudo_wrapper,
-	SlowAdjustingFeeUpdate, CurrencyToVote, impls::DealWithFees,
-	BlockHashCount, RocksDbWeight, BlockWeights, BlockLength, OffchainSolutionWeightLimit, OffchainSolutionLengthLimit,
-	ToAuthor,
+	paras_registrar, xcm_sender, slots, paras_sudo_wrapper, ToAuthor,
+	CurrencyToVote, OffchainSolutionWeightLimit, OffchainSolutionLengthLimit,
+	BlockHashCount, RocksDbWeight, BlockWeights, BlockLength, 
+	
 };
 
 use runtime_parachains::origin as parachains_origin;
@@ -68,7 +71,7 @@ use sp_runtime::{
 	transaction_validity::{TransactionValidity, TransactionSource, TransactionPriority},
 	traits::{
 		BlakeTwo256, Block as BlockT, OpaqueKeys, ConvertInto, AccountIdLookup,
-		Extrinsic as ExtrinsicT, SaturatedConversion, Verify,
+		Extrinsic as ExtrinsicT, SaturatedConversion, Verify, Zero
 	},
 };
 #[cfg(feature = "runtime-benchmarks")]
@@ -77,7 +80,6 @@ use sp_version::RuntimeVersion;
 use pallet_grandpa::{AuthorityId as GrandpaId, fg_primitives};
 #[cfg(any(feature = "std", test))]
 use sp_version::NativeVersion;
-use sp_core::OpaqueMetadata;
 use sp_staking::SessionIndex;
 use frame_support::{
 	parameter_types, construct_runtime, RuntimeDebug, PalletId,
@@ -92,6 +94,11 @@ use pallet_session::historical as session_historical;
 use static_assertions::const_assert;
 use beefy_primitives::ecdsa::AuthorityId as BeefyId;
 use pallet_mmr_primitives as mmr;
+
+use orml_traits::parameter_type_with_key;
+use module_currencies::BasicCurrencyAdapter;
+use module_evm_accounts::EvmAddressMapping;
+use module_evm::{CallInfo, CreateInfo};
 
 #[cfg(feature = "std")]
 pub use pallet_staking::StakerStatus;
@@ -270,19 +277,19 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = weights::pallet_balances::WeightInfo<Runtime>;
 	type MaxLocks = MaxLocks;
 	type MaxReserves = MaxReserves;
-	type ReserveIdentifier = [u8; 8];
+	type ReserveIdentifier = ReserveIdentifier;
 }
 
-parameter_types! {
-	pub const TransactionByteFee: Balance = 7 * MILLICENTS;
-}
+// parameter_types! {
+// 	pub const TransactionByteFee: Balance = 7 * MILLICENTS;
+// }
 
-impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = CurrencyAdapter<Balances, DealWithFees<Self>>;
-	type TransactionByteFee = TransactionByteFee;
-	type WeightToFee = WeightToFee;
-	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
-}
+// impl pallet_transaction_payment::Config for Runtime {
+// 	type OnChargeTransaction = CurrencyAdapter<Balances, DealWithFees<Self>>;
+// 	type TransactionByteFee = TransactionByteFee;
+// 	type WeightToFee = WeightToFee;
+// 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+// }
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
@@ -728,7 +735,8 @@ impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for R
 			frame_system::CheckMortality::<Runtime>::from(generic::Era::mortal(period, current_block)),
 			frame_system::CheckNonce::<Runtime>::from(nonce),
 			frame_system::CheckWeight::<Runtime>::new(),
-			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+			module_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+			module_evm::SetEvmOrigin::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra).map_err(|e| {
 			log::warn!("Unable to create signed payload: {:?}", e);
@@ -873,11 +881,9 @@ impl InstanceFilter<Call> for ProxyType {
 				// Specifically omitting the entire Balances pallet
 				Call::Authorship(..) |
 				Call::Staking(..) |
-				Call::Offences(..) |
 				Call::Session(..) |
 				Call::Grandpa(..) |
 				Call::ImOnline(..) |
-				Call::AuthorityDiscovery(..) |
 				Call::Democracy(..) |
 				Call::Council(..) |
 				Call::TechnicalCommittee(..) |
@@ -904,7 +910,7 @@ impl InstanceFilter<Call> for ProxyType {
 				Call::Registrar(paras_registrar::Call::register(..)) |
 				Call::Registrar(paras_registrar::Call::deregister(..)) |
 				// Specifically omitting Registrar `swap`
-				Call::Registrar(paras_registrar::Call::reserve(..)) 
+				Call::Registrar(paras_registrar::Call::reserve(..))
 			),
 			ProxyType::Governance => matches!(c,
 				Call::Democracy(..) |
@@ -1209,6 +1215,124 @@ impl pallet_xcm::Config for Runtime {
 	type Weigher = FixedWeightBounds<BaseXcmWeight, Call>;
 }
 
+parameter_type_with_key! {
+	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
+		Zero::zero()
+	};
+}
+
+impl orml_tokens::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = CurrencyId;
+	type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = orml_tokens::BurnDust<Runtime>;
+	type MaxLocks = MaxLocks;
+}
+
+impl module_currencies::Config for Runtime {
+	type Event = Event;
+	type MultiCurrency = Tokens;
+	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+	type GetNativeCurrencyId = GetNativeCurrencyId;
+	type WeightInfo = ();
+	type AddressMapping = EvmAddressMapping<Runtime>;
+	type EVMBridge = EVMBridge;
+}
+
+impl module_evm_bridge::Config for Runtime {
+	type EVM = EVM;
+}
+
+parameter_types! {
+	pub const ChainId: u64 = 1000;
+	// 10 SEL minimum storage deposit
+	pub const NewContractExtraBytes: u32 = 10_000;
+	pub const StorageDepositPerByte: Balance = 1 * MILLICENTS;
+	pub NetworkContractSource: H160 = H160::from_low_u64_be(0);
+	pub const DeveloperDeposit: Balance = 1_000 * DOLLARS;
+	pub const DeploymentFee: Balance    = 100 * DOLLARS;
+}
+
+pub type MultiCurrencyPrecompile = runtime_common::MultiCurrencyPrecompile<
+		AccountId,
+		EvmAddressMapping<Runtime>,
+		Currencies
+	>;
+pub type StateRentPrecompile = runtime_common::StateRentPrecompile<
+		AccountId,
+		EvmAddressMapping<Runtime>,
+		EVM
+	>;
+pub type ScheduleCallPrecompile = runtime_common::ScheduleCallPrecompile<
+	AccountId,
+	EvmAddressMapping<Runtime>,
+	Scheduler,
+	module_transaction_payment::ChargeTransactionPayment<Runtime>,
+	Call,
+	Origin,
+	OriginCaller,
+	Runtime,
+>;
+
+impl module_evm::Config for Runtime {
+	type AddressMapping = EvmAddressMapping<Runtime>;
+	type Currency = Balances;
+	type TransferAll = Currencies;
+	type NewContractExtraBytes = NewContractExtraBytes;
+	type StorageDepositPerByte = StorageDepositPerByte;
+	type MaxCodeSize = MaxCodeSize;
+	type Event = Event;
+	type Precompiles = runtime_common::AllPrecompiles<
+		runtime_common::SystemContractsFilter,
+		MultiCurrencyPrecompile,
+		StateRentPrecompile,
+		ScheduleCallPrecompile,
+	>;
+	type ChainId = ChainId;
+	type GasToWeight = runtime_common::GasToWeight;
+	type ChargeTransactionPayment = module_transaction_payment::ChargeTransactionPayment<Runtime>;
+	type NetworkContractOrigin = MoreThanHalfCouncil;
+	type NetworkContractSource = NetworkContractSource;
+	type DeveloperDeposit = DeveloperDeposit;
+	type DeploymentFee = DeploymentFee;
+	type TreasuryAccount = ();
+	type FreeDeploymentOrigin = MoreThanHalfCouncil;
+	type WeightInfo = ();
+}
+
+impl module_evm_accounts::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type AddressMapping = EvmAddressMapping<Runtime>;
+	type TransferAll = Currencies;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const TransactionByteFee: Balance = 7 * MILLICENTS;
+	pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::SEL);
+	pub const GetStableCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::SUSD);
+	// All currency types except for native currency, Sort by fee charge order
+	pub AllNonNativeCurrencyIds: Vec<CurrencyId> = vec![];
+
+}
+
+impl module_transaction_payment::Config for Runtime {
+	type AllNonNativeCurrencyIds = AllNonNativeCurrencyIds;
+	type NativeCurrencyId = GetNativeCurrencyId;
+	type StableCurrencyId = GetStableCurrencyId;
+	type Currency = Balances;
+	type MultiCurrency = Currencies;
+	type OnTransactionPayment = ();
+	type TransactionByteFee = TransactionByteFee;
+	type WeightToFee = WeightToFee;
+	type FeeMultiplierUpdate = ();
+	type WeightInfo = ();
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -1216,89 +1340,95 @@ construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		// Basic stuff; balances is uncallable initially.
-		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
+		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 0,
 
 		// Must be before session.
-		Babe: pallet_babe::{Pallet, Call, Storage, Config, ValidateUnsigned},
+		Babe: pallet_babe::{Pallet, Call, Storage, Config, ValidateUnsigned} = 1,
 
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Indices: pallet_indices::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
+		Indices: pallet_indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 3,
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
+		TransactionPayment: module_transaction_payment::{Pallet, Call, Storage} = 33,
+		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 11,
+		Currencies: module_currencies::{Pallet, Call, Event<T>} = 12,
+
+		// Smart contracts
+		EVM: module_evm::{Pallet, Config<T>, Call, Storage, Event<T>} = 130,
+		EVMBridge: module_evm_bridge::{Pallet} = 131,
+		EvmAccounts: module_evm_accounts::{Pallet, Call, Storage, Event<T>} = 132,
 
 		// Consensus support.
-		Authorship: pallet_authorship::{Pallet, Call, Storage},
-		Staking: pallet_staking::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Offences: pallet_offences::{Pallet, Call, Storage, Event},
-		Historical: session_historical::{Pallet},
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
-		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned},
-		ImOnline: pallet_im_online::{Pallet, Call, Storage, Event<T>, ValidateUnsigned, Config<T>},
-		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Call, Config},
+		Authorship: pallet_authorship::{Pallet, Call, Storage} = 5,
+		Staking: pallet_staking::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
+		Offences: pallet_offences::{Pallet, Storage, Event} = 7,
+		Historical: session_historical::{Pallet} = 34,
+		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 8,
+		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 10,
+		ImOnline: pallet_im_online::{Pallet, Call, Storage, Event<T>, ValidateUnsigned, Config<T>} = 13,
+		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Config} = 14,
 
 		// Governance stuff; uncallable initially.
-		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
-		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
-		PhragmenElection: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>},
-		TechnicalMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>},
-		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
-
+		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 15,
+		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 16,
+		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 17,
+		PhragmenElection: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 18,
+		TechnicalMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 19,
+		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 20,
+		
 		// Utility module.
-		Utility: pallet_utility::{Pallet, Call, Event},
+		Utility: pallet_utility::{Pallet, Call, Event} = 24,
 
 		// Less simple identity module.
-		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>},
+		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 25,
 
 		// Social recovery module.
-		Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>},
+		Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>} = 27,
 
 		// Vesting. Usable initially, but removed once all vesting is finished.
-		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>},
+		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 28,
 
 		// System scheduler.
-		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
+		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 29,
 
 		// Proxy module. Late addition.
-		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>},
+		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 30,
 
 		// Multisig module. Late addition.
-		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>},
+		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 31,
 
 		// Bounties module.
-		Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>},
+		Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>} = 35,
 
 		// Tips module.
-		Tips: pallet_tips::{Pallet, Call, Storage, Event<T>},
+		Tips: pallet_tips::{Pallet, Call, Storage, Event<T>} = 36,
 
 		// Sudo
-		Sudo: pallet_sudo::{Pallet, Call, Storage, Event<T>, Config<T>},
+		Sudo: pallet_sudo::{Pallet, Call, Storage, Event<T>, Config<T>} = 255,
 
 		// Election pallet. Only works with staking, but placed here to maintain indices.
-		ElectionProviderMultiPhase: pallet_election_provider_multi_phase::{Pallet, Call, Storage, Event<T>, ValidateUnsigned},
+		ElectionProviderMultiPhase: pallet_election_provider_multi_phase::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 37,
 
 		// Parachains pallets. Start indices at 50 to leave room.
 		ParachainsOrigin: parachains_origin::{Pallet, Origin} = 50,
-		ParachainsConfiguration: parachains_configuration::{Pallet, Call, Storage, Config<T>},
-		ParasShared: parachains_shared::{Pallet, Call, Storage},
-		ParasInclusion: parachains_inclusion::{Pallet, Call, Storage, Event<T>},
-		ParasInherent: parachains_paras_inherent::{Pallet, Call, Storage, Inherent},
-		ParasScheduler: parachains_scheduler::{Pallet, Call, Storage},
-		Paras: parachains_paras::{Pallet, Call, Storage, Event, Config<T>},
-		ParasInitializer: parachains_initializer::{Pallet, Call, Storage},
-		ParasDmp: parachains_dmp::{Pallet, Call, Storage},
-		ParasUmp: parachains_ump::{Pallet, Call, Storage, Event},
-		ParasHrmp: parachains_hrmp::{Pallet, Call, Storage, Event},
-		ParasSessionInfo: parachains_session_info::{Pallet, Call, Storage},
+		ParachainsConfiguration: parachains_configuration::{Pallet, Call, Storage, Config<T>} = 51,
+		ParasShared: parachains_shared::{Pallet, Call, Storage} = 52,
+		ParasInclusion: parachains_inclusion::{Pallet, Call, Storage, Event<T>} = 53,
+		ParasInherent: parachains_paras_inherent::{Pallet, Call, Storage, Inherent} = 54,
+		ParasScheduler: parachains_scheduler::{Pallet, Call, Storage} = 55,
+		Paras: parachains_paras::{Pallet, Call, Storage, Event, Config<T>} = 56,
+		ParasInitializer: parachains_initializer::{Pallet, Call, Storage} = 57,
+		ParasDmp: parachains_dmp::{Pallet, Call, Storage} = 58,
+		ParasUmp: parachains_ump::{Pallet, Call, Storage, Event} = 59,
+		ParasHrmp: parachains_hrmp::{Pallet, Call, Storage, Event} = 60,
+		ParasSessionInfo: parachains_session_info::{Pallet, Call, Storage} = 61,
 
 		// Parachain Onboarding Pallets. Start indices at 70 to leave room.
-		Registrar: paras_registrar::{Pallet, Call, Storage, Event<T>},
-		Slots: slots::{Pallet, Call, Storage, Event<T>},
-		ParasSudoWrapper: paras_sudo_wrapper::{Pallet, Call},
+		Registrar: paras_registrar::{Pallet, Call, Storage, Event<T>} = 70,
+		Slots: slots::{Pallet, Call, Storage, Event<T>} = 71,
+		ParasSudoWrapper: paras_sudo_wrapper::{Pallet, Call} = 72,
 
 		// Pallet for sending XCM.
-		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>},
+		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin} = 99,
 	}
 }
 
@@ -1345,7 +1475,8 @@ pub type SignedExtra = (
 	frame_system::CheckMortality<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+	module_transaction_payment::ChargeTransactionPayment<Runtime>,
+	module_evm::SetEvmOrigin<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
@@ -1646,6 +1777,90 @@ sp_api::impl_runtime_apis! {
 			let weight = Executive::try_runtime_upgrade()?;
 			Ok((weight, BlockWeights::get().max_block))
 		}
+	}
+
+	impl module_evm_rpc_runtime_api::EVMRuntimeRPCApi<Block, Balance> for Runtime {
+		fn call(
+			from: H160,
+			to: H160,
+			data: Vec<u8>,
+			value: Balance,
+			gas_limit: u64,
+			storage_limit: u32,
+			estimate: bool,
+		) -> Result<CallInfo, sp_runtime::DispatchError> {
+			let mut config = <Runtime as module_evm::Config>::config().clone();
+			if estimate {
+				config.estimate = true;
+			}
+			module_evm::Runner::<Runtime>::call(
+				from,
+				from,
+				to,
+				data,
+				value,
+				gas_limit,
+				storage_limit,
+				&config,
+			)
+		}
+
+		fn create(
+			from: H160,
+			data: Vec<u8>,
+			value: Balance,
+			gas_limit: u64,
+			storage_limit: u32,
+			estimate: bool,
+		) -> Result<CreateInfo, sp_runtime::DispatchError> {
+			let mut config = <Runtime as module_evm::Config>::config().clone();
+			if estimate {
+				config.estimate = true;
+			}
+			module_evm::Runner::<Runtime>::create(
+				from,
+				data,
+				value,
+				gas_limit,
+				storage_limit,
+				&config,
+			)
+		}
+
+		fn get_estimate_resources_request(
+			extrinsic: Vec<u8>,
+		) -> Result<EstimateResourcesRequest, sp_runtime::DispatchError> {
+
+			let utx = UncheckedExtrinsic::decode(&mut &*extrinsic)
+				.map_err(|_| sp_runtime::DispatchError::Other("Invalid parameter extrinsic, decode failed"))?;
+
+			let request = match utx.function {
+				Call::EVM(module_evm::Call::call(to, data, value, gas_limit, storage_limit)) => {
+					Some(EstimateResourcesRequest {
+						from: None,
+						to: Some(to),
+						gas_limit: Some(gas_limit),
+						storage_limit: Some(storage_limit),
+						value: Some(value),
+						data: Some(data),
+					})
+				}
+				Call::EVM(module_evm::Call::create(data, value, gas_limit, storage_limit)) => {
+					Some(EstimateResourcesRequest {
+						from: None,
+						to: None,
+						gas_limit: Some(gas_limit),
+						storage_limit: Some(storage_limit),
+						value: Some(value),
+						data: Some(data),
+					})
+				}
+				_ => None,
+			};
+
+			request.ok_or(sp_runtime::DispatchError::Other("Invalid parameter extrinsic, not evm Call"))
+		}
+
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
