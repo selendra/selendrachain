@@ -12,11 +12,11 @@ rand = { version = "0.8.3", default-features = false }
 rand_chacha = { version = "0.3.0", default-features = false }
 
 # Substrate Dependencies
-sp-std = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
-sp-io = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
-sp-runtime = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
-frame-support = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
-frame-system = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.6" }
+sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.6" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.6" }
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.6" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.6" }
 
 # Selendra Dependencies
 xcm = { path = "../../../xcm", default-features = false }
@@ -26,8 +26,8 @@ xcm-executor = { path = "../../../xcm/xcm-executor", default-features = false }
 cumulus-primitives-core = { path = "../../primitives/core", default-features = false }
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
-sp-version = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
+sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.6" }
+sp-version = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.6" }
 
 [features]
 default = [ "std" ]

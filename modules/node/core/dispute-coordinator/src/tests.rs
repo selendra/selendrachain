@@ -53,7 +53,7 @@ struct TestState {
 	validators: Vec<Sr25519Keyring>,
 	validator_public: Vec<ValidatorId>,
 	validator_groups: Vec<Vec<ValidatorIndex>>,
-	0.1.0-tn4_keystore: Arc<sc_keystore::LocalKeystore>,
+	polkadot-v0.9.6_keystore: Arc<sc_keystore::LocalKeystore>,
 	subsystem_keystore: Arc<sc_keystore::LocalKeystore>,
 	db: Arc<dyn KeyValueDB>,
 	config: Config,
@@ -80,7 +80,7 @@ impl Default for TestState {
 			vec![ValidatorIndex(4), ValidatorIndex(5)],
 		];
 
-		let 0.1.0-tn4_keystore = make_keystore(&validators).into();
+		let polkadot-v0.9.6_keystore = make_keystore(&validators).into();
 		let subsystem_keystore = make_keystore(&[Sr25519Keyring::Alice]).into();
 
 		let db = Arc::new(kvdb_memorydb::create(1));
@@ -92,7 +92,7 @@ impl Default for TestState {
 			validators,
 			validator_public,
 			validator_groups,
-			0.1.0-tn4_keystore,
+			polkadot-v0.9.6_keystore,
 			subsystem_keystore,
 			db,
 			config,
@@ -196,7 +196,7 @@ impl TestState {
 	) -> SignedDisputeStatement {
 		let public = self.validator_public[index].clone();
 
-		let keystore = self.0.1.0-tn4_keystore.clone() as SyncCryptoStorePtr;
+		let keystore = self.polkadot-v0.9.6_keystore.clone() as SyncCryptoStorePtr;
 
 		SignedDisputeStatement::sign_explicit(
 			&keystore,

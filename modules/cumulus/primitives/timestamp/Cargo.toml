@@ -7,18 +7,18 @@ description = "Provides timestamp related functionality for parachains."
 
 [dependencies]
 # Substrate dependencies
-sp-timestamp = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
-sp-inherents = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
-sp-std = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
+sp-timestamp = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.6" }
+sp-inherents = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.6" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.6" }
 
 # Cumulus dependencies
 cumulus-primitives-core = { path = "../core", default-features = false }
 
 [dev-dependencies]
 # Substrate dependencies
-sp-tracing = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
-sp-runtime = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
-sp-consensus = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.6" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.6" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.6" }
 
 # Cumulus dependencies
 cumulus-test-client = { path = "../../test/client" }

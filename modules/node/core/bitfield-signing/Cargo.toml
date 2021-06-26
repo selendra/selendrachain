@@ -10,7 +10,7 @@ tracing = "0.1.26"
 selendra-primitives = { path = "../../../../primitives" }
 selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
-sp-keystore = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.6" }
 wasm-timer = "0.2.5"
 thiserror = "1.0.23"
 

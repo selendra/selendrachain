@@ -12,8 +12,8 @@ selendra-node-primitives = { path = "../primitives" }
 selendra-node-subsystem = { path = "../subsystem" }
 selendra-node-subsystem-util = { path = "../subsystem-util" }
 selendra-primitives = { path = "../../../primitives" }
-sp-core = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
-sp-maybe-compressed-blob  = { git = "https://github.com/selendra/substrate", branch = "0.1.0-tn4" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.6" }
+sp-maybe-compressed-blob  = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.6" }
 thiserror = "1.0.23"
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["bit-vec", "derive"] }
 

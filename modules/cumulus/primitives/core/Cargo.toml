@@ -6,11 +6,11 @@ edition = "2018"
 
 [dependencies]
 # Substrate dependencies
-sp-std = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
-sp-api = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
-sp-runtime = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
-sp-trie = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
-frame-support = { git = "https://github.com/selendra/substrate", default-features = false, branch = "0.1.0-tn4" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.6" }
+sp-api = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.6" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.6" }
+sp-trie = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.6" }
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.6" }
 
 # Selendra dependencies
 selendra-parachain = { path = "../../../parachain", default-features = false }

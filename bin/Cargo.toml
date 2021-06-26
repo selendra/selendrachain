@@ -1,6 +1,6 @@
 [package]
 name = "selendra"
-version =  "0.1.0-tn4"
+version =  "0.1.0-tn5"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 description = "Implementation of a node in Rust based on the Substrate framework."
