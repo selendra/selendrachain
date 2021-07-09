@@ -23,10 +23,10 @@ selendra-primitives = { path = "../../../primitives" }
 selendra-statement-table = { path = "../../statement-table" }
 selendra-node-jaeger = { path = "../jaeger" }
 selendra-procmacro-subsystem-dispatch-gen = { path = "dispatch-gen" }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.6" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7" }
 smallvec = "1.6.1"
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.6" }
-substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.6" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7" }
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7" }
 thiserror = "1.0.23"
 log = "0.4.13"
 
