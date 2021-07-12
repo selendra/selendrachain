@@ -26,7 +26,7 @@ pub enum NetworkId {
 	Any,
 	/// Some named network.
 	Named(Vec<u8>),
-	/// Selendra.
+	/// The Selendra Relay chain
 	Selendra,
 }
 
@@ -143,7 +143,7 @@ impl Junction {
 			_ => false,
 		}
 	}
-	
+
 	/// Returns true if this junction can be considered an interior part of its context. This is generally `true`,
 	/// except for the `Parent` item.
 	pub fn is_interior(&self) -> bool {
