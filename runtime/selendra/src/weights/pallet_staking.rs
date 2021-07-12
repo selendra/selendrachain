@@ -220,8 +220,8 @@ impl<T: frame_system::Config> pallet_staking::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(v as Weight)))
 	}
 
-	fn update_staking_limits() -> Weight {
-		(6_398_000 as Weight)
+	fn set_staking_limits() -> Weight {
+		(4_799_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 	fn chill_other() -> Weight {
