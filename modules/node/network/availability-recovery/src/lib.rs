@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Availability Recovery Subsystem of selendra.
+//! Availability Recovery Subsystem of Selendra.
 
 #![warn(missing_docs)]
 
@@ -51,6 +51,7 @@ use selendra_node_network_protocol::{
 };
 use selendra_node_subsystem_util::request_session_info;
 use selendra_erasure_coding::{branches, branch_hash, recovery_threshold, obtain_chunks_v1};
+
 mod error;
 
 #[cfg(test)]
@@ -649,7 +650,7 @@ async fn launch_interaction(
 		awaiting: vec![response_sender],
 	});
 
-	if let Err(e) = ctx.spawn("recovery interaction", Box::pin(remote)).await {
+	if let Err(e) = ctx.spawn("recovery interaction", Box::pin(remote)) {
 		tracing::warn!(
 			target: LOG_TARGET,
 			err = ?e,

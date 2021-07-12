@@ -90,7 +90,7 @@ impl Requester {
 	}
 	/// Update heads that need availability distribution.
 	///
-	/// For all active heads we will be fetching our chunks for availabilty distribution.
+	/// For all active heads we will be fetching our chunks for availability distribution.
 	pub async fn update_fetching_heads<Context>(
 		&mut self,
 		ctx: &mut Context,

@@ -36,8 +36,7 @@ use std::{borrow::Cow, u64};
 use std::time::Duration;
 
 use futures::channel::mpsc;
-use selendra_node_primitives::MAX_POV_SIZE;
-use selendra_primitives::v1::MAX_CODE_SIZE;
+use selendra_primitives::v1::{MAX_CODE_SIZE, MAX_POV_SIZE};
 use strum::EnumIter;
 
 pub use sc_network::config as network;
@@ -45,7 +44,7 @@ pub use sc_network::config::RequestResponseConfig;
 
 /// All requests that can be sent to the network bridge.
 pub mod request;
-pub use request::{IncomingRequest, OutgoingRequest, Requests, Recipient, OutgoingResult};
+pub use request::{IncomingRequest, OutgoingRequest, Requests, Recipient, OutgoingResult, ResponseSender};
 
 ///// Multiplexer for incoming requests.
 // pub mod multiplexer;
@@ -158,7 +157,7 @@ impl Protocol {
 				max_response_size: MAX_CODE_SIZE as u64 + 1000,
 				// We need statement fetching to be fast and will try our best at the responding
 				// side to answer requests within that timeout, assuming a bandwidth of 500Mbit/s
-				// - which is the recommended minimum bandwidth for nodes on Selendra as of April
+				// - which is the recommended minimum bandwidth for nodes on Kusama as of April
 				// 2021.
 				// Responders will reject requests, if it is unlikely they can serve them within
 				// the timeout, so the requester can immediately try another node, instead of

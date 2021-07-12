@@ -49,6 +49,9 @@ use std::sync::Arc;
 
 mod error;
 
+#[cfg(test)]
+mod tests;
+
 const LOG_TARGET: &'static str = "parachain::collation-generation";
 
 /// Collation Generation Subsystem
@@ -408,7 +411,7 @@ async fn handle_new_activations<Context: SubsystemContext>(
 						"failed to send collation result",
 					);
 				}
-			})).await?;
+			}))?;
 		}
 	}
 
@@ -505,6 +508,3 @@ impl metrics::Metrics for Metrics {
 		Ok(Metrics(Some(metrics)))
 	}
 }
-
-#[cfg(test)]
-mod tests;
