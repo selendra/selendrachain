@@ -65,7 +65,7 @@ use xcm_builder::{
 use xcm_executor::XcmExecutor;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys, curve::PiecewiseLinear,
-	ApplyExtrinsicResult, KeyTypeId, Percent, Permill, Perbill,
+	ApplyExtrinsicResult, KeyTypeId, Percent, Permill, Perbill, FixedPointNumber,
 	transaction_validity::{TransactionValidity, TransactionSource, TransactionPriority},
 	traits::{
 		BlakeTwo256, Block as BlockT, OpaqueKeys, ConvertInto, AccountIdLookup,
@@ -91,8 +91,9 @@ use authority_discovery_primitives::AuthorityId as AuthorityDiscoveryId;
 use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
 use pallet_session::historical as session_historical;
 use static_assertions::const_assert;
-use beefy_primitives::ecdsa::AuthorityId as BeefyId;
+use beefy_primitives::crypto::AuthorityId as BeefyId;
 use pallet_mmr_primitives as mmr;
+use pallet_election_provider_multi_phase::WeightInfo;
 
 #[cfg(feature = "std")]
 pub use pallet_staking::StakerStatus;
@@ -100,6 +101,7 @@ pub use pallet_staking::StakerStatus;
 pub use sp_runtime::BuildStorage;
 pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_balances::Call as BalancesCall;
+pub use pallet_election_provider_multi_phase::Call as EPMCall;
 
 /// Constant values used within the runtime.
 pub mod constants;
@@ -351,11 +353,14 @@ parameter_types! {
 	// This formula is currently adjusted such that a typical solution will spend an amount equal
 	// to the base deposit for every 50 kb.
 	pub const SignedDepositByte: Balance = deposit(1, 0) / (50 * 1024);
-	pub SignedRewardBase: Balance = fee_for_submit_call::<
-		Runtime,
-		crate::constants::fee::WeightToFee,
-		crate::weights::pallet_election_provider_multi_phase::WeightInfo<Runtime>,
-	>(Perbill::from_perthousand(1500));
+	pub SignedRewardBase: Balance = fee_for_submit_call::<Runtime>(
+		// give 20% threshold.
+		sp_runtime::FixedU128::saturating_from_rational(12, 10),
+		// maximum weight possible.
+		weights::pallet_election_provider_multi_phase::WeightInfo::<Runtime>::submit(SignedMaxSubmissions::get()),
+		// assume a solution of 100kb length.
+		100 * 1024
+	);
 
 	// fallback: emergency phase.
 	pub const Fallback: pallet_election_provider_multi_phase::FallbackStrategy =
@@ -412,8 +417,6 @@ pallet_staking_reward_curve::build! {
 	const REWARD_CURVE: PiecewiseLinear<'static> = curve!(
 		min_inflation: 0_025_000,
 		max_inflation: 0_050_000,
-		// 3:2:1 staked : parachains : float.
-		// while there's no parachains, then this is 75% staked : 25% float.
 		ideal_stake: 0_750_000,
 		falloff: 0_050_000,
 		max_piece_count: 40,
@@ -1510,7 +1513,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl beefy_primitives::BeefyApi<Block, BeefyId> for Runtime {
+	impl beefy_primitives::BeefyApi<Block> for Runtime {
 		fn validator_set() -> beefy_primitives::ValidatorSet<BeefyId> {
 			// dummy implementation due to lack of BEEFY pallet.
 			beefy_primitives::ValidatorSet { validators: Vec::new(), id: 0 }

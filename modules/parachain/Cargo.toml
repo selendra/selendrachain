@@ -15,7 +15,7 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 selendra-core-primitives = { path = "../../primitives/core-primitives", default-features = false }
-derive_more = "0.99.11"
+derive_more = "0.99.14"
 
 # all optional crates.
 serde = { version = "1.0.117", default-features = false, features = [ "derive" ], optional = true }
