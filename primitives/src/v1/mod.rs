@@ -405,7 +405,6 @@ impl PartialOrd for CommittedCandidateReceipt {
 impl Ord for CommittedCandidateReceipt {
 	fn cmp(&self, other: &Self) -> sp_std::cmp::Ordering {
 		// TODO: compare signatures or something more sane
-		// https://github.com/paritytech/selendra/issues/222
 		self.descriptor().para_id.cmp(&other.descriptor().para_id)
 			.then_with(|| self.commitments.head_data.cmp(&other.commitments.head_data))
 	}
