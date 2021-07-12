@@ -64,7 +64,7 @@ fn create_project(out_dir: &Path) -> PathBuf {
 			[package]
 			name = "{project_name}"
 			version = "0.1.0"
-			authors = ["Selendra <info@selendra.org>"]
+			authors = ["Parity Technologies <admin@parity.io>"]
 			edition = "2018"
 
 			[dependencies]
