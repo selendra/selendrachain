@@ -1,6 +1,6 @@
 [package]
 name = "test-parachain-adder-collator"
-version =  "0.1.0-tn6"
+version =  "0.1.0-tn7"
 authors = ["Selendra <info@selendra.org>"]
 description = "Collator for the adder test parachain"
 edition = "2018"
