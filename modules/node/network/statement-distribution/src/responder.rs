@@ -18,7 +18,7 @@ use futures::{SinkExt, StreamExt, channel::{mpsc, oneshot}, stream::FuturesUnord
 
 use parity_scale_codec::Decode;
 
-use polkadot_node_network_protocol::{
+use selendra_node_network_protocol::{
 	PeerId, UnifiedReputationChange as Rep,
 	request_response::{
 		IncomingRequest, MAX_PARALLEL_STATEMENT_REQUESTS, request::OutgoingResponse,

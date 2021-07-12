@@ -15,8 +15,8 @@
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::*;
-use polkadot_node_subsystem_test_helpers as test_helpers;
-use polkadot_primitives::v1::{HeadData, UpwardMessage};
+use selendra_node_subsystem_test_helpers as test_helpers;
+use selendra_primitives::v1::{HeadData, UpwardMessage};
 use sp_core::testing::TaskExecutor;
 use futures::executor;
 use assert_matches::assert_matches;
@@ -24,7 +24,7 @@ use sp_keyring::Sr25519Keyring;
 
 fn collator_sign(descriptor: &mut CandidateDescriptor, collator: Sr25519Keyring) {
 	descriptor.collator = collator.public().into();
-	let payload = polkadot_primitives::v1::collator_signature_payload(
+	let payload = selendra_primitives::v1::collator_signature_payload(
 		&descriptor.relay_parent,
 		&descriptor.para_id,
 		&descriptor.persisted_validation_data_hash,

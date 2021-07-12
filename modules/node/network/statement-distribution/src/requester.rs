@@ -18,7 +18,7 @@ use std::time::Duration;
 
 use futures::{SinkExt, channel::{mpsc, oneshot}};
 
-use polkadot_node_network_protocol::{
+use selendra_node_network_protocol::{
 	PeerId, UnifiedReputationChange,
 	request_response::{
 		OutgoingRequest, Recipient, Requests,
