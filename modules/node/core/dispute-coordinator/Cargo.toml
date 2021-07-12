@@ -18,12 +18,12 @@ selendra-node-primitives = { path = "../../primitives" }
 selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 
-sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7" }
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 
 [dev-dependencies]
 kvdb-memorydb = "0.9.0"
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers"}
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 assert_matches = "1.4.0"
