@@ -30,6 +30,7 @@ sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7" }
 sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7" }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7" }
 
 [dev-dependencies]
 adder = { package = "test-parachain-adder", path = "../../../parachain/test-parachains/adder" }

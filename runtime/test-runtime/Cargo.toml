@@ -68,7 +68,7 @@ sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 serde_json = "1.0.61"
 
 [build-dependencies]
-substrate-wasm-builder = "3.0.0"
+substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7" }
 
 [features]
 default = ["std"]
