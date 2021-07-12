@@ -91,7 +91,7 @@ fn main() -> Result<()> {
 							.await;
 
 						overseer_handler
-							.send_msg(CollatorProtocolMessage::CollateOn(para_id))
+							.send_msg(CollatorProtocolMessage::CollateOn(para_id), "Collator")
 							.await;
 
 						Ok(full_node.task_manager)

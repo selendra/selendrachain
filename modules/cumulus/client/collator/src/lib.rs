@@ -326,7 +326,7 @@ pub async fn start_collator<Block, RA, BS, Spawner>(
 		.await;
 
 	overseer_handler
-		.send_msg(CollatorProtocolMessage::CollateOn(para_id))
+		.send_msg(CollatorProtocolMessage::CollateOn(para_id), "Collator")
 		.await;
 }
 
