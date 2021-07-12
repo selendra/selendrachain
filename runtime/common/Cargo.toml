@@ -35,6 +35,7 @@ pallet-vesting = { git = "https://github.com/paritytech/substrate", branch = "po
 pallet-offences = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7", default-features = false }
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7", default-features = false }
 pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7", default-features = false }
+pallet-election-provider-multi-phase = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7", default-features = false }
 
 pallet-beefy = { git = "https://github.com/paritytech/grandpa-bridge-gadget", branch = "polkadot-v0.9.7", default-features = false }
 pallet-mmr = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7", default-features = false }
@@ -91,6 +92,7 @@ std = [
 	"pallet-timestamp/std",
 	"pallet-vesting/std",
 	"pallet-transaction-payment/std",
+	"pallet-election-provider-multi-phase/std",
 	"pallet-treasury/std",
 	"slot-range-helper/std",
 	"sp-runtime/std",
