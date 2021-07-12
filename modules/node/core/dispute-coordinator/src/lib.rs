@@ -61,7 +61,7 @@ mod tests;
 const LOG_TARGET: &str = "parachain::dispute-coordinator";
 
 // It would be nice to draw this from the chain state, but we have no tools for it right now.
-// On Selendra this is 1 day, and on Kusama it's 6 hours.
+// On Selendra this is 1 day, and on selendra it's 6 hours.
 const DISPUTE_WINDOW: SessionIndex = 6;
 
 struct State {

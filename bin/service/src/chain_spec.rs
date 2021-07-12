@@ -18,10 +18,10 @@
 
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
-use beefy_primitives::ecdsa::AuthorityId as BeefyId;
+use beefy_primitives::crypto::AuthorityId as BeefyId;
 use grandpa::AuthorityId as GrandpaId;
 use selendra_runtime as selendra;
-use selendra_runtime::constants::paras::{MAX_CODE_SIZE, MAX_POV_SIZE};
+use selendra_primitives::v1::{MAX_CODE_SIZE, MAX_POV_SIZE};
 use selendra_runtime::constants::currency::SELS;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_staking::Forcing;
