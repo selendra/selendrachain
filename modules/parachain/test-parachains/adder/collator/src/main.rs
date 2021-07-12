@@ -65,6 +65,7 @@ fn main() -> Result<()> {
 							true,
 							None,
 							None,
+							selendra_service::RealOverseerGen,
 						).map_err(|e| e.to_string())?;
 						let mut overseer_handler = full_node
 							.overseer_handler
@@ -87,7 +88,7 @@ fn main() -> Result<()> {
 							para_id,
 						};
 						overseer_handler
-							.send_msg(CollationGenerationMessage::Initialize(config))
+							.send_msg(CollationGenerationMessage::Initialize(config), "Collator")
 							.await;
 
 						overseer_handler
