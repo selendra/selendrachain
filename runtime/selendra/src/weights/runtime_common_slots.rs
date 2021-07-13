@@ -31,7 +31,7 @@
 // --wasm-execution=compiled
 // --heap-pages=4096
 // --header=./file_header.txt
-// --output=./runtime/kusama/src/weights/runtime_common_slots.rs
+// --output=./runtime/selendra/src/weights/runtime_common_slots.rs
 
 
 #![allow(unused_parens)]

@@ -24,38 +24,58 @@ mod parachains_db;
 mod relay_chain_selection;
 
 #[cfg(feature = "full-node")]
+mod overseer;
+
+#[cfg(feature = "full-node")]
+pub use self::overseer::{
+	OverseerGen,
+	OverseerGenArgs,
+	RealOverseerGen,
+	create_default_subsystems,
+};
+
+#[cfg(feature = "full-node")]
 use {
-	std::time::Duration,
 	tracing::info,
 	selendra_network_bridge::RequestMultiplexer,
 	selendra_node_core_av_store::Config as AvailabilityConfig,
 	selendra_node_core_av_store::Error as AvailabilityError,
 	selendra_node_core_approval_voting::Config as ApprovalVotingConfig,
 	selendra_node_core_candidate_validation::Config as CandidateValidationConfig,
-	selendra_overseer::{AllSubsystems, BlockInfo, Overseer, OverseerHandler},
-	selendra_primitives::v1::ParachainHost,
-	sc_authority_discovery::Service as AuthorityDiscoveryService,
-	sp_authority_discovery::AuthorityDiscoveryApi,
-	sp_blockchain::HeaderBackend,
+	selendra_overseer::BlockInfo,
 	sp_trie::PrefixedMemoryDB,
-	sc_client_api::{AuxStore, ExecutorProvider},
-	sc_keystore::LocalKeystore,
-	sp_consensus_babe::BabeApi,
+	sc_client_api::ExecutorProvider,
 	grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider},
-	beefy_primitives::ecdsa::AuthoritySignature as BeefySignature,
 	sp_runtime::traits::Header as HeaderT,
 };
 
-use sp_core::traits::SpawnNamed;
+#[cfg(feature = "full-node")]
+pub use {
+	sp_blockchain::HeaderBackend,
+	sp_consensus_babe::BabeApi,
+	sp_authority_discovery::AuthorityDiscoveryApi,
+	sc_client_api::AuxStore,
+	selendra_primitives::v1::ParachainHost,
+	selendra_overseer::{Overseer, OverseerHandler},
+};
+pub use sp_core::traits::SpawnNamed;
 
+#[cfg(feature = "full-node")]
 use selendra_subsystem::jaeger;
 
 use std::sync::Arc;
+use std::time::Duration;
 
 use prometheus_endpoint::Registry;
 use service::RpcHandlers;
-use telemetry::{Telemetry, TelemetryWorker, TelemetryWorkerHandle};
+#[cfg(feature = "full-node")]
+use telemetry::{Telemetry, TelemetryWorkerHandle};
+use telemetry::TelemetryWorker;
 
+pub use selendra_client::{
+	SelendraExecutor, FullBackend, FullClient, AbstractClient, Client, ClientHandle, ExecuteWithClient,
+	RuntimeApiCollection,
+};
 pub use chain_spec::SelendraChainSpec;
 pub use consensus_common::{Proposal, SelectChain, BlockImport, block_validation::Chain};
 pub use selendra_primitives::v1::{Block, BlockId, CollatorPair, Hash, Id as ParaId};
@@ -67,10 +87,6 @@ pub use service::{
 	TFullClient, TLightClient, TFullBackend, TLightBackend, TFullCallExecutor, TLightCallExecutor,
 	Configuration, ChainSpec, TaskManager,
 };
-pub use selendra_client::{
-	SelendraExecutor, FullBackend, FullClient, AbstractClient, Client, ClientHandle, ExecuteWithClient,
-	RuntimeApiCollection,
-};
 pub use service::config::{DatabaseConfig, PrometheusConfig};
 pub use sp_api::{ApiRef, Core as CoreApi, ConstructRuntimeApi, ProvideRuntimeApi, StateBackend};
 pub use sp_runtime::traits::{DigestFor, HashFor, NumberFor, Block as BlockT, self as runtime_traits, BlakeTwo256};
@@ -78,6 +94,7 @@ pub use sp_runtime::traits::{DigestFor, HashFor, NumberFor, Block as BlockT, sel
 pub use selendra_runtime;
 
 /// The maximum number of active leaves we forward to the [`Overseer`] on startup.
+#[cfg(any(test,feature = "full-node"))]
 const MAX_ACTIVE_LEAVES: usize = 4;
 
 #[derive(thiserror::Error, Debug)]
@@ -144,6 +161,7 @@ fn set_prometheus_registry(config: &mut Configuration) -> Result<(), Error> {
 
 /// Initialize the `Jeager` collector. The destination must listen
 /// on the given address and port for `UDP` packets.
+#[cfg(any(test,feature = "full-node"))]
 fn jaeger_launch_collector_with_agent(spawner: impl SpawnNamed, config: &Configuration, agent: Option<std::net::SocketAddr>) -> Result<(), Error> {
 	if let Some(agent) = agent {
 		let cfg = jaeger::JaegerConfig::builder()
@@ -191,7 +209,7 @@ fn new_partial<RuntimeApi, Executor>(
 				>,
 				grandpa::LinkHalf<Block, FullClient<RuntimeApi, Executor>, FullSelectChain>,
 				babe::BabeLink<Block>,
-				beefy_gadget::notification::BeefySignedCommitmentSender<Block, BeefySignature>,
+				beefy_gadget::notification::BeefySignedCommitmentSender<Block>,
 			),
 			grandpa::SharedVoterState,
 			std::time::Duration, // slot-duration
@@ -363,145 +381,6 @@ fn new_partial<RuntimeApi, Executor>(
 }
 
 #[cfg(feature = "full-node")]
-fn real_overseer<Spawner, RuntimeClient>(
-	leaves: impl IntoIterator<Item = BlockInfo>,
-	keystore: Arc<LocalKeystore>,
-	runtime_client: Arc<RuntimeClient>,
-	parachains_db: Arc<dyn kvdb::KeyValueDB>,
-	availability_config: AvailabilityConfig,
-	approval_voting_config: ApprovalVotingConfig,
-	network_service: Arc<sc_network::NetworkService<Block, Hash>>,
-	authority_discovery: AuthorityDiscoveryService,
-	request_multiplexer: RequestMultiplexer,
-	registry: Option<&Registry>,
-	spawner: Spawner,
-	is_collator: IsCollator,
-	candidate_validation_config: CandidateValidationConfig,
-) -> Result<(Overseer<Spawner, Arc<RuntimeClient>>, OverseerHandler), Error>
-where
-	RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore,
-	RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
-	Spawner: 'static + SpawnNamed + Clone + Unpin,
-{
-	use selendra_node_subsystem_util::metrics::Metrics;
-
-	use selendra_availability_distribution::AvailabilityDistributionSubsystem;
-	use selendra_node_core_av_store::AvailabilityStoreSubsystem;
-	use selendra_availability_bitfield_distribution::BitfieldDistribution as BitfieldDistributionSubsystem;
-	use selendra_node_core_bitfield_signing::BitfieldSigningSubsystem;
-	use selendra_node_core_backing::CandidateBackingSubsystem;
-	use selendra_node_core_candidate_validation::CandidateValidationSubsystem;
-	use selendra_node_core_chain_api::ChainApiSubsystem;
-	use selendra_node_collation_generation::CollationGenerationSubsystem;
-	use selendra_collator_protocol::{CollatorProtocolSubsystem, ProtocolSide};
-	use selendra_network_bridge::NetworkBridge as NetworkBridgeSubsystem;
-	use selendra_node_core_provisioner::ProvisioningSubsystem as ProvisionerSubsystem;
-	use selendra_node_core_runtime_api::RuntimeApiSubsystem;
-	use selendra_statement_distribution::StatementDistribution as StatementDistributionSubsystem;
-	use selendra_availability_recovery::AvailabilityRecoverySubsystem;
-	use selendra_approval_distribution::ApprovalDistribution as ApprovalDistributionSubsystem;
-	use selendra_node_core_approval_voting::ApprovalVotingSubsystem;
-	use selendra_gossip_support::GossipSupport as GossipSupportSubsystem;
-
-	let all_subsystems = AllSubsystems {
-		availability_distribution: AvailabilityDistributionSubsystem::new(
-			keystore.clone(),
-			Metrics::register(registry)?,
-		),
-		availability_recovery: AvailabilityRecoverySubsystem::with_chunks_only(
-		),
-		availability_store: AvailabilityStoreSubsystem::new(
-			parachains_db.clone(),
-			availability_config,
-			Metrics::register(registry)?,
-		),
-		bitfield_distribution: BitfieldDistributionSubsystem::new(
-			Metrics::register(registry)?,
-		),
-		bitfield_signing: BitfieldSigningSubsystem::new(
-			spawner.clone(),
-			keystore.clone(),
-			Metrics::register(registry)?,
-		),
-		candidate_backing: CandidateBackingSubsystem::new(
-			spawner.clone(),
-			keystore.clone(),
-			Metrics::register(registry)?,
-		),
-		candidate_validation: CandidateValidationSubsystem::with_config(
-			candidate_validation_config,
-			Metrics::register(registry)?,
-		),
-		chain_api: ChainApiSubsystem::new(
-			runtime_client.clone(),
-			Metrics::register(registry)?,
-		),
-		collation_generation: CollationGenerationSubsystem::new(
-			Metrics::register(registry)?,
-		),
-		collator_protocol: {
-			let side = match is_collator {
-				IsCollator::Yes(collator_pair) => ProtocolSide::Collator(
-					network_service.local_peer_id().clone(),
-					collator_pair,
-					Metrics::register(registry)?,
-				),
-				IsCollator::No => ProtocolSide::Validator {
-					keystore: keystore.clone(),
-					eviction_policy: Default::default(),
-					metrics: Metrics::register(registry)?,
-				},
-			};
-			CollatorProtocolSubsystem::new(
-				side,
-			)
-		},
-		network_bridge: NetworkBridgeSubsystem::new(
-			network_service.clone(),
-			authority_discovery,
-			request_multiplexer,
-			Box::new(network_service.clone()),
-			Metrics::register(registry)?,
-		),
-		provisioner: ProvisionerSubsystem::new(
-			spawner.clone(),
-			(),
-			Metrics::register(registry)?,
-		),
-		runtime_api: RuntimeApiSubsystem::new(
-			runtime_client.clone(),
-			Metrics::register(registry)?,
-			spawner.clone(),
-		),
-		statement_distribution: StatementDistributionSubsystem::new(
-			keystore.clone(),
-			Metrics::register(registry)?,
-		),
-		approval_distribution: ApprovalDistributionSubsystem::new(
-			Metrics::register(registry)?,
-		),
-		approval_voting: ApprovalVotingSubsystem::with_config(
-			approval_voting_config,
-			parachains_db,
-			keystore.clone(),
-			Box::new(network_service.clone()),
-			Metrics::register(registry)?,
-		),
-		gossip_support: GossipSupportSubsystem::new(
-			keystore.clone(),
-		),
-	};
-
-	Overseer::new(
-		leaves,
-		all_subsystems,
-		registry,
-		runtime_client.clone(),
-		spawner,
-	).map_err(|e| e.into())
-}
-
-#[cfg(feature = "full-node")]
 pub struct NewFull<C> {
 	pub task_manager: TaskManager,
 	pub client: C,
@@ -557,7 +436,7 @@ impl IsCollator {
 
 /// Returns the active leaves the overseer should start with.
 #[cfg(feature = "full-node")]
-fn active_leaves<RuntimeApi, Executor>(
+async fn active_leaves<RuntimeApi, Executor>(
 	select_chain: &sc_consensus::LongestChain<FullBackend, Block>,
 	client: &FullClient<RuntimeApi, Executor>,
 ) -> Result<Vec<BlockInfo>, Error>
@@ -567,10 +446,11 @@ where
 		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
 		Executor: NativeExecutionDispatch + 'static,
 {
-	let best_block = select_chain.best_chain()?;
+	let best_block = select_chain.best_chain().await?;
 
 	let mut leaves = select_chain
 		.leaves()
+		.await
 		.unwrap_or_default()
 		.into_iter()
 		.filter_map(|hash| {
@@ -610,7 +490,7 @@ where
 /// This is an advanced feature and not recommended for general use. Generally, `build_full` is
 /// a better choice.
 #[cfg(feature = "full-node")]
-pub fn new_full<RuntimeApi, Executor>(
+pub fn new_full<RuntimeApi, Executor, OverseerGenerator>(
 	mut config: Configuration,
 	is_collator: IsCollator,
 	grandpa_pause: Option<(u32, u32)>,
@@ -618,12 +498,14 @@ pub fn new_full<RuntimeApi, Executor>(
 	jaeger_agent: Option<std::net::SocketAddr>,
 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 	program_path: Option<std::path::PathBuf>,
+	overseer_gen: OverseerGenerator,
 ) -> Result<NewFull<Arc<FullClient<RuntimeApi, Executor>>>, Error>
 	where
 		RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
 		RuntimeApi::RuntimeApi:
 		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
 		Executor: NativeExecutionDispatch + 'static,
+		OverseerGenerator: OverseerGen,
 {
 	let role = config.role.clone();
 	let force_authoring = config.force_authoring;
@@ -651,11 +533,12 @@ pub fn new_full<RuntimeApi, Executor>(
 	let shared_voter_state = rpc_setup;
 	let auth_disc_publish_non_global_ips = config.network.allow_non_globals_in_dht;
 
-	// Note: GrandPa is pushed before the selendra-specific protocols. This doesn't change
+	// Note: GrandPa is pushed before the Selendra-specific protocols. This doesn't change
 	// anything in terms of behaviour, but makes the logs more consistent with the other
 	// Substrate nodes.
 	config.network.extra_sets.push(grandpa::grandpa_peers_set_config());
 
+	// config.network.extra_sets.push(beefy_gadget::beefy_peers_set_config());
 	{
 		use selendra_network_bridge::{peer_sets_info, IsAuthority};
 		let is_authority = if role.is_authority() {
@@ -718,6 +601,7 @@ pub fn new_full<RuntimeApi, Executor>(
 		},
 	};
 
+	// let chain_spec = config.chain_spec.cloned_box();
 	let rpc_handlers = service::spawn_tasks(service::SpawnTasksParams {
 		config,
 		backend: backend.clone(),
@@ -737,7 +621,9 @@ pub fn new_full<RuntimeApi, Executor>(
 
 	let overseer_client = client.clone();
 	let spawner = task_manager.spawn_handle();
-	let active_leaves = active_leaves(&select_chain, &*client)?;
+	let active_leaves = futures::executor::block_on(
+		active_leaves(&select_chain, &*client)
+	)?;
 
 	let authority_discovery_service = if role.is_authority() || is_collator.is_collator() {
 		use sc_network::Event;
@@ -785,20 +671,25 @@ pub fn new_full<RuntimeApi, Executor>(
 		.and_then(move |k| authority_discovery_service.map(|a| (a, k)));
 
 	let overseer_handler = if let Some((authority_discovery_service, keystore)) = maybe_params {
-		let (overseer, overseer_handler) = real_overseer(
-			active_leaves,
-			keystore,
-			overseer_client.clone(),
-			parachains_db,
-			availability_config,
-			approval_voting_config,
-			network.clone(),
-			authority_discovery_service,
-			request_multiplexer,
-			prometheus_registry.as_ref(),
-			spawner,
-			is_collator,
-			candidate_validation_config,
+		let (overseer, overseer_handler) = overseer_gen.generate::<
+			service::SpawnTaskHandle,
+			FullClient<RuntimeApi, Executor>,
+		>(
+			OverseerGenArgs {
+				leaves: active_leaves,
+				keystore,
+				runtime_client: overseer_client.clone(),
+				parachains_db,
+				availability_config,
+				approval_voting_config,
+				network_service: network.clone(),
+				authority_discovery_service,
+				request_multiplexer,
+				registry: prometheus_registry.as_ref(),
+				spawner,
+				is_collator,
+				candidate_validation_config,
+			}
 		)?;
 		let overseer_handler_clone = overseer_handler.clone();
 
@@ -879,6 +770,7 @@ pub fn new_full<RuntimeApi, Executor>(
 			babe_link,
 			can_author_with,
 			block_proposal_slot_portion: babe::SlotProportion::new(2f32 / 3f32),
+			max_block_proposal_slot_portion: None,
 			telemetry: telemetry.as_ref().map(|x| x.handle()),
 		};
 
@@ -893,6 +785,23 @@ pub fn new_full<RuntimeApi, Executor>(
 	} else {
 		None
 	};
+
+	// if !disable_beefy {
+	// 	let beefy_params = beefy_gadget::BeefyParams {
+	// 		client: client.clone(),
+	// 		backend: backend.clone(),
+	// 		key_store: keystore_opt.clone(),
+	// 		network: network.clone(),
+	// 		signed_commitment_sender: beefy_link,
+	// 		min_block_delta: if chain_spec.is_wococo() { 4 } else { 8 },
+	// 		prometheus_registry: prometheus_registry.clone(),
+	// 	};
+
+	// 	let gadget = beefy_gadget::start_beefy_gadget::<_, _, _, _>(
+	// 		beefy_params
+	// 	);
+	// 	task_manager.spawn_handle().spawn_blocking("beefy-gadget", gadget);
+	// }
 
 	let config = grandpa::Config {
 		// FIXME substrate#1578 make this available through chainspec
@@ -1089,7 +998,7 @@ fn new_light<Runtime, Dispatch>(mut config: Configuration) -> Result<(
 			"grandpa-observer",
 			grandpa::run_grandpa_observer(config, grandpa_link, network.clone())?,
 		);
-	}	
+	}
 
 	if config.offchain_worker.enabled {
 		let _ = service::build_offchain_workers(
@@ -1167,9 +1076,9 @@ pub fn build_full(
 	disable_beefy: bool,
 	jaeger_agent: Option<std::net::SocketAddr>,
 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
+	overseer_gen: impl OverseerGen,
 ) -> Result<NewFull<Client>, Error> {
-	
-	new_full::<selendra_runtime::RuntimeApi, SelendraExecutor>(
+	new_full::<selendra_runtime::RuntimeApi, SelendraExecutor, _>(
 		config,
 		is_collator,
 		grandpa_pause,
@@ -1177,5 +1086,6 @@ pub fn build_full(
 		jaeger_agent,
 		telemetry_worker_handle,
 		None,
+		overseer_gen,
 	).map(|full| full.with_client(Client::Selendra))
 }

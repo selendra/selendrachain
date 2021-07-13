@@ -14,13 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Polkadot-specific RPCs implementation.
+//! Selendra-specific RPCs implementation.
 
 #![warn(missing_docs)]
 
 use std::sync::Arc;
 
-use polkadot_primitives::v0::{Block, BlockNumber, AccountId, Nonce, Balance, Hash};
+use selendra_primitives::v0::{Block, BlockNumber, AccountId, Nonce, Balance, Hash};
 use sp_api::ProvideRuntimeApi;
 use txpool_api::TransactionPool;
 use sp_block_builder::BlockBuilder;

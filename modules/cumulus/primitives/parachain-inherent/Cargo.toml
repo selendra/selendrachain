@@ -20,6 +20,7 @@ selendra-client = { path = "../../../../bin/client", optional = true }
 
 # Cumulus dependencies
 cumulus-primitives-core = { path = "../core", default-features = false }
+cumulus-test-relay-sproof-builder = { path = "../../test/relay-sproof-builder", optional = true }
 
 # Other dependencies
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = [ "derive" ] }
@@ -42,4 +43,5 @@ std = [
 	"sc-client-api",
 	"sp-api",
 	"selendra-client",
+	"cumulus-test-relay-sproof-builder"
 ]

@@ -20,7 +20,7 @@ use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use babe_primitives::AuthorityId as BabeId;
 use grandpa::AuthorityId as GrandpaId;
 use pallet_staking::Forcing;
-use selendra_primitives::v1::{ValidatorId, AccountId, AssignmentId};
+use selendra_primitives::v1::{ValidatorId, AccountId, AssignmentId, MAX_CODE_SIZE, MAX_POV_SIZE};
 use selendra_service::chain_spec::{get_account_id_from_seed, get_from_seed, Extensions};
 use selendra_test_runtime::{constants::currency::DOTS, BABE_GENESIS_EPOCH_CONFIG};
 use sc_chain_spec::{ChainSpec, ChainType};
@@ -29,7 +29,7 @@ use sp_runtime::Perbill;
 
 const DEFAULT_PROTOCOL_ID: &str = "sel";
 
-/// The `ChainSpec` parametrized for selendra test runtime.
+/// The `ChainSpec` parameterized for selendra test runtime.
 pub type SelendraChainSpec =
 	service::GenericChainSpec<selendra_test_runtime::GenesisConfig, Extensions>;
 
@@ -175,8 +175,8 @@ fn selendra_testnet_genesis(
 				validation_upgrade_frequency: 10u32,
 				validation_upgrade_delay: 5,
 				code_retention_period: 1200,
-				max_code_size: 5 * 1024 * 1024,
-				max_pov_size: 50 * 1024 * 1024,
+				max_code_size: MAX_CODE_SIZE,
+				max_pov_size: MAX_POV_SIZE,
 				max_head_data_size: 32 * 1024,
 				group_rotation_frequency: 20,
 				chain_availability_period: 4,

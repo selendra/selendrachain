@@ -18,8 +18,6 @@
 
 use std::sync::Arc;
 
-use selendra_primitives::v1::BlockNumber;
-
 use sp_runtime::traits::{Block as BlockT, NumberFor};
 use sp_runtime::generic::BlockId;
 use sp_runtime::traits::Header as _;
@@ -71,9 +69,10 @@ impl ApprovalCheckingVotingRule {
 	}
 }
 
+#[cfg(feature = "full-node")]
 #[derive(Debug, PartialEq)]
+/// Vote explicitly on the given hash.
 enum ParachainVotingRuleTarget<H, N> {
-	/// Vote explicitly on the given hash.
 	Explicit((H, N)),
 	/// Vote on the current target.
 	Current,
@@ -81,6 +80,7 @@ enum ParachainVotingRuleTarget<H, N> {
 	Base,
 }
 
+#[cfg(feature = "full-node")]
 fn approval_checking_vote_to_grandpa_vote<H, N: PartialOrd>(
 	approval_checking_vote: Option<(H, N)>,
 	current_number: N,
@@ -99,7 +99,8 @@ fn approval_checking_vote_to_grandpa_vote<H, N: PartialOrd>(
 
 /// The maximum amount of unfinalized blocks we are willing to allow due to approval checking lag.
 /// This is a safety net that should be removed at some point in the future.
-const MAX_APPROVAL_CHECKING_FINALITY_LAG: BlockNumber = 50;
+#[cfg(feature = "full-node")]
+const MAX_APPROVAL_CHECKING_FINALITY_LAG: selendra_primitives::v1::BlockNumber = 50;
 
 #[cfg(feature = "full-node")]
 impl<B> grandpa::VotingRule<SelendraBlock, B> for ApprovalCheckingVotingRule
@@ -198,7 +199,7 @@ impl<B> grandpa::VotingRule<SelendraBlock, B> for ApprovalCheckingVotingRule
 
 /// Returns the block hash of the block at the given `target_number` by walking
 /// backwards from the given `current_header`.
-fn walk_backwards_to_target_block<Block, B>(
+pub(super) fn walk_backwards_to_target_block<Block, B>(
 	backend: &B,
 	target_number: NumberFor<Block>,
 	current_header: &Block::Header,

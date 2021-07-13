@@ -31,7 +31,7 @@
 // --wasm-execution=compiled
 // --heap-pages=4096
 // --header=./file_header.txt
-// --output=./runtime/kusama/src/weights/
+// --output=./runtime/selendra/src/weights/
 
 
 #![allow(unused_parens)]

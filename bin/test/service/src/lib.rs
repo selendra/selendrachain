@@ -78,7 +78,7 @@ pub fn new_full(
 	NewFull<Arc<Client>>,
 	Error,
 > {
-	selendra_service::new_full::<selendra_test_runtime::RuntimeApi, SelendraTestExecutor>(
+	selendra_service::new_full::<selendra_test_runtime::RuntimeApi, SelendraTestExecutor, _>(
 		config,
 		is_collator,
 		None,
@@ -86,6 +86,7 @@ pub fn new_full(
 		None,
 		None,
 		worker_program_path,
+		selendra_service::RealOverseerGen,
 	)
 }
 
@@ -104,7 +105,7 @@ impl ClientHandle for TestClient {
 /// nodes if you want the future node to be connected to other nodes.
 ///
 /// The `storage_update_func` function will be executed in an externalities provided environment
-/// and can be used to make adjustements to the runtime genesis storage.
+/// and can be used to make adjustments to the runtime genesis storage.
 pub fn node_config(
 	storage_update_func: impl Fn(),
 	task_executor: TaskExecutor,
@@ -212,7 +213,7 @@ pub fn node_config(
 /// want it to be connected to other nodes.
 ///
 /// The `storage_update_func` function will be executed in an externalities provided environment
-/// and can be used to make adjustements to the runtime genesis storage.
+/// and can be used to make adjustments to the runtime genesis storage.
 pub fn run_validator_node(
 	task_executor: TaskExecutor,
 	key: Sr25519Keyring,
@@ -244,11 +245,11 @@ pub fn run_validator_node(
 /// want it to be connected to other nodes.
 ///
 /// The `storage_update_func` function will be executed in an externalities provided environment
-/// and can be used to make adjustements to the runtime genesis storage.
+/// and can be used to make adjustments to the runtime genesis storage.
 ///
 /// # Note
 ///
-/// The collator functionionality still needs to be registered at the node! This can be done using
+/// The collator functionality still needs to be registered at the node! This can be done using
 /// [`SelendraTestNode::register_collator`].
 pub fn run_collator_node(
 	task_executor: TaskExecutor,
@@ -347,7 +348,7 @@ impl SelendraTestNode {
 		};
 
 		self.overseer_handler
-			.send_msg(CollationGenerationMessage::Initialize(config))
+			.send_msg(CollationGenerationMessage::Initialize(config), "Collator")
 			.await;
 
 		self.overseer_handler
