@@ -104,6 +104,8 @@ selendra-statement-distribution = { path = "../../modules/node/network/statement
 selendra-approval-distribution = { path = "../../modules/node/network/approval-distribution", optional = true }
 selendra-node-core-approval-voting = { path = "../../modules/node/core/approval-voting", optional = true }
 
+pallet-evm = { path = "../../modules/frontier/frame/evm"}
+
 [dev-dependencies]
 selendra-test-client = { path = "../test/client" }
 env_logger = "0.8.2"

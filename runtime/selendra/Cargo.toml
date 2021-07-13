@@ -8,6 +8,7 @@ build = "build.rs"
 [dependencies]
 bitvec = { version = "0.20.1", default-features = false, features = ["alloc"] }
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
+hex-literal = { version = "0.3.1", optional = true }
 log = { version = "0.4.14", default-features = false }
 rustc-hex = { version = "2.1.0", default-features = false }
 serde = { version = "1.0.123", default-features = false }
@@ -79,7 +80,6 @@ frame-try-runtime = { git = "https://github.com/paritytech/substrate", branch = 
 pallet-offences-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false, optional = true }
 pallet-session-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false, optional = true }
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false, optional = true }
-hex-literal = { version = "0.3.1", optional = true }
 
 runtime-common = { package = "selendra-runtime-common", path = "../common", default-features = false }
 runtime-parachains = { package = "selendra-runtime-parachains", path = "../../modules/parachain/runtime-parachains", default-features = false }
@@ -88,6 +88,17 @@ primitives = { package = "selendra-primitives", path = "../../primitives", defau
 xcm = { package = "xcm", path = "../../modules/xcm", default-features = false }
 xcm-executor = { package = "xcm-executor", path = "../../modules/xcm/xcm-executor", default-features = false }
 xcm-builder = { package = "xcm-builder", path = "../../modules/xcm/xcm-builder", default-features = false }
+
+# Frontier
+evm = { version = "0.27.0", default-features = false, features = ["with-codec"] }
+fp-rpc = { path = "../../modules/frontier/primitives/rpc", default-features = false }
+pallet-evm = { path = "../../modules/frontier/frame/evm", default-features = false }
+pallet-ethereum  = { path = "../../modules/frontier/frame/ethereum", default-features = false }
+pallet-evm-precompile-bn128 = { path = "../../modules/frontier/frame/evm/precompile/bn128", default-features = false }
+pallet-evm-precompile-dispatch = { path = "../../modules/frontier/frame/evm/precompile/dispatch", default-features = false }
+pallet-evm-precompile-modexp = { path = "../../modules/frontier/frame/evm/precompile/modexp", default-features = false }
+pallet-evm-precompile-simple = { path = "../../modules/frontier/frame/evm/precompile/simple", default-features = false }
+pallet-evm-precompile-sha3fips = { path = "../../modules/frontier/frame/evm/precompile/sha3fips", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.1"
@@ -174,6 +185,17 @@ std = [
 	"xcm-executor/std",
 	"xcm-builder/std",
 	"max-encoded-len/std",
+	"pallet-evm/std",
+
+	"evm/std",
+	"fp-rpc/std",
+	"pallet-evm/std",
+	"pallet-ethereum/std",
+	"pallet-evm-precompile-bn128/std",
+	"pallet-evm-precompile-dispatch/std",
+	"pallet-evm-precompile-modexp/std",
+	"pallet-evm-precompile-simple/std",
+	"pallet-evm-precompile-sha3fips/std",
 ]
 runtime-benchmarks = [
 	"runtime-common/runtime-benchmarks",

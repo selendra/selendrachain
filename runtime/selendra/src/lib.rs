@@ -1233,6 +1233,55 @@ impl pallet_xcm::Config for Runtime {
 	type Weigher = FixedWeightBounds<BaseXcmWeight, Call>;
 }
 
+// Evm start
+mod precompiles;
+
+use precompiles::IndracorePrecompiles;
+use pallet_evm::{
+    EnsureAddressTruncated, HashedAddressMapping, FeeCalculator,
+};
+use runtime_common::WEIGHT_PER_GAS;
+use sp_std::convert::TryFrom;
+use sp_core::{U256};
+
+pub struct SelendraGasWeightMapping;
+
+impl pallet_evm::GasWeightMapping for SelendraGasWeightMapping {
+	fn gas_to_weight(gas: u64) -> Weight {
+		gas.saturating_mul(WEIGHT_PER_GAS)
+	}
+	fn weight_to_gas(weight: Weight) -> u64 {
+		u64::try_from(weight.wrapping_div(WEIGHT_PER_GAS)).unwrap_or(u32::MAX as u64)
+	}
+}
+
+pub struct FixedGasPrice;
+impl FeeCalculator for FixedGasPrice {
+	fn min_gas_price() -> U256 {
+		(1 * CENTS).into()
+	}
+}
+
+parameter_types! {
+	pub const ChainId: u64 = 42;
+	pub BlockGasLimit: U256 = U256::from(u32::max_value());
+}
+
+impl pallet_evm::Config for Runtime {
+	type FeeCalculator = FixedGasPrice;
+	type GasWeightMapping = SelendraGasWeightMapping;
+	type CallOrigin = EnsureAddressTruncated;
+	type WithdrawOrigin = EnsureAddressTruncated;
+	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	type Currency = Balances;
+	type Event = Event;
+	type Runner = pallet_evm::runner::stack::Runner<Self>;
+	type Precompiles = IndracorePrecompiles<Self>;
+	type ChainId = ChainId;
+	type OnChargeTransaction = ();
+	type BlockGasLimit = BlockGasLimit;
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -1322,6 +1371,9 @@ construct_runtime! {
 
 		// Pallet for sending XCM.
 		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin} = 99,
+
+		// Evm
+		Evm: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
 	}
 }
 
