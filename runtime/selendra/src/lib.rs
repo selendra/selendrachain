@@ -1241,8 +1241,9 @@ use pallet_evm::{
     EnsureAddressTruncated, HashedAddressMapping, FeeCalculator,
 };
 use runtime_common::WEIGHT_PER_GAS;
-use sp_std::convert::TryFrom;
-use sp_core::{U256};
+use sp_std::{convert::TryFrom, marker::PhantomData};
+use sp_core::{U256, H160, crypto::Public};
+use frame_support::{traits::FindAuthor, ConsensusEngineId};
 
 pub struct SelendraGasWeightMapping;
 
@@ -1281,6 +1282,44 @@ impl pallet_evm::Config for Runtime {
 	type OnChargeTransaction = ();
 	type BlockGasLimit = BlockGasLimit;
 }
+
+pub struct EthereumFindAuthor<F>(PhantomData<F>);
+impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
+	fn find_author<'a, I>(digests: I) -> Option<H160>
+	where
+		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
+	{
+		if let Some(author_index) = F::find_author(digests) {
+			let authority_id = Babe::authorities()[author_index as usize].clone();
+			return Some(H160::from_slice(&authority_id.0.to_raw_vec()[4..24]));
+		}
+		None
+	}
+}
+
+pub struct TransactionConverter;
+
+impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
+	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> UncheckedExtrinsic {
+		UncheckedExtrinsic::new_unsigned(pallet_ethereum::Call::<Runtime>::transact(transaction).into())
+	}
+}
+
+impl fp_rpc::ConvertTransaction<sp_runtime::OpaqueExtrinsic> for TransactionConverter {
+	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> sp_runtime::OpaqueExtrinsic {
+		let extrinsic =
+			UncheckedExtrinsic::new_unsigned(pallet_ethereum::Call::<Runtime>::transact(transaction).into());
+		let encoded = extrinsic.encode();
+		sp_runtime::OpaqueExtrinsic::decode(&mut &encoded[..]).expect("Encoded extrinsic is always valid")
+	}
+}
+
+impl pallet_ethereum::Config for Runtime {
+	type Event = Event;
+	type FindAuthor = EthereumFindAuthor<Babe>;
+	type StateRoot = pallet_ethereum::IntermediateStateRoot;
+}
+
 
 construct_runtime! {
 	pub enum Runtime where
@@ -1374,6 +1413,7 @@ construct_runtime! {
 
 		// Evm
 		Evm: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned} = 101,
 	}
 }
 

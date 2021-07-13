@@ -217,6 +217,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		evm: selendra::EvmConfig {
             accounts: BTreeMap::new(),
         },
+		ethereum: selendra::EthereumConfig {},
 	}
 }
 
@@ -432,6 +433,7 @@ pub fn selendra_testnet_genesis(
             .cloned()
             .collect(),
 		},
+		ethereum: selendra::EthereumConfig {},
 	}
 }
 
