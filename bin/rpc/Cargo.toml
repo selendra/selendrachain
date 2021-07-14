@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 jsonrpc-core = "15.1.0"
-selendra-primitives = { path = "../../primitives" }
+jsonrpc-pubsub = "15.1.0"
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
@@ -18,6 +18,7 @@ sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "pol
 sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sc-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sc-consensus-babe-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sc-consensus-epochs = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sc-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sc-finality-grandpa-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
@@ -31,3 +32,11 @@ parity-scale-codec = { version = "2.0.0", default-features = false }
 sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 beefy-gadget = { git = "https://github.com/paritytech/grandpa-bridge-gadget", branch = "polkadot-v0.9.8" }
 beefy-gadget-rpc = { git = "https://github.com/paritytech/grandpa-bridge-gadget", branch = "polkadot-v0.9.8" }
+
+selendra-runtime = { path = "../../runtime/selendra" }
+selendra-primitives = { path = "../../primitives" }
+pallet-ethereum = { path = "../../modules/frontier/frame/ethereum" }
+fp-rpc = { path = "../../modules/frontier/primitives/rpc"}
+fc-rpc = { path = "../../modules/frontier/client/rpc" }
+fc-rpc-core = { path = "../../modules/frontier/client/rpc-core" }
+fc-db = { path = "../../modules/frontier/client/db" }

@@ -514,10 +514,10 @@ dependencies = [
  "beefy-gadget",
  "beefy-primitives",
  "futures 0.3.15",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "jsonrpc-pubsub",
+ "jsonrpc-core 15.1.0",
+ "jsonrpc-core-client 15.1.0",
+ "jsonrpc-derive 15.1.0",
+ "jsonrpc-pubsub 15.1.0",
  "log",
  "parity-scale-codec",
  "sc-rpc",
@@ -1283,580 +1283,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cumulus-client-cli"
-version = "0.1.0"
-dependencies = [
- "sc-cli",
- "sc-service",
- "structopt",
-]
-
-[[package]]
-name = "cumulus-client-collator"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "cumulus-client-consensus-common",
- "cumulus-client-network",
- "cumulus-primitives-core",
- "cumulus-test-client",
- "cumulus-test-runtime",
- "futures 0.3.15",
- "parity-scale-codec",
- "parking_lot 0.10.2",
- "sc-client-api",
- "selendra-node-primitives",
- "selendra-node-subsystem",
- "selendra-node-subsystem-test-helpers",
- "selendra-overseer",
- "selendra-primitives",
- "sp-api",
- "sp-blockchain",
- "sp-consensus",
- "sp-core",
- "sp-io",
- "sp-keyring",
- "sp-runtime",
- "sp-state-machine",
- "sp-tracing",
- "substrate-test-client",
- "tracing",
-]
-
-[[package]]
-name = "cumulus-client-consensus-aura"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "cumulus-client-consensus-common",
- "cumulus-primitives-core",
- "futures 0.3.15",
- "parity-scale-codec",
- "parking_lot 0.10.2",
- "sc-client-api",
- "sc-consensus-aura",
- "sc-consensus-slots",
- "sc-telemetry",
- "selendra-client",
- "sp-api",
- "sp-application-crypto",
- "sp-block-builder",
- "sp-blockchain",
- "sp-consensus",
- "sp-consensus-aura",
- "sp-core",
- "sp-inherents",
- "sp-keystore",
- "sp-runtime",
- "substrate-prometheus-endpoint",
- "tracing",
-]
-
-[[package]]
-name = "cumulus-client-consensus-common"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "cumulus-primitives-core",
- "cumulus-test-client",
- "cumulus-test-runtime",
- "cumulus-test-service",
- "dyn-clone",
- "futures 0.3.15",
- "futures-timer 3.0.2",
- "parity-scale-codec",
- "sc-cli",
- "sc-client-api",
- "sc-service",
- "selendra-primitives",
- "selendra-runtime",
- "selendra-test-client",
- "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-consensus",
- "sp-core",
- "sp-inherents",
- "sp-runtime",
- "sp-tracing",
- "sp-trie",
- "substrate-prometheus-endpoint",
- "substrate-test-utils",
- "tokio 0.2.21",
- "tracing",
-]
-
-[[package]]
-name = "cumulus-client-consensus-relay-chain"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "cumulus-client-consensus-common",
- "cumulus-primitives-core",
- "futures 0.3.15",
- "parity-scale-codec",
- "parking_lot 0.10.2",
- "sc-client-api",
- "selendra-client",
- "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-consensus",
- "sp-core",
- "sp-inherents",
- "sp-runtime",
- "substrate-prometheus-endpoint",
- "tracing",
-]
-
-[[package]]
-name = "cumulus-client-network"
-version = "0.1.0"
-dependencies = [
- "cumulus-primitives-core",
- "cumulus-test-service",
- "derive_more",
- "futures 0.3.15",
- "futures-timer 3.0.2",
- "parity-scale-codec",
- "parking_lot 0.10.2",
- "sc-cli",
- "sc-client-api",
- "sc-service",
- "selendra-client",
- "selendra-node-primitives",
- "selendra-parachain",
- "selendra-primitives",
- "selendra-statement-table",
- "selendra-test-client",
- "sp-api",
- "sp-blockchain",
- "sp-consensus",
- "sp-core",
- "sp-keyring",
- "sp-keystore",
- "sp-runtime",
- "substrate-test-utils",
- "tokio 0.2.21",
- "tracing",
-]
-
-[[package]]
-name = "cumulus-client-pov-recovery"
-version = "0.1.0"
-dependencies = [
- "cumulus-primitives-core",
- "cumulus-test-service",
- "futures 0.3.15",
- "futures-timer 3.0.2",
- "parity-scale-codec",
- "rand 0.8.4",
- "sc-cli",
- "sc-client-api",
- "sc-service",
- "selendra-node-primitives",
- "selendra-node-subsystem",
- "selendra-overseer",
- "selendra-primitives",
- "selendra-test-client",
- "sp-api",
- "sp-consensus",
- "sp-core",
- "sp-keyring",
- "sp-keystore",
- "sp-maybe-compressed-blob",
- "sp-runtime",
- "substrate-test-utils",
- "tokio 0.2.21",
- "tracing",
-]
-
-[[package]]
-name = "cumulus-client-service"
-version = "0.1.0"
-dependencies = [
- "cumulus-client-collator",
- "cumulus-client-consensus-common",
- "cumulus-client-pov-recovery",
- "cumulus-primitives-core",
- "parity-scale-codec",
- "parking_lot 0.10.2",
- "sc-chain-spec",
- "sc-client-api",
- "sc-consensus-babe",
- "sc-service",
- "sc-telemetry",
- "sc-tracing",
- "selendra-overseer",
- "selendra-primitives",
- "selendra-service",
- "sp-api",
- "sp-blockchain",
- "sp-consensus",
- "sp-core",
- "sp-runtime",
- "tracing",
-]
-
-[[package]]
-name = "cumulus-pallet-aura-ext"
-version = "0.1.0"
-dependencies = [
- "cumulus-pallet-parachain-system",
- "frame-executive",
- "frame-support",
- "frame-system",
- "pallet-aura",
- "parity-scale-codec",
- "serde",
- "sp-application-crypto",
- "sp-consensus-aura",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "cumulus-pallet-dmp-queue"
-version = "0.1.0"
-dependencies = [
- "cumulus-primitives-core",
- "frame-support",
- "frame-system",
- "log",
- "parity-scale-codec",
- "rand 0.8.4",
- "rand_chacha 0.3.1",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "sp-version",
- "xcm",
- "xcm-executor",
-]
-
-[[package]]
-name = "cumulus-pallet-parachain-system"
-version = "0.1.0"
-dependencies = [
- "cumulus-pallet-parachain-system-proc-macro",
- "cumulus-primitives-core",
- "cumulus-primitives-parachain-inherent",
- "cumulus-test-client",
- "cumulus-test-relay-sproof-builder",
- "environmental",
- "frame-support",
- "frame-system",
- "hex-literal 0.2.1",
- "lazy_static",
- "log",
- "pallet-balances",
- "parity-scale-codec",
- "sc-client-api",
- "selendra-parachain",
- "serde",
- "sp-consensus",
- "sp-core",
- "sp-externalities",
- "sp-inherents",
- "sp-io",
- "sp-keyring",
- "sp-runtime",
- "sp-state-machine",
- "sp-std",
- "sp-tracing",
- "sp-trie",
- "sp-version",
- "xcm",
-]
-
-[[package]]
-name = "cumulus-pallet-parachain-system-proc-macro"
-version = "0.1.0"
-dependencies = [
- "proc-macro-crate 1.0.0",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "cumulus-pallet-xcm"
-version = "0.1.0"
-dependencies = [
- "cumulus-primitives-core",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "serde",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "xcm",
-]
-
-[[package]]
-name = "cumulus-pallet-xcmp-queue"
-version = "0.1.0"
-dependencies = [
- "cumulus-primitives-core",
- "frame-support",
- "frame-system",
- "log",
- "parity-scale-codec",
- "rand 0.8.4",
- "rand_chacha 0.3.1",
- "sp-runtime",
- "sp-std",
- "xcm",
- "xcm-executor",
-]
-
-[[package]]
-name = "cumulus-primitives-core"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "impl-trait-for-tuples 0.2.1",
- "parity-scale-codec",
- "selendra-core-primitives",
- "selendra-parachain",
- "selendra-primitives",
- "sp-api",
- "sp-runtime",
- "sp-std",
- "sp-trie",
- "xcm",
-]
-
-[[package]]
-name = "cumulus-primitives-parachain-inherent"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "cumulus-primitives-core",
- "cumulus-test-relay-sproof-builder",
- "parity-scale-codec",
- "sc-client-api",
- "selendra-client",
- "sp-api",
- "sp-core",
- "sp-inherents",
- "sp-runtime",
- "sp-state-machine",
- "sp-std",
- "sp-trie",
- "tracing",
-]
-
-[[package]]
-name = "cumulus-primitives-timestamp"
-version = "0.1.0"
-dependencies = [
- "cumulus-primitives-core",
- "cumulus-test-client",
- "cumulus-test-relay-sproof-builder",
- "futures 0.3.15",
- "parity-scale-codec",
- "sp-consensus",
- "sp-inherents",
- "sp-runtime",
- "sp-std",
- "sp-timestamp",
- "sp-tracing",
-]
-
-[[package]]
-name = "cumulus-primitives-utility"
-version = "0.1.0"
-dependencies = [
- "cumulus-primitives-core",
- "frame-support",
- "impl-trait-for-tuples 0.2.1",
- "parity-scale-codec",
- "selendra-core-primitives",
- "selendra-parachain",
- "selendra-primitives",
- "sp-runtime",
- "sp-std",
- "sp-trie",
- "xcm",
-]
-
-[[package]]
-name = "cumulus-test-client"
-version = "0.1.0"
-dependencies = [
- "cumulus-primitives-core",
- "cumulus-primitives-parachain-inherent",
- "cumulus-test-relay-sproof-builder",
- "cumulus-test-runtime",
- "cumulus-test-service",
- "frame-system",
- "pallet-balances",
- "pallet-transaction-payment",
- "parity-scale-codec",
- "sc-block-builder",
- "sc-consensus",
- "sc-executor",
- "sc-executor-common",
- "sc-service",
- "selendra-parachain",
- "selendra-primitives",
- "sp-api",
- "sp-blockchain",
- "sp-core",
- "sp-inherents",
- "sp-io",
- "sp-keyring",
- "sp-runtime",
- "sp-state-machine",
- "sp-test-primitives",
- "sp-timestamp",
- "substrate-test-client",
-]
-
-[[package]]
-name = "cumulus-test-relay-sproof-builder"
-version = "0.1.0"
-dependencies = [
- "cumulus-primitives-core",
- "parity-scale-codec",
- "selendra-primitives",
- "sp-runtime",
- "sp-state-machine",
- "sp-std",
-]
-
-[[package]]
-name = "cumulus-test-relay-validation-worker-provider"
-version = "0.1.0"
-dependencies = [
- "selendra-node-core-pvf",
-]
-
-[[package]]
-name = "cumulus-test-runtime"
-version = "0.1.0"
-dependencies = [
- "cumulus-pallet-parachain-system",
- "cumulus-primitives-core",
- "cumulus-primitives-timestamp",
- "frame-executive",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "pallet-randomness-collective-flip",
- "pallet-sudo",
- "pallet-timestamp",
- "pallet-transaction-payment",
- "parity-scale-codec",
- "selendra-parachain",
- "serde",
- "sp-api",
- "sp-block-builder",
- "sp-core",
- "sp-inherents",
- "sp-io",
- "sp-offchain",
- "sp-runtime",
- "sp-session",
- "sp-std",
- "sp-transaction-pool",
- "sp-version",
- "substrate-wasm-builder",
-]
-
-[[package]]
-name = "cumulus-test-runtime-upgrade"
-version = "0.1.0"
-dependencies = [
- "cumulus-pallet-parachain-system",
- "cumulus-primitives-core",
- "cumulus-primitives-timestamp",
- "frame-executive",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "pallet-randomness-collective-flip",
- "pallet-sudo",
- "pallet-timestamp",
- "pallet-transaction-payment",
- "parity-scale-codec",
- "selendra-parachain",
- "serde",
- "sp-api",
- "sp-block-builder",
- "sp-core",
- "sp-inherents",
- "sp-io",
- "sp-offchain",
- "sp-runtime",
- "sp-session",
- "sp-std",
- "sp-transaction-pool",
- "sp-version",
- "substrate-wasm-builder",
-]
-
-[[package]]
-name = "cumulus-test-service"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "cumulus-client-consensus-common",
- "cumulus-client-consensus-relay-chain",
- "cumulus-client-network",
- "cumulus-client-service",
- "cumulus-primitives-core",
- "cumulus-primitives-parachain-inherent",
- "cumulus-test-relay-validation-worker-provider",
- "cumulus-test-runtime",
- "cumulus-test-runtime-upgrade",
- "frame-system",
- "futures 0.3.15",
- "jsonrpc-core",
- "pallet-transaction-payment",
- "parity-scale-codec",
- "rand 0.7.3",
- "sc-basic-authorship",
- "sc-block-builder",
- "sc-chain-spec",
- "sc-cli",
- "sc-client-api",
- "sc-executor",
- "sc-network",
- "sc-rpc",
- "sc-service",
- "sc-telemetry",
- "sc-tracing",
- "sc-transaction-pool",
- "selendra-overseer",
- "selendra-primitives",
- "selendra-service",
- "selendra-test-runtime",
- "selendra-test-service",
- "serde",
- "sp-api",
- "sp-arithmetic",
- "sp-block-builder",
- "sp-blockchain",
- "sp-consensus",
- "sp-core",
- "sp-keyring",
- "sp-offchain",
- "sp-runtime",
- "sp-session",
- "sp-state-machine",
- "sp-timestamp",
- "sp-transaction-pool",
- "sp-trie",
- "substrate-test-client",
- "substrate-test-utils",
- "tokio 0.2.21",
-]
-
-[[package]]
 name = "curve25519-dalek"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2362,6 +1788,97 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca5faf057445ce5c9d4329e382b2ce7ca38550ef3b73a5348362d5f24e0c7fe3"
 dependencies = [
  "instant",
+]
+
+[[package]]
+name = "fc-consensus"
+version = "1.0.1-dev"
+dependencies = [
+ "async-trait",
+ "derive_more",
+ "fc-db",
+ "fp-consensus",
+ "fp-rpc",
+ "futures 0.3.15",
+ "log",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-timestamp",
+ "substrate-prometheus-endpoint",
+]
+
+[[package]]
+name = "fc-db"
+version = "1.0.0"
+dependencies = [
+ "kvdb",
+ "kvdb-rocksdb",
+ "parity-scale-codec",
+ "parking_lot 0.11.1",
+ "sp-core",
+ "sp-database",
+ "sp-runtime",
+]
+
+[[package]]
+name = "fc-rpc"
+version = "2.0.0-dev"
+dependencies = [
+ "ethereum",
+ "ethereum-types",
+ "evm",
+ "fc-consensus",
+ "fc-db",
+ "fc-rpc-core",
+ "fp-consensus",
+ "fp-evm",
+ "fp-rpc",
+ "fp-storage",
+ "futures 0.3.15",
+ "jsonrpc-core 15.1.0",
+ "jsonrpc-core-client 14.2.0",
+ "jsonrpc-derive 14.2.2",
+ "jsonrpc-pubsub 15.1.0",
+ "libsecp256k1",
+ "log",
+ "pallet-ethereum",
+ "pallet-evm",
+ "parity-scale-codec",
+ "rand 0.7.3",
+ "rlp",
+ "rustc-hex",
+ "sc-client-api",
+ "sc-network",
+ "sc-rpc",
+ "sc-service",
+ "sha3 0.8.2",
+ "sp-api",
+ "sp-blockchain",
+ "sp-io",
+ "sp-runtime",
+ "sp-storage",
+ "sp-transaction-pool",
+]
+
+[[package]]
+name = "fc-rpc-core"
+version = "1.1.0-dev"
+dependencies = [
+ "ethereum-types",
+ "jsonrpc-core 15.1.0",
+ "jsonrpc-core-client 14.2.0",
+ "jsonrpc-derive 14.2.2",
+ "jsonrpc-pubsub 15.1.0",
+ "rustc-hex",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -3184,28 +2701,9 @@ checksum = "644f9158b2f133fd50f5fb3242878846d9eb792e445c893805ff0e3824006e35"
 
 [[package]]
 name = "hex-literal"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "961de220ec9a91af2e1e5bd80d02109155695e516771762381ef8581317066e0"
-dependencies = [
- "hex-literal-impl",
- "proc-macro-hack",
-]
-
-[[package]]
-name = "hex-literal"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5af1f635ef1bc545d78392b136bfe1c9809e029023c84a3638a864a10b8819c8"
-
-[[package]]
-name = "hex-literal-impl"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "853f769599eb31de176303197b7ba4973299c38c7a7604a6bc88c3eef05b9b46"
-dependencies = [
- "proc-macro-hack",
-]
 
 [[package]]
 name = "hex_fmt"
@@ -3687,18 +3185,47 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-client-transports"
+version = "14.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2773fa94a2a1fd51efb89a8f45b8861023dbb415d18d3c9235ae9388d780f9ec"
+dependencies = [
+ "failure",
+ "futures 0.1.29",
+ "jsonrpc-core 14.2.0",
+ "jsonrpc-pubsub 14.2.0",
+ "log",
+ "serde",
+ "serde_json",
+ "url 1.7.2",
+]
+
+[[package]]
+name = "jsonrpc-client-transports"
 version = "15.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "489b9c612e60c766f751ab40fcb43cbb55a1e10bb44a9b4307ed510ca598cbd7"
 dependencies = [
  "failure",
  "futures 0.1.29",
- "jsonrpc-core",
- "jsonrpc-pubsub",
+ "jsonrpc-core 15.1.0",
+ "jsonrpc-pubsub 15.1.0",
  "log",
  "serde",
  "serde_json",
  "url 1.7.2",
+]
+
+[[package]]
+name = "jsonrpc-core"
+version = "14.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0747307121ffb9703afd93afbd0fb4f854c38fb873f2c8b90e0e902f27c7b62"
+dependencies = [
+ "futures 0.1.29",
+ "log",
+ "serde",
+ "serde_derive",
+ "serde_json",
 ]
 
 [[package]]
@@ -3716,11 +3243,32 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-core-client"
+version = "14.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "34221123bc79b66279a3fde2d3363553835b43092d629b34f2e760c44dc94713"
+dependencies = [
+ "jsonrpc-client-transports 14.2.1",
+]
+
+[[package]]
+name = "jsonrpc-core-client"
 version = "15.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6f764902d7b891344a0acb65625f32f6f7c6db006952143bd650209fbe7d94db"
 dependencies = [
- "jsonrpc-client-transports",
+ "jsonrpc-client-transports 15.1.0",
+]
+
+[[package]]
+name = "jsonrpc-derive"
+version = "14.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d0e77e8812f02155b85a677a96e1d16b60181950c0636199bc4528524fba98dc"
+dependencies = [
+ "proc-macro-crate 0.1.5",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -3742,7 +3290,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fb5c4513b7b542f42da107942b7b759f27120b5cc894729f88254b28dff44b7"
 dependencies = [
  "hyper 0.12.35",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-server-utils",
  "log",
  "net2",
@@ -3756,7 +3304,7 @@ version = "15.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf50e53e4eea8f421a7316c5f63e395f7bc7c4e786a6dc54d76fab6ff7aa7ce7"
 dependencies = [
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-server-utils",
  "log",
  "parity-tokio-ipc",
@@ -3766,11 +3314,24 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-pubsub"
+version = "14.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d44f5602a11d657946aac09357956d2841299ed422035edf140c552cb057986"
+dependencies = [
+ "jsonrpc-core 14.2.0",
+ "log",
+ "parking_lot 0.10.2",
+ "rand 0.7.3",
+ "serde",
+]
+
+[[package]]
+name = "jsonrpc-pubsub"
 version = "15.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "639558e0604013be9787ae52f798506ae42bf4220fe587bdc5625871cc8b9c77"
 dependencies = [
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "log",
  "parking_lot 0.10.2",
  "rand 0.7.3",
@@ -3785,7 +3346,7 @@ checksum = "72f1f3990650c033bd8f6bd46deac76d990f9bbfb5f8dc8c4767bf0a00392176"
 dependencies = [
  "bytes 0.4.12",
  "globset",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "lazy_static",
  "log",
  "tokio 0.1.22",
@@ -3799,7 +3360,7 @@ version = "15.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6596fe75209b73a2a75ebe1dce4e60e03b88a2b25e8807b667597f6315150d22"
 dependencies = [
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-server-utils",
  "log",
  "parity-ws",
@@ -5172,22 +4733,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13370dae44474229701bb69b90b4f4dca6404cb0357a2d50d635f1171dc3aa7b"
 
 [[package]]
-name = "pallet-aura"
-version = "3.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b758b2a8d151d97d2242260c465b6df9cb8a7a4"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-session",
- "pallet-timestamp",
- "parity-scale-codec",
- "sp-application-crypto",
- "sp-consensus-aura",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-authority-discovery"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b758b2a8d151d97d2242260c465b6df9cb8a7a4"
@@ -5281,30 +4826,6 @@ dependencies = [
  "parity-scale-codec",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "pallet-collator-selection"
-version = "3.0.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "pallet-aura",
- "pallet-authorship",
- "pallet-balances",
- "pallet-session",
- "pallet-timestamp",
- "parity-scale-codec",
- "serde",
- "sp-consensus-aura",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-staking",
- "sp-std",
- "sp-tracing",
 ]
 
 [[package]]
@@ -5625,9 +5146,9 @@ name = "pallet-mmr-rpc"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b758b2a8d151d97d2242260c465b6df9cb8a7a4"
 dependencies = [
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
+ "jsonrpc-core 15.1.0",
+ "jsonrpc-core-client 15.1.0",
+ "jsonrpc-derive 15.1.0",
  "pallet-mmr-primitives",
  "parity-scale-codec",
  "serde",
@@ -5900,9 +5421,9 @@ name = "pallet-transaction-payment-rpc"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b758b2a8d151d97d2242260c465b6df9cb8a7a4"
 dependencies = [
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
+ "jsonrpc-core 15.1.0",
+ "jsonrpc-core-client 15.1.0",
+ "jsonrpc-derive 15.1.0",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "sp-api",
@@ -7476,37 +6997,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sc-consensus-aura"
-version = "0.9.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b758b2a8d151d97d2242260c465b6df9cb8a7a4"
-dependencies = [
- "async-trait",
- "derive_more",
- "futures 0.3.15",
- "futures-timer 3.0.2",
- "log",
- "parity-scale-codec",
- "sc-block-builder",
- "sc-client-api",
- "sc-consensus-slots",
- "sc-telemetry",
- "sp-api",
- "sp-application-crypto",
- "sp-block-builder",
- "sp-blockchain",
- "sp-consensus",
- "sp-consensus-aura",
- "sp-consensus-slots",
- "sp-core",
- "sp-inherents",
- "sp-io",
- "sp-keystore",
- "sp-runtime",
- "sp-version",
- "substrate-prometheus-endpoint",
-]
-
-[[package]]
 name = "sc-consensus-babe"
 version = "0.9.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b758b2a8d151d97d2242260c465b6df9cb8a7a4"
@@ -7559,9 +7049,9 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b7
 dependencies = [
  "derive_more",
  "futures 0.3.15",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
+ "jsonrpc-core 15.1.0",
+ "jsonrpc-core-client 15.1.0",
+ "jsonrpc-derive 15.1.0",
  "sc-consensus-babe",
  "sc-consensus-epochs",
  "sc-rpc-api",
@@ -7757,10 +7247,10 @@ dependencies = [
  "derive_more",
  "finality-grandpa",
  "futures 0.3.15",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "jsonrpc-pubsub",
+ "jsonrpc-core 15.1.0",
+ "jsonrpc-core-client 15.1.0",
+ "jsonrpc-derive 15.1.0",
+ "jsonrpc-pubsub 15.1.0",
  "log",
  "parity-scale-codec",
  "sc-client-api",
@@ -7978,8 +7468,8 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b7
 dependencies = [
  "futures 0.3.15",
  "hash-db",
- "jsonrpc-core",
- "jsonrpc-pubsub",
+ "jsonrpc-core 15.1.0",
+ "jsonrpc-pubsub 15.1.0",
  "log",
  "parity-scale-codec",
  "parking_lot 0.11.1",
@@ -8013,10 +7503,10 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b7
 dependencies = [
  "derive_more",
  "futures 0.3.15",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "jsonrpc-pubsub",
+ "jsonrpc-core 15.1.0",
+ "jsonrpc-core-client 15.1.0",
+ "jsonrpc-derive 15.1.0",
+ "jsonrpc-pubsub 15.1.0",
  "log",
  "parity-scale-codec",
  "parking_lot 0.11.1",
@@ -8037,10 +7527,10 @@ version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b758b2a8d151d97d2242260c465b6df9cb8a7a4"
 dependencies = [
  "futures 0.1.29",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-http-server",
  "jsonrpc-ipc-server",
- "jsonrpc-pubsub",
+ "jsonrpc-pubsub 15.1.0",
  "jsonrpc-ws-server",
  "log",
  "serde",
@@ -8061,8 +7551,8 @@ dependencies = [
  "futures 0.3.15",
  "futures-timer 3.0.2",
  "hash-db",
- "jsonrpc-core",
- "jsonrpc-pubsub",
+ "jsonrpc-core 15.1.0",
+ "jsonrpc-pubsub 15.1.0",
  "lazy_static",
  "log",
  "parity-scale-codec",
@@ -8135,9 +7625,9 @@ name = "sc-sync-state-rpc"
 version = "0.9.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b758b2a8d151d97d2242260c465b6df9cb8a7a4"
 dependencies = [
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
+ "jsonrpc-core 15.1.0",
+ "jsonrpc-core-client 15.1.0",
+ "jsonrpc-derive 15.1.0",
  "sc-chain-spec",
  "sc-client-api",
  "sc-consensus-babe",
@@ -8532,6 +8022,7 @@ name = "selendra-client"
 version = "0.1.0"
 dependencies = [
  "beefy-primitives",
+ "fp-rpc",
  "frame-benchmarking",
  "frame-system-rpc-runtime-api",
  "pallet-mmr-primitives",
@@ -8893,7 +8384,7 @@ dependencies = [
  "async-std",
  "futures 0.3.15",
  "futures-timer 3.0.2",
- "hex-literal 0.3.1",
+ "hex-literal",
  "libc",
  "parity-scale-codec",
  "pin-project 1.0.7",
@@ -9116,7 +8607,7 @@ version = "0.1.0-tn7"
 dependencies = [
  "bitvec",
  "frame-system",
- "hex-literal 0.3.1",
+ "hex-literal",
  "parity-scale-codec",
  "parity-util-mem",
  "pretty_assertions 0.7.2",
@@ -9169,7 +8660,13 @@ version = "0.1.0-tn7"
 dependencies = [
  "beefy-gadget",
  "beefy-gadget-rpc",
- "jsonrpc-core",
+ "fc-db",
+ "fc-rpc",
+ "fc-rpc-core",
+ "fp-rpc",
+ "jsonrpc-core 15.1.0",
+ "jsonrpc-pubsub 15.1.0",
+ "pallet-ethereum",
  "pallet-mmr-rpc",
  "pallet-transaction-payment-rpc",
  "parity-scale-codec",
@@ -9181,9 +8678,11 @@ dependencies = [
  "sc-finality-grandpa",
  "sc-finality-grandpa-rpc",
  "sc-keystore",
+ "sc-network",
  "sc-rpc",
  "sc-sync-state-rpc",
  "selendra-primitives",
+ "selendra-runtime",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
@@ -9211,7 +8710,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "hex-literal 0.3.1",
+ "hex-literal",
  "libsecp256k1",
  "log",
  "max-encoded-len",
@@ -9304,7 +8803,7 @@ dependencies = [
  "frame-support",
  "frame-support-test",
  "frame-system",
- "hex-literal 0.3.1",
+ "hex-literal",
  "impl-trait-for-tuples 0.2.1",
  "libsecp256k1",
  "log",
@@ -9359,7 +8858,7 @@ dependencies = [
  "frame-support-test",
  "frame-system",
  "futures 0.3.15",
- "hex-literal 0.3.1",
+ "hex-literal",
  "libsecp256k1",
  "log",
  "pallet-authority-discovery",
@@ -9407,9 +8906,13 @@ dependencies = [
  "beefy-gadget",
  "beefy-primitives",
  "env_logger 0.8.4",
+ "fc-consensus",
+ "fc-db",
+ "fc-rpc",
+ "fc-rpc-core",
  "frame-system-rpc-runtime-api",
  "futures 0.3.15",
- "hex-literal 0.3.1",
+ "hex-literal",
  "kvdb",
  "kvdb-rocksdb",
  "pallet-babe",
@@ -9464,7 +8967,6 @@ dependencies = [
  "selendra-runtime",
  "selendra-runtime-parachains",
  "selendra-statement-distribution",
- "selendra-test-client",
  "serde",
  "serde_json",
  "sp-api",
@@ -9526,148 +9028,6 @@ dependencies = [
  "parity-scale-codec",
  "selendra-primitives",
  "sp-core",
-]
-
-[[package]]
-name = "selendra-test-client"
-version = "0.1.0-tn7"
-dependencies = [
- "futures 0.3.15",
- "parity-scale-codec",
- "sc-block-builder",
- "sc-consensus",
- "sc-service",
- "selendra-node-subsystem",
- "selendra-primitives",
- "selendra-test-runtime",
- "selendra-test-service",
- "sp-api",
- "sp-blockchain",
- "sp-consensus",
- "sp-consensus-babe",
- "sp-core",
- "sp-inherents",
- "sp-keyring",
- "sp-runtime",
- "sp-state-machine",
- "sp-timestamp",
- "substrate-test-client",
-]
-
-[[package]]
-name = "selendra-test-runtime"
-version = "0.1.0-tn7"
-dependencies = [
- "beefy-primitives",
- "bitvec",
- "frame-election-provider-support",
- "frame-executive",
- "frame-support",
- "frame-system",
- "frame-system-rpc-runtime-api",
- "hex-literal 0.3.1",
- "libsecp256k1",
- "log",
- "pallet-authority-discovery",
- "pallet-authorship",
- "pallet-babe",
- "pallet-balances",
- "pallet-grandpa",
- "pallet-indices",
- "pallet-mmr-primitives",
- "pallet-nicks",
- "pallet-offences",
- "pallet-randomness-collective-flip",
- "pallet-session",
- "pallet-staking",
- "pallet-staking-reward-curve",
- "pallet-sudo",
- "pallet-timestamp",
- "pallet-transaction-payment",
- "pallet-transaction-payment-rpc-runtime-api",
- "pallet-vesting",
- "parity-scale-codec",
- "rustc-hex",
- "selendra-parachain",
- "selendra-primitives",
- "selendra-runtime-common",
- "selendra-runtime-parachains",
- "serde",
- "serde_derive",
- "serde_json",
- "smallvec 1.6.1",
- "sp-api",
- "sp-authority-discovery",
- "sp-block-builder",
- "sp-consensus-babe",
- "sp-core",
- "sp-inherents",
- "sp-io",
- "sp-keyring",
- "sp-offchain",
- "sp-runtime",
- "sp-session",
- "sp-staking",
- "sp-std",
- "sp-transaction-pool",
- "sp-trie",
- "sp-version",
- "substrate-wasm-builder",
- "tiny-keccak",
-]
-
-[[package]]
-name = "selendra-test-service"
-version = "0.1.0-tn7"
-dependencies = [
- "frame-benchmarking",
- "frame-system",
- "futures 0.1.29",
- "futures 0.3.15",
- "hex",
- "pallet-balances",
- "pallet-staking",
- "pallet-transaction-payment",
- "rand 0.8.4",
- "sc-authority-discovery",
- "sc-chain-spec",
- "sc-cli",
- "sc-client-api",
- "sc-consensus",
- "sc-consensus-babe",
- "sc-executor",
- "sc-finality-grandpa",
- "sc-network",
- "sc-service",
- "sc-tracing",
- "sc-transaction-pool",
- "selendra-node-primitives",
- "selendra-node-subsystem",
- "selendra-overseer",
- "selendra-parachain",
- "selendra-primitives",
- "selendra-rpc",
- "selendra-runtime-common",
- "selendra-runtime-parachains",
- "selendra-service",
- "selendra-test-runtime",
- "serde_json",
- "sp-arithmetic",
- "sp-authority-discovery",
- "sp-blockchain",
- "sp-consensus",
- "sp-consensus-babe",
- "sp-core",
- "sp-finality-grandpa",
- "sp-inherents",
- "sp-keyring",
- "sp-runtime",
- "sp-state-machine",
- "substrate-test-client",
- "substrate-test-utils",
- "tempfile",
- "tokio 0.2.21",
- "tracing",
 ]
 
 [[package]]
@@ -10150,23 +9510,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sp-consensus-aura"
-version = "0.9.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b758b2a8d151d97d2242260c465b6df9cb8a7a4"
-dependencies = [
- "async-trait",
- "parity-scale-codec",
- "sp-api",
- "sp-application-crypto",
- "sp-consensus",
- "sp-consensus-slots",
- "sp-inherents",
- "sp-runtime",
- "sp-std",
- "sp-timestamp",
-]
-
-[[package]]
 name = "sp-consensus-babe"
 version = "0.9.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b758b2a8d151d97d2242260c465b6df9cb8a7a4"
@@ -10569,19 +9912,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sp-test-primitives"
-version = "2.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b758b2a8d151d97d2242260c465b6df9cb8a7a4"
-dependencies = [
- "parity-scale-codec",
- "parity-util-mem",
- "serde",
- "sp-application-crypto",
- "sp-core",
- "sp-runtime",
-]
-
-[[package]]
 name = "sp-timestamp"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b758b2a8d151d97d2242260c465b6df9cb8a7a4"
@@ -10909,9 +10239,9 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b7
 dependencies = [
  "frame-system-rpc-runtime-api",
  "futures 0.3.15",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
+ "jsonrpc-core 15.1.0",
+ "jsonrpc-core-client 15.1.0",
+ "jsonrpc-derive 15.1.0",
  "log",
  "parity-scale-codec",
  "sc-client-api",
@@ -10937,55 +10267,6 @@ dependencies = [
  "log",
  "prometheus",
  "tokio 0.2.21",
-]
-
-[[package]]
-name = "substrate-test-client"
-version = "2.0.1"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b758b2a8d151d97d2242260c465b6df9cb8a7a4"
-dependencies = [
- "async-trait",
- "futures 0.1.29",
- "futures 0.3.15",
- "hash-db",
- "hex",
- "parity-scale-codec",
- "sc-client-api",
- "sc-client-db",
- "sc-consensus",
- "sc-executor",
- "sc-light",
- "sc-offchain",
- "sc-service",
- "serde",
- "serde_json",
- "sp-blockchain",
- "sp-consensus",
- "sp-core",
- "sp-keyring",
- "sp-keystore",
- "sp-runtime",
- "sp-state-machine",
-]
-
-[[package]]
-name = "substrate-test-utils"
-version = "3.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b758b2a8d151d97d2242260c465b6df9cb8a7a4"
-dependencies = [
- "futures 0.3.15",
- "substrate-test-utils-derive",
- "tokio 0.2.21",
-]
-
-[[package]]
-name = "substrate-test-utils-derive"
-version = "0.9.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#1b758b2a8d151d97d2242260c465b6df9cb8a7a4"
-dependencies = [
- "proc-macro-crate 1.0.0",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -11261,7 +10542,6 @@ dependencies = [
  "pin-project-lite 0.1.7",
  "signal-hook-registry",
  "slab",
- "tokio-macros",
  "winapi 0.3.9",
 ]
 
@@ -11337,17 +10617,6 @@ dependencies = [
  "bytes 0.4.12",
  "futures 0.1.29",
  "log",
-]
-
-[[package]]
-name = "tokio-macros"
-version = "0.2.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0c3acc6aa564495a0f2e1d59fab677cd7f81a19994cfc7f3ad0e64301560389"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]

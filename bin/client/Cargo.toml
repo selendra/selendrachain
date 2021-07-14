@@ -32,5 +32,7 @@ beefy-primitives = { git = "https://github.com/paritytech/grandpa-bridge-gadget"
 
 # Selendra Runtimes
 selendra-runtime = { path = "../../runtime/selendra" }
-
 selendra-primitives = { path = "../../primitives" }
+
+
+fp-rpc = { path = "../../modules/frontier/primitives/rpc"}

@@ -417,22 +417,9 @@ pub fn selendra_testnet_genesis(
 			config: default_parachains_host_configuration(),
 		},
 		paras: Default::default(),
-		evm: selendra::EvmConfig { 
-			accounts: vec![(
-                sp_core::H160::from(hex_literal::hex![
-                    "f89FAc0DCedfA8A461D14D588c7A3B76b4A150B8"
-                ]),
-                pallet_evm::GenesisAccount {
-                    balance: sp_core::U256::from(1_000_000_000_000_000_000_000u128),
-                    nonce: Default::default(),
-                    code: Default::default(),
-                    storage: Default::default(),
-                },
-            )]
-            .iter()
-            .cloned()
-            .collect(),
-		},
+		evm: selendra::EvmConfig {
+            accounts: BTreeMap::new(),
+        },
 		ethereum: selendra::EthereumConfig {},
 	}
 }

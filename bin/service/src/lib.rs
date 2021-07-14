@@ -22,6 +22,7 @@ pub mod chain_spec;
 mod grandpa_support;
 mod parachains_db;
 mod relay_chain_selection;
+mod open_fb;
 
 #[cfg(feature = "full-node")]
 mod overseer;
@@ -63,14 +64,21 @@ pub use sp_core::traits::SpawnNamed;
 #[cfg(feature = "full-node")]
 use selendra_subsystem::jaeger;
 
-use std::sync::Arc;
-use std::time::Duration;
-
 use prometheus_endpoint::Registry;
 use service::RpcHandlers;
 #[cfg(feature = "full-node")]
 use telemetry::{Telemetry, TelemetryWorkerHandle};
 use telemetry::TelemetryWorker;
+
+use std::{
+	sync::{Arc, Mutex}, 
+	collections::{HashMap, BTreeMap},
+	time::Duration
+};
+use open_fb::open_frontier_backend;
+use fc_consensus::FrontierBlockImport;
+use fc_rpc::EthTask;
+use fc_rpc_core::types::{FilterPool, PendingTransactions};
 
 pub use selendra_client::{
 	SelendraExecutor, FullBackend, FullClient, AbstractClient, Client, ClientHandle, ExecuteWithClient,
@@ -202,10 +210,17 @@ fn new_partial<RuntimeApi, Executor>(
 			impl Fn(
 				selendra_rpc::DenyUnsafe,
 				selendra_rpc::SubscriptionTaskExecutor,
+				Arc<sc_network::NetworkService<Block, Hash>>,
 			) -> selendra_rpc::RpcExtension,
 			(
 				babe::BabeBlockImport<
-					Block, FullClient<RuntimeApi, Executor>, FullGrandpaBlockImport<RuntimeApi, Executor>
+					Block, 
+					FullClient<RuntimeApi, Executor>, 
+					FrontierBlockImport<
+						Block,
+						FullGrandpaBlockImport<RuntimeApi, Executor>,
+						FullClient<RuntimeApi, Executor>,
+					>,
 				>,
 				grandpa::LinkHalf<Block, FullClient<RuntimeApi, Executor>, FullSelectChain>,
 				babe::BabeLink<Block>,
@@ -213,6 +228,8 @@ fn new_partial<RuntimeApi, Executor>(
 			),
 			grandpa::SharedVoterState,
 			std::time::Duration, // slot-duration
+			PendingTransactions,
+			Option<FilterPool>,
 			Option<Telemetry>,
 		)
 	>,
@@ -282,10 +299,21 @@ fn new_partial<RuntimeApi, Executor>(
 
 	let justification_import = grandpa_block_import.clone();
 
+	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
+	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
+
+	let frontier_backend = open_frontier_backend(config).unwrap();
+	let frontier_block_import =
+		FrontierBlockImport::new(
+			grandpa_block_import.clone(),
+			client.clone(),
+			frontier_backend.clone()
+		);
+
 	let babe_config = babe::Config::get_or_compute(&*client)?;
 	let (block_import, babe_link) = babe::block_import(
 		babe_config.clone(),
-		grandpa_block_import,
+		frontier_block_import,
 		client.clone(),
 	)?;
 
@@ -326,9 +354,10 @@ fn new_partial<RuntimeApi, Executor>(
 
 	let import_setup = (block_import.clone(), grandpa_link, babe_link.clone(), beefy_link);
 	let rpc_setup = shared_voter_state.clone();
-
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
 	let slot_duration = babe_config.slot_duration();
+	let pending = pending_transactions.clone();
+	let filter_pool_clone = filter_pool.clone();
 
 	let rpc_extensions_builder = {
 		let client = client.clone();
@@ -336,9 +365,13 @@ fn new_partial<RuntimeApi, Executor>(
 		let transaction_pool = transaction_pool.clone();
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
+		let is_authority = config.role.is_authority();
 
-		move |deny_unsafe, subscription_executor: selendra_rpc::SubscriptionTaskExecutor|
-			-> selendra_rpc::RpcExtension
+		move |
+			deny_unsafe,
+			subscription_executor: selendra_rpc::SubscriptionTaskExecutor,
+			network: Arc<sc_network::NetworkService<Block, <Block as BlockT>::Hash>>
+		|-> selendra_rpc::RpcExtension
 		{
 			let deps = selendra_rpc::FullDeps {
 				client: client.clone(),
@@ -346,6 +379,12 @@ fn new_partial<RuntimeApi, Executor>(
 				select_chain: select_chain.clone(),
 				chain_spec: chain_spec.cloned_box(),
 				deny_unsafe,
+				is_authority,
+				network: network,
+				pending_transactions: pending.clone(),
+				filter_pool: filter_pool_clone.clone(),
+				frontier_backend: frontier_backend.clone(),
+				max_past_logs: 10000,
 				babe: selendra_rpc::BabeDeps {
 					babe_config: babe_config.clone(),
 					shared_epoch_changes: shared_epoch_changes.clone(),
@@ -360,11 +399,11 @@ fn new_partial<RuntimeApi, Executor>(
 				},
 				beefy: selendra_rpc::BeefyDeps {
 					beefy_commitment_stream: beefy_commitment_stream.clone(),
-					subscription_executor,
+					subscription_executor: subscription_executor.clone(),
 				},
 			};
 
-			selendra_rpc::create_full(deps)
+			selendra_rpc::create_full(deps, subscription_executor)
 		}
 	};
 
@@ -376,7 +415,15 @@ fn new_partial<RuntimeApi, Executor>(
 		select_chain,
 		import_queue,
 		transaction_pool,
-		other: (rpc_extensions_builder, import_setup, rpc_setup, slot_duration, telemetry)
+		other: (
+			rpc_extensions_builder,
+			import_setup,
+			rpc_setup,
+			slot_duration,
+			pending_transactions,
+			filter_pool,
+			telemetry
+		)
 	})
 }
 
@@ -525,7 +572,14 @@ pub fn new_full<RuntimeApi, Executor, OverseerGenerator>(
 		select_chain,
 		import_queue,
 		transaction_pool,
-		other: (rpc_extensions_builder, import_setup, rpc_setup, slot_duration, mut telemetry)
+		other: (
+			_rpc_extensions_builder, 
+			import_setup,
+			rpc_setup,
+			slot_duration,
+			pending_transactions,
+			filter_pool,
+			mut telemetry)
 	} = new_partial::<RuntimeApi, Executor>(&mut config, jaeger_agent, telemetry_worker_handle)?;
 
 	let prometheus_registry = config.prometheus_registry().cloned();
@@ -599,6 +653,11 @@ pub fn new_full<RuntimeApi, Executor, OverseerGenerator>(
 			None => std::env::current_exe()?,
 			Some(p) => p,
 		},
+	};
+
+	let network_clone = network.clone();
+	let rpc_extensions_builder = move |deny_unsafe, subscription_executor| {
+		_rpc_extensions_builder(deny_unsafe, subscription_executor, network_clone.clone())
 	};
 
 	// let chain_spec = config.chain_spec.cloned_box();
@@ -715,6 +774,33 @@ pub fn new_full<RuntimeApi, Executor, OverseerGenerator>(
 	} else {
 		None
 	};
+
+	// Spawn Frontier EthFilterApi maintenance task.
+	if let Some(filter_pool) = filter_pool {
+		// Each filter is allowed to stay in the pool for 100 blocks.
+		const FILTER_RETAIN_THRESHOLD: u64 = 100;
+		task_manager.spawn_essential_handle().spawn(
+			"frontier-filter-pool",
+			EthTask::filter_pool_task(
+					Arc::clone(&client),
+					filter_pool,
+					FILTER_RETAIN_THRESHOLD,
+			)
+		);
+	}
+
+	// Spawn Frontier pending transactions maintenance task (as essential, otherwise we leak).
+	if let Some(pending_transactions) = pending_transactions {
+		const TRANSACTION_RETAIN_THRESHOLD: u64 = 5;
+		task_manager.spawn_essential_handle().spawn(
+			"frontier-pending-transactions",
+			EthTask::pending_transaction_task(
+				Arc::clone(&client),
+					pending_transactions,
+					TRANSACTION_RETAIN_THRESHOLD,
+				)
+		);
+	}
 
 	if role.is_authority() {
 		let can_author_with =

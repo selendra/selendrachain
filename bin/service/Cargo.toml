@@ -105,9 +105,13 @@ selendra-approval-distribution = { path = "../../modules/node/network/approval-d
 selendra-node-core-approval-voting = { path = "../../modules/node/core/approval-voting", optional = true }
 
 pallet-evm = { path = "../../modules/frontier/frame/evm"}
+fc-db = { path = "../../modules/frontier/client/db"}
+fc-rpc = { path = "../../modules/frontier/client/rpc"}
+fc-consensus = { path = "../../modules/frontier/client/consensus"}
+fc-rpc-core = { path = "../../modules/frontier/client/rpc-core"}
 
 [dev-dependencies]
-selendra-test-client = { path = "../test/client" }
+# selendra-test-client = { path = "../test/client" }
 env_logger = "0.8.2"
 
 [features]

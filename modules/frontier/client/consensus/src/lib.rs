@@ -19,7 +19,6 @@
 use std::sync::Arc;
 use std::collections::HashMap;
 use std::marker::PhantomData;
-use async_trait::async_trait;
 use fp_consensus::{ensure_log, FindLogError};
 use fp_rpc::EthereumRuntimeRPCApi;
 use sc_client_api::{BlockOf, backend::AuxStore};
