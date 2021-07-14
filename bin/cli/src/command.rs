@@ -76,7 +76,6 @@ impl SubstrateCli for Cli {
 			"selendra" => Box::new(service::chain_spec::selendra_config()?),
 			"selendra-dev" | "dev" => Box::new(service::chain_spec::selendra_development_config()?),
 			"selendra-local" => Box::new(service::chain_spec::selendra_local_testnet_config()?),
-			"selendra-staging" => Box::new(service::chain_spec::selendra_staging_testnet_config()?),
 			path => {
 				let path = std::path::PathBuf::from(path);
 				Box::new(service::SelendraChainSpec::from_json_file(path.clone())?) as Box<dyn service::ChainSpec>
