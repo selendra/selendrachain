@@ -1413,8 +1413,8 @@ construct_runtime! {
 		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin} = 99,
 
 		// Evm
-		Evm: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
-		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned} = 101,
+		Evm: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 19,
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned} = 20,
 	}
 }
 
