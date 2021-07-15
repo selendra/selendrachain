@@ -1261,7 +1261,7 @@ impl pallet_evm::GasWeightMapping for SelendraGasWeightMapping {
 pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {
 	fn min_gas_price() -> U256 {
-		(1 * CENTS).into()
+		(1 * MILLICENTS).into()
 	}
 }
 
