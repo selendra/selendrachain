@@ -111,7 +111,7 @@ fc-consensus = { path = "../../modules/frontier/client/consensus"}
 fc-rpc-core = { path = "../../modules/frontier/client/rpc-core"}
 
 [dev-dependencies]
-# selendra-test-client = { path = "../test/client" }
+selendra-test-client = { path = "../test/client" }
 env_logger = "0.8.2"
 
 [features]

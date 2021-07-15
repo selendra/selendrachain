@@ -26,6 +26,7 @@ use selendra_test_runtime::{constants::currency::DOTS, BABE_GENESIS_EPOCH_CONFIG
 use sc_chain_spec::{ChainSpec, ChainType};
 use sp_core::sr25519;
 use sp_runtime::Perbill;
+use std::collections::BTreeMap;
 
 const DEFAULT_PROTOCOL_ID: &str = "sel";
 
@@ -184,6 +185,11 @@ fn selendra_testnet_genesis(
 				no_show_slots: 10,
 				..Default::default()
 			},
+		},
+
+		ethereum: runtime::EthereumConfig {},
+		evm: runtime::EvmConfig {
+			accounts: BTreeMap::new(),
 		},
 	}
 }

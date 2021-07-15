@@ -186,7 +186,6 @@ std = [
 	"xcm-builder/std",
 	"max-encoded-len/std",
 	"pallet-evm/std",
-
 	"evm/std",
 	"fp-rpc/std",
 	"pallet-evm/std",

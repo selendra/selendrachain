@@ -21,9 +21,13 @@
 #![recursion_limit = "256"]
 
 use pallet_transaction_payment::CurrencyAdapter;
-use sp_std::prelude::*;
-use sp_std::collections::btree_map::BTreeMap;
-use sp_core::u32_trait::{_1, _2, _3, _5};
+use sp_std::{prelude::*, convert::TryFrom, marker::PhantomData, 
+	collections::btree_map::BTreeMap
+};
+use sp_core::{
+	U256, H160, H256, crypto::Public, OpaqueMetadata,
+	u32_trait::{_1, _2, _3, _5},
+};
 use parity_scale_codec::{Encode, Decode};
 use primitives::v1::{
 	AccountId, AccountIndex, Balance, BlockNumber, CandidateEvent, CommittedCandidateReceipt,
@@ -36,7 +40,7 @@ use runtime_common::{
 	SlowAdjustingFeeUpdate, CurrencyToVote, impls::DealWithFees,
 	BlockHashCount, RocksDbWeight, BlockWeights, BlockLength,
 	OffchainSolutionWeightLimit, OffchainSolutionLengthLimit, elections::fee_for_submit_call,
-	ToAuthor,
+	ToAuthor, WEIGHT_PER_GAS
 };
 
 use runtime_parachains::origin as parachains_origin;
@@ -78,7 +82,6 @@ use sp_version::RuntimeVersion;
 use pallet_grandpa::{AuthorityId as GrandpaId, fg_primitives};
 #[cfg(any(feature = "std", test))]
 use sp_version::NativeVersion;
-use sp_core::OpaqueMetadata;
 use sp_staking::SessionIndex;
 use frame_support::{
 	parameter_types, construct_runtime, RuntimeDebug, PalletId,
@@ -94,6 +97,13 @@ use static_assertions::const_assert;
 use beefy_primitives::crypto::AuthorityId as BeefyId;
 use pallet_mmr_primitives as mmr;
 
+use pallet_evm::{
+    EnsureAddressTruncated, HashedAddressMapping, FeeCalculator,
+	Account as EvmAccount, Runner
+};
+use frame_support::{traits::FindAuthor, ConsensusEngineId};
+use fp_rpc::TransactionStatus;
+
 #[cfg(feature = "std")]
 pub use pallet_staking::StakerStatus;
 #[cfg(any(feature = "std", test))]
@@ -102,15 +112,17 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_election_provider_multi_phase::Call as EPMCall;
 
-/// Constant values used within the runtime.
-pub mod constants;
-use constants::{time::*, currency::*, fee::*};
-
 // Weights used in the runtime.
 mod weights;
+mod precompiles;
+pub mod constants;
 
 #[cfg(test)]
 mod tests;
+
+/// Constant values used within the runtime.
+use constants::{time::*, currency::*, fee::*};
+use precompiles::IndracorePrecompiles;
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
@@ -1232,20 +1244,6 @@ impl pallet_xcm::Config for Runtime {
 	type XcmReserveTransferFilter = All<(MultiLocation, Vec<MultiAsset>)>;
 	type Weigher = FixedWeightBounds<BaseXcmWeight, Call>;
 }
-
-// Evm start
-mod precompiles;
-
-use precompiles::IndracorePrecompiles;
-use pallet_evm::{
-    EnsureAddressTruncated, HashedAddressMapping, FeeCalculator,
-	Account as EvmAccount, Runner
-};
-use runtime_common::WEIGHT_PER_GAS;
-use sp_std::{convert::TryFrom, marker::PhantomData};
-use sp_core::{U256, H160, H256, crypto::Public};
-use frame_support::{traits::FindAuthor, ConsensusEngineId};
-use fp_rpc::TransactionStatus;
 
 pub struct SelendraGasWeightMapping;
 
