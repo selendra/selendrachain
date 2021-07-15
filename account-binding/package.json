@@ -2,7 +2,7 @@
   "name": "js",
   "version": "1.0.0",
   "description": "",
-  "main": "signer.js",
+  "main": "bindAccount.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node bindAccount.js"
