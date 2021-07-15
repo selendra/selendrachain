@@ -98,11 +98,12 @@ use beefy_primitives::crypto::AuthorityId as BeefyId;
 use pallet_mmr_primitives as mmr;
 
 use pallet_evm::{
-    EnsureAddressTruncated, HashedAddressMapping, FeeCalculator,
+    EnsureAddressTruncated, FeeCalculator,
 	Account as EvmAccount, Runner
 };
 use frame_support::{traits::FindAuthor, ConsensusEngineId};
 use fp_rpc::TransactionStatus;
+use evm_accounts::EvmAddressMapping;
 
 #[cfg(feature = "std")]
 pub use pallet_staking::StakerStatus;
@@ -115,6 +116,7 @@ pub use pallet_election_provider_multi_phase::Call as EPMCall;
 // Weights used in the runtime.
 mod weights;
 mod precompiles;
+mod impls;
 pub mod constants;
 
 #[cfg(test)]
@@ -177,7 +179,7 @@ type MoreThanHalfCouncil = EnsureOneOf<
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u8 = 0;
+	pub const SS58Prefix: u8 = 42;
 }
 
 impl frame_system::Config for Runtime {
@@ -1273,7 +1275,7 @@ impl pallet_evm::Config for Runtime {
 	type GasWeightMapping = SelendraGasWeightMapping;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
-	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	type AddressMapping = EvmAddressMapping<Runtime>;
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
@@ -1319,6 +1321,15 @@ impl pallet_ethereum::Config for Runtime {
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot;
 }
+
+impl evm_accounts::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type KillAccount = frame_system::Consumer<Runtime>;
+	type AddressMapping = EvmAddressMapping<Runtime>;
+	type MergeAccount = impls::MergeAccountEvm;
+	type WeightInfo = ();
+  }
 
 construct_runtime! {
 	pub enum Runtime where
@@ -1413,6 +1424,7 @@ construct_runtime! {
 		// Evm
 		Evm: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 19,
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned} = 20,
+		EvmAccounts: evm_accounts::{Pallet, Call, Storage, Event<T>} = 21,
 	}
 }
 

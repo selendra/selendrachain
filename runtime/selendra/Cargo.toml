@@ -99,6 +99,7 @@ pallet-evm-precompile-dispatch = { path = "../../modules/frontier/frame/evm/prec
 pallet-evm-precompile-modexp = { path = "../../modules/frontier/frame/evm/precompile/modexp", default-features = false }
 pallet-evm-precompile-simple = { path = "../../modules/frontier/frame/evm/precompile/simple", default-features = false }
 pallet-evm-precompile-sha3fips = { path = "../../modules/frontier/frame/evm/precompile/sha3fips", default-features = false }
+evm-accounts = { path = "../../modules/evm-accounts", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.1"
