@@ -27,6 +27,7 @@ async function run() {
         }, ({ events = [], status }) => {
             if (status.isFinalized) {
                 console.log(`${pioneer.address} has bound with EVM address: ${PUB_KEY}`)
+                process.exit(1)
             }
         });
 }
