@@ -27,3 +27,4 @@ runs.txt
 genesis-state
 genesis-wasm
 selendra-local.json
+node_modules
