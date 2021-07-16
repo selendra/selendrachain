@@ -31,7 +31,7 @@ use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::{traits::IdentifyAccount, Perbill};
 use telemetry::TelemetryEndpoints;
-use std::str::FromStr;
+use std::collections::BTreeMap;
 
 const SELENDRA_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 const DEFAULT_PROTOCOL_ID: &str = "sel";
@@ -207,9 +207,7 @@ pub fn selendra_testnet_genesis(
 
 	const ENDOWMENT: u128 = 1570700000 * SELS;
 	const STASH: u128 = 96327 * SELS;
-	let evm_account = 
-		sp_core::H160::from_str("0x761B9D277d5Bf36fA8D6dBD5c0B2D059c9df5b82").unwrap();
-
+	
 	selendra::GenesisConfig {
 		system: selendra::SystemConfig {
 			code: wasm_binary.to_vec(),
@@ -288,18 +286,7 @@ pub fn selendra_testnet_genesis(
 		},
 		paras: Default::default(),
 		evm: selendra::EvmConfig { 
-			accounts: vec![(
-                evm_account,
-                pallet_evm::GenesisAccount {
-                    balance: sp_core::U256::from(1000 * SELS),
-                    nonce: Default::default(),
-                    code: Default::default(),
-                    storage: Default::default(),
-                },
-            )]
-            .iter()
-            .cloned()
-            .collect(),
+			accounts: BTreeMap::new(),
 		},
 		ethereum: selendra::EthereumConfig {},
 	}
@@ -326,7 +313,7 @@ pub fn selendra_development_config() -> Result<SelendraChainSpec, String> {
 		vec![],
 		Some(
 			TelemetryEndpoints::new(vec![(SELENDRA_TELEMETRY_URL.to_string(), 0)])
-				.expect("Selendra Staging telemetry url is valid; qed"),
+				.expect("Selendra telemetry url is valid; qed"),
 		),
 		Some(DEFAULT_PROTOCOL_ID),
 		Some(
