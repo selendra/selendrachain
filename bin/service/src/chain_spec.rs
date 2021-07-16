@@ -53,7 +53,7 @@ pub struct Extensions {
 pub type SelendraChainSpec = service::GenericChainSpec<selendra::GenesisConfig, Extensions>;
 
 pub fn selendra_config() -> Result<SelendraChainSpec, String> {
-	SelendraChainSpec::from_json_bytes(&include_bytes!("../res/selendra.json")[..])
+	SelendraChainSpec::from_json_bytes(&include_bytes!("../res/selendraRaw.json")[..])
 }
 
 /// The default parachains host configuration.
