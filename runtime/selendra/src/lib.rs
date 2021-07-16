@@ -85,8 +85,11 @@ use sp_version::NativeVersion;
 use sp_staking::SessionIndex;
 use frame_support::{
 	parameter_types, construct_runtime, RuntimeDebug, PalletId,
-	traits::{KeyOwnerProofSystem, LockIdentifier, Filter, InstanceFilter, All, MaxEncodedLen},
-	weights::Weight,
+	traits::{
+		KeyOwnerProofSystem, LockIdentifier, Filter, 
+		InstanceFilter, All, MaxEncodedLen, FindAuthor
+	},
+	weights::Weight, ConsensusEngineId,
 };
 use frame_system::{EnsureRoot, EnsureOneOf};
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
@@ -101,7 +104,6 @@ use pallet_evm::{
     EnsureAddressTruncated, FeeCalculator,
 	Account as EvmAccount, Runner
 };
-use frame_support::{traits::FindAuthor, ConsensusEngineId};
 use fp_rpc::TransactionStatus;
 use evm_accounts::EvmAddressMapping;
 
