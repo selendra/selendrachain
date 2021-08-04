@@ -1,1 +1,0 @@
-{"rustc":3948150948982054541,"features":"[]","target":12745679767163175763,"profile":4339006351771724982,"path":7093612286540217550,"deps":[[1301684924191809150,"stream_cipher",false,17342659190795701651]],"local":[{"CheckDepInfo":{"dep_info":"release/.fingerprint/salsa20-core-fb146b287f12e218/dep-lib-salsa20-core"}}],"rustflags":[],"metadata":7950406337505375980,"config":0}

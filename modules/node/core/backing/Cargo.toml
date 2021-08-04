@@ -1,0 +1,28 @@
+[package]
+name = "selendra-node-core-backing"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+futures = "0.3.15"
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+selendra-primitives = { path = "../../../../primitives" }
+selendra-node-primitives = { path = "../../primitives" }
+selendra-subsystem = { package = "selendra-node-subsystem", path = "../../subsystem" }
+selendra-node-subsystem-util = { path = "../../subsystem-util" }
+erasure-coding = { package = "selendra-erasure-coding", path = "../../../erasure-coding" }
+statement-table = { package = "selendra-statement-table", path = "../../../statement-table" }
+bitvec = { version = "0.20.1", default-features = false, features = ["alloc"] }
+tracing = "0.1.26"
+thiserror = "1.0.23"
+
+[dev-dependencies]
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+futures = { version = "0.3.15", features = ["thread-pool"] }
+assert_matches = "1.4.0"
+selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }

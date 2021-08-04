@@ -1,0 +1,32 @@
+[package]
+name = "selendra"
+version =  "0.1.0-tn7"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+description = "Implementation of a node in Rust based on the Substrate framework."
+license = "GPL-3.0-only"
+readme = "README.md"
+
+[[bin]]
+name = "selendra"
+path = "src/main.rs"
+
+[dependencies]
+cli = { package = "selendra-cli", path = "cli" }
+color-eyre = { version = "0.5.11", default-features = false }
+thiserror = "1.0.23"
+futures = "0.3.15"
+service = { package = "selendra-service", path = "service" }
+parity-util-mem = { version = "*", default-features = false, features = ["jemalloc-global"] }
+
+[dev-dependencies]
+assert_cmd = "1.0.2"
+nix = "0.19.1"
+tempfile = "3.2.0"
+
+[badges]
+maintenance = { status = "actively-developed" }
+
+[features]
+runtime-benchmarks=["cli/runtime-benchmarks"]
+try-runtime = ["cli/try-runtime"]

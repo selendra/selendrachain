@@ -1,0 +1,26 @@
+[package]
+name = "selendra-node-subsystem-test-helpers"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+description = "Subsystem traits and message definitions"
+
+[dependencies]
+async-trait = "0.1.42"
+futures = "0.3.15"
+futures-timer = "3.0.2"
+tracing = "0.1.26"
+parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
+parking_lot = "0.11.1"
+pin-project = "1.0.7"
+selendra-node-primitives = { path = "../primitives" }
+selendra-node-subsystem = { path = "../subsystem" }
+selendra-node-subsystem-util = { path = "../subsystem-util" }
+selendra-primitives = { path = "../../../primitives" }
+selendra-statement-table = { path = "../../statement-table" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+smallvec = "1.6.1"
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+
+[dev-dependencies]
+selendra-overseer = { path = "../overseer" }
