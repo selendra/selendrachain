@@ -1,8 +1,10 @@
 # Selendra Node &middot; [![GitHub license](https://img.shields.io/badge/license-GPL3%2FApache2-blue)](LICENSE-APACHE2) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
 
-Codebase for Selendra a multi-use cases blockchain super-app for the Internet 2.0
+Codebase of Selendra is a multi-blockchain nominated proof-of-stake cryptographic system built to facilitate micro-economic transactions. It is designed to be interoperable with other open blockchains and developable by developers and students with very minimal learning curve, and ease of use for end-users to interact and benefits from blockchain technology.
 
-A special solution for identity management, ownership of assets distribution & management, decentralized e-commerce, finance, decentralize computing and storage, and IoT applications and more.
+A specialized solution for identity management, ownership of assets distribution & management, decentralized e-commerce, finance, decentralize computing and storage, and IoT applications and more.
+
+[Read the paper](https://docs.selendra.org/whitepaper/whitepaper/)
 
 ### Build
 
