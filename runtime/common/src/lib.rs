@@ -87,7 +87,7 @@ parameter_types! {
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
 	/// Maximum length of block. Up to 5MB.
 	pub BlockLength: limits::BlockLength =
-		limits::BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+		limits::BlockLength::max_with_normal_ratio(10 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	/// Block weights base values and limits.
 	pub BlockWeights: limits::BlockWeights = limits::BlockWeights::builder()
 		.base_block(BlockExecutionWeight::get())
