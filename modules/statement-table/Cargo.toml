@@ -1,6 +1,6 @@
 [package]
 name = "selendra-statement-table"
-version =  "0.1.0-tn7"
+version = "0.9.8"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 

@@ -50,7 +50,7 @@ fn get_exec_name() -> Option<String> {
 }
 
 impl SubstrateCli for Cli {
-	fn impl_name() -> String { "Selendra Chain".into() }
+	fn impl_name() -> String { "Selendra-Chain".into() }
 
 	fn impl_version() -> String { env!("SUBSTRATE_CLI_IMPL_VERSION").into() }
 
@@ -74,11 +74,13 @@ impl SubstrateCli for Cli {
 		} else { id };
 		Ok(match id {
 			"selendra" => Box::new(service::chain_spec::selendra_config()?),
-			"selendra-dev" | "dev" => Box::new(service::chain_spec::selendra_development_config()?),
-			"selendra-local" => Box::new(service::chain_spec::selendra_local_testnet_config()?),
+			"dev" => Box::new(service::chain_spec::selendra_development_config()?),
+			"local" => Box::new(service::chain_spec::selendra_local_testnet_config()?),
+			"staging" => Box::new(service::chain_spec::selendra_staging_testnet_config()?),
 			path => {
 				let path = std::path::PathBuf::from(path);
-				Box::new(service::SelendraChainSpec::from_json_file(path.clone())?) as Box<dyn service::ChainSpec>
+				let chain_spec = Box::new(service::SelendraChainSpec::from_json_file(path.clone())?) as Box<dyn service::ChainSpec>;
+				chain_spec
 			},
 		})
 	}
@@ -117,6 +119,7 @@ fn run_node_inner(cli: Cli, overseer_gen: impl service::OverseerGen) -> Result<(
 	} else {
 		Some((cli.run.grandpa_pause[0], cli.run.grandpa_pause[1]))
 	};
+
 	let jaeger_agent = cli.run.jaeger_agent;
 
 	runner.run_node_until_exit(move |config| async move {
@@ -256,6 +259,7 @@ pub fn run() -> Result<()> {
 
 			ensure_dev(chain_spec).map_err(Error::Other)?;
 
+			// else we assume it is selendra.
 			Ok(runner.sync_run(|config| {
 				cmd.run::<service::selendra_runtime::Block, service::SelendraExecutor>(config)
 					.map_err(|e| Error::SubstrateCli(e))
@@ -276,6 +280,7 @@ pub fn run() -> Result<()> {
 			).map_err(|e| Error::SubstrateService(sc_service::Error::Prometheus(e)))?;
 
 			ensure_dev(chain_spec).map_err(Error::Other)?;
+			// else we assume it is selendra.
 			runner.async_run(|config| {
 				Ok((cmd.run::<
 					service::selendra_runtime::Block,

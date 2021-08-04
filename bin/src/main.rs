@@ -22,6 +22,6 @@ use color_eyre::eyre;
 
 fn main() -> eyre::Result<()> {
 	color_eyre::install()?;
-	cli::run()?;
+	selendra_cli::run()?;
 	Ok(())
 }

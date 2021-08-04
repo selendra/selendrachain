@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 selendra-erasure-coding = { path = ".." }
 honggfuzz = "0.5"
-primitives = { package = "selendra-node-primitives", path = "../../node/primitives/" }
+primitives = { package = "selendra-node-primitives", path = "../../../node/primitives" }
 
 [[bin]]
 name = "reconstruct"

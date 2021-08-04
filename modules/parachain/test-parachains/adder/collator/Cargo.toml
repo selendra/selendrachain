@@ -1,6 +1,6 @@
 [package]
 name = "test-parachain-adder-collator"
-version =  "0.1.0-tn7"
+version = "0.9.8"
 authors = ["Selendra <info@selendra.org>"]
 description = "Collator for the adder test parachain"
 edition = "2018"
@@ -22,10 +22,10 @@ structopt = "0.3.21"
 
 test-parachain-adder = { path = ".." }
 selendra-primitives = { path = "../../../../../primitives" }
-selendra-cli = { path = "../../../../../bin/cli" }
-selendra-service = { path = "../../../../../bin/service" }
-selendra-node-primitives = { path = "../../../../node/primitives" }
-selendra-node-subsystem = { path = "../../../../node/subsystem" }
+selendra-cli = { path = "../../../../../cli" }
+selendra-service = { path = "../../../../../node/service" }
+selendra-node-primitives = { path = "../../../../../node/primitives" }
+selendra-node-subsystem = { path = "../../../../../node/subsystem" }
 
 sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
@@ -35,11 +35,11 @@ sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkad
 # This one is tricky. Even though it is not used directly by the collator, we still need it for the
 # `puppet_worker` binary, which is required for the integration test. However, this shouldn't be
 # a big problem since it is used transitively anyway.
-selendra-node-core-pvf = { path = "../../../../node/core/pvf" }
+selendra-node-core-pvf = { path = "../../../../../node/core/pvf" }
 
 [dev-dependencies]
-selendra-parachain = { path = "../../../../parachain" }
-selendra-test-service = { path = "../../../../../bin/test/service" }
+selendra-parachain = { path = "../../.." }
+selendra-test-service = { path = "../../../../../node/test/service" }
 
 substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }

@@ -28,7 +28,7 @@ mod command;
 pub use service::{
 	self,
 	ProvideRuntimeApi, CoreApi, IdentifyVariant,
-	Block, RuntimeApiCollection, TFullClient
+	Block, RuntimeApiCollection, TFullClient,
 };
 
 #[cfg(feature = "cli")]

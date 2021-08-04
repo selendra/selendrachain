@@ -18,13 +18,12 @@
 pub mod currency {
 	use primitives::v0::Balance;
 
-	pub const SELS: Balance = 1_000_000_000_000_000_000;
-	pub const DOLLARS: Balance = SELS / 1000;       // 1_000_000_000_000_000
-	pub const CENTS: Balance = DOLLARS / 100;      // 10_000_000_000_000
-	pub const MILLICENTS: Balance = CENTS / 1_000; // 10_000_000_000
+	pub const UNITS: Balance = 1_000_000_000_000_000_000;
+	pub const CENTS: Balance = UNITS / 10_000;
+	pub const MILLICENTS: Balance = CENTS / 1_000;
 
 	pub const fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 20 * DOLLARS + (bytes as Balance) * 100 * MILLICENTS
+		items as Balance * 5_000 * CENTS + (bytes as Balance) * 50 * MILLICENTS
 	}
 }
 
@@ -33,7 +32,7 @@ pub mod time {
 	use primitives::v0::{Moment, BlockNumber};
 	pub const MILLISECS_PER_BLOCK: Moment = 6000;
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-	pub const EPOCH_DURATION_IN_SLOTS: BlockNumber = 4 * HOURS;
+	pub const EPOCH_DURATION_IN_SLOTS: BlockNumber = 2 * MINUTES;
 
 	// These time units are defined in number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
@@ -73,7 +72,7 @@ pub mod fee {
 		type Balance = Balance;
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 			// in Selendra, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 CENT:
-			let p = super::currency::MILLICENTS;
+			let p = super::currency::CENTS;
 			let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 			smallvec![WeightToFeeCoefficient {
 				degree: 1,
@@ -85,20 +84,57 @@ pub mod fee {
 	}
 }
 
+pub mod permission {
+	use frame_system::{EnsureRoot, EnsureOneOf};
+	use primitives::v0::AccountId;
+	use sp_core::u32_trait::{_1, _2, _3, _5};
+	use crate::CouncilCollective;
+
+	pub type ApproveOrigin = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>
+	>;
+
+	pub type MoreThanHalfCouncil = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>
+	>;
+
+	pub type ScheduleOrigin = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>
+	>;
+
+	pub type SlashCancelOrigin = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>
+	>;
+
+	pub type AuctionInitiate = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, CouncilCollective>
+	>;
+}
+
 #[cfg(test)]
 mod tests {
 	use frame_support::weights::WeightToFeePolynomial;
 	use runtime_common::{MAXIMUM_BLOCK_WEIGHT, ExtrinsicBaseWeight};
 	use super::fee::WeightToFee;
-	use super::currency::{CENTS, DOLLARS, MILLICENTS};
+	use super::currency::{CENTS, MILLICENTS};
 
 	#[test]
 	// This function tests that the fee for `MAXIMUM_BLOCK_WEIGHT` of weight is correct
 	fn full_block_fee_is_correct() {
-		// A full block should cost 16 DOLLARS
+		// A full block should cost 1,600 CENTS
 		println!("Base: {}", ExtrinsicBaseWeight::get());
 		let x = WeightToFee::calc(&MAXIMUM_BLOCK_WEIGHT);
-		let y = 16 * DOLLARS;
+		let y = 16 * 100 * CENTS;
 		assert!(x.max(y) - x.min(y) < MILLICENTS);
 	}
 
