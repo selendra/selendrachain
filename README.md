@@ -4,14 +4,7 @@ Codebase of Selendra is a multi-blockchain nominated proof-of-stake cryptographi
 
 A specialized solution for identity management, ownership of assets distribution & management, decentralized e-commerce, finance, decentralize computing and storage, and IoT applications and more.
 
-<<<<<<< HEAD
-Codebase for Selendra multi-use cases blockchain super-app for the Internet 2.0
-
-A special solution for identity management, ownership of assets distribution & management, decentralized e-commerce, finance, decentralize computing and storage, and IoT applications and more.
-=======
-[Read the paper](https://docs.selendra.org/whitepaper/whitepaper/)
->>>>>>> 7c9d5b969fe85dbd08550e8c5fbc71f6e0476814
-
+Read the [Selendra whitepaper](https://docs.selendra.org/whitepaper/whitepaper/)
 ### Build
 
 Once the development environment is set up, build the node template. This command will build the [Wasm](https://substrate.dev/docs/en/knowledgebase/advanced/executor#wasm-execution) and [native](https://substrate.dev/docs/en/knowledgebase/advanced/executor#native-execution) code:
@@ -143,8 +136,4 @@ $ cargo run --release --features=runtime-benchmarks -- benchmark --chain=selendr
 
   
 
-<<<<<<< HEAD
 In the interests of the community, we require any deeper improvements made to Substrate's core logic (e.g. Substrate's internal consensus, crypto or database code) to be contributed back so everyone can benefit.
-=======
-Selendra is implement from [Polkadot](https://github.com/paritytech/polkadot.git) under license [GPL 3.0 licensed](LICENSE-GPL3).
->>>>>>> 7c9d5b969fe85dbd08550e8c5fbc71f6e0476814
