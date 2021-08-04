@@ -1,0 +1,30 @@
+[package]
+name = "cumulus-test-relay-sproof-builder"
+version = '0.1.0'
+authors = ["Selendra <info@selendra.org>"]
+edition = '2018'
+
+[dependencies]
+# Other dependencies
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = [ "derive" ] }
+
+# Substrate dependencies
+sp-state-machine = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
+
+# Selendra dependencies
+selendra-primitives = { path = "../../../../primitives", default-features = false }
+
+# Cumulus dependencies
+cumulus-primitives-core = { path = "../../primitives/core", default-features = false }
+
+[features]
+default = [ "std" ]
+std = [
+	"codec/std",
+	"sp-state-machine/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"cumulus-primitives-core/std",
+]

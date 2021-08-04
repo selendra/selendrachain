@@ -1,0 +1,47 @@
+[package]
+name = "cumulus-primitives-parachain-inherent"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+# Substrate dependencies
+sp-inherents = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
+sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.8" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.8" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.8" }
+sp-trie = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
+sp-api = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.8" }
+
+# Selendra dependencies
+selendra-client = { path = "../../../../bin/client", optional = true }
+
+# Cumulus dependencies
+cumulus-primitives-core = { path = "../core", default-features = false }
+cumulus-test-relay-sproof-builder = { path = "../../test/relay-sproof-builder", optional = true }
+
+# Other dependencies
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = [ "derive" ] }
+tracing = { version = "0.1.22", optional = true }
+async-trait = { version = "0.1.42", optional = true }
+
+[features]
+default = [ "std" ]
+std = [
+	"async-trait",
+	"codec/std",
+	"cumulus-primitives-core/std",
+	"sp-inherents/std",
+	"sp-core/std",
+	"sp-trie/std",
+	"sp-std/std",
+	"sp-state-machine",
+	"tracing",
+	"sp-runtime",
+	"sc-client-api",
+	"sp-api",
+	"selendra-client",
+	"cumulus-test-relay-sproof-builder"
+]
