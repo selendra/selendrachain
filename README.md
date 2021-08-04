@@ -4,7 +4,7 @@ Codebase of Selendra is a multi-blockchain nominated proof-of-stake cryptographi
 
 A specialized solution for identity management, ownership of assets distribution & management, decentralized e-commerce, finance, decentralize computing and storage, and IoT applications and more.
 
-[Read the paper](https://docs.selendra.org/whitepaper/whitepaper/)
+Read the [Selendra whitepaper](https://docs.selendra.org/whitepaper/whitepaper/)
 
 ### Build
 
