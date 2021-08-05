@@ -26,6 +26,7 @@ use selendra_test_runtime::{constants::currency::DOTS, BABE_GENESIS_EPOCH_CONFIG
 use sc_chain_spec::{ChainSpec, ChainType};
 use sp_core::sr25519;
 use sp_runtime::Perbill;
+use std::collections::BTreeMap;
 
 const DEFAULT_PROTOCOL_ID: &str = "sel";
 
@@ -170,6 +171,10 @@ fn selendra_testnet_genesis(
 		authority_discovery: runtime::AuthorityDiscoveryConfig { keys: vec![] },
 		vesting: runtime::VestingConfig { vesting: vec![] },
 		sudo: runtime::SudoConfig { key: root_key },
+		evm: runtime::EvmConfig { 
+			accounts: BTreeMap::new(),
+		},
+		ethereum: runtime::EthereumConfig {},
 		parachains_configuration: runtime::ParachainsConfigurationConfig {
 			config: selendra_runtime_parachains::configuration::HostConfiguration {
 				validation_upgrade_frequency: 10u32,

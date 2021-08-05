@@ -35,6 +35,17 @@ use sc_finality_grandpa::FinalityProofProvider;
 use sc_sync_state_rpc::{SyncStateRpcApi, SyncStateRpcHandler};
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 
+use std::collections::BTreeMap;
+use jsonrpc_pubsub::manager::SubscriptionManager;
+use fc_rpc::{StorageOverride, SchemaV1Override, OverrideHandle, RuntimeApiStorageOverride};
+use fc_rpc_core::types::{FilterPool, PendingTransactions};
+use pallet_ethereum::EthereumStorageSchema;
+use fc_rpc::{
+	EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, 
+	NetApi, NetApiServer, EthPubSubApi, EthPubSubApiServer, 
+	Web3Api, Web3ApiServer, HexEncodedIdProvider,
+};
+
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
 
@@ -94,6 +105,18 @@ pub struct FullDeps<C, P, SC, B> {
 	pub chain_spec: Box<dyn sc_chain_spec::ChainSpec>,
 	/// Whether to deny unsafe calls
 	pub deny_unsafe: DenyUnsafe,
+	/// The Node authority flag
+	pub is_authority: bool,
+	/// Network service
+	pub network: Arc<sc_network::NetworkService<Block, Hash>>,
+	/// Ethereum pending transactions.
+	pub pending_transactions: PendingTransactions,
+	/// EthFilterApi pool.
+	pub filter_pool: Option<FilterPool>,
+	/// Frontier Backend.
+	pub frontier_backend: Arc<fc_db::Backend<Block>>,
+	/// Maximum number of logs in a query.
+	pub max_past_logs: u32,
 	/// BABE specific dependencies.
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
@@ -103,15 +126,26 @@ pub struct FullDeps<C, P, SC, B> {
 }
 
 /// Instantiate all RPC extensions.
-pub fn create_full<C, P, SC, B>(deps: FullDeps<C, P, SC, B>) -> RpcExtension where
-	C: ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore +
-		HeaderMetadata<Block, Error=BlockChainError> + Send + Sync + 'static,
+pub fn create_full<C, P, SC, B>(
+	deps: FullDeps<C, P, SC, B>,
+	subscription_task_executor: SubscriptionTaskExecutor,
+) -> RpcExtension where
+	C: ProvideRuntimeApi<Block> 	
+		+ HeaderBackend<Block> 
+		+ sc_client_api::backend::StorageProvider<Block, B>
+		+ AuxStore 
+		+ sc_client_api::client::BlockchainEvents<Block>
+		+ HeaderMetadata<Block, Error=BlockChainError> 
+		+ Send 
+		+ Sync 
+		+ 'static,
 	C::Api: frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: pallet_mmr_rpc::MmrRuntimeApi<Block, <Block as sp_runtime::traits::Block>::Hash>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: BabeApi<Block>,
 	C::Api: BlockBuilder<Block>,
-	P: TransactionPool + Sync + Send + 'static,
+	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
+	P: TransactionPool<Block = Block> + Sync + Send + 'static,
 	SC: SelectChain<Block> + 'static,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	B::State: sc_client_api::StateBackend<sp_runtime::traits::HashFor<Block>>,
@@ -129,6 +163,12 @@ pub fn create_full<C, P, SC, B>(deps: FullDeps<C, P, SC, B>) -> RpcExtension whe
 		select_chain,
 		chain_spec,
 		deny_unsafe,
+		is_authority,
+		network,
+		pending_transactions,
+		filter_pool,
+		frontier_backend,
+		max_past_logs,
 		babe,
 		grandpa,
 		beefy,
@@ -147,11 +187,79 @@ pub fn create_full<C, P, SC, B>(deps: FullDeps<C, P, SC, B>) -> RpcExtension whe
 	} = grandpa;
 
 	io.extend_with(
-		SystemApi::to_delegate(FullSystem::new(client.clone(), pool, deny_unsafe))
+		SystemApi::to_delegate(FullSystem::new(client.clone(), pool.clone(), deny_unsafe))
 	);
 	io.extend_with(
 		TransactionPaymentApi::to_delegate(TransactionPayment::new(client.clone()))
 	);
+
+	let signers = Vec::new();
+	let mut overrides_map = BTreeMap::new();
+	overrides_map.insert(
+		EthereumStorageSchema::V1,
+		Box::new(SchemaV1Override::new(client.clone())) as Box<dyn StorageOverride<_> + Send + Sync>
+	);
+
+	let overrides = Arc::new(OverrideHandle {
+		schemas: overrides_map,
+		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
+	});
+
+	io.extend_with(
+		EthApiServer::to_delegate(EthApi::new(
+			client.clone(),
+			pool.clone(),
+			selendra_runtime::TransactionConverter,
+			network.clone(),
+			pending_transactions.clone(),
+			signers,
+			overrides.clone(),
+			frontier_backend,
+			is_authority,
+			max_past_logs,
+		))
+	);
+
+	if let Some(filter_pool) = filter_pool {
+		io.extend_with(
+			EthFilterApiServer::to_delegate(EthFilterApi::new(
+				client.clone(),
+				filter_pool.clone(),
+				500 as usize, // max stored filters
+				overrides.clone(),
+				max_past_logs,
+			))
+		);
+	}
+
+	io.extend_with(
+		NetApiServer::to_delegate(NetApi::new(
+			client.clone(),
+			network.clone(),
+			// Whether to format the `peer_count` response as Hex (default) or not.
+			true,
+		))
+	);
+
+	io.extend_with(
+		EthPubSubApiServer::to_delegate(EthPubSubApi::new(
+			pool.clone(),
+			client.clone(),
+			network.clone(),
+			SubscriptionManager::<HexEncodedIdProvider>::with_id_provider(
+				HexEncodedIdProvider::default(),
+				Arc::new(subscription_task_executor)
+			),
+			overrides
+		))
+	);
+
+	io.extend_with(
+		Web3ApiServer::to_delegate(Web3Api::new(
+			client.clone(),
+		))
+	);
+
 	io.extend_with(
 		MmrApi::to_delegate(Mmr::new(client.clone()))
 	);

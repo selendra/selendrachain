@@ -19,7 +19,6 @@
 
 extern crate alloc;
 
-use alloc::vec::Vec;
 use core::marker::PhantomData;
 use fp_evm::Precompile;
 use evm::{ExitSucceed, ExitError, Context, executor::PrecompileOutput};

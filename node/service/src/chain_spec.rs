@@ -31,6 +31,7 @@ use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::{traits::IdentifyAccount, Perbill};
 use telemetry::TelemetryEndpoints;
+use std::collections::BTreeMap;
 
 const SELENDRA_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 const DEFAULT_PROTOCOL_ID: &str = "sel";
@@ -275,6 +276,10 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		sudo: selendra::SudoConfig {
 			key: endowed_accounts[0].clone(),
 		},
+		evm: selendra::EvmConfig { 
+			accounts: BTreeMap::new(),
+		},
+		ethereum: selendra::EthereumConfig {},
 	}
 }
 
@@ -487,6 +492,10 @@ pub fn selendra_testnet_genesis(
 		sudo: selendra::SudoConfig {
 			key: endowed_accounts[0].clone(),
 		},
+		evm: selendra::EvmConfig { 
+			accounts: BTreeMap::new(),
+		},
+		ethereum: selendra::EthereumConfig {},
 	}
 }
 
