@@ -197,7 +197,8 @@ pub fn create_full<C, P, SC, B>(
 	let mut overrides_map = BTreeMap::new();
 	overrides_map.insert(
 		EthereumStorageSchema::V1,
-		Box::new(SchemaV1Override::new(client.clone())) as Box<dyn StorageOverride<_> + Send + Sync>
+		Box::new(SchemaV1Override::new(client.clone())) 
+			as Box<dyn StorageOverride<_> + Send + Sync>
 	);
 
 	let overrides = Arc::new(OverrideHandle {

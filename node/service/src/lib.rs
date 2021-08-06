@@ -69,6 +69,7 @@ use service::RpcHandlers;
 #[cfg(feature = "full-node")]
 use telemetry::{Telemetry, TelemetryWorkerHandle};
 use telemetry::TelemetryWorker;
+use futures::StreamExt;
 
 use std::{
 	sync::{Arc, Mutex}, 
@@ -79,6 +80,7 @@ use open_fb::open_frontier_backend;
 use fc_consensus::FrontierBlockImport;
 use fc_rpc::EthTask;
 use fc_rpc_core::types::{FilterPool, PendingTransactions};
+use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
 pub use selendra_client::{
 	SelendraExecutor, FullBackend, FullClient, AbstractClient, Client, ClientHandle, ExecuteWithClient,
@@ -87,7 +89,7 @@ pub use selendra_client::{
 pub use chain_spec::SelendraChainSpec;
 pub use consensus_common::{Proposal, SelectChain, BlockImport, block_validation::Chain};
 pub use selendra_primitives::v1::{Block, BlockId, CollatorPair, Hash, Id as ParaId};
-pub use sc_client_api::{Backend, ExecutionStrategy, CallExecutor};
+pub use sc_client_api::{BlockchainEvents, Backend, ExecutionStrategy, CallExecutor};
 pub use sc_consensus::LongestChain;
 pub use sc_executor::NativeExecutionDispatch;
 pub use service::{
@@ -229,6 +231,7 @@ fn new_partial<RuntimeApi, Executor>(
 			grandpa::SharedVoterState,
 			std::time::Duration, // slot-duration
 			PendingTransactions,
+			Arc<fc_db::Backend<Block>>,
 			Option<FilterPool>,
 			Option<Telemetry>,
 		)
@@ -358,6 +361,7 @@ fn new_partial<RuntimeApi, Executor>(
 	let slot_duration = babe_config.slot_duration();
 	let pending = pending_transactions.clone();
 	let filter_pool_clone = filter_pool.clone();
+	let frontier_backend_clone = frontier_backend.clone();
 
 	let rpc_extensions_builder = {
 		let client = client.clone();
@@ -421,6 +425,7 @@ fn new_partial<RuntimeApi, Executor>(
 			rpc_setup,
 			slot_duration,
 			pending_transactions,
+			frontier_backend_clone,
 			filter_pool,
 			telemetry
 		)
@@ -578,6 +583,7 @@ pub fn new_full<RuntimeApi, Executor, OverseerGenerator>(
 			rpc_setup,
 			slot_duration,
 			pending_transactions,
+			frontier_backend,
 			filter_pool,
 			mut telemetry)
 	} = new_partial::<RuntimeApi, Executor>(&mut config, jaeger_agent, telemetry_worker_handle)?;
@@ -654,6 +660,19 @@ pub fn new_full<RuntimeApi, Executor, OverseerGenerator>(
 		},
 	};
 
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-mapping-sync-worker",
+		MappingSyncWorker::new(
+			client.import_notification_stream(),
+			Duration::new(6, 0),
+			client.clone(),
+			backend.clone(),
+			frontier_backend.clone(),
+			SyncStrategy::Normal,
+		)
+		.for_each(|()| futures::future::ready(())),
+	);
+
 	let network_clone = network.clone();
 	let rpc_extensions_builder = move |deny_unsafe, subscription_executor| {
 		_rpc_extensions_builder(deny_unsafe, subscription_executor, network_clone.clone())
@@ -684,7 +703,6 @@ pub fn new_full<RuntimeApi, Executor, OverseerGenerator>(
 
 	let authority_discovery_service = if role.is_authority() || is_collator.is_collator() {
 		use sc_network::Event;
-		use futures::StreamExt;
 
 		let authority_discovery_role = if role.is_authority() {
 			sc_authority_discovery::Role::PublishAndDiscover(
@@ -799,6 +817,11 @@ pub fn new_full<RuntimeApi, Executor, OverseerGenerator>(
 				)
 		);
 	}
+
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-schema-cache-task",
+		EthTask::ethereum_schema_cache_task(Arc::clone(&client), Arc::clone(&frontier_backend)),
+	);
 
 	if role.is_authority() {
 		let can_author_with =

@@ -1848,6 +1848,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "fc-mapping-sync"
+version = "1.1.0"
+dependencies = [
+ "fc-consensus",
+ "fc-db",
+ "fp-consensus",
+ "fp-rpc",
+ "futures 0.3.15",
+ "futures-timer 3.0.2",
+ "log",
+ "sc-client-api",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime",
+]
+
+[[package]]
 name = "fc-rpc"
 version = "2.0.0"
 dependencies = [
@@ -8901,6 +8918,7 @@ dependencies = [
  "env_logger 0.8.4",
  "fc-consensus",
  "fc-db",
+ "fc-mapping-sync",
  "fc-rpc",
  "fc-rpc-core",
  "frame-system-rpc-runtime-api",

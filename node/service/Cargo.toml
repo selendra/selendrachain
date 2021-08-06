@@ -110,6 +110,7 @@ fc-db = { path = "../../vendor/frontier/client/db"}
 fc-rpc = { path = "../../vendor/frontier/client/rpc"}
 fc-consensus = { path = "../../vendor/frontier/client/consensus"}
 fc-rpc-core = { path = "../../vendor/frontier/client/rpc-core"}
+fc-mapping-sync = { path = "../../vendor/frontier/client/mapping-sync"}
 
 [dev-dependencies]
 selendra-test-client = { path = "../test/client" }
