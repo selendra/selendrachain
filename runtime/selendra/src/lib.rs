@@ -1334,7 +1334,7 @@ impl pallet_sudo::Config for Runtime {
 //Evm
 
 use pallet_evm::{
-    EnsureAddressTruncated, HashedAddressMapping, FeeCalculator,
+    EnsureAddressTruncated, FeeCalculator,
 	Account as EvmAccount, Runner
 };
 use runtime_common::WEIGHT_PER_GAS;
@@ -1343,8 +1343,10 @@ use sp_core::{U256, H160, H256, crypto::Public};
 use frame_support::{traits::FindAuthor, ConsensusEngineId};
 use fp_rpc::TransactionStatus;
 use constants::precompiles::SelendraPrecompiles;
+use constants::merge_account::MergeAccountEvm;
 
 pub struct SelendraGasWeightMapping;
+use evm_accounts::EvmAddressMapping;
 
 impl pallet_evm::GasWeightMapping for SelendraGasWeightMapping {
 	fn gas_to_weight(gas: u64) -> Weight {
@@ -1372,7 +1374,7 @@ impl pallet_evm::Config for Runtime {
 	type GasWeightMapping = SelendraGasWeightMapping;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
-	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	type AddressMapping = EvmAddressMapping<Runtime>;
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
@@ -1419,6 +1421,15 @@ impl pallet_ethereum::Config for Runtime {
 	type StateRoot = pallet_ethereum::IntermediateStateRoot;
 }
 
+impl evm_accounts::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type KillAccount = frame_system::Consumer<Runtime>;
+	type AddressMapping = EvmAddressMapping<Runtime>;
+	type MergeAccount = MergeAccountEvm;
+	type WeightInfo = ();
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -1455,8 +1466,9 @@ construct_runtime! {
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 18,
 
 		// Evm
-		Evm: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 22,
-		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned}= 23,
+		Evm: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 19,
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned}= 20,
+		EvmAccounts: evm_accounts::{Pallet, Call, Storage, Event<T>} = 21,
 
 		// Utility module.
 		Utility: pallet_utility::{Pallet, Call, Event} = 24,
