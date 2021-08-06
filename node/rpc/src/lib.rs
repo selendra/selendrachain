@@ -214,7 +214,7 @@ pub fn create_full<C, P, SC, B>(
 			pending_transactions.clone(),
 			signers,
 			overrides.clone(),
-			frontier_backend,
+			frontier_backend.clone(),
 			is_authority,
 			max_past_logs,
 		))
@@ -224,6 +224,7 @@ pub fn create_full<C, P, SC, B>(
 		io.extend_with(
 			EthFilterApiServer::to_delegate(EthFilterApi::new(
 				client.clone(),
+				frontier_backend,
 				filter_pool.clone(),
 				500 as usize, // max stored filters
 				overrides.clone(),

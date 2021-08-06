@@ -18,20 +18,18 @@
 //! Test utilities
 
 use super::*;
-use crate::{Module, Config, IntermediateStateRoot};
+use crate::{Config, IntermediateStateRoot, Module};
 use ethereum::{TransactionAction, TransactionSignature};
-use frame_support::{
-	impl_outer_origin, parameter_types, ConsensusEngineId
-};
-use pallet_evm::{FeeCalculator, AddressMapping, EnsureAddressTruncated};
+use frame_support::{impl_outer_origin, parameter_types, traits::FindAuthor, ConsensusEngineId};
+use pallet_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use rlp::*;
 use sp_core::{H160, H256, U256};
+use sp_runtime::AccountId32;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 	ModuleId,
 };
-use sp_runtime::AccountId32;
 
 impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
@@ -41,11 +39,11 @@ pub struct PalletInfo;
 
 impl frame_support::traits::PalletInfo for PalletInfo {
 	fn index<P: 'static>() -> Option<usize> {
-		return Some(0)
+		return Some(0);
 	}
 
 	fn name<P: 'static>() -> Option<&'static str> {
-		return Some("TestName")
+		return Some("TestName");
 	}
 }
 
@@ -119,10 +117,11 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
-pub struct EthereumFindAuthor;
-impl FindAuthor<H160> for EthereumFindAuthor {
-	fn find_author<'a, I>(_digests: I) -> Option<H160> where
-		I: 'a + IntoIterator<Item=(ConsensusEngineId, &'a [u8])>
+pub struct FindAuthorTruncated;
+impl FindAuthor<H160> for FindAuthorTruncated {
+	fn find_author<'a, I>(_digests: I) -> Option<H160>
+	where
+		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
 	{
 		Some(address_build(0).address)
 	}
@@ -158,15 +157,16 @@ impl pallet_evm::Config for Test {
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
 	type OnChargeTransaction = ();
+	type FindAuthor = FindAuthorTruncated;
+	type BlockHashMapping = crate::EthereumBlockHashMapping;
 }
 
 impl Config for Test {
 	type Event = ();
-	type FindAuthor = EthereumFindAuthor;
 	type StateRoot = IntermediateStateRoot;
 }
 
-pub type System = frame_system::Module<Test>;
+pub type System = frame_system::Pallet<Test>;
 pub type Balances = pallet_balances::Module<Test>;
 pub type Ethereum = Module<Test>;
 pub type Evm = pallet_evm::Module<Test>;
@@ -179,11 +179,9 @@ pub struct AccountInfo {
 
 fn address_build(seed: u8) -> AccountInfo {
 	let private_key = H256::from_slice(&[(seed + 1) as u8; 32]); //H256::from_low_u64_be((i + 1) as u64);
-	let secret_key = secp256k1::SecretKey::parse_slice(&private_key[..]).unwrap();
-	let public_key = &secp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
-	let address = H160::from(H256::from_slice(
-		&Keccak256::digest(public_key)[..],
-	));
+	let secret_key = libsecp256k1::SecretKey::parse_slice(&private_key[..]).unwrap();
+	let public_key = &libsecp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
+	let address = H160::from(H256::from_slice(&Keccak256::digest(public_key)[..]));
 
 	let mut data = [0u8; 32];
 	data[0..20].copy_from_slice(&address[..]);
@@ -191,10 +189,9 @@ fn address_build(seed: u8) -> AccountInfo {
 	AccountInfo {
 		private_key,
 		account_id: AccountId32::from(Into::<[u8; 32]>::into(data)),
-		address
+		address,
 	}
 }
-
 
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
@@ -208,16 +205,13 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 		.map(|i| address_build(i as u8))
 		.collect::<Vec<_>>();
 
-
 	let balances: Vec<_> = (0..accounts_len)
-		.map(|i| {
-			(pairs[i].account_id.clone(), 10_000_000)
-		})
+		.map(|i| (pairs[i].account_id.clone(), 10_000_000))
 		.collect();
 
 	pallet_balances::GenesisConfig::<Test> { balances }
-			.assimilate_storage(&mut ext)
-			.unwrap();
+		.assimilate_storage(&mut ext)
+		.unwrap();
 
 	(pairs, ext.into())
 }
@@ -267,8 +261,11 @@ impl UnsignedTransaction {
 
 	pub fn sign(&self, key: &H256) -> Transaction {
 		let hash = self.signing_hash();
-		let msg = secp256k1::Message::parse(hash.as_fixed_bytes());
-		let s = secp256k1::sign(&msg, &secp256k1::SecretKey::parse_slice(&key[..]).unwrap());
+		let msg = libsecp256k1::Message::parse(hash.as_fixed_bytes());
+		let s = libsecp256k1::sign(
+			&msg,
+			&libsecp256k1::SecretKey::parse_slice(&key[..]).unwrap(),
+		);
 		let sig = s.0.serialize();
 
 		let sig = TransactionSignature::new(
@@ -276,7 +273,7 @@ impl UnsignedTransaction {
 			H256::from_slice(&sig[0..32]),
 			H256::from_slice(&sig[32..64]),
 		)
-			.unwrap();
+		.unwrap();
 
 		Transaction {
 			nonce: self.nonce,

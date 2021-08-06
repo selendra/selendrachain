@@ -1,6 +1,6 @@
 [package]
 name = "pallet-evm-precompile-modexp"
-version = "1.1.0-dev"
+version = "1.1.0"
 authors = ["Parity Technologies <admin@parity.io>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -9,15 +9,16 @@ repository = "https://github.com/paritytech/frontier/"
 description = "MODEXP precompiles for EVM pallet."
 
 [dependencies]
-sp-core = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
-sp-io = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
-fp-evm = { version = "1.0.1-dev", default-features = false, path = "../../../../primitives/evm" }
-evm = { version = "0.27.0", default-features = false, features = ["with-codec"] }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
 num = { version = "0.3", features = ["alloc"], default-features = false }
+
+fp-evm = { default-features = false, path = "../../../../primitives/evm" }
+evm = { version = "0.27.0", default-features = false, features = ["with-codec"] }
 
 [dev-dependencies]
 hex = "0.4.0"
-pallet-evm-test-vector-support = { version = "1.0.0-dev", path = "../../test-vector-support" }
+pallet-evm-test-vector-support = { version = "1.0.0", path = "../../test-vector-support" }
 
 [features]
 default = ["std"]

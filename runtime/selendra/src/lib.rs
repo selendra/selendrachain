@@ -1337,12 +1337,13 @@ use pallet_evm::{
     EnsureAddressTruncated, FeeCalculator,
 	Account as EvmAccount, Runner
 };
+use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use runtime_common::WEIGHT_PER_GAS;
 use sp_std::{convert::TryFrom, marker::PhantomData};
 use sp_core::{U256, H160, H256, crypto::Public};
 use frame_support::{traits::FindAuthor, ConsensusEngineId};
 use fp_rpc::TransactionStatus;
-use constants::precompiles::SelendraPrecompiles;
+// use constants::precompiles::SelendraPrecompiles;
 use constants::merge_account::MergeAccountEvm;
 
 pub struct SelendraGasWeightMapping;
@@ -1372,16 +1373,27 @@ parameter_types! {
 impl pallet_evm::Config for Runtime {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = SelendraGasWeightMapping;
+	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = EvmAddressMapping<Runtime>;
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type Precompiles = SelendraPrecompiles<Self>;
+	type Precompiles = (
+		pallet_evm_precompile_simple::ECRecover,
+		pallet_evm_precompile_simple::Sha256,
+		pallet_evm_precompile_simple::Ripemd160,
+		pallet_evm_precompile_simple::Identity,
+		pallet_evm_precompile_modexp::Modexp,
+		pallet_evm_precompile_simple::ECRecoverPublicKey,
+		pallet_evm_precompile_sha3fips::Sha3FIPS256,
+		pallet_evm_precompile_sha3fips::Sha3FIPS512,
+	);
 	type ChainId = ChainId;
 	type OnChargeTransaction = ();
 	type BlockGasLimit = BlockGasLimit;
+	type FindAuthor = EthereumFindAuthor<Babe>;
 }
 
 pub struct EthereumFindAuthor<F>(PhantomData<F>);
@@ -1401,13 +1413,13 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 pub struct TransactionConverter;
 
 impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> UncheckedExtrinsic {
+	fn convert_transaction(&self, transaction: EthereumTransaction) -> UncheckedExtrinsic {
 		UncheckedExtrinsic::new_unsigned(pallet_ethereum::Call::<Runtime>::transact(transaction).into())
 	}
 }
 
 impl fp_rpc::ConvertTransaction<sp_runtime::OpaqueExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> sp_runtime::OpaqueExtrinsic {
+	fn convert_transaction(&self, transaction: EthereumTransaction) -> sp_runtime::OpaqueExtrinsic {
 		let extrinsic =
 			UncheckedExtrinsic::new_unsigned(pallet_ethereum::Call::<Runtime>::transact(transaction).into());
 		let encoded = extrinsic.encode();
@@ -1417,7 +1429,6 @@ impl fp_rpc::ConvertTransaction<sp_runtime::OpaqueExtrinsic> for TransactionConv
 
 impl pallet_ethereum::Config for Runtime {
 	type Event = Event;
-	type FindAuthor = EthereumFindAuthor<Babe>;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot;
 }
 
@@ -1869,7 +1880,7 @@ sp_api::impl_runtime_apis! {
 		}
 
 		fn author() -> H160 {
-			Ethereum::find_author()
+			<pallet_evm::Module<Runtime>>::find_author()
 		}
 
 		fn storage_at(address: H160, index: U256) -> H256 {
@@ -1906,7 +1917,7 @@ sp_api::impl_runtime_apis! {
 				nonce,
 				config
 					.as_ref()
-					.unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
+					.unwrap_or(<Runtime as pallet_evm::Config>::config()),
 			)
 			.map_err(|err| err.into())
 		}
@@ -1928,7 +1939,6 @@ sp_api::impl_runtime_apis! {
 				None
 			};
 
-			#[allow(clippy::or_fun_call)] // suggestion not helpful here
 			<Runtime as pallet_evm::Config>::Runner::create(
 				from,
 				data,
@@ -1936,11 +1946,8 @@ sp_api::impl_runtime_apis! {
 				gas_limit.low_u64(),
 				gas_price,
 				nonce,
-				config
-					.as_ref()
-					.unwrap_or(<Runtime as pallet_evm::Config>::config()),
-			)
-			.map_err(|err| err.into())
+				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
+			).map_err(|err| err.into())
 		}
 
 		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
@@ -1958,13 +1965,22 @@ sp_api::impl_runtime_apis! {
 		fn current_all() -> (
 			Option<pallet_ethereum::Block>,
 			Option<Vec<pallet_ethereum::Receipt>>,
-			Option<Vec<TransactionStatus>>,
+			Option<Vec<TransactionStatus>>
 		) {
 			(
 				Ethereum::current_block(),
 				Ethereum::current_receipts(),
-				Ethereum::current_transaction_statuses(),
+				Ethereum::current_transaction_statuses()
 			)
+		}
+
+		fn extrinsic_filter(
+			xts: Vec<<Block as BlockT>::Extrinsic>,
+		) -> Vec<EthereumTransaction> {
+			xts.into_iter().filter_map(|xt| match xt.function {
+				Call::Ethereum(transact(t)) => Some(t),
+				_ => None
+			}).collect::<Vec<EthereumTransaction>>()
 		}
 	}
 

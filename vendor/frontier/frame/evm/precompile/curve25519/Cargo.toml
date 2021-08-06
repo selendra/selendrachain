@@ -1,6 +1,6 @@
 [package]
 name = "pallet-evm-precompile-curve25519"
-version = "1.0.0-dev"
+version = "1.0.0"
 authors = ["Parity Technologies <admin@parity.io>", "Drew Stone <drew@webb.tools>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -10,13 +10,15 @@ description = "Curve25519 elliptic curve precompiles for EVM pallet."
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-sp-core = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
-sp-io = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
-frame-support = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
-pallet-evm = { version = "3.0.1-dev", default-features = false, path = "../.." }
-fp-evm = { version = "1.0.1-dev", default-features = false, path = "../../../../primitives/evm" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
+
 evm = { version = "0.27.0", default-features = false, features = ["with-codec"] }
 codec = { package = "parity-scale-codec", version = "2.1.0", default-features = false }
+
+pallet-evm = { default-features = false, path = "../.." }
+fp-evm = { default-features = false, path = "../../../../primitives/evm" }
 
 [dependencies.curve25519-dalek]
 version = "3.0.0"
