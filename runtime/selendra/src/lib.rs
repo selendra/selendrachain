@@ -261,7 +261,7 @@ impl pallet_balances::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 10 * MILLICENTS;
+	pub const TransactionByteFee: Balance = 500 * NANO;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -1343,7 +1343,6 @@ use sp_std::{convert::TryFrom, marker::PhantomData};
 use sp_core::{U256, H160, H256, crypto::Public};
 use frame_support::{traits::FindAuthor, ConsensusEngineId};
 use fp_rpc::TransactionStatus;
-// use constants::precompiles::SelendraPrecompiles;
 use constants::merge_account::MergeAccountEvm;
 
 pub struct SelendraGasWeightMapping;
@@ -1361,7 +1360,7 @@ impl pallet_evm::GasWeightMapping for SelendraGasWeightMapping {
 pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {
 	fn min_gas_price() -> U256 {
-		(1 * MILLICENTS).into()
+		(5 * NANO).into()
 	}
 }
 
