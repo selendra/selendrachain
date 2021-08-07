@@ -192,7 +192,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		),
 	];
 
-	const ENDOWMENT: u128 = 523_598_775 * SEL;
+	const ENDOWMENT: u128 = 1570796325 * SEL;
 	const STASH: u128 =  31416 * SEL;
 
 	selendra::GenesisConfig {
@@ -228,8 +228,8 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 				.collect::<Vec<_>>(),
 		},
 		staking: selendra::StakingConfig {
-			validator_count: 1000,
-			minimum_validator_count: 4,
+			validator_count: 10,
+			minimum_validator_count: 2,
 			stakers: initial_authorities
 				.iter()
 				.map(|x| {
