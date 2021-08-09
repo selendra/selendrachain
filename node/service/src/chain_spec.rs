@@ -23,7 +23,6 @@ use grandpa::AuthorityId as GrandpaId;
 use selendra_runtime as selendra;
 use selendra_runtime::constants::currency::UNITS as SEL;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
-use pallet_staking::Forcing;
 use selendra_primitives::v1::{AccountId, AccountPublic, AssignmentId, ValidatorId};
 
 use sc_chain_spec::{ChainSpecExtension, ChainType};
@@ -228,7 +227,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 				.collect::<Vec<_>>(),
 		},
 		staking: selendra::StakingConfig {
-			validator_count: 10,
+			validator_count: 2,
 			minimum_validator_count: 2,
 			stakers: initial_authorities
 				.iter()
@@ -242,7 +241,6 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 				})
 				.collect(),
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
-			force_era: Forcing::ForceNone,
 			slash_reward_fraction: Perbill::from_percent(10),
 			min_nominator_bond: 314 * SEL,
 			min_validator_bond: STASH,
@@ -458,7 +456,6 @@ pub fn selendra_testnet_genesis(
 				})
 				.collect(),
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
-			force_era: Forcing::NotForcing,
 			slash_reward_fraction: Perbill::from_percent(10),
 			min_nominator_bond: 314 * SEL,
 			min_validator_bond: STASH,
