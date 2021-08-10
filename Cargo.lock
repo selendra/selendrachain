@@ -7933,7 +7933,7 @@ dependencies = [
 
 [[package]]
 name = "selendra"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "assert_cmd",
  "color-eyre",
@@ -8045,7 +8045,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-cli"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "frame-benchmarking-cli",
  "futures 0.3.15",
@@ -8067,7 +8067,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-client"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "beefy-primitives",
  "fp-rpc",
@@ -8120,7 +8120,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-core-primitives"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "parity-scale-codec",
  "parity-util-mem",
@@ -8131,7 +8131,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-erasure-coding"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "parity-scale-codec",
  "reed-solomon-novelpoly",
@@ -8599,7 +8599,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-parachain"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "derive_more",
  "parity-scale-codec",
@@ -8613,7 +8613,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-primitives"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "bitvec",
  "frame-system",
@@ -8666,7 +8666,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-rpc"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "beefy-gadget",
  "beefy-gadget-rpc",
@@ -8706,7 +8706,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "beefy-primitives",
  "bitvec",
@@ -8807,7 +8807,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime-common"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "beefy-primitives",
  "bitvec",
@@ -8860,7 +8860,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime-parachains"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "bitvec",
  "derive_more",
@@ -8910,7 +8910,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-service"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "async-trait",
  "beefy-gadget",
@@ -9035,7 +9035,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-statement-table"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "parity-scale-codec",
  "selendra-primitives",
@@ -9044,7 +9044,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-test-client"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "futures 0.3.15",
  "parity-scale-codec",
@@ -9070,7 +9070,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-test-runtime"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "beefy-primitives",
  "bitvec",
@@ -9140,7 +9140,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-test-service"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "frame-benchmarking",
  "frame-system",
@@ -9430,7 +9430,7 @@ dependencies = [
 
 [[package]]
 name = "slot-range-helper"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "enumn",
  "parity-scale-codec",
@@ -10562,7 +10562,7 @@ dependencies = [
 
 [[package]]
 name = "test-parachain-adder"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "dlmalloc",
  "parity-scale-codec",
@@ -10575,7 +10575,7 @@ dependencies = [
 
 [[package]]
 name = "test-parachain-halt"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "substrate-wasm-builder",
 ]
@@ -11965,7 +11965,7 @@ dependencies = [
 
 [[package]]
 name = "xcm"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "derivative",
  "impl-trait-for-tuples 0.2.1",
@@ -11974,7 +11974,7 @@ dependencies = [
 
 [[package]]
 name = "xcm-builder"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -11992,7 +11992,7 @@ dependencies = [
 
 [[package]]
 name = "xcm-executor"
-version = "0.9.8"
+version = "0.1.0"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples 0.2.1",

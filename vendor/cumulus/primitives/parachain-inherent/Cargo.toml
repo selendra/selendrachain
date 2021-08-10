@@ -8,12 +8,12 @@ edition = "2018"
 # Substrate dependencies
 sp-inherents = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
 sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.8" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.8" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.8" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.8" }
 sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
-sp-state-machine = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.8" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.8" }
 sp-trie = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
-sp-api = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.8" }
+sp-api = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.8" }
 
 # Selendra dependencies
 selendra-client = { path = "../../../../bin/client", optional = true }
