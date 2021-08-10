@@ -1,6 +1,6 @@
 [package]
 name = "selendra-cli"
-version = "0.9.8"
+version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 description = "Selendra Relay-chain Client Node"
 edition = "2018"
@@ -25,15 +25,15 @@ service = { package = "selendra-service", path = "../../node/service", default-f
 selendra-node-core-pvf = { path = "../../node/core/pvf", optional = true }
 
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
-frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.8" }
-try-runtime-cli = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.8" }
-sc-cli = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.8" }
-sc-service = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.8" }
-browser-utils = { package = "substrate-browser-utils", git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.8" }
+frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.8" }
+try-runtime-cli = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.8" }
+sc-cli = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.8" }
+sc-service = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.8" }
+browser-utils = { package = "substrate-browser-utils", git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.8" }
 
 # this crate is used only to enable `trie-memory-tracker` feature
 # see https://github.com/paritytech/substrate/pull/6745
-sp-trie = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.8" }
+sp-trie = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
 
 [build-dependencies]
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
