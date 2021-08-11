@@ -92,7 +92,7 @@ impl SubstrateCli for Cli {
 
 fn set_default_ss58_version(_spec: &Box<dyn service::ChainSpec>) {
 	use sp_core::crypto::Ss58AddressFormat;
-	let ss58_version = Ss58AddressFormat::SubstrateAccount;
+	let ss58_version = Ss58AddressFormat::Custom(972);
 	sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 

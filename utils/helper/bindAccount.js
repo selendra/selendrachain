@@ -39,7 +39,7 @@ async function run() {
         provider: wsProvider,
         types: selendraTypes
     });
-    const keyring = new API.Keyring({ type: 'sr25519' });
+    const keyring = new API.Keyring({ type: 'sr25519' ,ss58Format: 972});
     const substrate_account = keyring.addFromUri(parser.parse_args().mnemonic);
     let nonce = await api.rpc.system.accountNextIndex(substrate_account.address);
 

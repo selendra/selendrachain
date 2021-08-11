@@ -152,7 +152,7 @@ impl Filter<Call> for BaseFilter {
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u8 = 42;
+	pub const SS58Prefix: u16 = 972;
 }
 
 impl frame_system::Config for Runtime {
