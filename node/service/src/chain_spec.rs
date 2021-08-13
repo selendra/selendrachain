@@ -288,8 +288,8 @@ pub fn selendra_staging_testnet_config() -> Result<SelendraChainSpec, String> {
 	let boot_nodes = vec![];
 
 	Ok(SelendraChainSpec::from_genesis(
-		"Selendra Staging Testnet",
-		"selendra_staging_testnet",
+		"SelendraTestnet",
+		"selendra_testnet",
 		ChainType::Live,
 		move || selendra_staging_testnet_config_genesis(wasm_binary),
 		boot_nodes,
