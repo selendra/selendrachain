@@ -18,9 +18,9 @@
 
 //! `TransactionRequest` type
 
-use crate::types::Bytes;
+use serde::{Serialize, Deserialize};
 use ethereum_types::{H160, U256};
-use serde::{Deserialize, Serialize};
+use crate::types::Bytes;
 
 /// Transaction request coming from RPC
 #[derive(Debug, Clone, Default, Eq, PartialEq, Hash, Serialize, Deserialize)]

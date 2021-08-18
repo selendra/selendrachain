@@ -225,7 +225,6 @@ pub fn create_full<C, P, SC, B>(
 		io.extend_with(
 			EthFilterApiServer::to_delegate(EthFilterApi::new(
 				client.clone(),
-				frontier_backend,
 				filter_pool.clone(),
 				500 as usize, // max stored filters
 				overrides.clone(),

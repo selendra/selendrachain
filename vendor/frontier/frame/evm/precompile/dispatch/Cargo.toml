@@ -1,6 +1,6 @@
 [package]
 name = "pallet-evm-precompile-dispatch"
-version = "1.0.1"
+version = "1.0.1-dev"
 authors = ["Parity Technologies <admin@parity.io>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -9,15 +9,13 @@ repository = "https://github.com/paritytech/frontier/"
 description = "DISPATCH precompiles for EVM pallet."
 
 [dependencies]
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
-
+sp-core = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
+sp-io = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
+frame-support = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
+pallet-evm = { version = "3.0.1-dev", default-features = false, path = "../.." }
+fp-evm = { version = "1.0.1-dev", default-features = false, path = "../../../../primitives/evm" }
 evm = { version = "0.27.0", default-features = false, features = ["with-codec"] }
 codec = { package = "parity-scale-codec", version = "2.1.0", default-features = false }
-
-pallet-evm = {default-features = false, path = "../.." }
-fp-evm = { default-features = false, path = "../../../../primitives/evm" }
 
 [features]
 default = ["std"]

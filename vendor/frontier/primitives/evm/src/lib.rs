@@ -19,15 +19,15 @@
 
 mod precompile;
 
-use codec::{Decode, Encode};
-use evm::ExitReason;
+use codec::{Encode, Decode};
 #[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
-use sp_core::{H160, U256};
+use serde::{Serialize, Deserialize};
 use sp_std::vec::Vec;
+use sp_core::{U256, H160};
+use evm::ExitReason;
 
 pub use evm::backend::{Basic as Account, Log};
-pub use precompile::{LinearCostPrecompile, Precompile, PrecompileSet};
+pub use precompile::{Precompile, PrecompileSet, LinearCostPrecompile};
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Default)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]

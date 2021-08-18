@@ -80,7 +80,7 @@ use open_fb::open_frontier_backend;
 use fc_consensus::FrontierBlockImport;
 use fc_rpc::EthTask;
 use fc_rpc_core::types::{FilterPool, PendingTransactions};
-use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
+use fc_mapping_sync::MappingSyncWorker;
 
 pub use selendra_client::{
 	SelendraExecutor, FullBackend, FullClient, AbstractClient, Client, ClientHandle, ExecuteWithClient,
@@ -668,7 +668,6 @@ pub fn new_full<RuntimeApi, Executor, OverseerGenerator>(
 			client.clone(),
 			backend.clone(),
 			frontier_backend.clone(),
-			SyncStrategy::Normal,
 		)
 		.for_each(|()| futures::future::ready(())),
 	);
@@ -817,11 +816,6 @@ pub fn new_full<RuntimeApi, Executor, OverseerGenerator>(
 				)
 		);
 	}
-
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-schema-cache-task",
-		EthTask::ethereum_schema_cache_task(Arc::clone(&client), Arc::clone(&frontier_backend)),
-	);
 
 	if role.is_authority() {
 		let can_author_with =

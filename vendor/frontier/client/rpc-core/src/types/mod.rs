@@ -34,27 +34,24 @@ mod work;
 
 pub mod pubsub;
 
-pub use self::account_info::{
-	AccountInfo, EthAccount, ExtAccountInfo, RecoveredAccount, StorageProof,
-};
-pub use self::block::{Block, BlockTransactions, Header, Rich, RichBlock, RichHeader};
-pub use self::block_number::BlockNumber;
+pub use self::account_info::{AccountInfo, ExtAccountInfo, EthAccount, StorageProof, RecoveredAccount};
 pub use self::bytes::Bytes;
+pub use self::block::{RichBlock, Block, BlockTransactions, Header, RichHeader, Rich};
+pub use self::block_number::BlockNumber;
 pub use self::call_request::CallRequest;
 pub use self::filter::{
-	Filter, FilterAddress, FilterChanges, FilterPool, FilterPoolItem, FilterType, FilteredParams,
-	Topic, VariadicValue,
+	Filter, FilterChanges, FilterPool, FilterPoolItem, FilterType, VariadicValue, FilterAddress,
+	Topic, FilteredParams,
 };
 pub use self::index::Index;
 pub use self::log::Log;
 pub use self::receipt::Receipt;
 pub use self::sync::{
-	ChainStatus, EthProtocolInfo, PeerCount, PeerInfo, PeerNetworkInfo, PeerProtocolsInfo, Peers,
-	PipProtocolInfo, SyncInfo, SyncStatus, TransactionStats,
+	SyncStatus, SyncInfo, Peers, PeerInfo, PeerNetworkInfo, PeerProtocolsInfo,
+	TransactionStats, ChainStatus, EthProtocolInfo, PipProtocolInfo, PeerCount,
 };
 pub use self::transaction::{
-	LocalTransactionStatus, PendingTransaction, PendingTransactions, RichRawTransaction,
-	Transaction,
+	Transaction, RichRawTransaction, LocalTransactionStatus, PendingTransactions, PendingTransaction,
 };
 pub use self::transaction_request::TransactionRequest;
 pub use self::work::Work;

@@ -15,24 +15,18 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
+use std::{sync::{Arc, Mutex}, collections::BTreeMap};
 use core::convert::AsRef;
-use ethereum_types::{Bloom, BloomInput, H160, H256, U256};
-use serde::de::{DeserializeOwned, Error};
+use ethereum_types::{H160, H256, U256, Bloom, BloomInput};
+use serde::de::{Error, DeserializeOwned};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::{from_value, Value};
-use std::{
-	collections::BTreeMap,
-	sync::{Arc, Mutex},
-};
+use serde_json::{Value, from_value};
 
 use crate::types::{BlockNumber, Log};
 
 /// Variadic value
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub enum VariadicValue<T>
-where
-	T: DeserializeOwned,
-{
+pub enum VariadicValue<T> where T: DeserializeOwned {
 	/// Single
 	Single(T),
 	/// List
@@ -41,22 +35,16 @@ where
 	Null,
 }
 
-impl<'a, T> Deserialize<'a> for VariadicValue<T>
-where
-	T: DeserializeOwned,
-{
+impl<'a, T> Deserialize<'a> for VariadicValue<T> where T: DeserializeOwned {
 	fn deserialize<D>(deserializer: D) -> Result<VariadicValue<T>, D::Error>
-	where
-		D: Deserializer<'a>,
-	{
+	where D: Deserializer<'a> {
 		let v: Value = Deserialize::deserialize(deserializer)?;
 
 		if v.is_null() {
 			return Ok(VariadicValue::Null);
 		}
 
-		from_value(v.clone())
-			.map(VariadicValue::Single)
+		from_value(v.clone()).map(VariadicValue::Single)
 			.or_else(|_| from_value(v).map(VariadicValue::Multiple))
 			.map_err(|err| D::Error::custom(format!("Invalid variadic value type: {}", err)))
 	}
@@ -65,7 +53,9 @@ where
 /// Filter Address
 pub type FilterAddress = VariadicValue<H160>;
 /// Topic, supports `A` | `null` | `[A,B,C]` | `[A,[B,C]]` | [null,[B,C]] | [null,[null,C]]
-pub type Topic = VariadicValue<Option<VariadicValue<Option<H256>>>>;
+pub type Topic = VariadicValue<Option<
+	VariadicValue<Option<H256>>
+>>;
 /// FlatTopic, simplifies the matching logic.
 pub type FlatTopic = VariadicValue<Option<H256>>;
 
@@ -100,23 +90,23 @@ impl Default for FilteredParams {
 	fn default() -> Self {
 		FilteredParams {
 			filter: None,
-			flat_topics: Vec::new(),
+			flat_topics: Vec::new()
 		}
 	}
 }
 
 impl FilteredParams {
-	pub fn new(f: Option<Filter>) -> Self {
+	pub fn new(
+		f: Option<Filter>,
+	) -> Self {
 		if let Some(f) = f {
 			return FilteredParams {
 				filter: Some(f.clone()),
 				flat_topics: {
 					if let Some(t) = f.clone().topics {
 						Self::flatten(&t)
-					} else {
-						Vec::new()
-					}
-				},
+					} else { Vec:: new() }
+				}
 			};
 		}
 		Self::default()
@@ -124,7 +114,7 @@ impl FilteredParams {
 
 	pub fn bloom_filter<'a>(
 		address: &'a Option<FilterAddress>,
-		topics: &'a Option<Vec<FlatTopic>>,
+		topics: &'a Option<Vec<FlatTopic>>
 	) -> BloomFilter<'a> {
 		let mut blooms = BloomFilter::new();
 		// Address
@@ -133,14 +123,14 @@ impl FilteredParams {
 				VariadicValue::Single(address) => {
 					let bloom: Bloom = BloomInput::Raw(address.as_ref()).into();
 					blooms.push(Some(bloom))
-				}
+				},
 				VariadicValue::Multiple(addresses) => {
 					for address in addresses.into_iter() {
 						let bloom: Bloom = BloomInput::Raw(address.as_ref()).into();
 						blooms.push(Some(bloom))
 					}
-				}
-				_ => blooms.push(None),
+				},
+				_ => blooms.push(None)
 			}
 		}
 		// Topics
@@ -154,8 +144,8 @@ impl FilteredParams {
 						} else {
 							blooms.push(None);
 						}
-					}
-					_ => blooms.push(None),
+					},
+					_ => blooms.push(None)
 				}
 			}
 		}
@@ -172,7 +162,7 @@ impl FilteredParams {
 				// Wildcard (None) or matching topic.
 				if match inner {
 					Some(input) => bloom.contains_bloom(input),
-					None => true,
+					None => true
 				} {
 					return true;
 				}
@@ -216,13 +206,15 @@ impl FilteredParams {
 							match v {
 								VariadicValue::Single(s) => {
 									vec![s.clone()]
-								}
-								VariadicValue::Multiple(s) => s.clone(),
+								},
+								VariadicValue::Multiple(s) => {
+									s.clone()
+								},
 								VariadicValue::Null => {
 									vec![None]
-								}
+								},
 							}
-						} else {
+						} else  {
 							vec![None]
 						}
 					});
@@ -230,15 +222,15 @@ impl FilteredParams {
 				for permut in cartesian(&foo) {
 					out.push(FlatTopic::Multiple(permut));
 				}
-			}
+			},
 			VariadicValue::Single(single) => {
 				if let Some(single) = single {
 					out.push(single.clone());
 				}
-			}
+			},
 			VariadicValue::Null => {
 				out.push(FlatTopic::Null);
-			}
+			},
 		}
 		out
 	}
@@ -251,7 +243,7 @@ impl FilteredParams {
 				if let Some(value) = value {
 					out.push(value);
 				}
-			}
+			},
 			VariadicValue::Multiple(value) => {
 				for (k, v) in value.into_iter().enumerate() {
 					if let Some(v) = v {
@@ -260,7 +252,7 @@ impl FilteredParams {
 						out.push(log.topics[k].clone());
 					}
 				}
-			}
+			},
 			_ => {}
 		};
 		if out.len() == 0 {
@@ -269,7 +261,10 @@ impl FilteredParams {
 		Some(out)
 	}
 
-	pub fn filter_block_range(&self, block_number: u64) -> bool {
+	pub fn filter_block_range(
+		&self,
+		block_number: u64
+	) -> bool {
 		let mut out = true;
 		let filter = self.filter.clone().unwrap();
 		if let Some(from) = filter.from_block {
@@ -278,7 +273,7 @@ impl FilteredParams {
 					if from.to_min_block_num().unwrap_or(0 as u64) > block_number {
 						out = false;
 					}
-				}
+				},
 				_ => {}
 			}
 		}
@@ -288,47 +283,48 @@ impl FilteredParams {
 					if to.to_min_block_num().unwrap_or(0 as u64) < block_number {
 						out = false;
 					}
-				}
+				},
 				BlockNumber::Earliest => {
 					out = false;
-				}
+				},
 				_ => {}
 			}
 		}
 		out
 	}
 
-	pub fn filter_block_hash(&self, block_hash: H256) -> bool {
+	pub fn filter_block_hash(
+		&self,
+		block_hash: H256
+	) -> bool {
 		if let Some(h) = self.filter.clone().unwrap().block_hash {
-			if h != block_hash {
-				return false;
-			}
+			if h != block_hash { return false; }
 		}
 		true
 	}
 
-	pub fn filter_address(&self, log: &Log) -> bool {
+	pub fn filter_address(
+		&self,
+		log: &Log
+	) -> bool {
 		if let Some(input_address) = &self.filter.clone().unwrap().address {
 			match input_address {
 				VariadicValue::Single(x) => {
-					if log.address != *x {
-						return false;
-					}
-				}
+					if log.address != *x { return false; }
+				},
 				VariadicValue::Multiple(x) => {
-					if !x.contains(&log.address) {
-						return false;
-					}
-				}
-				_ => {
-					return true;
-				}
+					if !x.contains(&log.address) { return false; }
+				},
+				_ => { return true; }
 			}
 		}
 		true
 	}
 
-	pub fn filter_topics(&self, log: &Log) -> bool {
+	pub fn filter_topics(
+		&self,
+		log: &Log
+	) -> bool {
 		let mut out: bool = true;
 		for topic in self.flat_topics.clone() {
 			match topic {
@@ -338,16 +334,11 @@ impl FilteredParams {
 							out = false;
 						}
 					}
-				}
+				},
 				VariadicValue::Multiple(multi) => {
 					// Shrink the topics until the last item is Some.
 					let mut new_multi = multi;
-					while new_multi
-						.iter()
-						.last()
-						.unwrap_or(&Some(H256::default()))
-						.is_none()
-					{
+					while new_multi.iter().last().unwrap_or(&Some(H256::default())).is_none() {
 						new_multi.pop();
 					}
 					// We can discard right away any logs with lesser topics than the filter.
@@ -355,16 +346,17 @@ impl FilteredParams {
 						out = false;
 						break;
 					}
-					let replaced: Option<Vec<H256>> =
-						self.replace(log, VariadicValue::Multiple(new_multi));
+					let replaced: Option<Vec<H256>> = self.replace(log, VariadicValue::Multiple(new_multi));
 					if let Some(replaced) = replaced {
 						out = false;
-						if log.topics.starts_with(&replaced[..]) {
+						if log.topics.starts_with(
+							&replaced[..]
+						) {
 							out = true;
 							break;
 						}
 					}
-				}
+				},
 				_ => {
 					out = true;
 				}
@@ -386,31 +378,31 @@ pub enum FilterChanges {
 }
 
 impl Serialize for FilterChanges {
-	fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-	where
-		S: Serializer,
-	{
+	fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error> where S: Serializer {
 		match *self {
 			FilterChanges::Logs(ref logs) => logs.serialize(s),
 			FilterChanges::Hashes(ref hashes) => hashes.serialize(s),
 			FilterChanges::Empty => (&[] as &[Value]).serialize(s),
 		}
 	}
+
+
 }
 
 #[derive(Debug, Clone)]
 pub enum FilterType {
 	Block,
 	PendingTransaction,
-	Log(Filter),
+	Log(Filter)
 }
 
 #[derive(Debug, Clone)]
 pub struct FilterPoolItem {
 	pub last_poll: BlockNumber,
 	pub filter_type: FilterType,
-	pub at_block: u64,
+	pub at_block: u64
 }
 
 /// On-memory stored filters created through the `eth_newFilter` RPC.
 pub type FilterPool = Arc<Mutex<BTreeMap<U256, FilterPoolItem>>>;
+
