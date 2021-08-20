@@ -52,7 +52,7 @@ Start Alice node
 ```
 ./target/release/selendra \
 --base-path /tmp/alice \
---chain selendra-local \
+--chain local \
 --alice \
 --port 30333 \
 --ws-port 9944 \
@@ -74,7 +74,7 @@ Start Bob node
 ```
 ./target/release/selendra \
 --base-path /tmp/bob \
---chain selendra-local \
+--chain local \
 --bob \
 --port 30334 \
 --ws-port 9945 \
