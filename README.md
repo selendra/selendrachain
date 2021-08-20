@@ -1,10 +1,5 @@
 # Selendra Node &middot; [![GitHub license](https://img.shields.io/badge/license-GPL3%2FApache2-blue)](LICENSE-APACHE2) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
 
-
-<p align="center">
-  <img src="https://github.com/selendra/indracore/raw/main/docs/media/selendra.png">
-</p>
-
 Codebase of Selendra is a multi-blockchain nominated proof-of-stake cryptographic system built to facilitate micro-economic transactions. It is designed to be interoperable with other open blockchains and developable by developers and students with very minimal learning curve, and ease of use for end-users to interact and benefits from blockchain technology.
 
 A specialized solution for identity management, ownership of assets distribution & management, decentralized e-commerce, finance, decentralize computing and storage, and IoT applications and more.
@@ -57,7 +52,7 @@ Start Alice node
 ```
 ./target/release/selendra \
 --base-path /tmp/alice \
---chain selendra-local \
+--chain local \
 --alice \
 --port 30333 \
 --ws-port 9944 \
@@ -79,7 +74,7 @@ Start Bob node
 ```
 ./target/release/selendra \
 --base-path /tmp/bob \
---chain selendra-local \
+--chain local \
 --bob \
 --port 30334 \
 --ws-port 9945 \
