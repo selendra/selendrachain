@@ -18,11 +18,11 @@
 use crate::{
 	error_on_execution_failure, frontier_backend_client, internal_err, public_key, EthSigner,
 };
-use ethereum::{Block as EthereumBlock, Transaction as EthereumTransaction};
+use ethereum::{BlockV0 as EthereumBlock, TransactionV0 as EthereumTransaction};
 use ethereum_types::{H160, H256, H512, H64, U256, U64};
 use fc_rpc_core::types::{
 	Block, BlockNumber, BlockTransactions, Bytes, CallRequest, Filter, FilterChanges, FilterPool,
-	FilterPoolItem, FilterType, FilteredParams, Index, Log, PeerCount, PendingTransaction,
+	FilterPoolItem, FilterType, FilteredParams, Header, Index, Log, PeerCount, PendingTransaction,
 	PendingTransactions, Receipt, Rich, RichBlock, SyncInfo, SyncStatus, Transaction,
 	TransactionRequest, Work,
 };
@@ -40,6 +40,7 @@ use sc_client_api::{
 	client::BlockchainEvents,
 };
 use sc_network::{ExHashT, NetworkService};
+use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
 use sha3::{Digest, Keccak256};
 use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
@@ -47,7 +48,6 @@ use sp_runtime::{
 	traits::{BlakeTwo256, Block as BlockT, NumberFor, One, Saturating, UniqueSaturatedInto, Zero},
 	transaction_validity::TransactionSource,
 };
-use sp_transaction_pool::{InPoolTransaction, TransactionPool};
 use std::collections::{BTreeMap, HashMap};
 use std::{
 	marker::PhantomData,
@@ -110,35 +110,38 @@ where
 }
 
 fn rich_block_build(
-	block: ethereum::Block,
+	block: ethereum::BlockV0,
 	statuses: Vec<Option<TransactionStatus>>,
 	hash: Option<H256>,
 	full_transactions: bool,
 ) -> RichBlock {
 	Rich {
 		inner: Block {
-			hash: Some(hash.unwrap_or_else(|| {
-				H256::from_slice(Keccak256::digest(&rlp::encode(&block.header)).as_slice())
-			})),
-			parent_hash: block.header.parent_hash,
-			uncles_hash: block.header.ommers_hash,
-			author: block.header.beneficiary,
-			miner: block.header.beneficiary,
-			state_root: block.header.state_root,
-			transactions_root: block.header.transactions_root,
-			receipts_root: block.header.receipts_root,
-			number: Some(block.header.number),
-			gas_used: block.header.gas_used,
-			gas_limit: block.header.gas_limit,
-			extra_data: Bytes(block.header.extra_data.clone()),
-			logs_bloom: Some(block.header.logs_bloom),
-			timestamp: U256::from(block.header.timestamp / 1000),
-			difficulty: block.header.difficulty,
+			header: Header {
+				hash: Some(hash.unwrap_or_else(|| {
+					H256::from_slice(Keccak256::digest(&rlp::encode(&block.header)).as_slice())
+				})),
+				parent_hash: block.header.parent_hash,
+				uncles_hash: block.header.ommers_hash,
+				author: block.header.beneficiary,
+				miner: block.header.beneficiary,
+				state_root: block.header.state_root,
+				transactions_root: block.header.transactions_root,
+				receipts_root: block.header.receipts_root,
+				number: Some(block.header.number),
+				gas_used: block.header.gas_used,
+				gas_limit: block.header.gas_limit,
+				extra_data: Bytes(block.header.extra_data.clone()),
+				logs_bloom: block.header.logs_bloom,
+				timestamp: U256::from(block.header.timestamp / 1000),
+				difficulty: block.header.difficulty,
+				seal_fields: vec![
+					Bytes(block.header.mix_hash.as_bytes().to_vec()),
+					Bytes(block.header.nonce.as_bytes().to_vec()),
+				],
+				size: Some(U256::from(rlp::encode(&block.header).len() as u32)),
+			},
 			total_difficulty: U256::zero(),
-			seal_fields: vec![
-				Bytes(block.header.mix_hash.as_bytes().to_vec()),
-				Bytes(block.header.nonce.as_bytes().to_vec()),
-			],
 			uncles: vec![],
 			transactions: {
 				if full_transactions {
@@ -743,9 +746,7 @@ where
 
 				match accounts.get(0) {
 					Some(account) => account.clone(),
-					None => {
-						return Box::new(future::result(Err(internal_err("no signer available"))))
-					}
+					None => return Box::new(future::err(internal_err("no signer available"))),
 				}
 			}
 		};
@@ -763,7 +764,7 @@ where
 			Err(e) => return Box::new(future::result(Err(e))),
 		};
 
-		let message = ethereum::TransactionMessage {
+		let message = ethereum::LegacyTransactionMessage {
 			nonce,
 			gas_price: request.gas_price.unwrap_or(U256::from(1)),
 			gas_limit: request.gas.unwrap_or(U256::max_value()),
@@ -827,7 +828,7 @@ where
 	}
 
 	fn send_raw_transaction(&self, bytes: Bytes) -> BoxFuture<H256> {
-		let transaction = match rlp::decode::<ethereum::Transaction>(&bytes.0[..]) {
+		let transaction = match rlp::decode::<ethereum::TransactionV0>(&bytes.0[..]) {
 			Ok(transaction) => transaction,
 			Err(_) => {
 				return Box::new(future::result(Err(internal_err(
@@ -1036,12 +1037,15 @@ where
 			Ok(used_gas)
 		};
 		if cfg!(feature = "rpc_binary_search_estimate") {
+			const MAX_OOG_PER_ESTIMATE_QUERY: u32 = 2;
+
 			let mut lower = U256::from(21_000);
 			// TODO: get a good upper limit, but below U64::max to operation overflow
 			let mut upper = U256::from(gas_limit);
 			let mut mid = upper;
 			let mut best = mid;
 			let mut old_best: U256;
+			let mut num_oog = 0;
 
 			// if the gas estimation depends on the gas limit, then we want to binary
 			// search until the change is under some threshold. but if not dependent,
@@ -1066,6 +1070,12 @@ where
 					Err(err) => {
 						// if Err == OutofGas, we need more gas
 						if err.code == ErrorCode::ServerError(0) {
+							num_oog += 1;
+							// don't try more than twice if we oog
+							if num_oog >= MAX_OOG_PER_ESTIMATE_QUERY {
+								return Err(err);
+							}
+
 							lower = mid;
 							mid = (lower + upper + 1) / 2;
 							if mid == lower {

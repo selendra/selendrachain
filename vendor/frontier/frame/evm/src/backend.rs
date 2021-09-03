@@ -26,7 +26,7 @@ use frame_support::traits::Get;
 use frame_support::{debug, storage::{StorageMap, StorageDoubleMap}};
 use sha3::{Keccak256, Digest};
 use evm::backend::{Backend as BackendT, ApplyBackend, Apply};
-use crate::{Trait, AccountStorages, AccountCodes, Module, Event};
+use crate::{AccountStorages, AccountCodes, Config, Event, Pallet};
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Default)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
@@ -73,7 +73,7 @@ impl<'vicinity, T> Backend<'vicinity, T> {
 	}
 }
 
-impl<'vicinity, T: Trait> BackendT for Backend<'vicinity, T> {
+impl<'vicinity, T: Config> BackendT for Backend<'vicinity, T> {
 	fn gas_price(&self) -> U256 { self.vicinity.gas_price }
 	fn origin(&self) -> H160 { self.vicinity.origin }
 
@@ -117,7 +117,7 @@ impl<'vicinity, T: Trait> BackendT for Backend<'vicinity, T> {
 	}
 
 	fn basic(&self, address: H160) -> evm::backend::Basic {
-		let account = Module::<T>::account_basic(&address);
+		let account = Pallet::<T>::account_basic(&address);
 
 		evm::backend::Basic {
 			balance: account.balance,

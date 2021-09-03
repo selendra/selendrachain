@@ -129,7 +129,8 @@ pub struct FullDeps<C, P, SC, B> {
 pub fn create_full<C, P, SC, B>(
 	deps: FullDeps<C, P, SC, B>,
 	subscription_task_executor: SubscriptionTaskExecutor,
-) -> RpcExtension where
+) -> Result<RpcExtension, Box<dyn std::error::Error + Send + Sync>> 
+where
 	C: ProvideRuntimeApi<Block> 	
 		+ HeaderBackend<Block> 
 		+ sc_client_api::backend::StorageProvider<Block, B>
@@ -293,7 +294,7 @@ pub fn create_full<C, P, SC, B>(
 			shared_authority_set,
 			shared_epoch_changes,
 			deny_unsafe,
-		))
+		)?)
 	);
 
 	io.extend_with(beefy_gadget_rpc::BeefyApi::to_delegate(
@@ -303,7 +304,7 @@ pub fn create_full<C, P, SC, B>(
 		),
 	));
 
-	io
+	Ok(io)
 }
 
 /// Instantiate all RPC extensions for light node.

@@ -20,14 +20,12 @@
 use super::*;
 use crate::mock::*;
 
-use frame_support::{
-	assert_ok,
-	traits::{LockIdentifier, LockableCurrency, WithdrawReasons},
-};
+use frame_support::assert_ok;
+use frame_support::traits::{GenesisBuild, LockIdentifier, LockableCurrency, WithdrawReasons};
 use std::{collections::BTreeMap, str::FromStr};
 
 type Balances = pallet_balances::Pallet<Test>;
-type EVM = Module<Test>;
+type EVM = Pallet<Test>;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default()
@@ -61,9 +59,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	pallet_balances::GenesisConfig::<Test>::default()
 		.assimilate_storage(&mut t)
 		.unwrap();
-	GenesisConfig { accounts }
-		.assimilate_storage::<Test>(&mut t)
-		.unwrap();
+	GenesisBuild::<Test>::assimilate_storage(&crate::GenesisConfig { accounts }, &mut t).unwrap();
 	t.into()
 }
 
