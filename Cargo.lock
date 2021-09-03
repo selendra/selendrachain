@@ -5736,6 +5736,7 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
+ "log",
  "parity-scale-codec",
  "serde",
  "sp-runtime",
@@ -8624,6 +8625,7 @@ dependencies = [
  "sp-externalities",
  "sp-io",
  "sp-maybe-compressed-blob",
+ "sp-tracing",
  "sp-wasm-interface",
  "tempfile",
  "test-parachain-adder",
@@ -12145,6 +12147,7 @@ version = "0.1.0"
 dependencies = [
  "derivative",
  "impl-trait-for-tuples 0.2.1",
+ "log",
  "parity-scale-codec",
 ]
 
