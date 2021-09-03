@@ -33,7 +33,7 @@
 // --header=./file_header.txt
 // --output=./runtime/selendra/src/weights/runtime_common_slots.rs
 
-
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
@@ -43,17 +43,25 @@ use sp_std::marker::PhantomData;
 /// Weight functions for runtime_common::slots.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> runtime_common::slots::WeightInfo for WeightInfo<T> {
+	// Storage: Slots Leases (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
 	fn force_lease() -> Weight {
-		(54_624_000 as Weight)
+		(48_054_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Paras Parachains (r:1 w:0)
+	// Storage: Slots Leases (r:101 w:100)
+	// Storage: Paras ParaLifecycles (r:101 w:101)
+	// Storage: ParasShared CurrentSessionIndex (r:1 w:0)
+	// Storage: Paras ActionsQueue (r:1 w:1)
+	// Storage: Registrar Paras (r:100 w:100)
 	fn manage_lease_period_start(c: u32, t: u32, ) -> Weight {
 		(0 as Weight)
-			// Standard Error: 36_000
-			.saturating_add((19_526_000 as Weight).saturating_mul(c as Weight))
-			// Standard Error: 36_000
-			.saturating_add((42_887_000 as Weight).saturating_mul(t as Weight))
+			// Standard Error: 21_000
+			.saturating_add((15_371_000 as Weight).saturating_mul(c as Weight))
+			// Standard Error: 21_000
+			.saturating_add((33_456_000 as Weight).saturating_mul(t as Weight))
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(c as Weight)))
 			.saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(t as Weight)))
@@ -61,13 +69,20 @@ impl<T: frame_system::Config> runtime_common::slots::WeightInfo for WeightInfo<T
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(c as Weight)))
 			.saturating_add(T::DbWeight::get().writes((3 as Weight).saturating_mul(t as Weight)))
 	}
+	// Storage: Slots Leases (r:1 w:1)
+	// Storage: System Account (r:8 w:8)
 	fn clear_all_leases() -> Weight {
-		(230_377_000 as Weight)
+		(195_355_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(9 as Weight))
 	}
+	// Storage: Slots Leases (r:1 w:0)
+	// Storage: Paras ParaLifecycles (r:1 w:1)
+	// Storage: ParasShared CurrentSessionIndex (r:1 w:0)
+	// Storage: Paras ActionsQueue (r:1 w:1)
+	// Storage: Registrar Paras (r:1 w:1)
 	fn trigger_onboard() -> Weight {
-		(45_884_000 as Weight)
+		(42_081_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}

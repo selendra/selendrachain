@@ -33,7 +33,7 @@
 // --header=./file_header.txt
 // --output=./runtime/selendra/src/weights/
 
-
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
@@ -43,45 +43,60 @@ use sp_std::marker::PhantomData;
 /// Weight functions for pallet_tips.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_tips::WeightInfo for WeightInfo<T> {
+	// Storage: Treasury Reasons (r:1 w:1)
+	// Storage: Treasury Tips (r:1 w:1)
 	fn report_awesome(r: u32, ) -> Weight {
-		(50_649_000 as Weight)
+		(48_769_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((1_000 as Weight).saturating_mul(r as Weight))
+			.saturating_add((2_000 as Weight).saturating_mul(r as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Treasury Tips (r:1 w:1)
+	// Storage: Treasury Reasons (r:0 w:1)
 	fn retract_tip() -> Weight {
-		(45_588_000 as Weight)
+		(44_512_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: PhragmenElection Members (r:1 w:0)
+	// Storage: Treasury Reasons (r:1 w:1)
+	// Storage: Treasury Tips (r:0 w:1)
 	fn tip_new(r: u32, t: u32, ) -> Weight {
-		(29_606_000 as Weight)
+		(30_407_000 as Weight)
 			// Standard Error: 0
 			.saturating_add((2_000 as Weight).saturating_mul(r as Weight))
 			// Standard Error: 0
-			.saturating_add((124_000 as Weight).saturating_mul(t as Weight))
+			.saturating_add((109_000 as Weight).saturating_mul(t as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: PhragmenElection Members (r:1 w:0)
+	// Storage: Treasury Tips (r:1 w:1)
 	fn tip(t: u32, ) -> Weight {
-		(18_751_000 as Weight)
+		(18_686_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((567_000 as Weight).saturating_mul(t as Weight))
+			.saturating_add((524_000 as Weight).saturating_mul(t as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: Treasury Tips (r:1 w:1)
+	// Storage: PhragmenElection Members (r:1 w:0)
+	// Storage: System Account (r:1 w:1)
+	// Storage: Treasury Reasons (r:0 w:1)
 	fn close_tip(t: u32, ) -> Weight {
-		(81_517_000 as Weight)
-			// Standard Error: 0
-			.saturating_add((318_000 as Weight).saturating_mul(t as Weight))
+		(80_571_000 as Weight)
+			// Standard Error: 1_000
+			.saturating_add((299_000 as Weight).saturating_mul(t as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+	// Storage: Treasury Tips (r:1 w:1)
+	// Storage: Treasury Reasons (r:0 w:1)
 	fn slash_tip(t: u32, ) -> Weight {
-		(24_467_000 as Weight)
+		(24_214_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((7_000 as Weight).saturating_mul(t as Weight))
+			.saturating_add((2_000 as Weight).saturating_mul(t as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}

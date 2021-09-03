@@ -33,7 +33,7 @@
 // --header=./file_header.txt
 // --output=./runtime/selendra/src/weights/
 
-
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
@@ -43,28 +43,35 @@ use sp_std::marker::PhantomData;
 /// Weight functions for pallet_indices.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_indices::WeightInfo for WeightInfo<T> {
+	// Storage: Indices Accounts (r:1 w:1)
 	fn claim() -> Weight {
-		(39_903_000 as Weight)
+		(41_372_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: Indices Accounts (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
 	fn transfer() -> Weight {
-		(48_162_000 as Weight)
+		(50_971_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Indices Accounts (r:1 w:1)
 	fn free() -> Weight {
-		(39_958_000 as Weight)
+		(42_079_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: Indices Accounts (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
 	fn force_transfer() -> Weight {
-		(40_459_000 as Weight)
+		(42_646_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Indices Accounts (r:1 w:1)
 	fn freeze() -> Weight {
-		(37_761_000 as Weight)
+		(39_217_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}

@@ -33,7 +33,7 @@
 // --header=./file_header.txt
 // --output=./runtime/selendra/src/weights/
 
-
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
@@ -43,13 +43,19 @@ use sp_std::marker::PhantomData;
 /// Weight functions for pallet_session.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_session::WeightInfo for WeightInfo<T> {
+	// Storage: Staking Ledger (r:1 w:0)
+	// Storage: Session NextKeys (r:1 w:1)
+	// Storage: Session KeyOwner (r:6 w:6)
 	fn set_keys() -> Weight {
-		(70_343_000 as Weight)
+		(72_752_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
+	// Storage: Staking Ledger (r:1 w:0)
+	// Storage: Session NextKeys (r:1 w:1)
+	// Storage: Session KeyOwner (r:0 w:6)
 	fn purge_keys() -> Weight {
-		(40_249_000 as Weight)
+		(41_991_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}

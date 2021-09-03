@@ -33,7 +33,7 @@
 // --header=./file_header.txt
 // --output=./runtime/selendra/src/weights/
 
-
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
@@ -43,31 +43,38 @@ use sp_std::marker::PhantomData;
 /// Weight functions for pallet_scheduler.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_scheduler::WeightInfo for WeightInfo<T> {
+	// Storage: Scheduler Agenda (r:1 w:1)
 	fn schedule(s: u32, ) -> Weight {
-		(28_189_000 as Weight)
+		(29_185_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((42_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add((31_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: Scheduler Agenda (r:1 w:1)
+	// Storage: Scheduler Lookup (r:0 w:1)
 	fn cancel(s: u32, ) -> Weight {
-		(27_165_000 as Weight)
+		(27_216_000 as Weight)
 			// Standard Error: 14_000
-			.saturating_add((4_332_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add((4_345_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Scheduler Lookup (r:1 w:1)
+	// Storage: Scheduler Agenda (r:1 w:1)
 	fn schedule_named(s: u32, ) -> Weight {
-		(33_852_000 as Weight)
+		(35_413_000 as Weight)
 			// Standard Error: 1_000
-			.saturating_add((62_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add((54_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Scheduler Lookup (r:1 w:1)
+	// Storage: Scheduler Agenda (r:1 w:1)
 	fn cancel_named(s: u32, ) -> Weight {
-		(29_352_000 as Weight)
+		(29_308_000 as Weight)
 			// Standard Error: 14_000
-			.saturating_add((4_346_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add((4_354_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}

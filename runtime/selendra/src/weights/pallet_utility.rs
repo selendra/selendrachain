@@ -33,7 +33,7 @@
 // --header=./file_header.txt
 // --output=./runtime/selendra/src/weights/
 
-
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
@@ -44,16 +44,16 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_utility::WeightInfo for WeightInfo<T> {
 	fn batch(c: u32, ) -> Weight {
-		(14_911_000 as Weight)
-			// Standard Error: 0
-			.saturating_add((2_456_000 as Weight).saturating_mul(c as Weight))
+		(53_964_000 as Weight)
+			// Standard Error: 10_000
+			.saturating_add((10_118_000 as Weight).saturating_mul(c as Weight))
 	}
 	fn as_derivative() -> Weight {
-		(5_087_000 as Weight)
+		(6_580_000 as Weight)
 	}
 	fn batch_all(c: u32, ) -> Weight {
-		(16_211_000 as Weight)
-			// Standard Error: 0
-			.saturating_add((3_296_000 as Weight).saturating_mul(c as Weight))
+		(45_326_000 as Weight)
+			// Standard Error: 9_000
+			.saturating_add((11_044_000 as Weight).saturating_mul(c as Weight))
 	}
 }
