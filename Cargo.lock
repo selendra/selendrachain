@@ -9072,6 +9072,7 @@ dependencies = [
 name = "selendra-runtime-parachains"
 version = "0.1.0"
 dependencies = [
+ "bitflags",
  "bitvec 0.20.1",
  "derive_more",
  "frame-benchmarking",

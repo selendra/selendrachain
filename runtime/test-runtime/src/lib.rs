@@ -36,6 +36,7 @@ use selendra_runtime_parachains::dmp as parachains_dmp;
 use selendra_runtime_parachains::ump as parachains_ump;
 use selendra_runtime_parachains::hrmp as parachains_hrmp;
 use selendra_runtime_parachains::scheduler as parachains_scheduler;
+use selendra_runtime_parachains::disputes as parachains_disputes;
 use selendra_runtime_parachains::runtime_api_impl::v1 as runtime_impl;
 
 use primitives::v1::{
@@ -267,7 +268,7 @@ impl_opaque_keys! {
 		pub grandpa: Grandpa,
 		pub babe: Babe,
 		pub para_validator: Initializer,
-		pub para_assignment: SessionInfo,
+		pub para_assignment: ParaSessionInfo,
 		pub authority_discovery: AuthorityDiscovery,
 	}
 }
@@ -447,7 +448,14 @@ impl parachains_shared::Config for Runtime {}
 
 impl parachains_inclusion::Config for Runtime {
 	type Event = Event;
+	type DisputesHandler = ParasDisputes;
 	type RewardValidators = RewardValidatorsWithEraPoints<Runtime>;
+}
+
+impl parachains_disputes::Config for Runtime {
+	type Event = Event;
+	type RewardValidators = ();
+	type PunishValidators = ();
 }
 
 impl parachains_paras_inherent::Config for Runtime {}
@@ -616,15 +624,18 @@ construct_runtime! {
 
 		// Parachains runtime modules
 		ParachainsConfiguration: parachains_configuration::{Pallet, Call, Storage, Config<T>},
-		Inclusion: parachains_inclusion::{Pallet, Call, Storage, Event<T>},
-		ParasInherent: parachains_paras_inherent::{Pallet, Call, Storage, Inherent},
+		ParaInclusion: parachains_inclusion::{Pallet, Call, Storage, Event<T>},
+		ParaInherent: parachains_paras_inherent::{Pallet, Call, Storage, Inherent},
+		ParasShared: parachains_shared::{Pallet, Call, Storage},
 		Initializer: parachains_initializer::{Pallet, Call, Storage},
 		Paras: parachains_paras::{Pallet, Call, Storage, Origin, Event},
-		Scheduler: parachains_scheduler::{Pallet, Call, Storage},
+		Scheduler: parachains_scheduler::{Pallet, Storage},
 		ParasSudoWrapper: paras_sudo_wrapper::{Pallet, Call},
-		SessionInfo: parachains_session_info::{Pallet, Call, Storage},
-		Hrmp: parachains_hrmp::{Pallet, Call, Storage, Event},
+		ParaSessionInfo: parachains_session_info::{Pallet, Storage},
+		Hrmp: parachains_hrmp::{Pallet, Call, Storage, Event<T>},
 		Ump: parachains_ump::{Pallet, Call, Storage, Event},
+		Dmp: parachains_dmp::{Pallet, Call, Storage},
+		ParasDisputes: parachains_disputes::{Pallet, Storage, Event<T>},
 
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
 		// Evm

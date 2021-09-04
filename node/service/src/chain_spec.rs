@@ -266,7 +266,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		authority_discovery: selendra::AuthorityDiscoveryConfig { keys: vec![] },
 		vesting: selendra::VestingConfig { vesting: vec![] },
 		treasury: Default::default(),
-		parachains_configuration: selendra::ParachainsConfigurationConfig {
+		configuration: selendra::ConfigurationConfig {
 			config: default_parachains_host_configuration(),
 		},
 		gilt: Default::default(),
@@ -481,7 +481,7 @@ pub fn selendra_testnet_genesis(
 		authority_discovery: selendra::AuthorityDiscoveryConfig { keys: vec![] },
 		vesting: selendra::VestingConfig { vesting: vec![] },
 		treasury: Default::default(),
-		parachains_configuration: selendra::ParachainsConfigurationConfig {
+		configuration: selendra::ConfigurationConfig {
 			config: default_parachains_host_configuration(),
 		},
 		gilt: Default::default(),
