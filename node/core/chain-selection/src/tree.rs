@@ -251,8 +251,9 @@ pub(crate) fn import_block(
 	parent_hash: Hash,
 	reversion_logs: Vec<BlockNumber>,
 	weight: BlockWeight,
+	stagnant_at: Timestamp,
 ) -> Result<(), Error> {
-	add_block(backend, block_hash, block_number, parent_hash, weight)?;
+	add_block(backend, block_hash, block_number, parent_hash, weight, stagnant_at)?;
 	apply_reversions(
 		backend,
 		block_hash,
@@ -308,6 +309,7 @@ fn add_block(
 	block_number: BlockNumber,
 	parent_hash: Hash,
 	weight: BlockWeight,
+	stagnant_at: Timestamp,
 ) -> Result<(), Error> {
 	let mut leaves = backend.load_leaves()?;
 	let parent_entry = backend.load_block_entry(&parent_hash)?;
@@ -350,7 +352,6 @@ fn add_block(
 	backend.write_blocks_by_number(block_number, blocks_by_number);
 
 	// 5. Add stagnation timeout.
-	let stagnant_at = crate::stagnant_timeout_from_now();
 	let mut stagnant_at_list = backend.load_stagnant_at(stagnant_at)?;
 	stagnant_at_list.push(block_hash);
 	backend.write_stagnant_at(stagnant_at, stagnant_at_list);
@@ -465,120 +466,4 @@ pub(super) fn finalize_block<'a, B: Backend + 'a>(
 			backend.delete_block_entry(&dead_hash);
 			viable_leaves.remove(&dead_hash);
 
-			// This does a few extra `clone`s but is unlikely to be
-			// a bottleneck. Code complexity is very low as a result.
-			let mut blocks_at_height = backend.load_blocks_by_number(dead_number)?;
-			blocks_at_height.retain(|h| h != &dead_hash);
-			backend.write_blocks_by_number(dead_number, blocks_at_height);
-
-			// Add all children to the frontier.
-			let next_height = dead_number + 1;
-			frontier.extend(
-				entry.into_iter().flat_map(|e| e.children).map(|h| (h, next_height))
-			);
-		}
-	}
-
-	// Visit and remove the finalized block, fetching its children.
-	let children_of_finalized = {
-		let finalized_entry = backend.load_block_entry(&finalized_hash)?;
-		backend.delete_block_entry(&finalized_hash);
-		viable_leaves.remove(&finalized_hash);
-
-		finalized_entry.into_iter().flat_map(|e| e.children)
-	};
-
-	backend.write_leaves(viable_leaves);
-
-	// Update the viability of each child.
-	for child in children_of_finalized {
-		if let Some(mut child) = backend.load_block_entry(&child)? {
-			// Finalized blocks are always viable.
-			child.viability.earliest_unviable_ancestor = None;
-
-			propagate_viability_update(&mut backend, child)?;
-		} else {
-			tracing::debug!(
-				target: LOG_TARGET,
-				?finalized_hash,
-				finalized_number,
-				child_hash = ?child,
-				"Missing child of finalized block",
-			);
-
-			// No need to do anything, but this is an inconsistent state.
-		}
-	}
-
-	Ok(backend)
-}
-
-/// Mark a block as approved and update the viability of itself and its
-/// descendants accordingly.
-pub(super) fn approve_block(
-	backend: &mut OverlayedBackend<impl Backend>,
-	approved_hash: Hash,
-) -> Result<(), Error> {
-	if let Some(mut entry) = backend.load_block_entry(&approved_hash)? {
-		let was_viable = entry.viability.is_viable();
-		entry.viability.approval = Approval::Approved;
-		let is_viable = entry.viability.is_viable();
-
-		// Approval can change the viability in only one direction.
-		// If the viability has changed, then we propagate that to children
-		// and recalculate the viable leaf set.
-		if !was_viable && is_viable {
-			propagate_viability_update(backend, entry)?;
-		} else {
-			backend.write_block_entry(entry);
-		}
-
-	} else {
-		tracing::debug!(
-			target: LOG_TARGET,
-			block_hash = ?approved_hash,
-			"Missing entry for freshly-approved block. Ignoring"
-		);
-	}
-
-	Ok(())
-}
-
-/// Check whether any blocks up to the given timestamp are stagnant and update
-/// accordingly.
-///
-/// This accepts a fresh backend and returns an overlay on top of it representing
-/// all changes made.
-// TODO: remove allow
-#[allow(unused)]
-pub(super) fn detect_stagnant<'a, B: 'a + Backend>(
-	backend: &'a B,
-	up_to: Timestamp,
-) -> Result<OverlayedBackend<'a, B>, Error> {
-	let stagnant_up_to = backend.load_stagnant_at_up_to(up_to)?;
-	let mut backend = OverlayedBackend::new(backend);
-
-	// As this is in ascending order, only the earliest stagnant
-	// blocks will involve heavy viability propagations.
-	for (timestamp, maybe_stagnant) in stagnant_up_to {
-		backend.delete_stagnant_at(timestamp);
-
-		for block_hash in maybe_stagnant {
-			if let Some(mut entry) = backend.load_block_entry(&block_hash)? {
-				let was_viable = entry.viability.is_viable();
-				if let Approval::Unapproved = entry.viability.approval {
-					entry.viability.approval = Approval::Stagnant;
-				}
-				let is_viable = entry.viability.is_viable();
-
-				if was_viable && !is_viable {
-					propagate_viability_update(&mut backend, entry)?;
-				} else {
-					backend.write_block_entry(entry);
-				}
-			}
-		}
-	}
-
-	Ok(backend)
-}
+			// This does a few extra `clone`s but is unli
