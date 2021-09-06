@@ -21,7 +21,7 @@ use sc_executor_common::{
 	runtime_blob::RuntimeBlob,
 	wasm_runtime::{InvokeMethod, WasmModule as _},
 };
-use sc_executor_wasmtime::{Config, DeterministicStackLimit, Semantics};
+use sc_executor_wasmtime::{Config, Semantics, DeterministicStackLimit};
 use sp_core::{
 	storage::{ChildInfo, TrackedStorageKey},
 };
@@ -69,7 +69,6 @@ const CONFIG: Config = Config {
 		canonicalize_nans: true,
 	},
 };
-
 
 /// Runs the prevaldation on the given code. Returns a [`RuntimeBlob`] if it succeeds.
 pub fn prevalidate(code: &[u8]) -> Result<RuntimeBlob, sc_executor_common::error::WasmError> {
