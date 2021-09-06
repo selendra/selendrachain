@@ -26,7 +26,7 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 sp-npos-elections = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
-sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
+sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 
 
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
