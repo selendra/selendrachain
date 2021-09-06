@@ -8481,6 +8481,7 @@ dependencies = [
  "merlin",
  "parity-scale-codec",
  "parking_lot 0.11.1",
+ "rand 0.8.4",
  "rand_core 0.5.1",
  "sc-client-api",
  "sc-keystore",
