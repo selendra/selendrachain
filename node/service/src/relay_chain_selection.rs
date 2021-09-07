@@ -35,19 +35,17 @@
 
 #![cfg(feature = "full-node")]
 
-use {
-	selendra_primitives::v1::{
-		Hash, BlockNumber, Block as SelendraBlock, Header as SelendraHeader,
-	},
-	selendra_subsystem::messages::{ApprovalVotingMessage, ChainSelectionMessage},
-	selendra_node_subsystem_util::metrics::{self, prometheus},
-	selendra_overseer::Handle,
-	futures::channel::oneshot,
-	consensus_common::{Error as ConsensusError, SelectChain},
-	sp_blockchain::HeaderBackend,
-	sp_runtime::generic::BlockId,
-	std::sync::Arc,
+use consensus_common::{Error as ConsensusError, SelectChain};
+use futures::channel::oneshot;
+use selendra_node_subsystem_util::metrics::{self, prometheus};
+use selendra_overseer::Handle;
+use selendra_primitives::v1::{
+	Block as SelendraBlock, BlockNumber, Hash, Header as SelendraHeader,
 };
+use selendra_subsystem::messages::{ApprovalVotingMessage, ChainSelectionMessage};
+use sp_blockchain::HeaderBackend;
+use sp_runtime::generic::BlockId;
+use std::sync::Arc;
 
 /// The maximum amount of unfinalized blocks we are willing to allow due to approval checking
 /// or disputes.
@@ -121,7 +119,8 @@ pub struct SelectRelayChain<B> {
 }
 
 impl<B> SelectRelayChain<B>
-	where B: sc_client_api::backend::Backend<SelendraBlock> + 'static
+where
+	B: sc_client_api::backend::Backend<SelendraBlock> + 'static,
 {
 	/// Create a new [`SelectRelayChain`] wrapping the given chain backend
 	/// and a handle to the overseer.
@@ -138,14 +137,11 @@ impl<B> SelectRelayChain<B>
 	fn block_header(&self, hash: Hash) -> Result<SelendraHeader, ConsensusError> {
 		match self.backend.blockchain().header(BlockId::Hash(hash)) {
 			Ok(Some(header)) => Ok(header),
-			Ok(None) => Err(ConsensusError::ChainLookup(format!(
-				"Missing header with hash {:?}",
-				hash,
-			))),
+			Ok(None) =>
+				Err(ConsensusError::ChainLookup(format!("Missing header with hash {:?}", hash,))),
 			Err(e) => Err(ConsensusError::ChainLookup(format!(
 				"Lookup failed for header with hash {:?}: {:?}",
-				hash,
-				e,
+				hash, e,
 			))),
 		}
 	}
@@ -153,14 +149,11 @@ impl<B> SelectRelayChain<B>
 	fn block_number(&self, hash: Hash) -> Result<BlockNumber, ConsensusError> {
 		match self.backend.blockchain().number(hash) {
 			Ok(Some(number)) => Ok(number),
-			Ok(None) => Err(ConsensusError::ChainLookup(format!(
-				"Missing number with hash {:?}",
-				hash,
-			))),
+			Ok(None) =>
+				Err(ConsensusError::ChainLookup(format!("Missing number with hash {:?}", hash,))),
 			Err(e) => Err(ConsensusError::ChainLookup(format!(
 				"Lookup failed for number with hash {:?}: {:?}",
-				hash,
-				e,
+				hash, e,
 			))),
 		}
 	}
@@ -170,16 +163,14 @@ impl<B> SelectRelayChain<B> {
 	/// Given an overseer handler, this connects the [`SelectRelayChain`]'s
 	/// internal handler to the same overseer.
 	#[allow(unused)]
-	pub fn connect_overseer_handler(
-		&mut self,
-		other_handler: &Handle,
-	) {
+	pub fn connect_overseer_handler(&mut self, other_handler: &Handle) {
 		other_handler.connect_other(&mut self.overseer);
 	}
 }
 
 impl<B> Clone for SelectRelayChain<B>
-	where B: sc_client_api::backend::Backend<SelendraBlock> + 'static
+where
+	B: sc_client_api::backend::Backend<SelendraBlock> + 'static,
 {
 	fn clone(&self) -> SelectRelayChain<B> {
 		SelectRelayChain {
@@ -203,7 +194,8 @@ enum Error {
 
 #[async_trait::async_trait]
 impl<B> SelectChain<SelendraBlock> for SelectRelayChain<B>
-	where B: sc_client_api::backend::Backend<SelendraBlock> + 'static
+where
+	B: sc_client_api::backend::Backend<SelendraBlock> + 'static,
 {
 	/// Get all leaves of the chain, i.e. block hashes that are suitable to
 	/// build upon and have no suitable children.
@@ -216,10 +208,8 @@ impl<B> SelectChain<SelendraBlock> for SelectRelayChain<B>
 
 		self.overseer
 			.clone()
-			.send_msg(
-				ChainSelectionMessage::Leaves(tx),
-				std::any::type_name::<Self>(),
-			).await;
+			.send_msg(ChainSelectionMessage::Leaves(tx), std::any::type_name::<Self>())
+			.await;
 
 		rx.await
 			.map_err(Error::OverseerDisconnected)
@@ -235,12 +225,12 @@ impl<B> SelectChain<SelendraBlock> for SelectRelayChain<B>
 		// The Chain Selection subsystem is supposed to treat the finalized
 		// block as the best leaf in the case that there are no viable
 		// leaves, so this should not happen in practice.
-		let best_leaf = self.leaves()
+		let best_leaf = self
+			.leaves()
 			.await?
 			.first()
 			.ok_or_else(|| ConsensusError::Other(Box::new(Error::EmptyLeaves)))?
 			.clone();
-
 
 		self.block_header(best_leaf)
 	}
@@ -267,12 +257,15 @@ impl<B> SelectChain<SelendraBlock> for SelectRelayChain<B>
 
 		let subchain_head = {
 			let (tx, rx) = oneshot::channel();
-			overseer.send_msg(
-				ChainSelectionMessage::BestLeafContaining(target_hash, tx),
-				std::any::type_name::<Self>(),
-			).await;
+			overseer
+				.send_msg(
+					ChainSelectionMessage::BestLeafContaining(target_hash, tx),
+					std::any::type_name::<Self>(),
+				)
+				.await;
 
-			let best = rx.await
+			let best = rx
+				.await
 				.map_err(Error::OverseerDisconnected)
 				.map_err(|e| ConsensusError::Other(Box::new(e)))?;
 
@@ -298,7 +291,7 @@ impl<B> SelectChain<SelendraBlock> for SelectRelayChain<B>
 							"`finality_target` max number is less than target number",
 						);
 					}
-					return Ok(Some(target_hash));
+					return Ok(Some(target_hash))
 				}
 				// find the current number.
 				let subchain_header = self.block_header(subchain_head)?;
@@ -306,15 +299,17 @@ impl<B> SelectChain<SelendraBlock> for SelectRelayChain<B>
 				if subchain_header.number <= max {
 					subchain_head
 				} else {
-					let (ancestor_hash, _) = crate::grandpa_support::walk_backwards_to_target_block(
-						self.backend.blockchain(),
-						max,
-						&subchain_header,
-					).map_err(|e| ConsensusError::ChainLookup(format!("{:?}", e)))?;
+					let (ancestor_hash, _) =
+						crate::grandpa_support::walk_backwards_to_target_block(
+							self.backend.blockchain(),
+							max,
+							&subchain_header,
+						)
+						.map_err(|e| ConsensusError::ChainLookup(format!("{:?}", e)))?;
 
 					ancestor_hash
 				}
-			}
+			},
 		};
 
 		let initial_leaf = subchain_head;
@@ -322,18 +317,16 @@ impl<B> SelectChain<SelendraBlock> for SelectRelayChain<B>
 
 		// 2. Constrain according to `ApprovedAncestor`.
 		let (subchain_head, subchain_number) = {
-
 			let (tx, rx) = oneshot::channel();
-			overseer.send_msg(
-				ApprovalVotingMessage::ApprovedAncestor(
-					subchain_head,
-					target_number,
-					tx,
-				),
-				std::any::type_name::<Self>(),
-			).await;
+			overseer
+				.send_msg(
+					ApprovalVotingMessage::ApprovedAncestor(subchain_head, target_number, tx),
+					std::any::type_name::<Self>(),
+				)
+				.await;
 
-			match rx.await
+			match rx
+				.await
 				.map_err(Error::OverseerDisconnected)
 				.map_err(|e| ConsensusError::Other(Box::new(e)))?
 			{
@@ -365,7 +358,8 @@ impl<B> SelectChain<SelendraBlock> for SelectRelayChain<B>
 					self.backend.blockchain(),
 					safe_target,
 					&initial_leaf_header,
-				).map_err(|e| ConsensusError::ChainLookup(format!("{:?}", e)))?;
+				)
+				.map_err(|e| ConsensusError::ChainLookup(format!("{:?}", e)))?;
 
 				Ok(Some(forced_target))
 			}

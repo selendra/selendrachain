@@ -17,8 +17,7 @@ use std::collections::BTreeMap;
 
 use ethereum::BlockV0 as EthereumBlock;
 use ethereum_types::{H160, H256, U256};
-use fp_rpc::EthereumRuntimeRPCApi;
-use fp_rpc::TransactionStatus;
+use fp_rpc::{EthereumRuntimeRPCApi, TransactionStatus};
 use sp_api::{BlockId, ProvideRuntimeApi};
 use sp_io::hashing::{blake2_128, twox_128};
 use sp_runtime::traits::Block as BlockT;
@@ -81,10 +80,7 @@ where
 	C: Send + Sync + 'static,
 {
 	pub fn new(client: Arc<C>) -> Self {
-		Self {
-			client,
-			_marker: PhantomData,
-		}
+		Self { client, _marker: PhantomData }
 	}
 }
 
@@ -97,18 +93,12 @@ where
 {
 	/// For a given account address, returns pallet_evm::AccountCodes.
 	fn account_code_at(&self, block: &BlockId<Block>, address: H160) -> Option<Vec<u8>> {
-		self.client
-			.runtime_api()
-			.account_code_at(&block, address)
-			.ok()
+		self.client.runtime_api().account_code_at(&block, address).ok()
 	}
 
 	/// For a given account address and index, returns pallet_evm::AccountStorages.
 	fn storage_at(&self, block: &BlockId<Block>, address: H160, index: U256) -> Option<H256> {
-		self.client
-			.runtime_api()
-			.storage_at(&block, address, index)
-			.ok()
+		self.client.runtime_api().storage_at(&block, address, index).ok()
 	}
 
 	/// Return the current block.
@@ -126,9 +116,6 @@ where
 		&self,
 		block: &BlockId<Block>,
 	) -> Option<Vec<TransactionStatus>> {
-		self.client
-			.runtime_api()
-			.current_transaction_statuses(&block)
-			.ok()?
+		self.client.runtime_api().current_transaction_statuses(&block).ok()?
 	}
 }

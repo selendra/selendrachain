@@ -16,17 +16,16 @@
 
 //! Code for elections.
 
+use super::{BlockExecutionWeight, BlockLength, BlockWeights};
 use frame_support::{
 	parameter_types,
-	weights::{DispatchClass, Weight},
-};
-use sp_runtime::{
-	traits::{Zero, Dispatchable},
-	FixedU128, FixedPointNumber, Perbill,
+	weights::{DispatchClass, DispatchInfo, Pays, Weight},
 };
 use pallet_transaction_payment::OnChargeTransaction;
-use frame_support::weights::{DispatchInfo, Pays};
-use super::{BlockExecutionWeight, BlockLength, BlockWeights};
+use sp_runtime::{
+	traits::{Dispatchable, Zero},
+	FixedPointNumber, FixedU128, Perbill,
+};
 
 parameter_types! {
 	/// A limit for off-chain phragmen unsigned solution submission.

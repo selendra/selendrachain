@@ -19,17 +19,14 @@
 use async_trait::async_trait;
 use fp_consensus::{ensure_log, FindLogError};
 use fp_rpc::EthereumRuntimeRPCApi;
-use sc_client_api;
-use sc_client_api::{backend::AuxStore, BlockOf};
+use sc_client_api::{self, backend::AuxStore, BlockOf};
 use sc_consensus::{BlockCheckParams, BlockImport, BlockImportParams, ImportResult};
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder as BlockBuilderApi;
 use sp_blockchain::{well_known_cache_keys::Id as CacheKeyId, HeaderBackend, ProvideCache};
 use sp_consensus::Error as ConsensusError;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
-use std::collections::HashMap;
-use std::marker::PhantomData;
-use std::sync::Arc;
+use std::{collections::HashMap, marker::PhantomData, sync::Arc};
 
 #[derive(derive_more::Display, Debug)]
 pub enum Error {
@@ -90,12 +87,7 @@ where
 	C::Api: BlockBuilderApi<B>,
 {
 	pub fn new(inner: I, client: Arc<C>, backend: Arc<fc_db::Backend<B>>) -> Self {
-		Self {
-			inner,
-			client,
-			backend,
-			_marker: PhantomData,
-		}
+		Self { inner, client, backend, _marker: PhantomData }
 	}
 }
 
@@ -129,9 +121,6 @@ where
 		// worker.
 		ensure_log(&block.header.digest()).map_err(|e| Error::from(e))?;
 
-		self.inner
-			.import_block(block, new_cache)
-			.await
-			.map_err(Into::into)
+		self.inner.import_block(block, new_cache).await.map_err(Into::into)
 	}
 }

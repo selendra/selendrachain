@@ -17,8 +17,10 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 use core::convert::AsRef;
 use ethereum_types::{Bloom, BloomInput, H160, H256, U256};
-use serde::de::{DeserializeOwned, Error};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{
+	de::{DeserializeOwned, Error},
+	Deserialize, Deserializer, Serialize, Serializer,
+};
 use serde_json::{from_value, Value};
 use std::{
 	collections::BTreeMap,
@@ -52,7 +54,7 @@ where
 		let v: Value = Deserialize::deserialize(deserializer)?;
 
 		if v.is_null() {
-			return Ok(VariadicValue::Null);
+			return Ok(VariadicValue::Null)
 		}
 
 		from_value(v.clone())
@@ -98,10 +100,7 @@ pub struct FilteredParams {
 
 impl Default for FilteredParams {
 	fn default() -> Self {
-		FilteredParams {
-			filter: None,
-			flat_topics: Vec::new(),
-		}
+		FilteredParams { filter: None, flat_topics: Vec::new() }
 	}
 }
 
@@ -117,7 +116,7 @@ impl FilteredParams {
 						Vec::new()
 					}
 				},
-			};
+			}
 		}
 		Self::default()
 	}
@@ -133,13 +132,12 @@ impl FilteredParams {
 				VariadicValue::Single(address) => {
 					let bloom: Bloom = BloomInput::Raw(address.as_ref()).into();
 					blooms.push(Some(bloom))
-				}
-				VariadicValue::Multiple(addresses) => {
+				},
+				VariadicValue::Multiple(addresses) =>
 					for address in addresses.into_iter() {
 						let bloom: Bloom = BloomInput::Raw(address.as_ref()).into();
 						blooms.push(Some(bloom))
-					}
-				}
+					},
 				_ => blooms.push(None),
 			}
 		}
@@ -147,14 +145,13 @@ impl FilteredParams {
 		if let Some(topics) = topics {
 			for flat in topics {
 				match flat {
-					VariadicValue::Single(topic) => {
+					VariadicValue::Single(topic) =>
 						if let Some(topic) = topic {
 							let bloom: Bloom = BloomInput::Raw(topic.as_ref()).into();
 							blooms.push(Some(bloom));
 						} else {
 							blooms.push(None);
-						}
-					}
+						},
 					_ => blooms.push(None),
 				}
 			}
@@ -166,7 +163,7 @@ impl FilteredParams {
 	/// Wildcards (VariadicValue::Null) are matched as positive.
 	pub fn in_bloom(bloom: Bloom, bloom_input: &BloomFilter) -> bool {
 		if bloom_input.len() == 0 {
-			return true;
+			return true
 		} else {
 			for inner in bloom_input {
 				// Wildcard (None) or matching topic.
@@ -174,7 +171,7 @@ impl FilteredParams {
 					Some(input) => bloom.contains_bloom(input),
 					None => true,
 				} {
-					return true;
+					return true
 				}
 			}
 		}
@@ -216,11 +213,11 @@ impl FilteredParams {
 							match v {
 								VariadicValue::Single(s) => {
 									vec![s.clone()]
-								}
+								},
 								VariadicValue::Multiple(s) => s.clone(),
 								VariadicValue::Null => {
 									vec![None]
-								}
+								},
 							}
 						} else {
 							vec![None]
@@ -230,15 +227,14 @@ impl FilteredParams {
 				for permut in cartesian(&foo) {
 					out.push(FlatTopic::Multiple(permut));
 				}
-			}
-			VariadicValue::Single(single) => {
+			},
+			VariadicValue::Single(single) =>
 				if let Some(single) = single {
 					out.push(single.clone());
-				}
-			}
+				},
 			VariadicValue::Null => {
 				out.push(FlatTopic::Null);
-			}
+			},
 		}
 		out
 	}
@@ -247,24 +243,22 @@ impl FilteredParams {
 	pub fn replace(&self, log: &Log, topic: FlatTopic) -> Option<Vec<H256>> {
 		let mut out: Vec<H256> = Vec::new();
 		match topic {
-			VariadicValue::Single(value) => {
+			VariadicValue::Single(value) =>
 				if let Some(value) = value {
 					out.push(value);
-				}
-			}
-			VariadicValue::Multiple(value) => {
+				},
+			VariadicValue::Multiple(value) =>
 				for (k, v) in value.into_iter().enumerate() {
 					if let Some(v) = v {
 						out.push(v);
 					} else {
 						out.push(log.topics[k].clone());
 					}
-				}
-			}
-			_ => {}
+				},
+			_ => {},
 		};
 		if out.len() == 0 {
-			return None;
+			return None
 		}
 		Some(out)
 	}
@@ -278,21 +272,20 @@ impl FilteredParams {
 					if from.to_min_block_num().unwrap_or(0 as u64) > block_number {
 						out = false;
 					}
-				}
-				_ => {}
+				},
+				_ => {},
 			}
 		}
 		if let Some(to) = filter.to_block {
 			match to {
-				BlockNumber::Num(_) => {
+				BlockNumber::Num(_) =>
 					if to.to_min_block_num().unwrap_or(0 as u64) < block_number {
 						out = false;
-					}
-				}
+					},
 				BlockNumber::Earliest => {
 					out = false;
-				}
-				_ => {}
+				},
+				_ => {},
 			}
 		}
 		out
@@ -301,7 +294,7 @@ impl FilteredParams {
 	pub fn filter_block_hash(&self, block_hash: H256) -> bool {
 		if let Some(h) = self.filter.clone().unwrap().block_hash {
 			if h != block_hash {
-				return false;
+				return false
 			}
 		}
 		true
@@ -310,19 +303,15 @@ impl FilteredParams {
 	pub fn filter_address(&self, log: &Log) -> bool {
 		if let Some(input_address) = &self.filter.clone().unwrap().address {
 			match input_address {
-				VariadicValue::Single(x) => {
+				VariadicValue::Single(x) =>
 					if log.address != *x {
-						return false;
-					}
-				}
-				VariadicValue::Multiple(x) => {
+						return false
+					},
+				VariadicValue::Multiple(x) =>
 					if !x.contains(&log.address) {
-						return false;
-					}
-				}
-				_ => {
-					return true;
-				}
+						return false
+					},
+				_ => return true,
 			}
 		}
 		true
@@ -332,28 +321,22 @@ impl FilteredParams {
 		let mut out: bool = true;
 		for topic in self.flat_topics.clone() {
 			match topic {
-				VariadicValue::Single(single) => {
+				VariadicValue::Single(single) =>
 					if let Some(single) = single {
 						if !log.topics.starts_with(&vec![single]) {
 							out = false;
 						}
-					}
-				}
+					},
 				VariadicValue::Multiple(multi) => {
 					// Shrink the topics until the last item is Some.
 					let mut new_multi = multi;
-					while new_multi
-						.iter()
-						.last()
-						.unwrap_or(&Some(H256::default()))
-						.is_none()
-					{
+					while new_multi.iter().last().unwrap_or(&Some(H256::default())).is_none() {
 						new_multi.pop();
 					}
 					// We can discard right away any logs with lesser topics than the filter.
 					if new_multi.len() > log.topics.len() {
 						out = false;
-						break;
+						break
 					}
 					let replaced: Option<Vec<H256>> =
 						self.replace(log, VariadicValue::Multiple(new_multi));
@@ -361,13 +344,13 @@ impl FilteredParams {
 						out = false;
 						if log.topics.starts_with(&replaced[..]) {
 							out = true;
-							break;
+							break
 						}
 					}
-				}
+				},
 				_ => {
 					out = true;
-				}
+				},
 			}
 		}
 		out

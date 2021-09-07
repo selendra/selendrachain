@@ -16,14 +16,14 @@
 
 //! Chain specifications for the test runtime.
 
-use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use babe_primitives::AuthorityId as BabeId;
 use grandpa::AuthorityId as GrandpaId;
 use pallet_staking::Forcing;
-use selendra_primitives::v1::{ValidatorId, AccountId, AssignmentId, MAX_CODE_SIZE, MAX_POV_SIZE};
+use sc_chain_spec::{ChainSpec, ChainType};
+use selendra_primitives::v1::{AccountId, AssignmentId, ValidatorId, MAX_CODE_SIZE, MAX_POV_SIZE};
 use selendra_service::chain_spec::{get_account_id_from_seed, get_from_seed, Extensions};
 use selendra_test_runtime::{constants::currency::DOTS, BABE_GENESIS_EPOCH_CONFIG};
-use sc_chain_spec::{ChainSpec, ChainType};
+use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::sr25519;
 use sp_runtime::Perbill;
 use std::collections::BTreeMap;
@@ -52,10 +52,7 @@ pub fn selendra_local_testnet_config() -> SelendraChainSpec {
 /// Local testnet genesis config (multivalidator Alice + Bob)
 pub fn selendra_local_testnet_genesis() -> selendra_test_runtime::GenesisConfig {
 	selendra_testnet_genesis(
-		vec![
-			get_authority_keys_from_seed("Alice"),
-			get_authority_keys_from_seed("Bob"),
-		],
+		vec![get_authority_keys_from_seed("Alice"), get_authority_keys_from_seed("Bob")],
 		get_account_id_from_seed::<sr25519::Public>("Alice"),
 		None,
 	)
@@ -121,10 +118,7 @@ fn selendra_testnet_genesis(
 		},
 		indices: runtime::IndicesConfig { indices: vec![] },
 		balances: runtime::BalancesConfig {
-			balances: endowed_accounts
-				.iter()
-				.map(|k| (k.clone(), ENDOWMENT))
-				.collect(),
+			balances: endowed_accounts.iter().map(|k| (k.clone(), ENDOWMENT)).collect(),
 		},
 		session: runtime::SessionConfig {
 			keys: initial_authorities
@@ -149,14 +143,7 @@ fn selendra_testnet_genesis(
 			validator_count: 2,
 			stakers: initial_authorities
 				.iter()
-				.map(|x| {
-					(
-						x.0.clone(),
-						x.1.clone(),
-						STASH,
-						runtime::StakerStatus::Validator,
-					)
-				})
+				.map(|x| (x.0.clone(), x.1.clone(), STASH, runtime::StakerStatus::Validator))
 				.collect(),
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
 			force_era: Forcing::NotForcing,
@@ -171,9 +158,7 @@ fn selendra_testnet_genesis(
 		authority_discovery: runtime::AuthorityDiscoveryConfig { keys: vec![] },
 		vesting: runtime::VestingConfig { vesting: vec![] },
 		sudo: runtime::SudoConfig { key: root_key },
-		evm: runtime::EvmConfig { 
-			accounts: BTreeMap::new(),
-		},
+		evm: runtime::EvmConfig { accounts: BTreeMap::new() },
 		ethereum: runtime::EthereumConfig {},
 		parachains_configuration: runtime::ParachainsConfigurationConfig {
 			config: selendra_runtime_parachains::configuration::HostConfiguration {

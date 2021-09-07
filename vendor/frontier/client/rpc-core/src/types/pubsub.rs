@@ -20,8 +20,7 @@
 
 use crate::types::{Filter, Log, RichHeader};
 use ethereum_types::H256;
-use serde::de::Error;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{from_value, Value};
 
 /// Subscription result.
@@ -97,7 +96,7 @@ impl<'a> Deserialize<'a> for Params {
 		let v: Value = Deserialize::deserialize(deserializer)?;
 
 		if v.is_null() {
-			return Ok(Params::None);
+			return Ok(Params::None)
 		}
 
 		from_value(v.clone())

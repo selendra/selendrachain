@@ -16,9 +16,9 @@
 
 //! Various implementations of `FilterAssetLocation`.
 
+use frame_support::traits::Get;
 use sp_std::marker::PhantomData;
 use xcm::v0::{MultiAsset, MultiLocation};
-use frame_support::traits::Get;
 use xcm_executor::traits::FilterAssetLocation;
 
 /// Accepts an asset IFF it is a native asset.

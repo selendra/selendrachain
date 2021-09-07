@@ -16,13 +16,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use std::collections::BTreeMap;
-use std::ops::Deref;
+use std::{collections::BTreeMap, ops::Deref};
 
 use crate::types::{Bytes, Transaction};
 use ethereum_types::{Bloom as H2048, H160, H256, U256};
-use serde::ser::Error;
-use serde::{Serialize, Serializer};
+use serde::{ser::Error, Serialize, Serializer};
 
 /// Block Transactions
 #[derive(Debug)]
@@ -141,9 +139,7 @@ impl<T: Serialize> Serialize for Rich<T> {
 			// and serialize
 			value.serialize(serializer)
 		} else {
-			Err(S::Error::custom(
-				"Unserializable structures: expected objects",
-			))
+			Err(S::Error::custom("Unserializable structures: expected objects"))
 		}
 	}
 }

@@ -19,11 +19,9 @@
 
 use thiserror::Error;
 
-
-use selendra_node_subsystem_util::{Fault, runtime};
-use selendra_subsystem::SubsystemError;
 use selendra_node_primitives::disputes::DisputeMessageCheckError;
-
+use selendra_node_subsystem_util::{runtime, Fault};
+use selendra_subsystem::SubsystemError;
 
 #[derive(Debug, Error)]
 #[error(transparent)]

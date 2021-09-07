@@ -17,10 +17,9 @@
 
 //! Consensus extension module tests for BABE consensus.
 
-use crate::mock::*;
 use crate::{
-	CallOrCreateInfo, Error, Transaction, TransactionAction, ValidTransactionBuilder, H160, H256,
-	U256,
+	mock::*, CallOrCreateInfo, Error, Transaction, TransactionAction, ValidTransactionBuilder,
+	H160, H256, U256,
 };
 use ethereum::TransactionSignature;
 use frame_support::{assert_err, assert_noop, assert_ok, unsigned::ValidateUnsigned};
@@ -259,7 +258,7 @@ fn transaction_should_generate_correct_gas_used() {
 		match info {
 			CallOrCreateInfo::Create(info) => {
 				assert_eq!(info.used_gas, expected_gas);
-			}
+			},
 			CallOrCreateInfo::Call(_) => panic!("expected create info"),
 		}
 	});
@@ -326,7 +325,7 @@ fn call_should_handle_errors() {
 					info.value.to_hex::<String>(),
 					"0000000000000000000000000000000000000000000000000000000000000001".to_owned()
 				);
-			}
+			},
 			CallOrCreateInfo::Create(_) => panic!("expected call info"),
 		}
 

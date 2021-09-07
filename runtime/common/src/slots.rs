@@ -21,17 +21,20 @@
 //! This doesn't handle the mechanics of determining which para ID actually ends up with a parachain lease. This
 //! must handled by a separately, through the trait interface that this pallet provides or the root dispatchables.
 
-use sp_std::prelude::*;
-use sp_runtime::traits::{CheckedSub, Zero, CheckedConversion, Saturating};
+use crate::traits::{LeaseError, Leaser, Registrar};
 use frame_support::{
-	decl_module, decl_storage, decl_event, decl_error, dispatch::DispatchResult,
-	traits::{Currency, ReservableCurrency, Get}, weights::Weight,
+	decl_error, decl_event, decl_module, decl_storage,
+	dispatch::DispatchResult,
+	traits::{Currency, Get, ReservableCurrency},
+	weights::Weight,
 };
+use frame_system::{ensure_root, ensure_signed};
 use primitives::v1::Id as ParaId;
-use frame_system::{ensure_signed, ensure_root};
-use crate::traits::{Leaser, LeaseError, Registrar};
+use sp_runtime::traits::{CheckedConversion, CheckedSub, Saturating, Zero};
+use sp_std::prelude::*;
 
-type BalanceOf<T> = <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+type BalanceOf<T> =
+	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 type LeasePeriodOf<T> = <T as frame_system::Config>::BlockNumber;
 
 pub trait WeightInfo {
@@ -43,10 +46,18 @@ pub trait WeightInfo {
 
 pub struct TestWeightInfo;
 impl WeightInfo for TestWeightInfo {
-	fn force_lease() -> Weight { 0 }
-	fn manage_lease_period_start(_c: u32, _t:u32) -> Weight { 0 }
-	fn clear_all_leases() -> Weight { 0 }
-	fn trigger_onboard() -> Weight { 0 }
+	fn force_lease() -> Weight {
+		0
+	}
+	fn manage_lease_period_start(_c: u32, _t: u32) -> Weight {
+		0
+	}
+	fn clear_all_leases() -> Weight {
+		0
+	}
+	fn trigger_onboard() -> Weight {
+		0
+	}
 }
 
 /// The module's configuration trait.
@@ -58,7 +69,7 @@ pub trait Config: frame_system::Config {
 	type Currency: ReservableCurrency<Self::AccountId>;
 
 	/// The parachain registrar type.
-	type Registrar: Registrar<AccountId=Self::AccountId>;
+	type Registrar: Registrar<AccountId = Self::AccountId>;
 
 	/// The number of blocks over which a single period lasts.
 	type LeasePeriod: Get<Self::BlockNumber>;
@@ -91,7 +102,8 @@ decl_storage! {
 }
 
 decl_event!(
-	pub enum Event<T> where
+	pub enum Event<T>
+	where
 		AccountId = <T as frame_system::Config>::AccountId,
 		LeasePeriod = LeasePeriodOf<T>,
 		ParaId = ParaId,
@@ -211,7 +223,9 @@ impl<T: Config> Module<T> {
 		// Figure out what chains need bringing on.
 		let mut parachains = Vec::new();
 		for (para, mut lease_periods) in Leases::<T>::iter() {
-			if lease_periods.is_empty() { continue }
+			if lease_periods.is_empty() {
+				continue
+			}
 			// ^^ should never be empty since we would have deleted the entry otherwise.
 
 			if lease_periods.len() == 1 {
@@ -283,25 +297,18 @@ impl<T: Config> Module<T> {
 	// you all the balances you need to unreserve.
 	fn all_deposits_held(para: ParaId) -> Vec<(T::AccountId, BalanceOf<T>)> {
 		let mut tracker = sp_std::collections::btree_map::BTreeMap::new();
-		Leases::<T>::get(para)
-			.into_iter()
-			.for_each(|lease| {
-				match lease {
-					Some((who, amount)) => {
-						match tracker.get(&who) {
-							Some(prev_amount) => {
-								if amount > *prev_amount {
-									tracker.insert(who, amount);
-								}
-							},
-							None => {
-								tracker.insert(who, amount);
-							}
-						}
+		Leases::<T>::get(para).into_iter().for_each(|lease| match lease {
+			Some((who, amount)) => match tracker.get(&who) {
+				Some(prev_amount) =>
+					if amount > *prev_amount {
+						tracker.insert(who, amount);
 					},
-					None => {},
-				}
-			});
+				None => {
+					tracker.insert(who, amount);
+				},
+			},
+			None => {},
+		});
 
 		tracker.into_iter().collect()
 	}
@@ -309,11 +316,7 @@ impl<T: Config> Module<T> {
 
 impl<T: Config> crate::traits::OnSwap for Module<T> {
 	fn on_swap(one: ParaId, other: ParaId) {
-		Leases::<T>::mutate(one, |x|
-			Leases::<T>::mutate(other, |y|
-				sp_std::mem::swap(x, y)
-			)
-		)
+		Leases::<T>::mutate(one, |x| Leases::<T>::mutate(other, |y| sp_std::mem::swap(x, y)))
 	}
 }
 
@@ -347,12 +350,12 @@ impl<T: Config> Leaser for Module<T> {
 		Leases::<T>::try_mutate(para, |d| {
 			// Left-pad with `None`s as necessary.
 			if d.len() < offset {
-				d.resize_with(offset, || { None });
+				d.resize_with(offset, || None);
 			}
-			let period_count_usize = period_count.checked_into::<usize>()
-				.ok_or(LeaseError::AlreadyEnded)?;
+			let period_count_usize =
+				period_count.checked_into::<usize>().ok_or(LeaseError::AlreadyEnded)?;
 			// Then place the deposit values for as long as the chain should exist.
-			for i in offset .. (offset + period_count_usize) {
+			for i in offset..(offset + period_count_usize) {
 				if d.len() > i {
 					// Already exists but it's `None`. That means a later slot was already leased.
 					// No problem.
@@ -363,7 +366,7 @@ impl<T: Config> Leaser for Module<T> {
 						// attempt.
 						//
 						// We bail, not giving any lease and leave it for governance to sort out.
-						return Err(LeaseError::AlreadyLeased);
+						return Err(LeaseError::AlreadyLeased)
 					}
 				} else if d.len() == i {
 					// Doesn't exist. This is usual.
@@ -391,24 +394,33 @@ impl<T: Config> Leaser for Module<T> {
 				let _ = T::Registrar::make_parachain(para);
 			}
 
-			Self::deposit_event(
-				RawEvent::Leased(para, leaser.clone(), period_begin, period_count, reserved, amount)
-			);
+			Self::deposit_event(RawEvent::Leased(
+				para,
+				leaser.clone(),
+				period_begin,
+				period_count,
+				reserved,
+				amount,
+			));
 
 			Ok(())
 		})
 	}
 
-	fn deposit_held(para: ParaId, leaser: &Self::AccountId) -> <Self::Currency as Currency<Self::AccountId>>::Balance {
+	fn deposit_held(
+		para: ParaId,
+		leaser: &Self::AccountId,
+	) -> <Self::Currency as Currency<Self::AccountId>>::Balance {
 		Leases::<T>::get(para)
 			.into_iter()
-			.map(|lease| {
-				match lease {
-					Some((who, amount)) => {
-						if &who == leaser { amount } else { Zero::zero() }
+			.map(|lease| match lease {
+				Some((who, amount)) =>
+					if &who == leaser {
+						amount
+					} else {
+						Zero::zero()
 					},
-					None => Zero::zero(),
-				}
+				None => Zero::zero(),
 			})
 			.max()
 			.unwrap_or_else(Zero::zero)
@@ -446,7 +458,7 @@ impl<T: Config> Leaser for Module<T> {
 
 		// Get the leases, and check each item in the vec which is part of the range we are checking.
 		let leases = Leases::<T>::get(para_id);
-		for slot in offset ..= offset + period_count {
+		for slot in offset..=offset + period_count {
 			if let Some(Some(_)) = leases.get(slot) {
 				// If there exists any lease period, we exit early and return true.
 				return true
@@ -458,21 +470,20 @@ impl<T: Config> Leaser for Module<T> {
 	}
 }
 
-
 /// tests for this module
 #[cfg(test)]
 mod tests {
 	use super::*;
 
-	use sp_core::H256;
-	use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
+	use crate::{mock::TestRegistrar, slots};
 	use frame_support::{
-		parameter_types, assert_ok, assert_noop,
-		traits::{OnInitialize, OnFinalize}
+		assert_noop, assert_ok, parameter_types,
+		traits::{OnFinalize, OnInitialize},
 	};
 	use pallet_balances;
 	use primitives::v1::{BlockNumber, Header};
-	use crate::{slots, mock::TestRegistrar};
+	use sp_core::H256;
+	use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 
 	type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 	type Block = frame_system::mocking::MockBlock<Test>;
@@ -553,7 +564,9 @@ mod tests {
 		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 		pallet_balances::GenesisConfig::<Test> {
 			balances: vec![(1, 10), (2, 20), (3, 30), (4, 40), (5, 50), (6, 60)],
-		}.assimilate_storage(&mut t).unwrap();
+		}
+		.assimilate_storage(&mut t)
+		.unwrap();
 		t.into()
 	}
 
@@ -587,7 +600,12 @@ mod tests {
 		new_test_ext().execute_with(|| {
 			run_to_block(1);
 
-			assert_ok!(TestRegistrar::<Test>::register(1, ParaId::from(1), Default::default(), Default::default()));
+			assert_ok!(TestRegistrar::<Test>::register(
+				1,
+				ParaId::from(1),
+				Default::default(),
+				Default::default()
+			));
 
 			assert_ok!(Slots::lease_out(1.into(), &1, 1, 1, 1));
 			assert_eq!(Slots::deposit_held(1.into(), &1), 1);
@@ -601,10 +619,10 @@ mod tests {
 			assert_eq!(Slots::deposit_held(1.into(), &1), 0);
 			assert_eq!(Balances::reserved_balance(1), 0);
 
-			assert_eq!(TestRegistrar::<Test>::operations(), vec![
-				(1.into(), 10, true),
-				(1.into(), 20, false),
-			]);
+			assert_eq!(
+				TestRegistrar::<Test>::operations(),
+				vec![(1.into(), 10, true), (1.into(), 20, false),]
+			);
 		});
 	}
 
@@ -613,7 +631,12 @@ mod tests {
 		new_test_ext().execute_with(|| {
 			run_to_block(1);
 
-			assert_ok!(TestRegistrar::<Test>::register(1, ParaId::from(1), Default::default(), Default::default()));
+			assert_ok!(TestRegistrar::<Test>::register(
+				1,
+				ParaId::from(1),
+				Default::default(),
+				Default::default()
+			));
 
 			assert_ok!(Slots::lease_out(1.into(), &1, 6, 1, 1));
 			assert_ok!(Slots::lease_out(1.into(), &1, 4, 3, 1));
@@ -634,12 +657,15 @@ mod tests {
 			assert_eq!(Slots::deposit_held(1.into(), &1), 0);
 			assert_eq!(Balances::reserved_balance(1), 0);
 
-			assert_eq!(TestRegistrar::<Test>::operations(), vec![
-				(1.into(), 10, true),
-				(1.into(), 20, false),
-				(1.into(), 30, true),
-				(1.into(), 40, false),
-			]);
+			assert_eq!(
+				TestRegistrar::<Test>::operations(),
+				vec![
+					(1.into(), 10, true),
+					(1.into(), 20, false),
+					(1.into(), 30, true),
+					(1.into(), 40, false),
+				]
+			);
 		});
 	}
 
@@ -648,7 +674,12 @@ mod tests {
 		new_test_ext().execute_with(|| {
 			run_to_block(1);
 
-			assert_ok!(TestRegistrar::<Test>::register(1, ParaId::from(1), Default::default(), Default::default()));
+			assert_ok!(TestRegistrar::<Test>::register(
+				1,
+				ParaId::from(1),
+				Default::default(),
+				Default::default()
+			));
 
 			assert!(Slots::lease_out(1.into(), &1, 6, 1, 1).is_ok());
 			assert!(Slots::lease_out(1.into(), &2, 4, 2, 1).is_ok());
@@ -681,10 +712,10 @@ mod tests {
 			assert_eq!(Slots::deposit_held(1.into(), &2), 0);
 			assert_eq!(Balances::reserved_balance(2), 0);
 
-			assert_eq!(TestRegistrar::<Test>::operations(), vec![
-				(1.into(), 10, true),
-				(1.into(), 30, false),
-			]);
+			assert_eq!(
+				TestRegistrar::<Test>::operations(),
+				vec![(1.into(), 10, true), (1.into(), 30, false),]
+			);
 		});
 	}
 
@@ -693,7 +724,12 @@ mod tests {
 		new_test_ext().execute_with(|| {
 			run_to_block(1);
 
-			assert_ok!(TestRegistrar::<Test>::register(1, ParaId::from(1), Default::default(), Default::default()));
+			assert_ok!(TestRegistrar::<Test>::register(
+				1,
+				ParaId::from(1),
+				Default::default(),
+				Default::default()
+			));
 
 			assert!(Slots::lease_out(1.into(), &1, 4, 1, 1).is_ok());
 			assert_eq!(Slots::deposit_held(1.into(), &1), 4);
@@ -711,10 +747,10 @@ mod tests {
 			assert_eq!(Slots::deposit_held(1.into(), &1), 0);
 			assert_eq!(Balances::reserved_balance(1), 0);
 
-			assert_eq!(TestRegistrar::<Test>::operations(), vec![
-				(1.into(), 10, true),
-				(1.into(), 30, false),
-			]);
+			assert_eq!(
+				TestRegistrar::<Test>::operations(),
+				vec![(1.into(), 10, true), (1.into(), 30, false),]
+			);
 		});
 	}
 
@@ -723,7 +759,12 @@ mod tests {
 		new_test_ext().execute_with(|| {
 			run_to_block(1);
 
-			assert_ok!(TestRegistrar::<Test>::register(1, ParaId::from(1), Default::default(), Default::default()));
+			assert_ok!(TestRegistrar::<Test>::register(
+				1,
+				ParaId::from(1),
+				Default::default(),
+				Default::default()
+			));
 
 			assert!(Slots::lease_out(1.into(), &1, 6, 1, 1).is_ok());
 			assert_eq!(Slots::deposit_held(1.into(), &1), 6);
@@ -749,10 +790,10 @@ mod tests {
 			assert_eq!(Slots::deposit_held(1.into(), &1), 0);
 			assert_eq!(Balances::reserved_balance(1), 0);
 
-			assert_eq!(TestRegistrar::<Test>::operations(), vec![
-				(1.into(), 10, true),
-				(1.into(), 30, false),
-			]);
+			assert_eq!(
+				TestRegistrar::<Test>::operations(),
+				vec![(1.into(), 10, true), (1.into(), 30, false),]
+			);
 		});
 	}
 
@@ -761,12 +802,17 @@ mod tests {
 		new_test_ext().execute_with(|| {
 			run_to_block(1);
 
-			assert_ok!(TestRegistrar::<Test>::register(1, ParaId::from(1), Default::default(), Default::default()));
+			assert_ok!(TestRegistrar::<Test>::register(
+				1,
+				ParaId::from(1),
+				Default::default(),
+				Default::default()
+			));
 
 			let max_num = 5u32;
 
 			// max_num different people are reserved for leases to Para ID 1
-			for i in 1u32 ..= max_num {
+			for i in 1u32..=max_num {
 				let j: u64 = i.into();
 				assert_ok!(Slots::lease_out(1.into(), &j, j * 10, i * i, i));
 				assert_eq!(Slots::deposit_held(1.into(), &j), j * 10);
@@ -776,7 +822,7 @@ mod tests {
 			assert_ok!(Slots::clear_all_leases(Origin::root(), 1.into()));
 
 			// Balances cleaned up correctly
-			for i in 1u32 ..= max_num {
+			for i in 1u32..=max_num {
 				let j: u64 = i.into();
 				assert_eq!(Slots::deposit_held(1.into(), &j), 0);
 				assert_eq!(Balances::reserved_balance(j), 0);
@@ -792,8 +838,18 @@ mod tests {
 		new_test_ext().execute_with(|| {
 			run_to_block(1);
 
-			assert_ok!(TestRegistrar::<Test>::register(1, ParaId::from(1), Default::default(), Default::default()));
-			assert_ok!(TestRegistrar::<Test>::register(1, ParaId::from(2), Default::default(), Default::default()));
+			assert_ok!(TestRegistrar::<Test>::register(
+				1,
+				ParaId::from(1),
+				Default::default(),
+				Default::default()
+			));
+			assert_ok!(TestRegistrar::<Test>::register(
+				1,
+				ParaId::from(2),
+				Default::default(),
+				Default::default()
+			));
 
 			run_to_block(20);
 			assert_eq!(Slots::lease_period_index(), 2);
@@ -804,9 +860,7 @@ mod tests {
 			// Lease in the future doesn't
 			assert_ok!(Slots::lease_out(2.into(), &1, 1, 3, 1));
 
-			assert_eq!(TestRegistrar::<Test>::operations(), vec![
-				(1.into(), 20, true),
-			]);
+			assert_eq!(TestRegistrar::<Test>::operations(), vec![(1.into(), 20, true),]);
 		});
 	}
 
@@ -814,9 +868,24 @@ mod tests {
 	fn trigger_onboard_works() {
 		new_test_ext().execute_with(|| {
 			run_to_block(1);
-			assert_ok!(TestRegistrar::<Test>::register(1, ParaId::from(1), Default::default(), Default::default()));
-			assert_ok!(TestRegistrar::<Test>::register(1, ParaId::from(2), Default::default(), Default::default()));
-			assert_ok!(TestRegistrar::<Test>::register(1, ParaId::from(3), Default::default(), Default::default()));
+			assert_ok!(TestRegistrar::<Test>::register(
+				1,
+				ParaId::from(1),
+				Default::default(),
+				Default::default()
+			));
+			assert_ok!(TestRegistrar::<Test>::register(
+				1,
+				ParaId::from(2),
+				Default::default(),
+				Default::default()
+			));
+			assert_ok!(TestRegistrar::<Test>::register(
+				1,
+				ParaId::from(3),
+				Default::default(),
+				Default::default()
+			));
 
 			// We will directly manipulate leases to emulate some kind of failure in the system.
 			// Para 1 will have no leases
@@ -826,20 +895,24 @@ mod tests {
 			Leases::<Test>::insert(ParaId::from(3), vec![None, None, Some((0, 0))]);
 
 			// Para 1 should fail cause they don't have any leases
-			assert_noop!(Slots::trigger_onboard(Origin::signed(1), 1.into()), Error::<Test>::ParaNotOnboarding);
+			assert_noop!(
+				Slots::trigger_onboard(Origin::signed(1), 1.into()),
+				Error::<Test>::ParaNotOnboarding
+			);
 
 			// Para 2 should succeed
 			assert_ok!(Slots::trigger_onboard(Origin::signed(1), 2.into()));
 
 			// Para 3 should fail cause their lease is in the future
-			assert_noop!(Slots::trigger_onboard(Origin::signed(1), 3.into()), Error::<Test>::ParaNotOnboarding);
+			assert_noop!(
+				Slots::trigger_onboard(Origin::signed(1), 3.into()),
+				Error::<Test>::ParaNotOnboarding
+			);
 
 			// Trying Para 2 again should fail cause they are not currently a parathread
 			assert!(Slots::trigger_onboard(Origin::signed(1), 2.into()).is_err());
 
-			assert_eq!(TestRegistrar::<Test>::operations(), vec![
-				(2.into(), 1, true),
-			]);
+			assert_eq!(TestRegistrar::<Test>::operations(), vec![(2.into(), 1, true),]);
 		});
 	}
 }
@@ -847,11 +920,11 @@ mod tests {
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking {
 	use super::*;
-	use frame_system::RawOrigin;
 	use frame_support::assert_ok;
+	use frame_system::RawOrigin;
 	use sp_runtime::traits::Bounded;
 
-	use frame_benchmarking::{benchmarks, account, whitelisted_caller, impl_benchmark_test_suite};
+	use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 
 	use crate::slots::Module as Slots;
 
@@ -870,7 +943,12 @@ mod benchmarking {
 		let worst_head_data = T::Registrar::worst_head_data();
 		let worst_validation_code = T::Registrar::worst_validation_code();
 
-		assert_ok!(T::Registrar::register(leaser.clone(), para, worst_head_data, worst_validation_code));
+		assert_ok!(T::Registrar::register(
+			leaser.clone(),
+			para,
+			worst_head_data,
+			worst_validation_code
+		));
 		T::Registrar::execute_pending_transitions();
 
 		(para, leaser)

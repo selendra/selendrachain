@@ -29,9 +29,9 @@ use evm::ExitReason;
 use fp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use fp_evm::CallOrCreateInfo;
 use fp_storage::PALLET_ETHEREUM_SCHEMA;
-use frame_support::ensure;
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
+	ensure,
 	traits::Get,
 	weights::{Pays, PostDispatchInfo, Weight},
 };
@@ -91,9 +91,7 @@ pub mod pallet {
 			);
 			// move block hash pruning window by one block
 			let block_hash_count = T::BlockHashCount::get();
-			let to_remove = n
-				.saturating_sub(block_hash_count)
-				.saturating_sub(One::one());
+			let to_remove = n.saturating_sub(block_hash_count).saturating_sub(One::one());
 			// keep genesis hash
 			if !to_remove.is_zero() {
 				<BlockHash<T>>::remove(U256::from(
@@ -195,7 +193,7 @@ pub mod pallet {
 						return InvalidTransaction::Custom(
 							TransactionValidationError::InvalidChainId as u8,
 						)
-						.into();
+						.into()
 					}
 				}
 
@@ -207,25 +205,25 @@ pub mod pallet {
 					return InvalidTransaction::Custom(
 						TransactionValidationError::InvalidGasLimit as u8,
 					)
-					.into();
+					.into()
 				}
 
 				let account_data = pallet_evm::Pallet::<T>::account_basic(&origin);
 
 				if transaction.nonce < account_data.nonce {
-					return InvalidTransaction::Stale.into();
+					return InvalidTransaction::Stale.into()
 				}
 
 				let fee = transaction.gas_price.saturating_mul(transaction.gas_limit);
 				let total_payment = transaction.value.saturating_add(fee);
 				if account_data.balance < total_payment {
-					return InvalidTransaction::Payment.into();
+					return InvalidTransaction::Payment.into()
 				}
 
 				let min_gas_price = T::FeeCalculator::min_gas_price();
 
 				if transaction.gas_price < min_gas_price {
-					return InvalidTransaction::Payment.into();
+					return InvalidTransaction::Payment.into()
 				}
 
 				let mut builder = ValidTransactionBuilder::default()
@@ -255,9 +253,7 @@ impl<T: Config> Pallet<T> {
 		msg.copy_from_slice(&LegacyTransactionMessage::from(transaction.clone()).hash()[..]);
 
 		let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
-		Some(H160::from(H256::from_slice(
-			Keccak256::digest(&pubkey).as_slice(),
-		)))
+		Some(H160::from(H256::from_slice(Keccak256::digest(&pubkey).as_slice())))
 	}
 
 	fn store_block(post_log: bool, block_number: U256) {
@@ -284,10 +280,7 @@ impl<T: Config> Pallet<T> {
 			difficulty: U256::zero(),
 			number: block_number,
 			gas_limit: T::BlockGasLimit::get(),
-			gas_used: receipts
-				.clone()
-				.into_iter()
-				.fold(U256::zero(), |acc, r| acc + r.used_gas),
+			gas_used: receipts.clone().into_iter().fold(U256::zero(), |acc, r| acc + r.used_gas),
 			timestamp: UniqueSaturatedInto::<u64>::unique_saturated_into(
 				pallet_timestamp::Pallet::<T>::get(),
 			),
@@ -456,7 +449,7 @@ impl<T: Config> Pallet<T> {
 				.map_err(Into::into)?;
 
 				Ok((Some(target), None, CallOrCreateInfo::Call(res)))
-			}
+			},
 			ethereum::TransactionAction::Create => {
 				let res = T::Runner::create(
 					from,
@@ -470,7 +463,7 @@ impl<T: Config> Pallet<T> {
 				.map_err(Into::into)?;
 
 				Ok((None, Some(res.value), CallOrCreateInfo::Create(res)))
-			}
+			},
 		}
 	}
 }

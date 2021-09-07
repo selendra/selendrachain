@@ -14,49 +14,42 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-use super::{
-	Error,
-	Registry,
-	IsCollator,
-	Block,
-	SpawnNamed,
-	Hash,
-	AuthorityDiscoveryApi,
-};
-use std::sync::Arc;
-use selendra_network_bridge::RequestMultiplexer;
-use selendra_node_core_av_store::Config as AvailabilityConfig;
-use selendra_node_core_approval_voting::Config as ApprovalVotingConfig;
-use selendra_node_core_candidate_validation::Config as CandidateValidationConfig;
-use selendra_overseer::{AllSubsystems, BlockInfo, Overseer, Handle};
-use selendra_primitives::v1::ParachainHost;
+use super::{AuthorityDiscoveryApi, Block, Error, Hash, IsCollator, Registry, SpawnNamed};
 use sc_authority_discovery::Service as AuthorityDiscoveryService;
-use sp_api::ProvideRuntimeApi;
-use sp_blockchain::HeaderBackend;
 use sc_client_api::AuxStore;
 use sc_keystore::LocalKeystore;
+use selendra_network_bridge::RequestMultiplexer;
+use selendra_node_core_approval_voting::Config as ApprovalVotingConfig;
+use selendra_node_core_av_store::Config as AvailabilityConfig;
+use selendra_node_core_candidate_validation::Config as CandidateValidationConfig;
+use selendra_overseer::{AllSubsystems, BlockInfo, Handle, Overseer};
+use selendra_primitives::v1::ParachainHost;
+use sp_api::ProvideRuntimeApi;
+use sp_blockchain::HeaderBackend;
 use sp_consensus_babe::BabeApi;
+use std::sync::Arc;
 
-pub use selendra_availability_distribution::AvailabilityDistributionSubsystem;
-pub use selendra_node_core_av_store::AvailabilityStoreSubsystem;
+pub use selendra_approval_distribution::ApprovalDistribution as ApprovalDistributionSubsystem;
 pub use selendra_availability_bitfield_distribution::BitfieldDistribution as BitfieldDistributionSubsystem;
-pub use selendra_node_core_bitfield_signing::BitfieldSigningSubsystem;
+pub use selendra_availability_distribution::AvailabilityDistributionSubsystem;
+pub use selendra_availability_recovery::AvailabilityRecoverySubsystem;
+pub use selendra_collator_protocol::{CollatorProtocolSubsystem, ProtocolSide};
+pub use selendra_gossip_support::GossipSupport as GossipSupportSubsystem;
+pub use selendra_network_bridge::NetworkBridge as NetworkBridgeSubsystem;
+pub use selendra_node_collation_generation::CollationGenerationSubsystem;
+pub use selendra_node_core_approval_voting::ApprovalVotingSubsystem;
+pub use selendra_node_core_av_store::AvailabilityStoreSubsystem;
 pub use selendra_node_core_backing::CandidateBackingSubsystem;
+pub use selendra_node_core_bitfield_signing::BitfieldSigningSubsystem;
 pub use selendra_node_core_candidate_validation::CandidateValidationSubsystem;
 pub use selendra_node_core_chain_api::ChainApiSubsystem;
-pub use selendra_node_collation_generation::CollationGenerationSubsystem;
-pub use selendra_collator_protocol::{CollatorProtocolSubsystem, ProtocolSide};
-pub use selendra_network_bridge::NetworkBridge as NetworkBridgeSubsystem;
 pub use selendra_node_core_provisioner::ProvisioningSubsystem as ProvisionerSubsystem;
 pub use selendra_node_core_runtime_api::RuntimeApiSubsystem;
 pub use selendra_statement_distribution::StatementDistribution as StatementDistributionSubsystem;
-pub use selendra_availability_recovery::AvailabilityRecoverySubsystem;
-pub use selendra_approval_distribution::ApprovalDistribution as ApprovalDistributionSubsystem;
-pub use selendra_node_core_approval_voting::ApprovalVotingSubsystem;
-pub use selendra_gossip_support::GossipSupport as GossipSupportSubsystem;
 
 /// Arguments passed for overseer construction.
-pub struct OverseerGenArgs<'a, Spawner, RuntimeClient> where
+pub struct OverseerGenArgs<'a, Spawner, RuntimeClient>
+where
 	RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore,
 	RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
 	Spawner: 'static + SpawnNamed + Clone + Unpin,
@@ -93,8 +86,7 @@ pub struct OverseerGenArgs<'a, Spawner, RuntimeClient> where
 ///
 /// A convenience for usage with malus, to avoid
 /// repetitive code across multiple behavior strain implementations.
-pub fn create_default_subsystems<'a, Spawner, RuntimeClient>
-(
+pub fn create_default_subsystems<'a, Spawner, RuntimeClient>(
 	OverseerGenArgs {
 		keystore,
 		runtime_client,
@@ -109,33 +101,36 @@ pub fn create_default_subsystems<'a, Spawner, RuntimeClient>
 		is_collator,
 		candidate_validation_config,
 		..
-	} : OverseerGenArgs<'a, Spawner, RuntimeClient>
+	}: OverseerGenArgs<'a, Spawner, RuntimeClient>,
 ) -> Result<
 	AllSubsystems<
-	CandidateValidationSubsystem,
-	CandidateBackingSubsystem<Spawner>,
-	StatementDistributionSubsystem,
-	AvailabilityDistributionSubsystem,
-	AvailabilityRecoverySubsystem,
-	BitfieldSigningSubsystem<Spawner>,
-	BitfieldDistributionSubsystem,
-	ProvisionerSubsystem<Spawner>,
-	RuntimeApiSubsystem<RuntimeClient>,
-	AvailabilityStoreSubsystem,
-	NetworkBridgeSubsystem<Arc<sc_network::NetworkService<Block, Hash>>, AuthorityDiscoveryService>,
-	ChainApiSubsystem<RuntimeClient>,
-	CollationGenerationSubsystem,
-	CollatorProtocolSubsystem,
-	ApprovalDistributionSubsystem,
-	ApprovalVotingSubsystem,
-	GossipSupportSubsystem,
->,
-	Error
+		CandidateValidationSubsystem,
+		CandidateBackingSubsystem<Spawner>,
+		StatementDistributionSubsystem,
+		AvailabilityDistributionSubsystem,
+		AvailabilityRecoverySubsystem,
+		BitfieldSigningSubsystem<Spawner>,
+		BitfieldDistributionSubsystem,
+		ProvisionerSubsystem<Spawner>,
+		RuntimeApiSubsystem<RuntimeClient>,
+		AvailabilityStoreSubsystem,
+		NetworkBridgeSubsystem<
+			Arc<sc_network::NetworkService<Block, Hash>>,
+			AuthorityDiscoveryService,
+		>,
+		ChainApiSubsystem<RuntimeClient>,
+		CollationGenerationSubsystem,
+		CollatorProtocolSubsystem,
+		ApprovalDistributionSubsystem,
+		ApprovalVotingSubsystem,
+		GossipSupportSubsystem,
+	>,
+	Error,
 >
 where
 	RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore,
 	RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
-	Spawner: 'static + SpawnNamed + Clone + Unpin
+	Spawner: 'static + SpawnNamed + Clone + Unpin,
 {
 	use selendra_node_subsystem_util::metrics::Metrics;
 
@@ -144,16 +139,13 @@ where
 			keystore.clone(),
 			Metrics::register(registry)?,
 		),
-		availability_recovery: AvailabilityRecoverySubsystem::with_chunks_only(
-		),
+		availability_recovery: AvailabilityRecoverySubsystem::with_chunks_only(),
 		availability_store: AvailabilityStoreSubsystem::new(
 			parachains_db.clone(),
 			availability_config,
 			Metrics::register(registry)?,
 		),
-		bitfield_distribution: BitfieldDistributionSubsystem::new(
-			Metrics::register(registry)?,
-		),
+		bitfield_distribution: BitfieldDistributionSubsystem::new(Metrics::register(registry)?),
 		bitfield_signing: BitfieldSigningSubsystem::new(
 			spawner.clone(),
 			keystore.clone(),
@@ -168,13 +160,8 @@ where
 			candidate_validation_config,
 			Metrics::register(registry)?,
 		),
-		chain_api: ChainApiSubsystem::new(
-			runtime_client.clone(),
-			Metrics::register(registry)?,
-		),
-		collation_generation: CollationGenerationSubsystem::new(
-			Metrics::register(registry)?,
-		),
+		chain_api: ChainApiSubsystem::new(runtime_client.clone(), Metrics::register(registry)?),
+		collation_generation: CollationGenerationSubsystem::new(Metrics::register(registry)?),
 		collator_protocol: {
 			let side = match is_collator {
 				IsCollator::Yes(collator_pair) => ProtocolSide::Collator(
@@ -188,9 +175,7 @@ where
 					metrics: Metrics::register(registry)?,
 				},
 			};
-			CollatorProtocolSubsystem::new(
-				side,
-			)
+			CollatorProtocolSubsystem::new(side)
 		},
 		network_bridge: NetworkBridgeSubsystem::new(
 			network_service.clone(),
@@ -199,11 +184,7 @@ where
 			Box::new(network_service.clone()),
 			Metrics::register(registry)?,
 		),
-		provisioner: ProvisionerSubsystem::new(
-			spawner.clone(),
-			(),
-			Metrics::register(registry)?,
-		),
+		provisioner: ProvisionerSubsystem::new(spawner.clone(), (), Metrics::register(registry)?),
 		runtime_api: RuntimeApiSubsystem::new(
 			runtime_client.clone(),
 			Metrics::register(registry)?,
@@ -213,9 +194,7 @@ where
 			keystore.clone(),
 			Metrics::register(registry)?,
 		),
-		approval_distribution: ApprovalDistributionSubsystem::new(
-			Metrics::register(registry)?,
-		),
+		approval_distribution: ApprovalDistributionSubsystem::new(Metrics::register(registry)?),
 		approval_voting: ApprovalVotingSubsystem::with_config(
 			approval_voting_config,
 			parachains_db,
@@ -223,13 +202,10 @@ where
 			Box::new(network_service.clone()),
 			Metrics::register(registry)?,
 		),
-		gossip_support: GossipSupportSubsystem::new(
-			keystore.clone(),
-		),
+		gossip_support: GossipSupportSubsystem::new(keystore.clone()),
 	};
 	Ok(all_subsystems)
 }
-
 
 /// Trait for the `fn` generating the overseer.
 ///
@@ -237,11 +213,15 @@ where
 /// would do.
 pub trait OverseerGen {
 	/// Overwrite the full generation of the overseer, including the subsystems.
-	fn generate<'a, Spawner, RuntimeClient>(&self, args: OverseerGenArgs<'a, Spawner, RuntimeClient>) -> Result<(Overseer<Spawner, Arc<RuntimeClient>>, Handle), Error>
+	fn generate<'a, Spawner, RuntimeClient>(
+		&self,
+		args: OverseerGenArgs<'a, Spawner, RuntimeClient>,
+	) -> Result<(Overseer<Spawner, Arc<RuntimeClient>>, Handle), Error>
 	where
 		RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore,
 		RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
-		Spawner: 'static + SpawnNamed + Clone + Unpin {
+		Spawner: 'static + SpawnNamed + Clone + Unpin,
+	{
 		let gen = RealOverseerGen;
 		RealOverseerGen::generate::<Spawner, RuntimeClient>(&gen, args)
 	}
@@ -254,13 +234,14 @@ pub trait OverseerGen {
 pub struct RealOverseerGen;
 
 impl OverseerGen for RealOverseerGen {
-	fn generate<'a, Spawner, RuntimeClient>(&self,
-		args : OverseerGenArgs<'a, Spawner, RuntimeClient>
+	fn generate<'a, Spawner, RuntimeClient>(
+		&self,
+		args: OverseerGenArgs<'a, Spawner, RuntimeClient>,
 	) -> Result<(Overseer<Spawner, Arc<RuntimeClient>>, Handle), Error>
 	where
 		RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore,
 		RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
-		Spawner: 'static + SpawnNamed + Clone + Unpin
+		Spawner: 'static + SpawnNamed + Clone + Unpin,
 	{
 		let spawner = args.spawner.clone();
 		let leaves = args.leaves.clone();
@@ -269,12 +250,7 @@ impl OverseerGen for RealOverseerGen {
 
 		let all_subsystems = create_default_subsystems::<Spawner, RuntimeClient>(args)?;
 
-		Overseer::new(
-			leaves,
-			all_subsystems,
-			registry,
-			runtime_client,
-			spawner,
-		).map_err(|e| e.into())
+		Overseer::new(leaves, all_subsystems, registry, runtime_client, spawner)
+			.map_err(|e| e.into())
 	}
 }

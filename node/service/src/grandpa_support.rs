@@ -18,17 +18,18 @@
 
 use std::sync::Arc;
 
-use sp_runtime::traits::{Block as BlockT, NumberFor};
-use sp_runtime::generic::BlockId;
-use sp_runtime::traits::Header as _;
+use sp_runtime::{
+	generic::BlockId,
+	traits::{Block as BlockT, Header as _, NumberFor},
+};
 
 #[cfg(feature = "full-node")]
 use {
-	selendra_primitives::v1::{Block as SelendraBlock, Header as SelendraHeader},
-	selendra_subsystem::messages::ApprovalVotingMessage,
+	futures::channel::oneshot,
 	prometheus_endpoint::{self, Registry},
 	selendra_overseer::Handle,
-	futures::channel::oneshot,
+	selendra_primitives::v1::{Block as SelendraBlock, Header as SelendraHeader},
+	selendra_subsystem::messages::ApprovalVotingMessage,
 };
 
 /// A custom GRANDPA voting rule that acts as a diagnostic for the approval
@@ -47,9 +48,10 @@ pub(crate) struct ApprovalCheckingVotingRule {
 #[cfg(feature = "full-node")]
 impl ApprovalCheckingVotingRule {
 	/// Create a new approval checking diagnostic voting rule.
-	pub fn new(overseer: Handle, registry: Option<&Registry>)
-		-> Result<Self, prometheus_endpoint::PrometheusError>
-	{
+	pub fn new(
+		overseer: Handle,
+		registry: Option<&Registry>,
+	) -> Result<Self, prometheus_endpoint::PrometheusError> {
 		Ok(ApprovalCheckingVotingRule {
 			checking_lag: if let Some(registry) = registry {
 				Some(prometheus_endpoint::register(
@@ -86,11 +88,13 @@ fn approval_checking_vote_to_grandpa_vote<H, N: PartialOrd>(
 	current_number: N,
 ) -> ParachainVotingRuleTarget<H, N> {
 	match approval_checking_vote {
-		Some((hash, number)) => if number > current_number {
-			// respect other voting rule.
-			ParachainVotingRuleTarget::Current
-		} else {
-			ParachainVotingRuleTarget::Explicit((hash, number))
+		Some((hash, number)) => {
+			if number > current_number {
+				// respect other voting rule.
+				ParachainVotingRuleTarget::Current
+			} else {
+				ParachainVotingRuleTarget::Explicit((hash, number))
+			}
 		},
 		// If approval-voting chooses 'None', that means we should vote on the base (last round estimate).
 		None => ParachainVotingRuleTarget::Base,
@@ -104,7 +108,8 @@ const MAX_APPROVAL_CHECKING_FINALITY_LAG: selendra_primitives::v1::BlockNumber =
 
 #[cfg(feature = "full-node")]
 impl<B> grandpa::VotingRule<SelendraBlock, B> for ApprovalCheckingVotingRule
-	where B: sp_blockchain::HeaderBackend<SelendraBlock> + 'static
+where
+	B: sp_blockchain::HeaderBackend<SelendraBlock> + 'static,
 {
 	fn restrict_vote(
 		&self,
@@ -130,22 +135,18 @@ impl<B> grandpa::VotingRule<SelendraBlock, B> for ApprovalCheckingVotingRule
 		Box::pin(async move {
 			let (tx, rx) = oneshot::channel();
 			let approval_checking_subsystem_vote = {
-				overseer.send_msg(
-					ApprovalVotingMessage::ApprovedAncestor(
-						best_hash,
-						base_number,
-						tx,
-					),
-					std::any::type_name::<Self>(),
-				).await;
+				overseer
+					.send_msg(
+						ApprovalVotingMessage::ApprovedAncestor(best_hash, base_number, tx),
+						std::any::type_name::<Self>(),
+					)
+					.await;
 
 				rx.await.ok().and_then(|v| v)
 			};
 
-			let approval_checking_subsystem_lag = approval_checking_subsystem_vote.map_or(
-				best_number - base_number,
-				|(_h, n)| best_number - n,
-			);
+			let approval_checking_subsystem_lag = approval_checking_subsystem_vote
+				.map_or(best_number - base_number, |(_h, n)| best_number - n);
 
 			if let Some(ref checking_lag) = checking_lag {
 				checking_lag.set(approval_checking_subsystem_lag as _);
@@ -176,7 +177,7 @@ impl<B> grandpa::VotingRule<SelendraBlock, B> for ApprovalCheckingVotingRule
 					} else {
 						Some(vote)
 					}
-				}
+				},
 				ParachainVotingRuleTarget::Current => Some((current_hash, current_number)),
 				ParachainVotingRuleTarget::Base => min_vote.or(Some((base_hash, base_number))),
 			};
@@ -221,7 +222,7 @@ where
 		}
 
 		if *target_header.number() == target_number {
-			return Ok((target_hash, target_number));
+			return Ok((target_hash, target_number))
 		}
 
 		target_hash = *target_header.parent_hash();
@@ -257,18 +258,18 @@ where
 				// if we're past the pause period (i.e. `self.0 + self.1`)
 				// then we no longer need to restrict any votes
 				if *best_target.number() > self.0 + self.1 {
-					return None;
+					return None
 				}
 
 				// if we've finalized the pause block, just keep returning it
 				// until best number increases enough to pass the condition above
 				if *base.number() >= self.0 {
-					return Some((base.hash(), *base.number()));
+					return Some((base.hash(), *base.number()))
 				}
 
 				// otherwise find the target header at the pause block
 				// to vote on
-				return walk_backwards_to_target_block(&*backend, self.0, current_target).ok();
+				return walk_backwards_to_target_block(&*backend, self.0, current_target).ok()
 			}
 
 			None
@@ -282,16 +283,16 @@ where
 
 #[cfg(test)]
 mod tests {
+	use super::{approval_checking_vote_to_grandpa_vote, ParachainVotingRuleTarget};
+	use consensus_common::BlockOrigin;
 	use grandpa::VotingRule;
 	use selendra_test_client::{
-		TestClientBuilder, TestClientBuilderExt, DefaultTestClientBuilderExt, InitSelendraBlockBuilder,
-		ClientBlockImportExt,
+		ClientBlockImportExt, DefaultTestClientBuilderExt, InitSelendraBlockBuilder,
+		TestClientBuilder, TestClientBuilderExt,
 	};
 	use sp_blockchain::HeaderBackend;
 	use sp_runtime::{generic::BlockId, traits::Header};
-	use consensus_common::BlockOrigin;
 	use std::sync::Arc;
-	use super::{approval_checking_vote_to_grandpa_vote, ParachainVotingRuleTarget};
 
 	#[test]
 	fn grandpa_pause_voting_rule_works() {

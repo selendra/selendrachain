@@ -72,12 +72,14 @@ pub use fp_evm::{
 #[cfg(feature = "std")]
 use codec::{Decode, Encode};
 use evm::Config as EvmConfig;
-use frame_support::dispatch::DispatchResultWithPostInfo;
-use frame_support::traits::{
-	tokens::fungible::Inspect, Currency, ExistenceRequirement, FindAuthor, Get, Imbalance,
-	OnUnbalanced, WithdrawReasons, OnKilledAccount,
+use frame_support::{
+	dispatch::DispatchResultWithPostInfo,
+	traits::{
+		tokens::fungible::Inspect, Currency, ExistenceRequirement, FindAuthor, Get, Imbalance,
+		OnKilledAccount, OnUnbalanced, WithdrawReasons,
+	},
+	weights::{Pays, PostDispatchInfo, Weight},
 };
-use frame_support::weights::{Pays, PostDispatchInfo, Weight};
 use frame_system::RawOrigin;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -196,10 +198,10 @@ pub mod pallet {
 			match info.exit_reason {
 				ExitReason::Succeed(_) => {
 					Pallet::<T>::deposit_event(Event::<T>::Executed(target));
-				}
+				},
 				_ => {
 					Pallet::<T>::deposit_event(Event::<T>::ExecutedFailed(target));
-				}
+				},
 			};
 
 			Ok(PostDispatchInfo {
@@ -236,19 +238,13 @@ pub mod pallet {
 
 			match info {
 				CreateInfo {
-					exit_reason: ExitReason::Succeed(_),
-					value: create_address,
-					..
+					exit_reason: ExitReason::Succeed(_), value: create_address, ..
 				} => {
 					Pallet::<T>::deposit_event(Event::<T>::Created(create_address));
-				}
-				CreateInfo {
-					exit_reason: _,
-					value: create_address,
-					..
-				} => {
+				},
+				CreateInfo { exit_reason: _, value: create_address, .. } => {
 					Pallet::<T>::deposit_event(Event::<T>::CreatedFailed(create_address));
-				}
+				},
 			}
 
 			Ok(PostDispatchInfo {
@@ -286,19 +282,13 @@ pub mod pallet {
 
 			match info {
 				CreateInfo {
-					exit_reason: ExitReason::Succeed(_),
-					value: create_address,
-					..
+					exit_reason: ExitReason::Succeed(_), value: create_address, ..
 				} => {
 					Pallet::<T>::deposit_event(Event::<T>::Created(create_address));
-				}
-				CreateInfo {
-					exit_reason: _,
-					value: create_address,
-					..
-				} => {
+				},
+				CreateInfo { exit_reason: _, value: create_address, .. } => {
 					Pallet::<T>::deposit_event(Event::<T>::CreatedFailed(create_address));
-				}
+				},
 			}
 
 			Ok(PostDispatchInfo {
@@ -354,9 +344,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self {
-				accounts: Default::default(),
-			}
+			Self { accounts: Default::default() }
 		}
 	}
 
@@ -493,9 +481,8 @@ where
 
 	fn try_address_origin(address: &H160, origin: OuterOrigin) -> Result<AccountId32, OuterOrigin> {
 		origin.into().and_then(|o| match o {
-			RawOrigin::Signed(who) if AsRef::<[u8; 32]>::as_ref(&who)[0..20] == address[0..20] => {
-				Ok(who)
-			}
+			RawOrigin::Signed(who) if AsRef::<[u8; 32]>::as_ref(&who)[0..20] == address[0..20] =>
+				Ok(who),
 			r => Err(OuterOrigin::from(r)),
 		})
 	}
@@ -613,7 +600,7 @@ impl<T: Config> Pallet<T> {
 	/// Create an account.
 	pub fn create_account(address: H160, code: Vec<u8>) {
 		if code.is_empty() {
-			return;
+			return
 		}
 
 		if !<AccountCodes<T>>::contains_key(&address) {
@@ -710,19 +697,16 @@ where
 			let account_id = T::AddressMapping::into_account_id(*who);
 
 			// Calculate how much refund we should return
-			let refund_amount = paid
-				.peek()
-				.saturating_sub(corrected_fee.low_u128().unique_saturated_into());
+			let refund_amount =
+				paid.peek().saturating_sub(corrected_fee.low_u128().unique_saturated_into());
 			// refund to the account that paid the fees. If this fails, the
 			// account might have dropped below the existential balance. In
 			// that case we don't refund anything.
 			let refund_imbalance = C::deposit_into_existing(&account_id, refund_amount)
 				.unwrap_or_else(|_| C::PositiveImbalance::zero());
 			// merge the imbalance caused by paying the fees and refunding parts of it again.
-			let adjusted_paid = paid
-				.offset(refund_imbalance)
-				.same()
-				.map_err(|_| Error::<T>::BalanceLow)?;
+			let adjusted_paid =
+				paid.offset(refund_imbalance).same().map_err(|_| Error::<T>::BalanceLow)?;
 			OU::on_unbalanced(adjusted_paid);
 		}
 		Ok(())

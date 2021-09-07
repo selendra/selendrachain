@@ -17,14 +17,15 @@
 
 //! EVM stack-based runner.
 
-use crate::runner::Runner as RunnerT;
 use crate::{
-	AccountCodes, AccountStorages, AddressMapping, BlockHashMapping, Config, Error, Event,
-	FeeCalculator, OnChargeEVMTransaction, Pallet, PrecompileSet,
+	runner::Runner as RunnerT, AccountCodes, AccountStorages, AddressMapping, BlockHashMapping,
+	Config, Error, Event, FeeCalculator, OnChargeEVMTransaction, Pallet, PrecompileSet,
 };
-use evm::backend::Backend as BackendT;
-use evm::executor::{StackExecutor, StackState as StackStateT, StackSubstateMetadata};
-use evm::{ExitError, ExitReason, Transfer};
+use evm::{
+	backend::Backend as BackendT,
+	executor::{StackExecutor, StackState as StackStateT, StackSubstateMetadata},
+	ExitError, ExitReason, Transfer,
+};
 use fp_evm::{CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 use frame_support::{
 	ensure,
@@ -59,36 +60,24 @@ impl<T: Config> Runner<T> {
 		// Gas price check is skipped when performing a gas estimation.
 		let gas_price = match gas_price {
 			Some(gas_price) => {
-				ensure!(
-					gas_price >= T::FeeCalculator::min_gas_price(),
-					Error::<T>::GasPriceTooLow
-				);
+				ensure!(gas_price >= T::FeeCalculator::min_gas_price(), Error::<T>::GasPriceTooLow);
 				gas_price
-			}
+			},
 			None => Default::default(),
 		};
 
-		let vicinity = Vicinity {
-			gas_price,
-			origin: source,
-		};
+		let vicinity = Vicinity { gas_price, origin: source };
 
 		let metadata = StackSubstateMetadata::new(gas_limit, &config);
 		let state = SubstrateStackState::new(&vicinity, metadata);
 		let mut executor =
 			StackExecutor::new_with_precompile(state, config, T::Precompiles::execute);
 
-		let total_fee = gas_price
-			.checked_mul(U256::from(gas_limit))
-			.ok_or(Error::<T>::FeeOverflow)?;
-		let total_payment = value
-			.checked_add(total_fee)
-			.ok_or(Error::<T>::PaymentOverflow)?;
+		let total_fee =
+			gas_price.checked_mul(U256::from(gas_limit)).ok_or(Error::<T>::FeeOverflow)?;
+		let total_payment = value.checked_add(total_fee).ok_or(Error::<T>::PaymentOverflow)?;
 		let source_account = Pallet::<T>::account_basic(&source);
-		ensure!(
-			source_account.balance >= total_payment,
-			Error::<T>::BalanceLow
-		);
+		ensure!(source_account.balance >= total_payment, Error::<T>::BalanceLow);
 
 		if let Some(nonce) = nonce {
 			ensure!(source_account.nonce == nonce, Error::<T>::InvalidNonce);
@@ -143,12 +132,7 @@ impl<T: Config> Runner<T> {
 			}));
 		}
 
-		Ok(ExecutionInfo {
-			value: retv,
-			exit_reason: reason,
-			used_gas,
-			logs: state.substate.logs,
-		})
+		Ok(ExecutionInfo { value: retv, exit_reason: reason, used_gas, logs: state.substate.logs })
 	}
 }
 
@@ -165,15 +149,9 @@ impl<T: Config> RunnerT<T> for Runner<T> {
 		nonce: Option<U256>,
 		config: &evm::Config,
 	) -> Result<CallInfo, Self::Error> {
-		Self::execute(
-			source,
-			value,
-			gas_limit,
-			gas_price,
-			nonce,
-			config,
-			|executor| executor.transact_call(source, target, value, input, gas_limit),
-		)
+		Self::execute(source, value, gas_limit, gas_price, nonce, config, |executor| {
+			executor.transact_call(source, target, value, input, gas_limit)
+		})
 	}
 
 	fn create(
@@ -185,21 +163,10 @@ impl<T: Config> RunnerT<T> for Runner<T> {
 		nonce: Option<U256>,
 		config: &evm::Config,
 	) -> Result<CreateInfo, Self::Error> {
-		Self::execute(
-			source,
-			value,
-			gas_limit,
-			gas_price,
-			nonce,
-			config,
-			|executor| {
-				let address = executor.create_address(evm::CreateScheme::Legacy { caller: source });
-				(
-					executor.transact_create(source, value, init, gas_limit),
-					address,
-				)
-			},
-		)
+		Self::execute(source, value, gas_limit, gas_price, nonce, config, |executor| {
+			let address = executor.create_address(evm::CreateScheme::Legacy { caller: source });
+			(executor.transact_create(source, value, init, gas_limit), address)
+		})
 	}
 
 	fn create2(
@@ -213,25 +180,14 @@ impl<T: Config> RunnerT<T> for Runner<T> {
 		config: &evm::Config,
 	) -> Result<CreateInfo, Self::Error> {
 		let code_hash = H256::from_slice(Keccak256::digest(&init).as_slice());
-		Self::execute(
-			source,
-			value,
-			gas_limit,
-			gas_price,
-			nonce,
-			config,
-			|executor| {
-				let address = executor.create_address(evm::CreateScheme::Create2 {
-					caller: source,
-					code_hash,
-					salt,
-				});
-				(
-					executor.transact_create2(source, value, init, salt, gas_limit),
-					address,
-				)
-			},
-		)
+		Self::execute(source, value, gas_limit, gas_price, nonce, config, |executor| {
+			let address = executor.create_address(evm::CreateScheme::Create2 {
+				caller: source,
+				code_hash,
+				salt,
+			});
+			(executor.transact_create2(source, value, init, salt, gas_limit), address)
+		})
 	}
 }
 
@@ -297,11 +253,11 @@ impl<'config> SubstrateStackSubstate<'config> {
 
 	pub fn deleted(&self, address: H160) -> bool {
 		if self.deletes.contains(&address) {
-			return true;
+			return true
 		}
 
 		if let Some(parent) = self.parent.as_ref() {
-			return parent.deleted(address);
+			return parent.deleted(address)
 		}
 
 		false
@@ -312,11 +268,7 @@ impl<'config> SubstrateStackSubstate<'config> {
 	}
 
 	pub fn log(&mut self, address: H160, topics: Vec<H256>, data: Vec<u8>) {
-		self.logs.push(Log {
-			address,
-			topics,
-			data,
-		});
+		self.logs.push(Log { address, topics, data });
 	}
 }
 
@@ -392,10 +344,7 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	fn basic(&self, address: H160) -> evm::backend::Basic {
 		let account = Pallet::<T>::account_basic(&address);
 
-		evm::backend::Basic {
-			balance: account.balance,
-			nonce: account.nonce,
-		}
+		evm::backend::Basic { balance: account.balance, nonce: account.nonce }
 	}
 
 	fn code(&self, address: H160) -> Vec<u8> {

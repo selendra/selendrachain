@@ -13,13 +13,13 @@
 
 //! Migration code for the parachain's DB.
 
-
 #![cfg(feature = "full-node")]
 
-use std::fs;
-use std::io;
-use std::path::{Path, PathBuf};
-use std::str::FromStr;
+use std::{
+	fs, io,
+	path::{Path, PathBuf},
+	str::FromStr,
+};
 
 type Version = u32;
 
@@ -36,10 +36,7 @@ pub enum Error {
 	#[error("The version file format is incorrect")]
 	CorruptedVersionFile,
 	#[error("Future version (expected {current:?}, found {got:?})")]
-	FutureVersion {
-		current: Version,
-		got: Version,
-	},
+	FutureVersion { current: Version, got: Version },
 }
 
 impl From<Error> for io::Error {
@@ -57,10 +54,7 @@ pub fn try_upgrade_db(db_path: &Path) -> Result<(), Error> {
 	if !is_empty {
 		match current_version(db_path)? {
 			CURRENT_VERSION => (),
-			v => return Err(Error::FutureVersion {
-				current: CURRENT_VERSION,
-				got: v,
-			}),
+			v => return Err(Error::FutureVersion { current: CURRENT_VERSION, got: v }),
 		}
 	}
 

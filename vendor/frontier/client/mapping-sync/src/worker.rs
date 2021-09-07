@@ -23,14 +23,11 @@ use futures::{
 };
 use futures_timer::Delay;
 use log::debug;
-use sc_client_api::BlockOf;
-use sc_client_api::ImportNotifications;
+use sc_client_api::{BlockOf, ImportNotifications};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
-use std::pin::Pin;
-use std::sync::Arc;
-use std::time::Duration;
+use std::{pin::Pin, sync::Arc, time::Duration};
 
 const LIMIT: usize = 8;
 
@@ -95,7 +92,7 @@ where
 				Poll::Pending => break,
 				Poll::Ready(Some(_)) => {
 					fire = true;
-				}
+				},
 				Poll::Ready(None) => return Poll::Ready(None),
 			}
 		}
@@ -107,7 +104,7 @@ where
 			Poll::Pending => (),
 			Poll::Ready(()) => {
 				fire = true;
-			}
+			},
 		}
 
 		if self.have_next {
@@ -127,12 +124,12 @@ where
 				Ok(have_next) => {
 					self.have_next = have_next;
 					Poll::Ready(Some(()))
-				}
+				},
 				Err(e) => {
 					self.have_next = false;
 					debug!(target: "mapping-sync", "Syncing failed with error {:?}, retrying.", e);
 					Poll::Ready(Some(()))
-				}
+				},
 			}
 		} else {
 			Poll::Pending

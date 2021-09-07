@@ -14,20 +14,13 @@
 //! A RocksDB instance for storing parachain data; availability data, and approvals.
 
 #[cfg(feature = "full-node")]
-use {
-	std::io,
-	std::path::PathBuf,
-	std::sync::Arc,
-
-	kvdb::KeyValueDB,
-};
+use {kvdb::KeyValueDB, std::io, std::path::PathBuf, std::sync::Arc};
 
 mod upgrade;
 
-#[cfg(any(test,feature = "full-node"))]
+#[cfg(any(test, feature = "full-node"))]
 mod columns {
 	pub const NUM_COLUMNS: u32 = 3;
-
 
 	pub const COL_AVAILABILITY_DATA: u32 = 0;
 	pub const COL_AVAILABILITY_META: u32 = 1;
@@ -35,7 +28,7 @@ mod columns {
 }
 
 /// Columns used by different subsystems.
-#[cfg(any(test,feature = "full-node"))]
+#[cfg(any(test, feature = "full-node"))]
 #[derive(Debug, Clone)]
 pub struct ColumnsConfig {
 	/// The column used by the av-store for data.
@@ -47,7 +40,7 @@ pub struct ColumnsConfig {
 }
 
 /// The real columns used by the parachains DB.
-#[cfg(any(test,feature = "full-node"))]
+#[cfg(any(test, feature = "full-node"))]
 pub const REAL_COLUMNS: ColumnsConfig = ColumnsConfig {
 	col_availability_data: columns::COL_AVAILABILITY_DATA,
 	col_availability_meta: columns::COL_AVAILABILITY_META,
@@ -67,11 +60,7 @@ pub struct CacheSizes {
 
 impl Default for CacheSizes {
 	fn default() -> Self {
-		CacheSizes {
-			availability_data: 25,
-			availability_meta: 1,
-			approval_data: 5,
-		}
+		CacheSizes { availability_data: 25, availability_meta: 1, approval_data: 5 }
 	}
 }
 
@@ -82,26 +71,26 @@ fn other_io_error(err: String) -> io::Error {
 
 /// Open the database on disk, creating it if it doesn't exist.
 #[cfg(feature = "full-node")]
-pub fn open_creating(
-	root: PathBuf,
-	cache_sizes: CacheSizes,
-) -> io::Result<Arc<dyn KeyValueDB>> {
-	use kvdb_rocksdb::{DatabaseConfig, Database};
+pub fn open_creating(root: PathBuf, cache_sizes: CacheSizes) -> io::Result<Arc<dyn KeyValueDB>> {
+	use kvdb_rocksdb::{Database, DatabaseConfig};
 
 	let path = root.join("parachains").join("db");
 
 	let mut db_config = DatabaseConfig::with_columns(columns::NUM_COLUMNS);
 
-	let _ = db_config.memory_budget
+	let _ = db_config
+		.memory_budget
 		.insert(columns::COL_AVAILABILITY_DATA, cache_sizes.availability_data);
-	let _ = db_config.memory_budget
+	let _ = db_config
+		.memory_budget
 		.insert(columns::COL_AVAILABILITY_META, cache_sizes.availability_meta);
-	let _ = db_config.memory_budget
+	let _ = db_config
+		.memory_budget
 		.insert(columns::COL_APPROVAL_DATA, cache_sizes.approval_data);
 
-	let path_str = path.to_str().ok_or_else(|| other_io_error(
-		format!("Bad database path: {:?}", path),
-	))?;
+	let path_str = path
+		.to_str()
+		.ok_or_else(|| other_io_error(format!("Bad database path: {:?}", path)))?;
 
 	std::fs::create_dir_all(&path_str)?;
 	upgrade::try_upgrade_db(&path)?;
