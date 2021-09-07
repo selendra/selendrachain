@@ -29,9 +29,9 @@ use primitives::v1::{
 	ValidationCode, ValidationCodeHash, ValidatorId, ValidatorIndex,
 };
 use runtime_common::{
-	auctions, crowdloan, elections::fee_for_submit_call, impls::DealWithFees, paras_registrar,
-	paras_sudo_wrapper, slots, xcm_sender, BlockHashCount, BlockLength, BlockWeights,
-	CurrencyToVote, OffchainSolutionLengthLimit, OffchainSolutionWeightLimit, RocksDbWeight,
+	auctions, crowdloan, impls::DealWithFees, paras_registrar, paras_sudo_wrapper, slots,
+	xcm_sender, BlockHashCount, BlockLength, BlockWeights, CurrencyToVote,
+	OffchainSolutionLengthLimit, OffchainSolutionWeightLimit, RocksDbWeight,
 	SlowAdjustingFeeUpdate, ToAuthor, WEIGHT_PER_GAS,
 };
 use sp_core::{
@@ -82,7 +82,7 @@ use sp_runtime::{
 		OpaqueKeys, SaturatedConversion, Verify,
 	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, FixedPointNumber, KeyTypeId, Perbill, Percent, Permill,
+	ApplyExtrinsicResult, KeyTypeId, Perbill, Percent, Permill,
 };
 use sp_staking::SessionIndex;
 #[cfg(any(feature = "std", test))]
@@ -340,7 +340,6 @@ impl pallet_session::historical::Config for Runtime {
 	type FullIdentificationOf = pallet_staking::ExposureOf<Runtime>;
 }
 
-use pallet_election_provider_multi_phase::WeightInfo;
 parameter_types! {
 	// phase durations. 1/4 of the last session for each.
 	pub const SignedPhase: u32 = EPOCH_DURATION_IN_SLOTS / 4;
@@ -353,14 +352,8 @@ parameter_types! {
 	// This formula is currently adjusted such that a typical solution will spend an amount equal
 	// to the base deposit for every 50 kb.
 	pub const SignedDepositByte: Balance = deposit(1, 0) / (50 * 1024);
-	pub SignedRewardBase: Balance = fee_for_submit_call::<Runtime>(
-		// give 20% threshold.
-		sp_runtime::FixedU128::saturating_from_rational(12, 10),
-		// maximum weight possible.
-		weights::pallet_election_provider_multi_phase::WeightInfo::<Runtime>::submit(SignedMaxSubmissions::get()),
-		// assume a solution of 100kb length.
-		100 * 1024
-	);
+	// Each good submission will get 1/10 SEL as reward
+	pub SignedRewardBase: Balance =  UNITS / 10;
 
 	// fallback: emergency phase.
 	pub const Fallback: pallet_election_provider_multi_phase::FallbackStrategy =

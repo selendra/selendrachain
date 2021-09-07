@@ -19,13 +19,9 @@
 use super::{BlockExecutionWeight, BlockLength, BlockWeights};
 use frame_support::{
 	parameter_types,
-	weights::{DispatchClass, DispatchInfo, Pays, Weight},
+	weights::{DispatchClass, Weight},
 };
-use pallet_transaction_payment::OnChargeTransaction;
-use sp_runtime::{
-	traits::{Dispatchable, Zero},
-	FixedPointNumber, FixedU128, Perbill,
-};
+use sp_runtime::Perbill;
 
 parameter_types! {
 	/// A limit for off-chain phragmen unsigned solution submission.
@@ -45,25 +41,6 @@ parameter_types! {
 		*BlockLength::get()
 		.max
 		.get(DispatchClass::Normal);
-}
-
-pub fn fee_for_submit_call<T>(
-	multiplier: FixedU128,
-	weight: Weight,
-	length: u32,
-) -> primitives::v1::Balance
-where
-	T: pallet_transaction_payment::Config,
-	<T as pallet_transaction_payment::Config>::OnChargeTransaction:
-		OnChargeTransaction<T, Balance = primitives::v1::Balance>,
-	<T as frame_system::Config>::Call: Dispatchable<Info = DispatchInfo>,
-{
-	let info = DispatchInfo { weight, class: DispatchClass::Normal, pays_fee: Pays::Yes };
-	multiplier.saturating_mul_int(pallet_transaction_payment::Pallet::<T>::compute_fee(
-		length,
-		&info,
-		Zero::zero(),
-	))
 }
 
 /// The numbers configured here should always be more than the the maximum limits of staking pallet
