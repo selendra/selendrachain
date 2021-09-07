@@ -10536,40 +10536,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dba1a27d3efae4351c8051072d619e3ade2820635c3958d826bfea39d59b54c8"
 
 [[package]]
-name = "staking-miner"
-version = "0.9.0"
-dependencies = [
- "env_logger 0.8.4",
- "frame-election-provider-support",
- "frame-support",
- "frame-system",
- "hex",
- "jsonrpsee-ws-client",
- "lazy_static",
- "log",
- "pallet-election-provider-multi-phase",
- "pallet-staking",
- "pallet-transaction-payment",
- "parity-scale-codec",
- "paste",
- "remote-externalities",
- "sc-transaction-pool-api",
- "selendra-core-primitives",
- "selendra-runtime",
- "selendra-runtime-common",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-npos-elections",
- "sp-runtime",
- "sp-version",
- "structopt",
- "thiserror",
- "tokio 0.2.21",
-]
-
-[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
