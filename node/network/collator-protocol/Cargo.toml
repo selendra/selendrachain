@@ -14,6 +14,7 @@ tracing = "0.1.26"
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
+# sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 
 selendra-primitives = { path = "../../../primitives" }
 selendra-node-network-protocol = { path = "../../network/protocol" }
