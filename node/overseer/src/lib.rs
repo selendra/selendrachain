@@ -91,6 +91,7 @@ use selendra_node_subsystem_types::messages::{
 	ApprovalVotingMessage, GossipSupportMessage,
 	NetworkBridgeEvent,
 	DisputeParticipationMessage, DisputeCoordinatorMessage, ChainSelectionMessage,
+	DisputeDistributionMessage,
 };
 pub use selendra_node_subsystem_types::{
 	OverseerSignal,
@@ -394,6 +395,9 @@ pub struct Overseer<SupportsParachains> {
 	#[subsystem(no_dispatch, wip, DisputeParticipationMessage)]
 	dispute_participation: DisputeParticipation,
 
+	#[subsystem(no_dispatch, wip, DisputeDistributionMessage)]
+	dipute_distribution: DisputeDistribution,
+
 	#[subsystem(no_dispatch, wip, ChainSelectionMessage)]
 	chain_selection: ChainSelection,
 
@@ -431,7 +435,7 @@ where
 	/// This returns the overseer along with an [`OverseerHandle`] which can
 	/// be used to send messages from external parts of the codebase.
 	///
-	/// The [`Handle`] returned from this function is connected to
+	/// The [`OverseerHandler`] returned from this function is connected to
 	/// the returned [`Overseer`].
 	///
 	/// ```text
@@ -832,7 +836,11 @@ where
 	fn handle_external_request(&mut self, request: ExternalRequest) {
 		match request {
 			ExternalRequest::WaitForActivation { hash, response_channel } => {
-				if self.active_leaves.get(&hash).is_some() {
+				// We use known leaves here because the `WaitForActivation` message
+				// is primarily concerned about leaves which subsystems have simply
+				// not been made aware of yet. Anything in the known leaves set,
+				// even if stale, has been activated in the past.
+				if self.known_leaves.peek(&hash).is_some() {
 					// it's fine if the listener is no longer interested
 					let _ = response_channel.send(Ok(()));
 				} else {

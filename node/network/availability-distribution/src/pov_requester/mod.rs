@@ -19,10 +19,8 @@
 use futures::{FutureExt, channel::oneshot, future::BoxFuture};
 
 use selendra_subsystem::jaeger;
-use selendra_node_network_protocol::{
-	request_response::{OutgoingRequest, Recipient, request::{RequestError, Requests},
-	v1::{PoVFetchingRequest, PoVFetchingResponse}}
-};
+use selendra_node_network_protocol::request_response::{OutgoingRequest, Recipient, request::{RequestError, Requests},
+	v1::{PoVFetchingRequest, PoVFetchingResponse}};
 use selendra_primitives::v1::{
 	CandidateHash, Hash, ValidatorIndex,
 };
@@ -49,7 +47,7 @@ pub async fn fetch_pov<Context>(
 where
 	Context: SubsystemContext,
 {
-	let info = &runtime.get_session_info(ctx, parent).await?.session_info;
+	let info = &runtime.get_session_info(ctx.sender(), parent).await?.session_info;
 	let authority_id = info.discovery_keys.get(from_validator.0 as usize)
 		.ok_or(NonFatal::InvalidValidatorIndex)?
 		.clone();
@@ -129,11 +127,12 @@ mod tests {
 	use selendra_primitives::v1::{CandidateHash, Hash, ValidatorIndex};
 	use selendra_node_primitives::BlockData;
 	use selendra_subsystem_testhelpers as test_helpers;
-	use selendra_subsystem::messages::{AllMessages, AvailabilityDistributionMessage, RuntimeApiMessage, RuntimeApiRequest};
+	use selendra_subsystem::messages::{AvailabilityDistributionMessage, RuntimeApiMessage, RuntimeApiRequest, AllMessages};
+	use test_helpers::mock::make_ferdie_keystore;
 
 	use super::*;
 	use crate::LOG_TARGET;
-	use crate::tests::mock::{make_session_info, make_ferdie_keystore};
+	use crate::tests::mock::{make_session_info};
 
 	#[test]
 	fn rejects_invalid_pov() {

@@ -8254,7 +8254,6 @@ dependencies = [
  "maplit",
  "parity-scale-codec",
  "rand 0.8.4",
- "sc-keystore",
  "sc-network",
  "selendra-erasure-coding",
  "selendra-node-core-runtime-api",
@@ -8389,6 +8388,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "selendra-dispute-distribution"
+version = "0.1.0"
+dependencies = [
+ "assert_matches",
+ "async-trait",
+ "futures 0.3.17",
+ "futures-timer 3.0.2",
+ "lazy_static",
+ "lru",
+ "maplit",
+ "parity-scale-codec",
+ "rand 0.8.4",
+ "sc-keystore",
+ "sc-network",
+ "selendra-erasure-coding",
+ "selendra-node-core-runtime-api",
+ "selendra-node-network-protocol",
+ "selendra-node-primitives",
+ "selendra-node-subsystem",
+ "selendra-node-subsystem-test-helpers",
+ "selendra-node-subsystem-util",
+ "selendra-primitives",
+ "smallvec 1.6.1",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-keyring",
+ "sp-keystore",
+ "sp-tracing",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
 name = "selendra-erasure-coding"
 version = "0.1.0"
 dependencies = [
@@ -8409,7 +8441,6 @@ dependencies = [
  "futures 0.3.17",
  "rand 0.8.4",
  "rand_chacha 0.3.1",
- "sc-keystore",
  "selendra-node-network-protocol",
  "selendra-node-subsystem",
  "selendra-node-subsystem-test-helpers",
@@ -8433,7 +8464,6 @@ dependencies = [
  "futures-timer 3.0.2",
  "parity-scale-codec",
  "parking_lot 0.11.1",
- "sc-authority-discovery",
  "sc-network",
  "selendra-node-network-protocol",
  "selendra-node-subsystem",
@@ -8733,8 +8763,10 @@ dependencies = [
 name = "selendra-node-network-protocol"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "futures 0.3.17",
  "parity-scale-codec",
+ "sc-authority-discovery",
  "sc-network",
  "selendra-node-jaeger",
  "selendra-node-primitives",
@@ -8762,6 +8794,7 @@ dependencies = [
  "sp-maybe-compressed-blob",
  "sp-runtime",
  "thiserror",
+ "tracing",
  "zstd",
 ]
 
@@ -8784,6 +8817,7 @@ dependencies = [
  "parity-scale-codec",
  "parking_lot 0.11.1",
  "pin-project 1.0.7",
+ "sc-keystore",
  "sc-network",
  "selendra-node-primitives",
  "selendra-node-subsystem",
@@ -8792,7 +8826,10 @@ dependencies = [
  "selendra-primitives",
  "selendra-statement-table",
  "smallvec 1.6.1",
+ "sp-application-crypto",
  "sp-core",
+ "sp-keyring",
+ "sp-keystore",
  "tracing",
 ]
 
@@ -9257,6 +9294,7 @@ dependencies = [
  "selendra-availability-recovery",
  "selendra-client",
  "selendra-collator-protocol",
+ "selendra-dispute-distribution",
  "selendra-gossip-support",
  "selendra-network-bridge",
  "selendra-node-collation-generation",

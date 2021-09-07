@@ -1,4 +1,6 @@
 // Copyright 2021 Parity Technologies (UK) Ltd.
+// This file is part of Polkadot.
+
 // Polkadot is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -15,8 +17,6 @@
 //! Large statement responding background task logic.
 
 use futures::{SinkExt, StreamExt, channel::{mpsc, oneshot}, stream::FuturesUnordered};
-
-use parity_scale_codec::Decode;
 
 use selendra_node_network_protocol::{
 	PeerId, UnifiedReputationChange as Rep,
@@ -85,35 +85,26 @@ pub async fn respond(
 			Some(v) => v,
 		};
 
-		let sc_network::config::IncomingRequest {
-			payload,
-			peer,
-			pending_response,
-		} = raw;
-
-		let payload = match StatementFetchingRequest::decode(&mut payload.as_ref()) {
+		let req =
+			match IncomingRequest::<StatementFetchingRequest>::try_from_raw(
+				raw,
+				vec![COST_INVALID_REQUEST],
+			) {
 			Err(err) => {
 				tracing::debug!(
 					target: LOG_TARGET,
 					?err,
 					"Decoding request failed"
 				);
-				report_peer(pending_response, COST_INVALID_REQUEST);
 				continue
 			}
 			Ok(payload) => payload,
 		};
 
-		let req = IncomingRequest::new(
-			peer,
-			payload,
-			pending_response
-		);
-
 		let (tx, rx) = oneshot::channel();
 		if let Err(err) = sender.feed(
 			ResponderMessage::GetData {
-				requesting_peer: peer,
+				requesting_peer: req.peer,
 				relay_parent: req.payload.relay_parent,
 				candidate_hash: req.payload.candidate_hash,
 				tx,
@@ -150,22 +141,5 @@ pub async fn respond(
 				"Sending response failed"
 			);
 		}
-	}
-}
-
-/// Report peer who sent us a request.
-fn report_peer(
-	tx: oneshot::Sender<sc_network::config::OutgoingResponse>,
-	rep: Rep,
-) {
-	if let Err(_) = tx.send(sc_network::config::OutgoingResponse {
-		result: Err(()),
-		reputation_changes: vec![rep.into_base_rep()],
-		sent_feedback: None,
-	}) {
-		tracing::debug!(
-			target: LOG_TARGET,
-			"Reporting peer failed."
-		);
 	}
 }

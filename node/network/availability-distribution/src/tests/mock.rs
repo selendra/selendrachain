@@ -14,35 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-
 //! Helper functions and tools to generate mock data useful for testing this subsystem.
 
 use std::sync::Arc;
 
-use sc_keystore::LocalKeystore;
 use sp_keyring::Sr25519Keyring;
-use sp_application_crypto::AppKey;
 
 use selendra_erasure_coding::{branches, obtain_chunks_v1 as obtain_chunks};
 use selendra_primitives::v1::{
 	CandidateCommitments, CandidateDescriptor, CandidateHash,
 	CommittedCandidateReceipt, GroupIndex, Hash, HeadData, Id as ParaId,
-	OccupiedCore, PersistedValidationData, SessionInfo, ValidatorId, ValidatorIndex
+	OccupiedCore, PersistedValidationData, SessionInfo, ValidatorIndex
 };
 use selendra_node_primitives::{PoV, ErasureChunk, AvailableData, BlockData};
-use sp_keystore::{SyncCryptoStore, SyncCryptoStorePtr};
 
-/// Get mock keystore with `Ferdie` key.
-pub fn make_ferdie_keystore() -> SyncCryptoStorePtr {
-	let keystore: SyncCryptoStorePtr = Arc::new(LocalKeystore::in_memory());
-	SyncCryptoStore::sr25519_generate_new(
-		&*keystore,
-		ValidatorId::ID,
-		Some(&Sr25519Keyring::Ferdie.to_seed()),
-	)
-	.expect("Insert key into keystore");
-	keystore
-}
 
 /// Create dummy session info with two validator groups.
 pub fn make_session_info() -> SessionInfo {

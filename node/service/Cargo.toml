@@ -85,10 +85,12 @@ selendra-runtime-parachains = { path = "../../modules/parachain/runtime" }
 selendra-runtime = { path = "../../runtime/selendra" }
 
 # Selendra Subsystems
+selendra-approval-distribution = { path = "../network/approval-distribution", optional = true }
 selendra-availability-bitfield-distribution = { path = "../network/bitfield-distribution", optional = true }
 selendra-availability-distribution = { path = "../network/availability-distribution", optional = true }
 selendra-availability-recovery = { path = "../network/availability-recovery", optional = true }
 selendra-collator-protocol = { path = "../network/collator-protocol", optional = true }
+selendra-dispute-distribution = { path = "../network/dispute-distribution", optional = true }
 selendra-gossip-support = { path = "../network/gossip-support", optional = true }
 selendra-network-bridge = { path = "../network/bridge", optional = true }
 selendra-node-collation-generation = { path = "../collation-generation", optional = true }
@@ -96,12 +98,11 @@ selendra-node-core-av-store = { path = "../core/av-store", optional = true }
 selendra-node-core-backing = { path = "../core/backing", optional = true }
 selendra-node-core-bitfield-signing = { path = "../core/bitfield-signing", optional = true }
 selendra-node-core-candidate-validation = { path = "../core/candidate-validation", optional = true }
+selendra-node-core-approval-voting = { path = "../core/approval-voting", optional = true }
 selendra-node-core-chain-api = { path = "../core/chain-api", optional = true }
 selendra-node-core-provisioner = { path = "../core/provisioner", optional = true }
 selendra-node-core-runtime-api = { path = "../core/runtime-api", optional = true }
 selendra-statement-distribution = { path = "../network/statement-distribution", optional = true }
-selendra-approval-distribution = { path = "../network/approval-distribution", optional = true }
-selendra-node-core-approval-voting = { path = "../core/approval-voting", optional = true }
 
 # Evm
 pallet-evm = { path = "../../vendor/frontier/frame/evm"}
@@ -125,6 +126,7 @@ full-node = [
 	"selendra-availability-distribution",
 	"selendra-availability-recovery",
 	"selendra-collator-protocol",
+	"selendra-dispute-distribution",
 	"selendra-gossip-support",
 	"selendra-network-bridge",
 	"selendra-node-collation-generation",

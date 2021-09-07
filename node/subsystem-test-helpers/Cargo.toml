@@ -13,14 +13,18 @@ tracing = "0.1.26"
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
 parking_lot = "0.11.1"
 pin-project = "1.0.7"
+smallvec = "1.6.1"
 selendra-node-primitives = { path = "../primitives" }
 selendra-node-subsystem = { path = "../subsystem" }
 selendra-node-subsystem-util = { path = "../subsystem-util" }
 selendra-primitives = { path = "../../primitives" }
 selendra-statement-table = { path = "../../modules/statement-table" }
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
-smallvec = "1.6.1"
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9"}
 
 [dev-dependencies]
 selendra-overseer = { path = "../overseer" }
