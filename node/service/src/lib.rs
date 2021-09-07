@@ -57,7 +57,7 @@ pub use {
 	sp_authority_discovery::AuthorityDiscoveryApi,
 	sc_client_api::AuxStore,
 	selendra_primitives::v1::ParachainHost,
-	selendra_overseer::{Overseer, OverseerHandler},
+	selendra_overseer::{Overseer, Handle},
 };
 pub use sp_core::traits::SpawnNamed;
 
@@ -436,7 +436,7 @@ fn new_partial<RuntimeApi, Executor>(
 pub struct NewFull<C> {
 	pub task_manager: TaskManager,
 	pub client: C,
-	pub overseer_handler: Option<OverseerHandler>,
+	pub overseer_handler: Option<Handle>,
 	pub network: Arc<sc_network::NetworkService<Block, <Block as BlockT>::Hash>>,
 	pub rpc_handlers: RpcHandlers,
 	pub backend: Arc<FullBackend>,

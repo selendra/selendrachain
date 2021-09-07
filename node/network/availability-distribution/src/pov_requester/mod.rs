@@ -29,7 +29,7 @@ use selendra_primitives::v1::{
 use selendra_node_primitives::PoV;
 use selendra_subsystem::{
 	SubsystemContext,
-	messages::{AllMessages, NetworkBridgeMessage, IfDisconnected}
+	messages::{NetworkBridgeMessage, IfDisconnected}
 };
 use selendra_node_subsystem_util::runtime::RuntimeInfo;
 
@@ -62,7 +62,6 @@ where
 	let full_req = Requests::PoVFetching(req);
 
 	ctx.send_message(
-		AllMessages::NetworkBridge(
 			NetworkBridgeMessage::SendRequests(
 				vec![full_req],
 				// We are supposed to be connected to validators of our group via `PeerSet`,
@@ -70,7 +69,7 @@ where
 				// longer to get established, so we try to connect in any case.
 				IfDisconnected::TryConnect
 			)
-	)).await;
+	).await;
 
 	let span = jaeger::Span::new(candidate_hash, "fetch-pov")
 		.with_validator_index(from_validator)
@@ -130,7 +129,7 @@ mod tests {
 	use selendra_primitives::v1::{CandidateHash, Hash, ValidatorIndex};
 	use selendra_node_primitives::BlockData;
 	use selendra_subsystem_testhelpers as test_helpers;
-	use selendra_subsystem::messages::{AvailabilityDistributionMessage, RuntimeApiMessage, RuntimeApiRequest};
+	use selendra_subsystem::messages::{AllMessages, AvailabilityDistributionMessage, RuntimeApiMessage, RuntimeApiRequest};
 
 	use super::*;
 	use crate::LOG_TARGET;

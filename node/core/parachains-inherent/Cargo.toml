@@ -11,7 +11,6 @@ tracing = "0.1.26"
 thiserror = "1.0.23"
 async-trait = "0.1.47"
 selendra-node-subsystem = { path = "../../subsystem" }
-selendra-overseer = { path = "../../overseer" }
 selendra-primitives = { path = "../../../primitives" }
 sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }

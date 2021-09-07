@@ -18,7 +18,7 @@
 //! Error handling related code and Error/Result definitions.
 
 use selendra_node_primitives::UncheckedSignedFullStatement;
-use selendra_subsystem::SubsystemError;
+use selendra_subsystem::errors::SubsystemError;
 use thiserror::Error;
 
 use selendra_node_subsystem_util::{Fault, runtime, unwrap_non_fatal};

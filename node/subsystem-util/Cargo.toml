@@ -21,8 +21,10 @@ lru = "0.6.5"
 selendra-node-primitives = { path = "../primitives" }
 selendra-node-subsystem = { path = "../subsystem" }
 selendra-node-jaeger = { path = "../jaeger" }
+selendra-node-metrics = { path = "../metrics" }
 selendra-node-network-protocol = { path = "../network/protocol" }
 selendra-primitives = { path = "../../primitives" }
+selendra-overseer = { path = "../overseer" }
 metered-channel = { path = "../metered-channel"}
 
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }

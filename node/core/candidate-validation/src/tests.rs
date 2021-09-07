@@ -15,6 +15,7 @@
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::*;
+use selendra_node_subsystem::messages::AllMessages;
 use selendra_node_subsystem_test_helpers as test_helpers;
 use selendra_primitives::v1::{HeadData, UpwardMessage};
 use sp_core::testing::TaskExecutor;

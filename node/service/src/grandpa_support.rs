@@ -27,7 +27,7 @@ use {
 	selendra_primitives::v1::{Block as SelendraBlock, Header as SelendraHeader},
 	selendra_subsystem::messages::ApprovalVotingMessage,
 	prometheus_endpoint::{self, Registry},
-	selendra_overseer::OverseerHandler,
+	selendra_overseer::Handle,
 	futures::channel::oneshot,
 };
 
@@ -41,13 +41,13 @@ use {
 #[derive(Clone)]
 pub(crate) struct ApprovalCheckingVotingRule {
 	checking_lag: Option<prometheus_endpoint::Gauge<prometheus_endpoint::U64>>,
-	overseer: OverseerHandler,
+	overseer: Handle,
 }
 
 #[cfg(feature = "full-node")]
 impl ApprovalCheckingVotingRule {
 	/// Create a new approval checking diagnostic voting rule.
-	pub fn new(overseer: OverseerHandler, registry: Option<&Registry>)
+	pub fn new(overseer: Handle, registry: Option<&Registry>)
 		-> Result<Self, prometheus_endpoint::PrometheusError>
 	{
 		Ok(ApprovalCheckingVotingRule {

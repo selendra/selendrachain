@@ -16,6 +16,7 @@ sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polk
 selendra-subsystem = { package = "selendra-node-subsystem", path = "../../subsystem" }
 selendra-node-network-protocol = { path = "../protocol" }
 selendra-node-subsystem-util = { path = "../../subsystem-util"}
+selendra-overseer = { path = "../../overseer" }
 strum = "0.20.0"
 parking_lot = "0.11.1"
 

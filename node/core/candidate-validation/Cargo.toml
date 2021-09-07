@@ -15,7 +15,7 @@ parity-scale-codec = { version = "2.0.0", default-features = false, features = [
 selendra-primitives = { path = "../../../primitives" }
 selendra-parachain = { path = "../../../modules/parachain" }
 selendra-node-primitives = { path = "../../primitives" }
-selendra-subsystem = { package = "selendra-node-subsystem", path = "../../subsystem" }
+selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 
 [target.'cfg(not(any(target_os = "android", target_os = "unknown")))'.dependencies]

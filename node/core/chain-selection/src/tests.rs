@@ -31,8 +31,11 @@ use sp_core::testing::TaskExecutor;
 use assert_matches::assert_matches;
 
 use selendra_primitives::v1::{BlakeTwo256, HashT, ConsensusLog};
-use selendra_subsystem::{jaeger, ActiveLeavesUpdate, ActivatedLeaf, LeafStatus};
-use selendra_subsystem::messages::AllMessages;
+use selendra_node_subsystem::{
+	messages::AllMessages,
+	jaeger,
+	ActiveLeavesUpdate, ActivatedLeaf, LeafStatus,
+};
 use selendra_node_subsystem_test_helpers as test_helpers;
 
 #[derive(Default)]

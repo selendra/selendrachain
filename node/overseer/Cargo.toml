@@ -10,17 +10,21 @@ client = { package = "sc-client-api", git = "https://github.com/paritytech/subst
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 futures = "0.3.15"
 futures-timer = "3.0.2"
-selendra-node-primitives = { package = "selendra-node-primitives", path = "../primitives" }
-selendra-node-subsystem-util = { path = "../subsystem-util" }
-selendra-procmacro-overseer-subsystems-gen = { path = "./subsystems-gen" }
+selendra-node-network-protocol = { path = "../network/protocol" }
+selendra-node-primitives = { path = "../primitives" }
+selendra-node-subsystem-types = { path = "../subsystem-types" }
+selendra-node-metrics = { path = "../metrics" }
 selendra-primitives = { path = "../../primitives" }
-selendra-subsystem = { package = "selendra-node-subsystem", path = "../subsystem" }
+selendra-overseer-gen = { path = "./overseer-gen" }
+selendra-overseer-all-subsystems-gen = { path = "./all-subsystems-gen" }
 tracing = "0.1.26"
 lru = "0.6"
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 selendra-node-network-protocol = { path = "../network/protocol" }
+selendra-node-metrics = { path = "../metrics" }
+metered-channel = { path = "../metered-channel" }
 futures = { version = "0.3.15", features = ["thread-pool"] }
 femme = "2.1.1"
 kv-log-macro = "1.0.7"
