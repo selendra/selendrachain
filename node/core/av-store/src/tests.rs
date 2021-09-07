@@ -32,8 +32,8 @@ use selendra_primitives::v1::{
 use selendra_node_primitives::{AvailableData, BlockData, PoV};
 use selendra_node_subsystem_util::TimeoutExt;
 use selendra_subsystem::{
-	ActiveLeavesUpdate, errors::RuntimeApiError, jaeger, messages::AllMessages, ActivatedLeaf,
-	LeafStatus,
+	ActiveLeavesUpdate, errors::RuntimeApiError, jaeger, ActivatedLeaf,
+	LeafStatus, messages::{AllMessages, RuntimeApiMessage, RuntimeApiRequest},
 };
 use selendra_node_subsystem_test_helpers as test_helpers;
 use sp_keyring::Sr25519Keyring;
