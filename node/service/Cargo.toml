@@ -157,3 +157,4 @@ runtime-benchmarks = [
 try-runtime = [
 	"selendra-runtime/try-runtime",
 ]
+disputes = ["selendra-node-core-dispute-coordinator/disputes"]
