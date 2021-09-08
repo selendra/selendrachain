@@ -22,7 +22,6 @@
 //! been sufficiently approved to finalize.
 
 use kvdb::KeyValueDB;
-use sc_keystore::LocalKeystore;
 use selendra_node_jaeger as jaeger;
 use selendra_node_primitives::{
 	approval::{
@@ -53,6 +52,7 @@ use selendra_primitives::v1::{
 	GroupIndex, Hash, SessionIndex, SessionInfo, ValidDisputeStatementKind, ValidatorId,
 	ValidatorIndex, ValidatorPair, ValidatorSignature,
 };
+use sc_keystore::LocalKeystore;
 use sp_application_crypto::Pair;
 use sp_consensus::SyncOracle;
 use sp_consensus_slots::Slot;
@@ -452,8 +452,9 @@ impl Wakeups {
 			Some(tick) => {
 				clock.wait(tick).await;
 				match self.wakeups.entry(tick) {
-					Entry::Vacant(_) =>
-						panic!("entry is known to exist since `first` was `Some`; qed"),
+					Entry::Vacant(_) => {
+						panic!("entry is known to exist since `first` was `Some`; qed")
+					},
 					Entry::Occupied(mut entry) => {
 						let (hash, candidate_hash) = entry.get_mut().pop()
 							.expect("empty entries are removed here and in `schedule`; no other mutation of this map; qed");
@@ -913,8 +914,9 @@ async fn handle_actions(
 				.await;
 
 				match confirmation_rx.await {
-					Err(oneshot::Canceled) =>
-						tracing::warn!(target: LOG_TARGET, "Dispute coordinator confirmation lost",),
+					Err(oneshot::Canceled) => {
+						tracing::warn!(target: LOG_TARGET, "Dispute coordinator confirmation lost",)
+					},
 					Ok(ImportStatementsResult::ValidImport) => {},
 					Ok(ImportStatementsResult::InvalidImport) => tracing::warn!(
 						target: LOG_TARGET,

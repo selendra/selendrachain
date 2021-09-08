@@ -32,7 +32,7 @@ use selendra_node_network_protocol::{
 	},
 	v1 as protocol_v1, OurView, PeerId, UnifiedReputationChange as Rep, View,
 };
-use selendra_node_primitives::{PoV, SignedFullStatement, Statement};
+use selendra_node_primitives::{CollationSecondedSignal, PoV, Statement};
 use selendra_node_subsystem_util::{
 	metrics::{self, prometheus},
 	runtime::{get_availability_cores, get_group_rotation_info, RuntimeInfo},
@@ -63,7 +63,7 @@ const COST_APPARENT_FLOOD: Rep =
 ///
 /// This is to protect from a single slow validator preventing collations from happening.
 ///
-/// With a collation size of 5Meg and bandwidth of 500Mbit/s (requirement for Kusama validators),
+/// With a collation size of 5MB and bandwidth of 500Mbit/s (requirement for Kusama validators),
 /// the transfer should be possible within 0.1 seconds. 400 milliseconds should therefore be
 /// plenty and should be low enough for later validators to still be able to finish on time.
 ///
@@ -266,7 +266,7 @@ struct State {
 	collations: HashMap<Hash, Collation>,
 
 	/// The result senders per collation.
-	collation_result_senders: HashMap<CandidateHash, oneshot::Sender<SignedFullStatement>>,
+	collation_result_senders: HashMap<CandidateHash, oneshot::Sender<CollationSecondedSignal>>,
 
 	/// Our validator groups per active leaf.
 	our_validators_groups: HashMap<Hash, ValidatorGroup>,
@@ -336,7 +336,7 @@ async fn distribute_collation<Context>(
 	id: ParaId,
 	receipt: CandidateReceipt,
 	pov: PoV,
-	result_sender: Option<oneshot::Sender<SignedFullStatement>>,
+	result_sender: Option<oneshot::Sender<CollationSecondedSignal>>,
 ) -> Result<()>
 where
 	Context: SubsystemContext<Message = CollatorProtocolMessage>,
@@ -866,7 +866,7 @@ where
 						?origin,
 						"received a `CollationSeconded`",
 					);
-					let _ = sender.send(statement);
+					let _ = sender.send(CollationSecondedSignal { statement, relay_parent });
 				}
 			}
 		},
