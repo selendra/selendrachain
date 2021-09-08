@@ -60,14 +60,14 @@ selendra-runtime-parachains = { path = "../../modules/parachain/runtime", defaul
 
 # Frontier
 evm = { version = "0.27.0", default-features = false, features = ["with-codec"] }
-fp-rpc = { path = "../../vendor/frontier/primitives/rpc", default-features = false }
-pallet-evm = { path = "../../vendor/frontier/frame/evm", default-features = false }
-pallet-ethereum  = { path = "../../vendor/frontier/frame/ethereum", default-features = false }
-pallet-evm-precompile-bn128 = { path = "../../vendor/frontier/frame/evm/precompile/bn128", default-features = false }
-pallet-evm-precompile-dispatch = { path = "../../vendor/frontier/frame/evm/precompile/dispatch", default-features = false }
-pallet-evm-precompile-modexp = { path = "../../vendor/frontier/frame/evm/precompile/modexp", default-features = false }
-pallet-evm-precompile-simple = { path = "../../vendor/frontier/frame/evm/precompile/simple", default-features = false }
-pallet-evm-precompile-sha3fips = { path = "../../vendor/frontier/frame/evm/precompile/sha3fips", default-features = false }
+fp-rpc = { path = "../../vendors/frontier/primitives/rpc", default-features = false }
+pallet-evm = { path = "../../vendors/frontier/frame/evm", default-features = false }
+pallet-ethereum  = { path = "../../vendors/frontier/frame/ethereum", default-features = false }
+pallet-evm-precompile-bn128 = { path = "../../vendors/frontier/frame/evm/precompile/bn128", default-features = false }
+pallet-evm-precompile-dispatch = { path = "../../vendors/frontier/frame/evm/precompile/dispatch", default-features = false }
+pallet-evm-precompile-modexp = { path = "../../vendors/frontier/frame/evm/precompile/modexp", default-features = false }
+pallet-evm-precompile-simple = { path = "../../vendors/frontier/frame/evm/precompile/simple", default-features = false }
+pallet-evm-precompile-sha3fips = { path = "../../vendors/frontier/frame/evm/precompile/sha3fips", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.1"

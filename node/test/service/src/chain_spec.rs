@@ -160,7 +160,7 @@ fn selendra_testnet_genesis(
 		sudo: runtime::SudoConfig { key: root_key },
 		evm: runtime::EvmConfig { accounts: BTreeMap::new() },
 		ethereum: runtime::EthereumConfig {},
-		parachains_configuration: runtime::ParachainsConfigurationConfig {
+		configuration: runtime::ConfigurationConfig {
 			config: selendra_runtime_parachains::configuration::HostConfiguration {
 				validation_upgrade_frequency: 10u32,
 				validation_upgrade_delay: 5,

@@ -35,8 +35,8 @@ beefy-gadget-rpc = { git = "https://github.com/paritytech/grandpa-bridge-gadget"
 
 selendra-runtime = { path = "../../runtime/selendra" }
 selendra-primitives = { path = "../../primitives" }
-pallet-ethereum = { path = "../../vendor/frontier/frame/ethereum" }
-fp-rpc = { path = "../../vendor/frontier/primitives/rpc"}
-fc-rpc = { path = "../../vendor/frontier/client/rpc" }
-fc-rpc-core = { path = "../../vendor/frontier/client/rpc-core" }
-fc-db = { path = "../../vendor/frontier/client/db" }
+pallet-ethereum = { path = "../../vendors/frontier/frame/ethereum" }
+fp-rpc = { path = "../../vendors/frontier/primitives/rpc"}
+fc-rpc = { path = "../../vendors/frontier/client/rpc" }
+fc-rpc-core = { path = "../../vendors/frontier/client/rpc-core" }
+fc-db = { path = "../../vendors/frontier/client/db" }

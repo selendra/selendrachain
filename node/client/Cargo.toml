@@ -33,4 +33,4 @@ beefy-primitives = { git = "https://github.com/paritytech/grandpa-bridge-gadget"
 selendra-runtime = { path = "../../runtime/selendra" }
 selendra-primitives = { path = "../../primitives" }
 
-fp-rpc = { path = "../../vendor/frontier/primitives/rpc"}
+fp-rpc = { path = "../../vendors/frontier/primitives/rpc"}

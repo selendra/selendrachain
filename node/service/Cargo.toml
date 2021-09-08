@@ -109,12 +109,12 @@ selendra-node-core-runtime-api = { path = "../core/runtime-api", optional = true
 selendra-statement-distribution = { path = "../network/statement-distribution", optional = true }
 
 # Evm
-pallet-evm = { path = "../../vendor/frontier/frame/evm"}
-fc-db = { path = "../../vendor/frontier/client/db"}
-fc-rpc = { path = "../../vendor/frontier/client/rpc"}
-fc-consensus = { path = "../../vendor/frontier/client/consensus"}
-fc-rpc-core = { path = "../../vendor/frontier/client/rpc-core"}
-fc-mapping-sync = { path = "../../vendor/frontier/client/mapping-sync"}
+pallet-evm = { path = "../../vendors/frontier/frame/evm"}
+fc-db = { path = "../../vendors/frontier/client/db"}
+fc-rpc = { path = "../../vendors/frontier/client/rpc"}
+fc-consensus = { path = "../../vendors/frontier/client/consensus"}
+fc-rpc-core = { path = "../../vendors/frontier/client/rpc-core"}
+fc-mapping-sync = { path = "../../vendors/frontier/client/mapping-sync"}
 
 [dev-dependencies]
 selendra-test-client = { path = "../test/client" }
