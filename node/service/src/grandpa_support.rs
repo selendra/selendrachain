@@ -109,8 +109,8 @@ where
 mod tests {
 	use consensus_common::BlockOrigin;
 	use grandpa::VotingRule;
-	use polkadot_test_client::{
-		ClientBlockImportExt, DefaultTestClientBuilderExt, InitPolkadotBlockBuilder,
+	use selendra_test_client::{
+		ClientBlockImportExt, DefaultTestClientBuilderExt, InitSelendraBlockBuilder,
 		TestClientBuilder, TestClientBuilderExt,
 	};
 	use sp_blockchain::HeaderBackend;
@@ -128,7 +128,7 @@ mod tests {
 
 			move |n| {
 				for _ in 0..n {
-					let block = client.init_polkadot_block_builder().build().unwrap().block;
+					let block = client.init_selendra_block_builder().build().unwrap().block;
 					futures::executor::block_on(client.import(BlockOrigin::Own, block)).unwrap();
 				}
 			}
