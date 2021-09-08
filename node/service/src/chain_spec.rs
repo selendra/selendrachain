@@ -46,6 +46,10 @@ pub struct Extensions {
 	pub fork_blocks: sc_client_api::ForkBlocks<selendra_primitives::v1::Block>,
 	/// Known bad block hashes.
 	pub bad_blocks: sc_client_api::BadBlocks<selendra_primitives::v1::Block>,
+	// The light sync state.
+	///
+	/// This value will be set by the `sync-state rpc` implementation.
+	pub light_sync_state: sc_sync_state_rpc::LightSyncStateExtension,
 }
 
 /// The `ChainSpec` parameterized for the selendra runtime.

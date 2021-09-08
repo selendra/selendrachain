@@ -63,6 +63,7 @@ use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
 		Contains, Everything, FindAuthor, InstanceFilter, KeyOwnerProofSystem, LockIdentifier,
+		OnRuntimeUpgrade,
 	},
 	weights::Weight,
 	ConsensusEngineId, PalletId, RuntimeDebug,
@@ -157,6 +158,7 @@ impl Contains<Call> for BaseFilter {
 		!matches!(c, Call::Registrar(paras_registrar::Call::swap(..)))
 	}
 }
+
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const SS58Prefix: u16 = 972;
@@ -538,7 +540,7 @@ impl pallet_democracy::Config for Runtime {
 	/// (NTB) vote.
 	type ExternalDefaultOrigin =
 		pallet_collective::EnsureProportionAtLeast<_1, _1, AccountId, CouncilCollective>;
-	/// Two thirds of the technical committee can have an ExternalMajority/ExternalDefault vote
+	/// Two thirds of the technical committee can have an `ExternalMajority/ExternalDefault` vote
 	/// be tabled immediately and with a shorter voting/enactment period.
 	type FastTrackOrigin =
 		pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, TechnicalCollective>;
@@ -825,7 +827,6 @@ where
 }
 
 parameter_types! {
-	// Minimum 100 bytes/SEL deposited (1 CENT/byte)
 	pub const BasicDeposit: Balance = 1 * UNITS;       // 258 bytes on-chain
 	pub const FieldDeposit: Balance = 2 * UNITS;        // 66 bytes on-chain
 	pub const SubAccountDeposit: Balance = 2 * UNITS;   // 53 bytes on-chain
@@ -989,16 +990,14 @@ impl InstanceFilter<Call> for ProxyType {
 					Call::Treasury(..) | Call::Bounties(..) |
 					Call::Tips(..) | Call::Utility(..)
 			),
-			ProxyType::Staking => {
-				matches!(c, Call::Staking(..) | Call::Session(..) | Call::Utility(..))
-			},
+			ProxyType::Staking =>
+				matches!(c, Call::Staking(..) | Call::Session(..) | Call::Utility(..)),
 			ProxyType::IdentityJudgement => matches!(
 				c,
 				Call::Identity(pallet_identity::Call::provide_judgement(..)) | Call::Utility(..)
 			),
-			ProxyType::CancelProxy => {
-				matches!(c, Call::Proxy(pallet_proxy::Call::reject_announcement(..)))
-			},
+			ProxyType::CancelProxy =>
+				matches!(c, Call::Proxy(pallet_proxy::Call::reject_announcement(..))),
 		}
 	}
 	fn is_superset(&self, o: &Self) -> bool {
@@ -1206,7 +1205,7 @@ pub type XcmRouter = (
 
 parameter_types! {
 	pub const SelendraForIndracore: (MultiAsset, MultiLocation) =
-		(AllConcreteFungible { id: Null }, X1(Parachain(888)));
+		(AllConcreteFungible { id: Null }, X1(Parachain(972)));
 }
 pub type TrustedTeleporters = (xcm_builder::Case<SelendraForIndracore>,);
 
@@ -1540,7 +1539,7 @@ construct_runtime! {
 		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin} = 99,
 
 		// sudo
-		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 100,
 	}
 }
 
@@ -1552,9 +1551,9 @@ pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
-/// BlockId type as expected by this runtime.
+/// `BlockId` type as expected by this runtime.
 pub type BlockId = generic::BlockId<Block>;
-/// The SignedExtension to the basic transaction logic.
+/// The `SignedExtension` to the basic transaction logic.
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
@@ -1573,7 +1572,20 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPallets,
+	MigratePalletVersionToStorageVersion,
 >;
+
+/// Migrate from `PalletVersion` to the new `StorageVersion`
+pub struct MigratePalletVersionToStorageVersion;
+
+impl OnRuntimeUpgrade for MigratePalletVersionToStorageVersion {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		frame_support::migrations::migrate_from_pallet_version_to_storage_version::<
+			AllPalletsWithSystem,
+		>(&RocksDbWeight::get())
+	}
+}
+
 /// The payload being signed in the transactions.
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
@@ -2000,15 +2012,64 @@ sp_api::impl_runtime_apis! {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
+		fn benchmark_metadata(extra: bool) -> (
+			Vec<frame_benchmarking::BenchmarkList>,
+			Vec<frame_support::traits::StorageInfo>,
+		) {
+			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_support::traits::StorageInfoTrait;
+
+			use pallet_session_benchmarking::Pallet as SessionBench;
+			use pallet_offences_benchmarking::Pallet as OffencesBench;
+			use frame_system_benchmarking::Pallet as SystemBench;
+
+			let mut list = Vec::<BenchmarkList>::new();
+
+			// NOTE: Make sure to prefix these `runtime_common::` so that path resolves correctly
+			// in the generated file.
+			list_benchmark!(list, extra, runtime_common::auctions, Auctions);
+			list_benchmark!(list, extra, runtime_common::crowdloan, Crowdloan);
+			list_benchmark!(list, extra, runtime_common::slots, Slots);
+			list_benchmark!(list, extra, runtime_common::paras_registrar, Registrar);
+			// Substrate
+			list_benchmark!(list, extra, pallet_balances, Balances);
+			list_benchmark!(list, extra, pallet_bounties, Bounties);
+			list_benchmark!(list, extra, pallet_collective, Council);
+			list_benchmark!(list, extra, pallet_democracy, Democracy);
+			list_benchmark!(list, extra, pallet_elections_phragmen, PhragmenElection);
+			list_benchmark!(list, extra, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
+			list_benchmark!(list, extra, pallet_gilt, Gilt);
+			list_benchmark!(list, extra, pallet_identity, Identity);
+			list_benchmark!(list, extra, pallet_im_online, ImOnline);
+			list_benchmark!(list, extra, pallet_indices, Indices);
+			list_benchmark!(list, extra, pallet_membership, TechnicalMembership);
+			list_benchmark!(list, extra, pallet_multisig, Multisig);
+			list_benchmark!(list, extra, pallet_offences, OffencesBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_proxy, Proxy);
+			list_benchmark!(list, extra, pallet_scheduler, Scheduler);
+			list_benchmark!(list, extra, pallet_session, SessionBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_staking, Staking);
+			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
+			list_benchmark!(list, extra, pallet_tips, Tips);
+			list_benchmark!(list, extra, pallet_treasury, Treasury);
+			list_benchmark!(list, extra, pallet_utility, Utility);
+			list_benchmark!(list, extra, pallet_vesting, Vesting);
+
+			let storage_info = AllPalletsWithSystem::storage_info();
+
+			return (list, storage_info)
+		}
+
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
-		) -> Result< (Vec<frame_benchmarking::BenchmarkBatch>, Vec<frame_support::traits::StorageInfo>), sp_runtime::RuntimeString,
+		) -> Result<
+			Vec<frame_benchmarking::BenchmarkBatch>,
+			sp_runtime::RuntimeString,
 		> {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
-			use frame_support::traits::StorageInfoTrait;
-			// Trying to add benchmarks directly to the Session Pallet caused cyclic dependency issues.
-			// To get around that, we separated the Session benchmarks into its own crate, which is why
-			// we need these two lines below.
+			// Trying to add benchmarks directly to some pallets caused cyclic dependency issues.
+			// To get around that, we separated the benchmarks into its own crate.
 			use pallet_session_benchmarking::Pallet as SessionBench;
 			use pallet_offences_benchmarking::Pallet as OffencesBench;
 			use frame_system_benchmarking::Pallet as SystemBench;
@@ -2066,8 +2127,7 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_vesting, Vesting);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
-			let storage_info = AllPalletsWithSystem::storage_info();
-			Ok((batches, storage_info))
+			Ok(batches)
 		}
 	}
 }
