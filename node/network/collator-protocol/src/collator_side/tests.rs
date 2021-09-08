@@ -272,16 +272,12 @@ async fn setup_system(virtual_overseer: &mut VirtualOverseer, test_state: &TestS
 
 	overseer_signal(
 		virtual_overseer,
-		OverseerSignal::ActiveLeaves(ActiveLeavesUpdate {
-			activated: vec![ActivatedLeaf {
-				hash: test_state.relay_parent,
-				number: 1,
-				status: LeafStatus::Fresh,
-				span: Arc::new(jaeger::Span::Disabled),
-			}]
-			.into(),
-			deactivated: [][..].into(),
-		}),
+		OverseerSignal::ActiveLeaves(ActiveLeavesUpdate::start_work(ActivatedLeaf {
+			hash: test_state.relay_parent,
+			number: 1,
+			status: LeafStatus::Fresh,
+			span: Arc::new(jaeger::Span::Disabled),
+		})),
 	)
 	.await;
 
@@ -852,7 +848,7 @@ fn collators_reject_declare_messages() {
 ///
 /// After the first response is done, the passed in lambda will be called with the receiver for the
 /// next response and a sender for giving feedback on the response of the first transmission. After
-/// the lamda has passed it is assumed that the second response is sent, which is checked by this
+/// the lambda has passed it is assumed that the second response is sent, which is checked by this
 /// function.
 ///
 /// The lambda can trigger occasions on which the second response should be sent, like timeouts,

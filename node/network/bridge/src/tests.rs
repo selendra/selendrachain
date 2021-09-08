@@ -1274,12 +1274,10 @@ fn spread_event_to_subsystems_is_up_to_date() {
 			AllMessages::StatementDistribution(_) => {
 				cnt += 1;
 			},
-			AllMessages::AvailabilityDistribution(_) => {
-				unreachable!("Not interested in network events")
-			},
-			AllMessages::AvailabilityRecovery(_) => {
-				unreachable!("Not interested in network events")
-			},
+			AllMessages::AvailabilityDistribution(_) =>
+				unreachable!("Not interested in network events"),
+			AllMessages::AvailabilityRecovery(_) =>
+				unreachable!("Not interested in network events"),
 			AllMessages::BitfieldDistribution(_) => {
 				cnt += 1;
 			},
@@ -1295,9 +1293,8 @@ fn spread_event_to_subsystems_is_up_to_date() {
 			},
 			AllMessages::GossipSupport(_) => unreachable!("Not interested in network events"),
 			AllMessages::DisputeCoordinator(_) => unreachable!("Not interested in network events"),
-			AllMessages::DisputeParticipation(_) => {
-				unreachable!("Not interested in network events")
-			},
+			AllMessages::DisputeParticipation(_) =>
+				unreachable!("Not interested in network events"),
 			AllMessages::DisputeDistribution(_) => unreachable!("Not interested in network events"),
 			AllMessages::ChainSelection(_) => unreachable!("Not interested in network events"),
 			// Add variants here as needed, `{ cnt += 1; }` for those that need to be
@@ -1314,33 +1311,22 @@ fn our_view_updates_decreasing_order_and_limited_to_max() {
 
 		// to show that we're still connected on the collation protocol, send a view update.
 
-		let hashes = (0..MAX_VIEW_HEADS * 3).map(|i| Hash::repeat_byte(i as u8));
+		let hashes = (0..MAX_VIEW_HEADS + 1).map(|i| Hash::repeat_byte(i as u8));
 
-		virtual_overseer
-			.send(FromOverseer::Signal(OverseerSignal::ActiveLeaves(
-				// These are in reverse order, so the subsystem must sort internally to
-				// get the correct view.
-				ActiveLeavesUpdate {
-					activated: hashes
-						.enumerate()
-						.map(|(i, h)| ActivatedLeaf {
-							hash: h,
-							number: i as _,
-							status: LeafStatus::Fresh,
-							span: Arc::new(jaeger::Span::Disabled),
-						})
-						.rev()
-						.collect(),
-					deactivated: Default::default(),
-				},
-			)))
-			.await;
-
-		let view_heads = (MAX_VIEW_HEADS * 2..MAX_VIEW_HEADS * 3)
-			.rev()
-			.map(|i| (Hash::repeat_byte(i as u8), Arc::new(jaeger::Span::Disabled)));
-
-		let our_view = OurView::new(view_heads, 0);
+		for (i, hash) in hashes.enumerate().rev() {
+			// These are in reverse order, so the subsystem must sort internally to
+			// get the correct view.
+			virtual_overseer
+				.send(FromOverseer::Signal(OverseerSignal::ActiveLeaves(
+					ActiveLeavesUpdate::start_work(ActivatedLeaf {
+						hash,
+						number: i as _,
+						status: LeafStatus::Fresh,
+						span: Arc::new(jaeger::Span::Disabled),
+					}),
+				)))
+				.await;
+		}
 
 		assert_matches!(
 			virtual_overseer.recv().await,
@@ -1353,17 +1339,29 @@ fn our_view_updates_decreasing_order_and_limited_to_max() {
 			)
 		);
 
-		assert_sends_validation_event_to_all(
-			NetworkBridgeEvent::OurViewChange(our_view.clone()),
-			&mut virtual_overseer,
-		)
-		.await;
+		let our_views = (1..=MAX_VIEW_HEADS).rev().map(|start| {
+			OurView::new(
+				(start..=MAX_VIEW_HEADS)
+					.rev()
+					.map(|i| (Hash::repeat_byte(i as u8), Arc::new(jaeger::Span::Disabled))),
+				0,
+			)
+		});
 
-		assert_sends_collation_event_to_all(
-			NetworkBridgeEvent::OurViewChange(our_view),
-			&mut virtual_overseer,
-		)
-		.await;
+		for our_view in our_views {
+			assert_sends_validation_event_to_all(
+				NetworkBridgeEvent::OurViewChange(our_view.clone()),
+				&mut virtual_overseer,
+			)
+			.await;
+
+			assert_sends_collation_event_to_all(
+				NetworkBridgeEvent::OurViewChange(our_view),
+				&mut virtual_overseer,
+			)
+			.await;
+		}
+
 		virtual_overseer
 	});
 }

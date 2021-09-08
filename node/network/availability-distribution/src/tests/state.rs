@@ -22,7 +22,6 @@ use std::{
 
 use selendra_node_subsystem_util::TimeoutExt;
 use selendra_subsystem_testhelpers::TestSubsystemContextHandle;
-use smallvec::smallvec;
 
 use futures::{
 	channel::{mpsc, oneshot},
@@ -63,7 +62,7 @@ pub struct TestHarness {
 	pub pool: TaskExecutor,
 }
 
-/// TestState for mocking execution of this subsystem.
+/// `TestState` for mocking execution of this subsystem.
 ///
 /// The `Default` instance provides data, which makes the system succeed by providing a couple of
 /// valid occupied cores. You can tune the data before calling `TestState::run`. E.g. modify some
@@ -176,13 +175,13 @@ impl TestState {
 				.iter()
 				.zip(advanced)
 				.map(|(old, new)| ActiveLeavesUpdate {
-					activated: smallvec![ActivatedLeaf {
+					activated: Some(ActivatedLeaf {
 						hash: new.clone(),
 						number: 1,
 						status: LeafStatus::Fresh,
 						span: Arc::new(jaeger::Span::Disabled),
-					}],
-					deactivated: smallvec![old.clone()],
+					}),
+					deactivated: vec![old.clone()].into(),
 				})
 				.collect::<Vec<_>>()
 		};

@@ -600,13 +600,12 @@ async fn activate_leaf(
 	let has_active_disputes = !active_disputes.is_empty();
 	handle
 		.send(FromOverseer::Signal(OverseerSignal::ActiveLeaves(ActiveLeavesUpdate {
-			activated: [ActivatedLeaf {
+			activated: Some(ActivatedLeaf {
 				hash: activate,
 				number: 10,
 				status: LeafStatus::Fresh,
 				span: Arc::new(Span::Disabled),
-			}][..]
-				.into(),
+			}),
 			deactivated: deactivate.into_iter().collect(),
 		})))
 		.await;

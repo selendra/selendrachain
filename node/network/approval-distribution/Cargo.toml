@@ -16,10 +16,8 @@ tracing = "0.1.26"
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/paritytech/substrate", features = ["std"], branch = "polkadot-v0.9.9" }
-
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
-
 assert_matches = "1.4.0"
 schnorrkel = { version = "0.9.1", default-features = false }
 rand_core = "0.5.1" # should match schnorrkel
