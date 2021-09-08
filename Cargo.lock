@@ -9047,6 +9047,7 @@ name = "selendra-parachain"
 version = "0.1.0"
 dependencies = [
  "derive_more",
+ "frame-support",
  "parity-scale-codec",
  "parity-util-mem",
  "selendra-core-primitives",
