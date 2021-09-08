@@ -1316,6 +1316,7 @@ impl pallet_xcm::Config for Runtime {
 	type XcmTeleportFilter = Everything;
 	type XcmReserveTransferFilter = Everything;
 	type Weigher = FixedWeightBounds<BaseXcmWeight, Call>;
+	type LocationInverter = LocationInverter<Ancestry>;
 }
 
 parameter_types! {

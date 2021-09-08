@@ -18,6 +18,14 @@ frame-system = { git = "https://github.com/paritytech/substrate", default-featur
 xcm = { path = "..", default-features = false }
 xcm-executor = { path = "../xcm-executor", default-features = false }
 
+[dev-dependencies]
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9", default-features = false }
+xcm-builder = { path = "../xcm-builder" }
+selendra-parachain = { path = "../../parachain" }
+selendra-runtime-parachains = { path = "../../parachain/runtime" }
+
 [features]
 default = ["std"]
 std = [

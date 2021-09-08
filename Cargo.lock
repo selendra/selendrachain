@@ -5794,11 +5794,17 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
+ "pallet-balances",
  "parity-scale-codec",
+ "selendra-parachain",
+ "selendra-runtime-parachains",
  "serde",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
  "xcm",
+ "xcm-builder",
  "xcm-executor",
 ]
 
