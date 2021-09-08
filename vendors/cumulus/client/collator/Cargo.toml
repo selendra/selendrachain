@@ -1,7 +1,7 @@
 [package]
 name = "cumulus-client-collator"
 version = "0.1.0"
-authors = ["Selendra <info@selendra.org>"]
+authors = ["Parity Technologies <admin@parity.io>"]
 edition = "2018"
 
 [dependencies]
@@ -15,9 +15,9 @@ sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "pol
 
 # Selendra dependencies
 selendra-primitives = { path = "../../../../primitives" }
-selendra-node-primitives = { path = "../../../node/primitives" }
-selendra-overseer = { path = "../../../node/overseer" }
-selendra-node-subsystem = { path = "../../../node/subsystem" }
+selendra-node-primitives = { path = "../../../../node/primitives" }
+selendra-overseer = { path = "../../../../node/overseer" }
+selendra-node-subsystem = { path = "../../../../node/subsystem" }
 
 # Cumulus dependencies
 cumulus-client-network = { path = "../network" }
@@ -32,7 +32,7 @@ tracing = "0.1.25"
 
 [dev-dependencies]
 # Selendra dependencies
-selendra-node-subsystem-test-helpers = { path = "../../../node/subsystem-test-helpers" }
+selendra-node-subsystem-test-helpers = { path = "../../../../node/subsystem-test-helpers" }
 
 # Cumulus dependencies
 cumulus-test-runtime = { path = "../../test/runtime" }

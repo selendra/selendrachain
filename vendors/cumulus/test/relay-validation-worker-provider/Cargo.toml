@@ -1,9 +1,9 @@
 [package]
 name = "cumulus-test-relay-validation-worker-provider"
 version = "0.1.0"
-authors = ["Selendra <info@selendra.org>"]
+authors = ["Parity Technologies <admin@parity.io>"]
 edition = "2018"
 build = "build.rs"
 
 [dependencies]
-selendra-node-core-pvf = { path = "../../../node/core/pvf" }
+selendra-node-core-pvf = { path = "../../../../node/core/pvf" }

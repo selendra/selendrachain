@@ -46,12 +46,11 @@ use frame_system::{ensure_none, ensure_root};
 use selendra_parachain::primitives::RelayChainBlockNumber;
 use relay_state_snapshot::MessagingStateSnapshot;
 use sp_runtime::{
-	traits::{BlakeTwo256, Block as BlockT, Hash},
+	traits::{BlakeTwo256, Block as BlockT, Hash, BlockNumberProvider},
 	transaction_validity::{
 		InvalidTransaction, TransactionLongevity, TransactionSource, TransactionValidity,
 		ValidTransaction,
 	},
-	offchain::storage_lock::BlockNumberProvider,
 };
 use sp_std::{cmp, collections::btree_map::BTreeMap, prelude::*};
 
@@ -596,6 +595,29 @@ pub mod pallet {
 			sp_io::storage::set(b":c", &[]);
 		}
 	}
+
+	#[pallet::validate_unsigned]
+	impl<T: Config> sp_runtime::traits::ValidateUnsigned for Pallet<T> {
+		type Call = Call<T>;
+	
+		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
+			if let Call::enact_authorized_upgrade(ref code) = call {
+				if let Ok(hash) = Self::validate_authorized_upgrade(code) {
+					return Ok(ValidTransaction {
+						priority: 100,
+						requires: vec![],
+						provides: vec![hash.as_ref().to_vec()],
+						longevity: TransactionLongevity::max_value(),
+						propagate: true,
+					});
+				}
+			}
+			if let Call::set_validation_data(..) = call {
+				return Ok(Default::default());
+			}
+			Err(InvalidTransaction::Call.into())
+		}
+	}
 }
 
 impl<T: Config> Pallet<T> {
@@ -604,28 +626,6 @@ impl<T: Config> Pallet<T> {
 		let actual_hash = T::Hashing::hash(&code[..]);
 		ensure!(actual_hash == required_hash, Error::<T>::Unauthorized);
 		Ok(actual_hash)
-	}
-}
-
-impl<T: Config> sp_runtime::traits::ValidateUnsigned for Pallet<T> {
-	type Call = Call<T>;
-
-	fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
-		if let Call::enact_authorized_upgrade(ref code) = call {
-			if let Ok(hash) = Self::validate_authorized_upgrade(code) {
-				return Ok(ValidTransaction {
-					priority: 100,
-					requires: vec![],
-					provides: vec![hash.as_ref().to_vec()],
-					longevity: TransactionLongevity::max_value(),
-					propagate: true,
-				});
-			}
-		}
-		if let Call::set_validation_data(..) = call {
-			return Ok(Default::default());
-		}
-		Err(InvalidTransaction::Call.into())
 	}
 }
 

@@ -1,7 +1,7 @@
 [package]
 name = "cumulus-client-pov-recovery"
 version = "0.1.0"
-authors = ["Selendra <info@selendra.org>"]
+authors = ["Parity Technologies <admin@parity.io>"]
 description = "Cumulus-specific networking protocol"
 edition = "2018"
 
@@ -13,12 +13,13 @@ sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 
 # Selendra deps
 selendra-primitives = { path = "../../../../primitives" }
-selendra-node-primitives = { path = "../../../node/primitives" }
-selendra-overseer = { path = "../../../node/overseer" }
-selendra-node-subsystem = { path = "../../../node/subsystem" }
+selendra-node-primitives = { path = "../../../../node/primitives" }
+selendra-overseer = { path = "../../../../node/overseer" }
+selendra-node-subsystem = { path = "../../../../node/subsystem" }
 
 # Cumulus deps
 cumulus-primitives-core = { path = "../../primitives/core" }
@@ -37,14 +38,13 @@ tokio = { version = "0.2.21", features = ["macros"] }
 cumulus-test-service = { path = "../../test/service" }
 
 # Selendra deps
-selendra-test-client = { path = "../../../../bin/test/client" }
+selendra-test-client = { path = "../../../../node/test/client" }
 
 # substrate deps
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }

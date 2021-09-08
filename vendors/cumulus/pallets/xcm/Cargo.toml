@@ -1,5 +1,5 @@
 [package]
-authors = ["Selendra <info@selendra.org>"]
+authors = ["Parity Technologies <admin@parity.io>"]
 edition = "2018"
 name = "cumulus-pallet-xcm"
 version = "0.1.0"
@@ -14,7 +14,7 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", default-features
 frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.9" }
 frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.9" }
 
-xcm = { path = "../../../xcm", default-features = false }
+xcm = { path = "../../../../modules/xcm", default-features = false }
 
 cumulus-primitives-core = { path = "../../primitives/core", default-features = false }
 

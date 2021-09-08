@@ -1,7 +1,7 @@
 [package]
 name = "cumulus-test-client"
 version = "0.1.0"
-authors = ["Selendra <info@selendra.org>"]
+authors = ["Parity Technologies <admin@parity.io>"]
 edition = "2018"
 
 [dependencies]
@@ -34,7 +34,7 @@ cumulus-primitives-parachain-inherent = { path = "../../primitives/parachain-inh
 
 # Selendra deps
 selendra-primitives = { path = "../../../../primitives" }
-selendra-parachain = { path = "../../../parachain" }
+selendra-parachain = { path = "../../../../modules/parachain" }
 
 # Other deps
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = [ "derive" ] }

@@ -2,11 +2,12 @@
 name = "cumulus-client-consensus-common"
 description = "Cumulus specific common consensus implementations"
 version = "0.1.0"
-authors = ["Selendra <info@selendra.org>"]
+authors = ["Parity Technologies <admin@parity.io>"]
 edition = "2018"
 
 [dependencies]
 # Substrate deps
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
@@ -43,7 +44,7 @@ cumulus-test-service = { path = "../../../test/service" }
 cumulus-primitives-core = { path = "../../../primitives/core" }
 
 # Selendra deps
-selendra-test-client = { path = "../../../../../bin/test/client" }
+selendra-test-client = { path = "../../../../../node/test/client" }
 
 # Other deps
 tokio = { version = "0.2.21", features = ["macros"] }

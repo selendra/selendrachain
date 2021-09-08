@@ -1,7 +1,7 @@
 [package]
 name = "cumulus-pallet-xcmp-queue"
 version = "0.1.0"
-authors = ["Selendra <info@selendra.org>"]
+authors = ["Parity Technologies <admin@parity.io>"]
 edition = "2018"
 
 [dependencies]
@@ -18,11 +18,18 @@ frame-support = { git = "https://github.com/paritytech/substrate", default-featu
 frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.9" }
 
 # Selendra Dependencies
-xcm = { path = "../../../xcm", default-features = false }
-xcm-executor = { path = "../../../xcm/xcm-executor", default-features = false }
+xcm = { path = "../../../../modules/xcm", default-features = false }
+xcm-executor = { path = "../../../../modules/xcm/xcm-executor", default-features = false }
 
 # Cumulus Dependencies
 cumulus-primitives-core = { path = "../../primitives/core", default-features = false }
+
+[dev-dependencies]
+sp-core = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.9" }
+sp-io = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.9" }
+cumulus-pallet-parachain-system = { path = "../parachain-system" }
+xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.9" }
+pallet-balances = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.9" }
 
 [features]
 default = [ "std" ]

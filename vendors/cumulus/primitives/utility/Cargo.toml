@@ -1,7 +1,7 @@
 [package]
 name = "cumulus-primitives-utility"
 version = "0.1.0"
-authors = ["Selendra <info@selendra.org>"]
+authors = ["Parity Technologies <admin@parity.io>"]
 edition = "2018"
 
 [dependencies]
@@ -12,10 +12,10 @@ sp-trie = { git = "https://github.com/paritytech/substrate", default-features = 
 frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.9" }
 
 # Selendra dependencies
-selendra-parachain = { path = "../../../parachain", default-features = false }
+selendra-parachain = { path = "../../../../modules/parachain", default-features = false }
 selendra-primitives = { path = "../../../../primitives", default-features = false }
 selendra-core-primitives = { path = "../../../../primitives/core-primitives", default-features = false }
-xcm = { path = "../../../xcm", default-features = false }
+xcm = { path = "../../../../modules/xcm", default-features = false }
 
 cumulus-primitives-core = { path = "../core", default-features = false }
 
