@@ -1,7 +1,7 @@
 [package]
 name = "selendra-node-metrics"
 version = "0.1.0"
-authors = ["Parity Technologies <admin@parity.io>"]
+authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 description = "Subsystem traits and message definitions"
 

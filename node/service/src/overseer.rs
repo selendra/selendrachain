@@ -22,7 +22,9 @@ use selendra_network_bridge::RequestMultiplexer;
 use selendra_node_core_approval_voting::Config as ApprovalVotingConfig;
 use selendra_node_core_av_store::Config as AvailabilityConfig;
 use selendra_node_core_candidate_validation::Config as CandidateValidationConfig;
-use selendra_overseer::{AllSubsystems, BlockInfo, Handle, Overseer};
+use selendra_node_core_chain_selection::Config as ChainSelectionConfig;
+use selendra_node_core_dispute_coordinator::Config as DisputeCoordinatorConfig;
+use selendra_overseer::{AllSubsystems, BlockInfo, Overseer, OverseerHandle};
 use selendra_primitives::v1::ParachainHost;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
@@ -34,6 +36,7 @@ pub use selendra_availability_bitfield_distribution::BitfieldDistribution as Bit
 pub use selendra_availability_distribution::AvailabilityDistributionSubsystem;
 pub use selendra_availability_recovery::AvailabilityRecoverySubsystem;
 pub use selendra_collator_protocol::{CollatorProtocolSubsystem, ProtocolSide};
+pub use selendra_dispute_distribution::DisputeDistributionSubsystem;
 pub use selendra_gossip_support::GossipSupport as GossipSupportSubsystem;
 pub use selendra_network_bridge::NetworkBridge as NetworkBridgeSubsystem;
 pub use selendra_node_collation_generation::CollationGenerationSubsystem;
@@ -43,6 +46,9 @@ pub use selendra_node_core_backing::CandidateBackingSubsystem;
 pub use selendra_node_core_bitfield_signing::BitfieldSigningSubsystem;
 pub use selendra_node_core_candidate_validation::CandidateValidationSubsystem;
 pub use selendra_node_core_chain_api::ChainApiSubsystem;
+pub use selendra_node_core_chain_selection::ChainSelectionSubsystem;
+pub use selendra_node_core_dispute_coordinator::DisputeCoordinatorSubsystem;
+pub use selendra_node_core_dispute_participation::DisputeParticipationSubsystem;
 pub use selendra_node_core_provisioner::ProvisioningSubsystem as ProvisionerSubsystem;
 pub use selendra_node_core_runtime_api::RuntimeApiSubsystem;
 pub use selendra_statement_distribution::StatementDistribution as StatementDistributionSubsystem;
@@ -62,10 +68,6 @@ where
 	pub runtime_client: Arc<RuntimeClient>,
 	/// The underlying key value store for the parachains.
 	pub parachains_db: Arc<dyn kvdb::KeyValueDB>,
-	/// Configuration for the availability store subsystem.
-	pub availability_config: AvailabilityConfig,
-	/// Configuration for the approval voting subsystem.
-	pub approval_voting_config: ApprovalVotingConfig,
 	/// Underlying network service implementation.
 	pub network_service: Arc<sc_network::NetworkService<Block, Hash>>,
 	/// Underlying authority discovery service.
@@ -78,8 +80,16 @@ where
 	pub spawner: Spawner,
 	/// Determines the behavior of the collator.
 	pub is_collator: IsCollator,
+	/// Configuration for the approval voting subsystem.
+	pub approval_voting_config: ApprovalVotingConfig,
+	/// Configuration for the availability store subsystem.
+	pub availability_config: AvailabilityConfig,
 	/// Configuration for the candidate validation subsystem.
 	pub candidate_validation_config: CandidateValidationConfig,
+	/// Configuration for the chain selection subsystem.
+	pub chain_selection_config: ChainSelectionConfig,
+	/// Configuration for the dispute coordinator subsystem.
+	pub dispute_coordinator_config: DisputeCoordinatorConfig,
 }
 
 /// Create a default, unaltered set of subsystems.
@@ -91,15 +101,17 @@ pub fn create_default_subsystems<'a, Spawner, RuntimeClient>(
 		keystore,
 		runtime_client,
 		parachains_db,
-		availability_config,
-		approval_voting_config,
 		network_service,
 		authority_discovery_service,
 		request_multiplexer,
 		registry,
 		spawner,
 		is_collator,
+		approval_voting_config,
+		availability_config,
 		candidate_validation_config,
+		chain_selection_config,
+		dispute_coordinator_config,
 		..
 	}: OverseerGenArgs<'a, Spawner, RuntimeClient>,
 ) -> Result<
@@ -124,6 +136,10 @@ pub fn create_default_subsystems<'a, Spawner, RuntimeClient>(
 		ApprovalDistributionSubsystem,
 		ApprovalVotingSubsystem,
 		GossipSupportSubsystem,
+		DisputeCoordinatorSubsystem,
+		DisputeParticipationSubsystem,
+		DisputeDistributionSubsystem<AuthorityDiscoveryService>,
+		ChainSelectionSubsystem,
 	>,
 	Error,
 >
@@ -197,12 +213,24 @@ where
 		approval_distribution: ApprovalDistributionSubsystem::new(Metrics::register(registry)?),
 		approval_voting: ApprovalVotingSubsystem::with_config(
 			approval_voting_config,
-			parachains_db,
+			parachains_db.clone(),
 			keystore.clone(),
 			Box::new(network_service.clone()),
 			Metrics::register(registry)?,
 		),
 		gossip_support: GossipSupportSubsystem::new(keystore.clone()),
+		dispute_coordinator: DisputeCoordinatorSubsystem::new(
+			parachains_db.clone(),
+			dispute_coordinator_config,
+			keystore.clone(),
+		),
+		dispute_participation: DisputeParticipationSubsystem::new(),
+		dispute_distribution: DisputeDistributionSubsystem::new(
+			keystore.clone(),
+			authority_discovery_service.clone(),
+			Metrics::register(registry)?,
+		),
+		chain_selection: ChainSelectionSubsystem::new(chain_selection_config, parachains_db),
 	};
 	Ok(all_subsystems)
 }
@@ -216,7 +244,7 @@ pub trait OverseerGen {
 	fn generate<'a, Spawner, RuntimeClient>(
 		&self,
 		args: OverseerGenArgs<'a, Spawner, RuntimeClient>,
-	) -> Result<(Overseer<Spawner, Arc<RuntimeClient>>, Handle), Error>
+	) -> Result<(Overseer<Spawner, Arc<RuntimeClient>>, OverseerHandle), Error>
 	where
 		RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore,
 		RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,
@@ -237,7 +265,7 @@ impl OverseerGen for RealOverseerGen {
 	fn generate<'a, Spawner, RuntimeClient>(
 		&self,
 		args: OverseerGenArgs<'a, Spawner, RuntimeClient>,
-	) -> Result<(Overseer<Spawner, Arc<RuntimeClient>>, Handle), Error>
+	) -> Result<(Overseer<Spawner, Arc<RuntimeClient>>, OverseerHandle), Error>
 	where
 		RuntimeClient: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block> + AuxStore,
 		RuntimeClient::Api: ParachainHost<Block> + BabeApi<Block> + AuthorityDiscoveryApi<Block>,

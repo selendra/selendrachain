@@ -1,3 +1,19 @@
+// Copyright 2020 Parity Technologies (UK) Ltd.
+// This file is part of Polkadot.
+
+// Polkadot is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Polkadot is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
+
 //! A dummy to be used with cargo expand
 
 use selendra_node_network_protocol::WrongVariant;
@@ -115,7 +131,7 @@ impl SpawnNamed for DummySpawner {
 struct DummyCtx;
 
 fn main() {
-	let (overseer, _handler): (Xxx<_>, _) = Xxx::builder()
+	let (overseer, _handle): (Xxx<_>, _) = Xxx::builder()
 		.sub0(AwesomeSubSys::default())
 		.plinkos(GoblinTower::default())
 		.i_like_pi(::std::f64::consts::PI)

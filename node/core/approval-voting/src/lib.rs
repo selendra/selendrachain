@@ -35,9 +35,9 @@ use selendra_node_subsystem::{
 	messages::{
 		ApprovalCheckError, ApprovalCheckResult, ApprovalDistributionMessage,
 		ApprovalVotingMessage, AssignmentCheckError, AssignmentCheckResult,
-		AvailabilityRecoveryMessage, CandidateValidationMessage, ChainApiMessage,
-		ChainSelectionMessage, DisputeCoordinatorMessage, ImportStatementsResult,
-		RuntimeApiMessage, RuntimeApiRequest,
+		AvailabilityRecoveryMessage, BlockDescription, CandidateValidationMessage, ChainApiMessage,
+		ChainSelectionMessage, DisputeCoordinatorMessage, HighestApprovedAncestorBlock,
+		ImportStatementsResult, RuntimeApiMessage, RuntimeApiRequest,
 	},
 	overseer::{self, SubsystemSender as _},
 	FromOverseer, OverseerSignal, SpawnedSubsystem, SubsystemContext, SubsystemError,
@@ -124,7 +124,7 @@ enum Mode {
 
 /// The approval voting subsystem.
 pub struct ApprovalVotingSubsystem {
-	/// LocalKeystore is needed for assignment keys, but not necessarily approval keys.
+	/// `LocalKeystore` is needed for assignment keys, but not necessarily approval keys.
 	///
 	/// We do a lot of VRF signing and need the keys to have low latency.
 	keystore: Arc<LocalKeystore>,
@@ -148,7 +148,7 @@ struct MetricsInner {
 	time_recover_and_approve: prometheus::Histogram,
 }
 
-/// Aproval Voting metrics.
+/// Approval Voting metrics.
 #[derive(Default, Clone)]
 pub struct Metrics(Option<MetricsInner>);
 
@@ -452,9 +452,8 @@ impl Wakeups {
 			Some(tick) => {
 				clock.wait(tick).await;
 				match self.wakeups.entry(tick) {
-					Entry::Vacant(_) => {
-						panic!("entry is known to exist since `first` was `Some`; qed")
-					},
+					Entry::Vacant(_) =>
+						panic!("entry is known to exist since `first` was `Some`; qed"),
 					Entry::Occupied(mut entry) => {
 						let (hash, candidate_hash) = entry.get_mut().pop()
 							.expect("empty entries are removed here and in `schedule`; no other mutation of this map; qed");
@@ -914,9 +913,8 @@ async fn handle_actions(
 				.await;
 
 				match confirmation_rx.await {
-					Err(oneshot::Canceled) => {
-						tracing::warn!(target: LOG_TARGET, "Dispute coordinator confirmation lost",)
-					},
+					Err(oneshot::Canceled) =>
+						tracing::warn!(target: LOG_TARGET, "Dispute coordinator confirmation lost",),
 					Ok(ImportStatementsResult::ValidImport) => {},
 					Ok(ImportStatementsResult::InvalidImport) => tracing::warn!(
 						target: LOG_TARGET,
@@ -1152,7 +1150,7 @@ async fn handle_approved_ancestor(
 	target: Hash,
 	lower_bound: BlockNumber,
 	wakeups: &Wakeups,
-) -> SubsystemResult<Option<(Hash, BlockNumber)>> {
+) -> SubsystemResult<Option<HighestApprovedAncestorBlock>> {
 	const MAX_TRACING_WINDOW: usize = 200;
 	const ABNORMAL_DEPTH_THRESHOLD: usize = 5;
 
@@ -1203,6 +1201,8 @@ async fn handle_approved_ancestor(
 		Vec::new()
 	};
 
+	let mut block_descriptions = Vec::new();
+
 	let mut bits: BitVec<Lsb0, u8> = Default::default();
 	for (i, block_hash) in std::iter::once(target).chain(ancestry).enumerate() {
 		// Block entries should be present as the assumption is that
@@ -1234,8 +1234,10 @@ async fn handle_approved_ancestor(
 			}
 		} else if bits.len() <= ABNORMAL_DEPTH_THRESHOLD {
 			all_approved_max = None;
+			block_descriptions.clear();
 		} else {
 			all_approved_max = None;
+			block_descriptions.clear();
 
 			let unapproved: Vec<_> = entry.unapproved_candidates().collect();
 			tracing::debug!(
@@ -1312,6 +1314,15 @@ async fn handle_approved_ancestor(
 				}
 			}
 		}
+		block_descriptions.push(BlockDescription {
+			block_hash,
+			session: entry.session(),
+			candidates: entry
+				.candidates()
+				.iter()
+				.map(|(_idx, candidate_hash)| *candidate_hash)
+				.collect(),
+		});
 	}
 
 	tracing::trace!(
@@ -1342,8 +1353,18 @@ async fn handle_approved_ancestor(
 		},
 	);
 
+	// `reverse()` to obtain the ascending order from lowest to highest
+	// block within the candidates, which is the expected order
+	block_descriptions.reverse();
+
+	let all_approved_max =
+		all_approved_max.map(|(hash, block_number)| HighestApprovedAncestorBlock {
+			hash,
+			number: block_number,
+			descriptions: block_descriptions,
+		});
 	match all_approved_max {
-		Some((ref hash, ref number)) => {
+		Some(HighestApprovedAncestorBlock { ref hash, ref number, .. }) => {
 			span.add_uint_tag("approved-number", *number as u64);
 			span.add_string_fmt_debug_tag("approved-hash", hash);
 		},

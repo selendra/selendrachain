@@ -70,6 +70,7 @@ use std::{
 
 use futures::{channel::oneshot, future::BoxFuture, select, Future, FutureExt, StreamExt};
 use lru::LruCache;
+use parking_lot::RwLock;
 
 use client::{BlockImportNotification, BlockchainEvents, FinalityNotification};
 use selendra_primitives::v1::{Block, BlockId, BlockNumber, Hash, ParachainHost};
@@ -132,13 +133,23 @@ where
 	}
 }
 
-/// A handler used to communicate with the [`Overseer`].
+/// A handle used to communicate with the [`Overseer`].
 ///
 /// [`Overseer`]: struct.Overseer.html
 #[derive(Clone)]
-pub struct Handle(pub OverseerHandle);
+pub enum Handle {
+	/// Used only at initialization to break the cyclic dependency.
+	Disconnected(Arc<RwLock<Option<OverseerHandle>>>),
+	/// A handle to the overseer.
+	Connected(OverseerHandle),
+}
 
 impl Handle {
+	/// Create a new disconnected [`Handle`].
+	pub fn new_disconnected() -> Self {
+		Self::Disconnected(Arc::new(RwLock::new(None)))
+	}
+
 	/// Inform the `Overseer` that that some block was imported.
 	pub async fn block_imported(&mut self, block: BlockInfo) {
 		self.send_and_log_error(Event::BlockImported(block)).await
@@ -185,25 +196,59 @@ impl Handle {
 
 	/// Most basic operation, to stop a server.
 	async fn send_and_log_error(&mut self, event: Event) {
-		if self.0.send(event).await.is_err() {
-			tracing::info!(target: LOG_TARGET, "Failed to send an event to Overseer");
+		self.try_connect();
+		if let Self::Connected(ref mut handle) = self {
+			if handle.send(event).await.is_err() {
+				tracing::info!(target: LOG_TARGET, "Failed to send an event to Overseer");
+			}
+		} else {
+			tracing::warn!(target: LOG_TARGET, "Using a disconnected Handle to send to Overseer");
 		}
 	}
 
-	/// Whether the overseer handler is connected to an overseer.
-	pub fn is_connected(&self) -> bool {
-		true
-	}
-
-	/// Whether the handler is disconnected.
+	/// Whether the handle is disconnected.
 	pub fn is_disconnected(&self) -> bool {
-		false
+		match self {
+			Self::Disconnected(ref x) => x.read().is_none(),
+			_ => false,
+		}
 	}
 
-	/// Using this handler, connect another handler to the same
-	/// overseer, if any.
-	pub fn connect_other(&self, other: &mut Handle) {
-		*other = self.clone();
+	/// Connect this handle and all disconnected clones of it to the overseer.
+	pub fn connect_to_overseer(&mut self, handle: OverseerHandle) {
+		match self {
+			Self::Disconnected(ref mut x) => {
+				let mut maybe_handle = x.write();
+				if maybe_handle.is_none() {
+					tracing::info!(target: LOG_TARGET, "🖇️ Connecting all Handles to Overseer");
+					*maybe_handle = Some(handle);
+				} else {
+					tracing::warn!(
+						target: LOG_TARGET,
+						"Attempting to connect a clone of a connected Handle",
+					);
+				}
+			},
+			_ => {
+				tracing::warn!(
+					target: LOG_TARGET,
+					"Attempting to connect an already connected Handle",
+				);
+			},
+		}
+	}
+
+	/// Try upgrading from `Self::Disconnected` to `Self::Connected` state
+	/// after calling `connect_to_overseer` on `self` or a clone of `self`.
+	fn try_connect(&mut self) {
+		if let Self::Disconnected(ref mut x) = self {
+			let guard = x.write();
+			if let Some(ref h) = *guard {
+				let handle = h.clone();
+				drop(guard);
+				*self = Self::Connected(handle);
+			}
+		}
 	}
 }
 
@@ -269,7 +314,7 @@ pub enum ExternalRequest {
 
 /// Glues together the [`Overseer`] and `BlockchainEvents` by forwarding
 /// import and finality notifications into the [`OverseerHandle`].
-pub async fn forward_events<P: BlockchainEvents<Block>>(client: Arc<P>, mut handler: Handle) {
+pub async fn forward_events<P: BlockchainEvents<Block>>(client: Arc<P>, mut handle: Handle) {
 	let mut finality = client.finality_notification_stream();
 	let mut imports = client.import_notification_stream();
 
@@ -278,7 +323,7 @@ pub async fn forward_events<P: BlockchainEvents<Block>>(client: Arc<P>, mut hand
 			f = finality.next() => {
 				match f {
 					Some(block) => {
-						handler.block_finalized(block.into()).await;
+						handle.block_finalized(block.into()).await;
 					}
 					None => break,
 				}
@@ -286,7 +331,7 @@ pub async fn forward_events<P: BlockchainEvents<Block>>(client: Arc<P>, mut hand
 			i = imports.next() => {
 				match i {
 					Some(block) => {
-						handler.block_imported(block.into()).await;
+						handle.block_imported(block.into()).await;
 					}
 					None => break,
 				}
@@ -356,16 +401,16 @@ pub struct Overseer<SupportsParachains> {
 	#[subsystem(no_dispatch, GossipSupportMessage)]
 	gossip_support: GossipSupport,
 
-	#[subsystem(no_dispatch, wip, DisputeCoordinatorMessage)]
-	dipute_coordinator: DisputeCoordinator,
+	#[subsystem(no_dispatch, DisputeCoordinatorMessage)]
+	dispute_coordinator: DisputeCoordinator,
 
-	#[subsystem(no_dispatch, wip, DisputeParticipationMessage)]
+	#[subsystem(no_dispatch, DisputeParticipationMessage)]
 	dispute_participation: DisputeParticipation,
 
-	#[subsystem(no_dispatch, wip, DisputeDistributionMessage)]
-	dipute_distribution: DisputeDistribution,
+	#[subsystem(no_dispatch, DisputeDistributionMessage)]
+	dispute_distribution: DisputeDistribution,
 
-	#[subsystem(no_dispatch, wip, ChainSelectionMessage)]
+	#[subsystem(no_dispatch, ChainSelectionMessage)]
 	chain_selection: ChainSelection,
 
 	/// External listeners waiting for a hash to be in the active-leave set.
@@ -402,7 +447,7 @@ where
 	/// This returns the overseer along with an [`OverseerHandle`] which can
 	/// be used to send messages from external parts of the codebase.
 	///
-	/// The [`OverseerHandler`] returned from this function is connected to
+	/// The [`OverseerHandle`] returned from this function is connected to
 	/// the returned [`Overseer`].
 	///
 	/// ```text
@@ -493,7 +538,7 @@ where
 	/// let spawner = sp_core::testing::TaskExecutor::new();
 	/// let all_subsystems = AllSubsystems::<()>::dummy()
 	///		.replace_candidate_validation(ValidationSubsystem);
-	/// let (overseer, _handler) = Overseer::new(
+	/// let (overseer, _handle) = Overseer::new(
 	///     vec![],
 	///     all_subsystems,
 	///     None,
@@ -515,7 +560,29 @@ where
 	/// # 	});
 	/// # }
 	/// ```
-	pub fn new<CV, CB, SD, AD, AR, BS, BD, P, RA, AS, NB, CA, CG, CP, ApD, ApV, GS>(
+	pub fn new<
+		CV,
+		CB,
+		SD,
+		AD,
+		AR,
+		BS,
+		BD,
+		P,
+		RA,
+		AS,
+		NB,
+		CA,
+		CG,
+		CP,
+		ApD,
+		ApV,
+		GS,
+		DC,
+		DP,
+		DD,
+		CS,
+	>(
 		leaves: impl IntoIterator<Item = BlockInfo>,
 		all_subsystems: AllSubsystems<
 			CV,
@@ -535,11 +602,15 @@ where
 			ApD,
 			ApV,
 			GS,
+			DC,
+			DP,
+			DD,
+			CS,
 		>,
 		prometheus_registry: Option<&prometheus::Registry>,
 		supports_parachains: SupportsParachains,
 		s: S,
-	) -> SubsystemResult<(Self, Handle)>
+	) -> SubsystemResult<(Self, OverseerHandle)>
 	where
 		CV: Subsystem<OverseerSubsystemContext<CandidateValidationMessage>, SubsystemError> + Send,
 		CB: Subsystem<OverseerSubsystemContext<CandidateBackingMessage>, SubsystemError> + Send,
@@ -561,11 +632,15 @@ where
 			Subsystem<OverseerSubsystemContext<ApprovalDistributionMessage>, SubsystemError> + Send,
 		ApV: Subsystem<OverseerSubsystemContext<ApprovalVotingMessage>, SubsystemError> + Send,
 		GS: Subsystem<OverseerSubsystemContext<GossipSupportMessage>, SubsystemError> + Send,
+		DC: Subsystem<OverseerSubsystemContext<DisputeCoordinatorMessage>, SubsystemError> + Send,
+		DP: Subsystem<OverseerSubsystemContext<DisputeParticipationMessage>, SubsystemError> + Send,
+		DD: Subsystem<OverseerSubsystemContext<DisputeDistributionMessage>, SubsystemError> + Send,
+		CS: Subsystem<OverseerSubsystemContext<ChainSelectionMessage>, SubsystemError> + Send,
 		S: SpawnNamed,
 	{
 		let metrics: Metrics = <Metrics as MetricsTrait>::register(prometheus_registry)?;
 
-		let (mut overseer, handler) = Self::builder()
+		let (mut overseer, handle) = Self::builder()
 			.candidate_validation(all_subsystems.candidate_validation)
 			.candidate_backing(all_subsystems.candidate_backing)
 			.statement_distribution(all_subsystems.statement_distribution)
@@ -583,6 +658,10 @@ where
 			.approval_distribution(all_subsystems.approval_distribution)
 			.approval_voting(all_subsystems.approval_voting)
 			.gossip_support(all_subsystems.gossip_support)
+			.dispute_coordinator(all_subsystems.dispute_coordinator)
+			.dispute_participation(all_subsystems.dispute_participation)
+			.dispute_distribution(all_subsystems.dispute_distribution)
+			.chain_selection(all_subsystems.chain_selection)
 			.leaves(Vec::from_iter(
 				leaves
 					.into_iter()
@@ -632,7 +711,7 @@ where
 			overseer.spawner().spawn("metrics_metronome", Box::pin(metronome));
 		}
 
-		Ok((overseer, Handle(handler)))
+		Ok((overseer, handle))
 	}
 
 	/// Stop the overseer.

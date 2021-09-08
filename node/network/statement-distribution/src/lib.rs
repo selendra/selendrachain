@@ -17,7 +17,7 @@
 //! The Statement Distribution Subsystem.
 //!
 //! This is responsible for distributing signed statements about candidate
-//! validity amongst validators.
+//! validity among validators.
 
 #![deny(unused_crate_dependencies)]
 #![warn(missing_docs)]
@@ -204,6 +204,8 @@ struct PeerRelayParentKnowledge {
 	/// How many statements we've received for each candidate that we're aware of.
 	received_message_count: HashMap<CandidateHash, usize>,
 
+	/// How many large statements this peer already sent us.
+	///
 	/// Quick and temporary fix, only accept `MAX_LARGE_STATEMENTS_PER_SENDER` per connected node.
 	///
 	/// Large statements should be rare, if they were not, we would run into problems anyways, as
@@ -273,7 +275,7 @@ impl PeerRelayParentKnowledge {
 	/// Provide the maximum message count that we can receive per candidate. In practice we should
 	/// not receive more statements for any one candidate than there are members in the group assigned
 	/// to that para, but this maximum needs to be lenient to account for equivocations that may be
-	/// cross-group. As such, a maximum of 2 * n_validators is recommended.
+	/// cross-group. As such, a maximum of 2 * `n_validators` is recommended.
 	///
 	/// This returns an error if the peer should not have sent us this message according to protocol
 	/// rules for flood protection.
@@ -441,7 +443,7 @@ impl PeerData {
 	/// Provide the maximum message count that we can receive per candidate. In practice we should
 	/// not receive more statements for any one candidate than there are members in the group assigned
 	/// to that para, but this maximum needs to be lenient to account for equivocations that may be
-	/// cross-group. As such, a maximum of 2 * n_validators is recommended.
+	/// cross-group. As such, a maximum of 2 * `n_validators` is recommended.
 	///
 	/// This returns an error if the peer should not have sent us this message according to protocol
 	/// rules for flood protection.
@@ -1554,9 +1556,8 @@ impl StatementDistribution {
 						Ok(true) => break,
 						Ok(false) => {},
 						Err(Error(Fault::Fatal(f))) => return Err(f),
-						Err(Error(Fault::Err(error))) => {
-							tracing::debug!(target: LOG_TARGET, ?error)
-						},
+						Err(Error(Fault::Err(error))) =>
+							tracing::debug!(target: LOG_TARGET, ?error),
 					}
 				},
 				MuxedMessage::Requester(result) => {
@@ -1752,6 +1753,16 @@ impl StatementDistribution {
 			})) => {
 				let _timer = metrics.time_active_leaves_update();
 
+				for deactivated in deactivated {
+					if active_heads.remove(&deactivated).is_some() {
+						tracing::trace!(
+							target: LOG_TARGET,
+							hash = ?deactivated,
+							"Deactivating leaf",
+						);
+					}
+				}
+
 				for activated in activated {
 					let relay_parent = activated.hash;
 					let span = PerLeafSpan::new(activated.span, "statement-distribution");
@@ -1773,18 +1784,6 @@ impl StatementDistribution {
 						session_index,
 						span,
 					));
-
-					active_heads.retain(|h, _| {
-						let live = !deactivated.contains(h);
-						if !live {
-							tracing::trace!(
-								target: LOG_TARGET,
-								hash = ?h,
-								"Deactivating leaf",
-							);
-						}
-						live
-					});
 				}
 			},
 			FromOverseer::Signal(OverseerSignal::BlockFinalized(..)) => {

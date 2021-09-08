@@ -33,7 +33,7 @@ struct MetricsInner {
 	signals_received: prometheus::GaugeVec<prometheus::U64>,
 }
 
-/// A sharable metrics type for usage with the overseer.
+/// A shareable metrics type for usage with the overseer.
 #[derive(Default, Clone)]
 pub struct Metrics(Option<MetricsInner>);
 

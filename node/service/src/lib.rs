@@ -24,6 +24,9 @@ mod open_fb;
 mod parachains_db;
 mod relay_chain_selection;
 
+#[cfg(test)]
+mod tests;
+
 #[cfg(feature = "full-node")]
 mod overseer;
 
@@ -41,8 +44,11 @@ use {
 	selendra_node_core_av_store::Config as AvailabilityConfig,
 	selendra_node_core_av_store::Error as AvailabilityError,
 	selendra_node_core_candidate_validation::Config as CandidateValidationConfig,
+	selendra_node_core_chain_selection::{
+		self as chain_selection_subsystem, Config as ChainSelectionConfig,
+	},
+	selendra_node_core_dispute_coordinator::Config as DisputeCoordinatorConfig,
 	selendra_overseer::BlockInfo,
-	sp_runtime::traits::Header as HeaderT,
 	sp_trie::PrefixedMemoryDB,
 	tracing::info,
 };
@@ -51,7 +57,7 @@ pub use sp_core::traits::SpawnNamed;
 #[cfg(feature = "full-node")]
 pub use {
 	sc_client_api::AuxStore,
-	selendra_overseer::{Handle, Overseer},
+	selendra_overseer::{Handle, Overseer, OverseerHandle},
 	selendra_primitives::v1::ParachainHost,
 	sp_authority_discovery::AuthorityDiscoveryApi,
 	sp_blockchain::HeaderBackend,
@@ -96,8 +102,12 @@ pub use service::{
 	TaskManager, TransactionPoolOptions,
 };
 pub use sp_api::{ApiRef, ConstructRuntimeApi, Core as CoreApi, ProvideRuntimeApi, StateBackend};
-pub use sp_runtime::traits::{
-	self as runtime_traits, BlakeTwo256, Block as BlockT, DigestFor, HashFor, NumberFor,
+pub use sp_runtime::{
+	generic,
+	traits::{
+		self as runtime_traits, BlakeTwo256, Block as BlockT, DigestFor, HashFor,
+		Header as HeaderT, NumberFor,
+	},
 };
 
 pub use selendra_runtime;
@@ -105,6 +115,73 @@ pub use selendra_runtime;
 /// The maximum number of active leaves we forward to the [`Overseer`] on startup.
 #[cfg(any(test, feature = "full-node"))]
 const MAX_ACTIVE_LEAVES: usize = 4;
+
+/// Provides the header and block number for a hash.
+///
+/// Decouples `sc_client_api::Backend` and `sp_blockchain::HeaderBackend`.
+pub trait HeaderProvider<Block, Error = sp_blockchain::Error>: Send + Sync + 'static
+where
+	Block: BlockT,
+	Error: std::fmt::Debug + Send + Sync + 'static,
+{
+	/// Obtain the header for a hash.
+	fn header(
+		&self,
+		hash: <Block as BlockT>::Hash,
+	) -> Result<Option<<Block as BlockT>::Header>, Error>;
+	/// Obtain the block number for a hash.
+	fn number(
+		&self,
+		hash: <Block as BlockT>::Hash,
+	) -> Result<Option<<<Block as BlockT>::Header as HeaderT>::Number>, Error>;
+}
+
+impl<Block, T> HeaderProvider<Block> for T
+where
+	Block: BlockT,
+	T: sp_blockchain::HeaderBackend<Block> + 'static,
+{
+	fn header(
+		&self,
+		hash: Block::Hash,
+	) -> sp_blockchain::Result<Option<<Block as BlockT>::Header>> {
+		<Self as sp_blockchain::HeaderBackend<Block>>::header(
+			self,
+			generic::BlockId::<Block>::Hash(hash),
+		)
+	}
+	fn number(
+		&self,
+		hash: Block::Hash,
+	) -> sp_blockchain::Result<Option<<<Block as BlockT>::Header as HeaderT>::Number>> {
+		<Self as sp_blockchain::HeaderBackend<Block>>::number(self, hash)
+	}
+}
+
+/// Decoupling the provider.
+///
+/// Mandated since `trait HeaderProvider` can only be
+/// implemented once for a generic `T`.
+pub trait HeaderProviderProvider<Block>: Send + Sync + 'static
+where
+	Block: BlockT,
+{
+	type Provider: HeaderProvider<Block> + 'static;
+
+	fn header_provider(&self) -> &Self::Provider;
+}
+
+impl<Block, T> HeaderProviderProvider<Block> for T
+where
+	Block: BlockT,
+	T: sc_client_api::Backend<Block> + 'static,
+{
+	type Provider = <T as sc_client_api::Backend<Block>>::Blockchain;
+
+	fn header_provider(&self) -> &Self::Provider {
+		self.blockchain()
+	}
+}
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -188,7 +265,7 @@ fn jaeger_launch_collector_with_agent(
 }
 
 #[cfg(feature = "full-node")]
-type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
+type FullSelectChain = relay_chain_selection::SelectRelayChainWithFallback<FullBackend>;
 #[cfg(feature = "full-node")]
 type FullGrandpaBlockImport<RuntimeApi, Executor> = grandpa::GrandpaBlockImport<
 	FullBackend,
@@ -288,7 +365,11 @@ where
 
 	jaeger_launch_collector_with_agent(task_manager.spawn_handle(), &*config, jaeger_agent)?;
 
-	let select_chain = sc_consensus::LongestChain::new(backend.clone());
+	let select_chain = relay_chain_selection::SelectRelayChainWithFallback::new(
+		backend.clone(),
+		Handle::new_disconnected(),
+		selendra_node_subsystem_util::metrics::Metrics::register(config.prometheus_registry())?,
+	);
 
 	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
 		config.transaction_pool.clone(),
@@ -438,7 +519,7 @@ where
 pub struct NewFull<C> {
 	pub task_manager: TaskManager,
 	pub client: C,
-	pub overseer_handler: Option<Handle>,
+	pub overseer_handle: Option<Handle>,
 	pub network: Arc<sc_network::NetworkService<Block, <Block as BlockT>::Hash>>,
 	pub rpc_handlers: RpcHandlers,
 	pub backend: Arc<FullBackend>,
@@ -451,7 +532,7 @@ impl<C> NewFull<C> {
 		NewFull {
 			client: func(self.client),
 			task_manager: self.task_manager,
-			overseer_handler: self.overseer_handler,
+			overseer_handle: self.overseer_handle,
 			network: self.network,
 			rpc_handlers: self.rpc_handlers,
 			backend: self.backend,
@@ -491,7 +572,7 @@ impl IsCollator {
 /// Returns the active leaves the overseer should start with.
 #[cfg(feature = "full-node")]
 async fn active_leaves<RuntimeApi, Executor>(
-	select_chain: &sc_consensus::LongestChain<FullBackend, Block>,
+	select_chain: &impl SelectChain<Block>,
 	client: &FullClient<RuntimeApi, Executor>,
 ) -> Result<Vec<BlockInfo>, Error>
 where
@@ -509,7 +590,7 @@ where
 		.unwrap_or_default()
 		.into_iter()
 		.filter_map(|hash| {
-			let number = client.number(hash).ok()??;
+			let number = HeaderBackend::number(client, hash).ok()??;
 
 			// Only consider leaves that are in maximum an uncle of the best block.
 			if number < best_block.number().saturating_sub(1) {
@@ -574,7 +655,7 @@ where
 		backend,
 		mut task_manager,
 		keystore_container,
-		select_chain,
+		mut select_chain,
 		import_queue,
 		transaction_pool,
 		other:
@@ -683,6 +764,15 @@ where
 		EthTask::ethereum_schema_cache_task(Arc::clone(&client), Arc::clone(&frontier_backend)),
 	);
 
+	let chain_selection_config = ChainSelectionConfig {
+		col_data: crate::parachains_db::REAL_COLUMNS.col_chain_selection_data,
+		stagnant_check_interval: chain_selection_subsystem::StagnantCheckInterval::never(),
+	};
+
+	let dispute_coordinator_config = DisputeCoordinatorConfig {
+		col_data: crate::parachains_db::REAL_COLUMNS.col_dispute_coordinator_data,
+	};
+
 	let network_clone = network.clone();
 	let rpc_extensions_builder = move |deny_unsafe, subscription_executor| {
 		_rpc_extensions_builder(deny_unsafe, subscription_executor, network_clone.clone())
@@ -743,8 +833,6 @@ where
 		None
 	};
 
-	// we'd say let overseer_handler = authority_discovery_service.map(|authority_discovery_service|, ...),
-	// but in that case we couldn't use ? to propagate errors
 	let local_keystore = keystore_container.local_keystore();
 	if local_keystore.is_none() {
 		tracing::info!("Cannot run as validator without local keystore.");
@@ -753,34 +841,36 @@ where
 	let maybe_params =
 		local_keystore.and_then(move |k| authority_discovery_service.map(|a| (a, k)));
 
-	let overseer_handler = if let Some((authority_discovery_service, keystore)) = maybe_params {
-		let (overseer, overseer_handler) = overseer_gen
+	let overseer_handle = if let Some((authority_discovery_service, keystore)) = maybe_params {
+		let (overseer, overseer_handle) = overseer_gen
 			.generate::<service::SpawnTaskHandle, FullClient<RuntimeApi, Executor>>(
 				OverseerGenArgs {
 					leaves: active_leaves,
 					keystore,
 					runtime_client: overseer_client.clone(),
 					parachains_db,
-					availability_config,
-					approval_voting_config,
 					network_service: network.clone(),
 					authority_discovery_service,
 					request_multiplexer,
 					registry: prometheus_registry.as_ref(),
 					spawner,
 					is_collator,
+					approval_voting_config,
+					availability_config,
 					candidate_validation_config,
+					chain_selection_config,
+					dispute_coordinator_config,
 				},
 			)?;
-		let overseer_handler_clone = overseer_handler.clone();
+		let handle = Handle::Connected(overseer_handle.clone());
+		let handle_clone = handle.clone();
 
 		task_manager.spawn_essential_handle().spawn_blocking(
 			"overseer",
 			Box::pin(async move {
 				use futures::{pin_mut, select, FutureExt};
 
-				let forward =
-					selendra_overseer::forward_events(overseer_client, overseer_handler_clone);
+				let forward = selendra_overseer::forward_events(overseer_client, handle_clone);
 
 				let forward = forward.fuse();
 				let overseer_fut = overseer.run().fuse();
@@ -796,7 +886,8 @@ where
 			}),
 		);
 
-		Some(overseer_handler)
+		select_chain.connect_to_overseer(overseer_handle.clone());
+		Some(handle)
 	} else {
 		None
 	};
@@ -837,8 +928,8 @@ where
 		);
 
 		let client_clone = client.clone();
-		let overseer_handler =
-			overseer_handler.as_ref().ok_or(Error::AuthoritiesRequireRealOverseer)?.clone();
+		let overseer_handle =
+			overseer_handle.as_ref().ok_or(Error::AuthoritiesRequireRealOverseer)?.clone();
 		let slot_duration = babe_link.config().slot_duration();
 		let babe_config = babe::BabeParams {
 			keystore: keystore_container.sync_keystore(),
@@ -850,11 +941,11 @@ where
 			justification_sync_link: network.clone(),
 			create_inherent_data_providers: move |parent, ()| {
 				let client_clone = client_clone.clone();
-				let overseer_handler = overseer_handler.clone();
+				let overseer_handle = overseer_handle.clone();
 				async move {
 					let parachain = selendra_node_core_parachains_inherent::ParachainsInherentDataProvider::create(
 						&*client_clone,
-						overseer_handler,
+						overseer_handle,
 						parent,
 					).await.map_err(|e| Box::new(e))?;
 
@@ -917,15 +1008,6 @@ where
 		// given delay.
 		let builder = grandpa::VotingRulesBuilder::default();
 
-		let builder = if let Some(ref overseer) = overseer_handler {
-			builder.add(grandpa_support::ApprovalCheckingVotingRule::new(
-				overseer.clone(),
-				prometheus_registry.as_ref(),
-			)?)
-		} else {
-			builder
-		};
-
 		let voting_rule = match grandpa_pause {
 			Some((block, delay)) => {
 				info!(
@@ -958,7 +1040,7 @@ where
 
 	network_starter.start_network();
 
-	Ok(NewFull { task_manager, client, overseer_handler, network, rpc_handlers, backend })
+	Ok(NewFull { task_manager, client, overseer_handle, network, rpc_handlers, backend })
 }
 
 /// Builds a new service for a light client.

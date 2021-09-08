@@ -13,6 +13,7 @@ thiserror = "1"
 metered = { package = "metered-channel", path = "../../metered-channel" }
 selendra-overseer-gen-proc-macro = { path = "./proc-macro" }
 selendra-node-network-protocol = { path = "../../network/protocol"}
+# trait SpawnNamed
 selendra-node-primitives = { path = "../../primitives" }
 futures-timer = "3.0.2"
 pin-project = "1.0"
