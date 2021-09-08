@@ -23,12 +23,12 @@
 
 use crate::traits::{LeaseError, Leaser, Registrar};
 use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage,
-	dispatch::DispatchResult,
-	traits::{Currency, Get, ReservableCurrency},
+	pallet_prelude::*,
+	traits::{Currency, ReservableCurrency},
 	weights::Weight,
 };
-use frame_system::{ensure_root, ensure_signed};
+use frame_system::pallet_prelude::*;
+pub use pallet::*;
 use primitives::v1::Id as ParaId;
 use sp_runtime::traits::{CheckedConversion, CheckedSub, Saturating, Zero};
 use sp_std::prelude::*;
@@ -60,82 +60,88 @@ impl WeightInfo for TestWeightInfo {
 	}
 }
 
-/// The module's configuration trait.
-pub trait Config: frame_system::Config {
-	/// The overarching event type.
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
+#[frame_support::pallet]
+pub mod pallet {
+	use super::*;
 
-	/// The currency type used for bidding.
-	type Currency: ReservableCurrency<Self::AccountId>;
+	#[pallet::pallet]
+	#[pallet::generate_store(pub(super) trait Store)]
+	pub struct Pallet<T>(_);
 
-	/// The parachain registrar type.
-	type Registrar: Registrar<AccountId = Self::AccountId>;
+	#[pallet::config]
+	pub trait Config: frame_system::Config {
+		/// The overarching event type.
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
-	/// The number of blocks over which a single period lasts.
-	type LeasePeriod: Get<Self::BlockNumber>;
+		/// The currency type used for bidding.
+		type Currency: ReservableCurrency<Self::AccountId>;
 
-	/// Weight Information for the Extrinsics in the Pallet
-	type WeightInfo: WeightInfo;
-}
+		/// The parachain registrar type.
+		type Registrar: Registrar<AccountId = Self::AccountId>;
 
-// This module's storage items.
-decl_storage! {
-	trait Store for Module<T: Config> as Slots {
-		/// Amounts held on deposit for each (possibly future) leased parachain.
-		///
-		/// The actual amount locked on its behalf by any account at any time is the maximum of the second values
-		/// of the items in this list whose first value is the account.
-		///
-		/// The first item in the list is the amount locked for the current Lease Period. Following
-		/// items are for the subsequent lease periods.
-		///
-		/// The default value (an empty list) implies that the parachain no longer exists (or never
-		/// existed) as far as this module is concerned.
-		///
-		/// If a parachain doesn't exist *yet* but is scheduled to exist in the future, then it
-		/// will be left-padded with one or more `None`s to denote the fact that nothing is held on
-		/// deposit for the non-existent chain currently, but is held at some point in the future.
-		///
-		/// It is illegal for a `None` value to trail in the list.
-		pub Leases get(fn lease): map hasher(twox_64_concat) ParaId => Vec<Option<(T::AccountId, BalanceOf<T>)>>;
+		/// The number of blocks over which a single period lasts.
+		#[pallet::constant]
+		type LeasePeriod: Get<Self::BlockNumber>;
+
+		/// Weight Information for the Extrinsics in the Pallet
+		type WeightInfo: WeightInfo;
 	}
-}
 
-decl_event!(
-	pub enum Event<T>
-	where
-		AccountId = <T as frame_system::Config>::AccountId,
-		LeasePeriod = LeasePeriodOf<T>,
-		ParaId = ParaId,
-		Balance = BalanceOf<T>,
-	{
-		/// A new [lease_period] is beginning.
-		NewLeasePeriod(LeasePeriod),
+	/// Amounts held on deposit for each (possibly future) leased parachain.
+	///
+	/// The actual amount locked on its behalf by any account at any time is the maximum of the second values
+	/// of the items in this list whose first value is the account.
+	///
+	/// The first item in the list is the amount locked for the current Lease Period. Following
+	/// items are for the subsequent lease periods.
+	///
+	/// The default value (an empty list) implies that the parachain no longer exists (or never
+	/// existed) as far as this pallet is concerned.
+	///
+	/// If a parachain doesn't exist *yet* but is scheduled to exist in the future, then it
+	/// will be left-padded with one or more `None`s to denote the fact that nothing is held on
+	/// deposit for the non-existent chain currently, but is held at some point in the future.
+	///
+	/// It is illegal for a `None` value to trail in the list.
+	#[pallet::storage]
+	#[pallet::getter(fn lease)]
+	pub type Leases<T: Config> =
+		StorageMap<_, Twox64Concat, ParaId, Vec<Option<(T::AccountId, BalanceOf<T>)>>, ValueQuery>;
+
+	#[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	#[pallet::metadata(
+		T::AccountId = "AccountId",
+		LeasePeriodOf<T> = "LeasePeriod",
+		BalanceOf<T> = "Balance",
+	)]
+	pub enum Event<T: Config> {
+		/// A new `[lease_period]` is beginning.
+		NewLeasePeriod(LeasePeriodOf<T>),
 		/// A para has won the right to a continuous set of lease periods as a parachain.
 		/// First balance is any extra amount reserved on top of the para's existing deposit.
 		/// Second balance is the total amount reserved.
-		/// \[parachain_id, leaser, period_begin, period_count, extra_reserved, total_amount\]
-		Leased(ParaId, AccountId, LeasePeriod, LeasePeriod, Balance, Balance),
+		/// `[parachain_id, leaser, period_begin, period_count, extra_reserved, total_amount]`
+		Leased(
+			ParaId,
+			T::AccountId,
+			LeasePeriodOf<T>,
+			LeasePeriodOf<T>,
+			BalanceOf<T>,
+			BalanceOf<T>,
+		),
 	}
-);
 
-decl_error! {
-	pub enum Error for Module<T: Config> {
+	#[pallet::error]
+	pub enum Error<T> {
 		/// The parachain ID is not onboarding.
 		ParaNotOnboarding,
 		/// There was an error with the lease.
 		LeaseError,
 	}
-}
 
-decl_module! {
-	pub struct Module<T: Config> for enum Call where origin: T::Origin {
-		type Error = Error<T>;
-
-		const LeasePeriod: T::BlockNumber = T::LeasePeriod::get();
-
-		fn deposit_event() = default;
-
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(n: T::BlockNumber) -> Weight {
 			// If we're beginning a new lease period then handle that.
 			let lease_period = T::LeasePeriod::get();
@@ -146,13 +152,17 @@ decl_module! {
 				0
 			}
 		}
+	}
 
-		/// Just a hotwire into the `lease_out` call, in case Root wants to force some lease to happen
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		/// Just a connect into the `lease_out` call, in case Root wants to force some lease to happen
 		/// independently of any other on-chain mechanism to use it.
 		///
 		/// Can only be called by the Root origin.
-		#[weight = T::WeightInfo::force_lease()]
-		pub fn force_lease(origin,
+		#[pallet::weight(T::WeightInfo::force_lease())]
+		pub fn force_lease(
+			origin: OriginFor<T>,
 			para: ParaId,
 			leaser: T::AccountId,
 			amount: BalanceOf<T>,
@@ -168,8 +178,8 @@ decl_module! {
 		/// Clear all leases for a Para Id, refunding any deposits back to the original owners.
 		///
 		/// Can only be called by the Root origin.
-		#[weight = T::WeightInfo::clear_all_leases()]
-		pub fn clear_all_leases(origin, para: ParaId) -> DispatchResult {
+		#[pallet::weight(T::WeightInfo::clear_all_leases())]
+		pub fn clear_all_leases(origin: OriginFor<T>, para: ParaId) -> DispatchResult {
 			ensure_root(origin)?;
 			let deposits = Self::all_deposits_held(para);
 
@@ -190,33 +200,29 @@ decl_module! {
 		/// let them onboard from here.
 		///
 		/// Origin must be signed, but can be called by anyone.
-		#[weight = T::WeightInfo::trigger_onboard()]
-		pub fn trigger_onboard(origin, para: ParaId) -> DispatchResult {
+		#[pallet::weight(T::WeightInfo::trigger_onboard())]
+		pub fn trigger_onboard(origin: OriginFor<T>, para: ParaId) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			let leases = Leases::<T>::get(para);
 			match leases.first() {
 				// If the first element in leases is present, then it has a lease!
 				// We can try to onboard it.
-				Some(Some(_lease_info)) => {
-					T::Registrar::make_parachain(para)?
-				},
+				Some(Some(_lease_info)) => T::Registrar::make_parachain(para)?,
 				// Otherwise, it does not have a lease.
-				Some(None) | None => {
-					return Err(Error::<T>::ParaNotOnboarding.into());
-				}
+				Some(None) | None => return Err(Error::<T>::ParaNotOnboarding.into()),
 			};
 			Ok(())
 		}
 	}
 }
 
-impl<T: Config> Module<T> {
+impl<T: Config> Pallet<T> {
 	/// A new lease period is beginning. We're at the start of the first block of it.
 	///
 	/// We need to on-board and off-board parachains as needed. We should also handle reducing/
 	/// returning deposits.
 	fn manage_lease_period_start(lease_period_index: LeasePeriodOf<T>) -> Weight {
-		Self::deposit_event(RawEvent::NewLeasePeriod(lease_period_index));
+		Self::deposit_event(Event::<T>::NewLeasePeriod(lease_period_index));
 
 		let old_parachains = T::Registrar::parachains();
 
@@ -314,13 +320,13 @@ impl<T: Config> Module<T> {
 	}
 }
 
-impl<T: Config> crate::traits::OnSwap for Module<T> {
+impl<T: Config> crate::traits::OnSwap for Pallet<T> {
 	fn on_swap(one: ParaId, other: ParaId) {
 		Leases::<T>::mutate(one, |x| Leases::<T>::mutate(other, |y| sp_std::mem::swap(x, y)))
 	}
 }
 
-impl<T: Config> Leaser for Module<T> {
+impl<T: Config> Leaser for Pallet<T> {
 	type AccountId = T::AccountId;
 	type LeasePeriod = T::BlockNumber;
 	type Currency = T::Currency;
@@ -394,7 +400,7 @@ impl<T: Config> Leaser for Module<T> {
 				let _ = T::Registrar::make_parachain(para);
 			}
 
-			Self::deposit_event(RawEvent::Leased(
+			Self::deposit_event(Event::<T>::Leased(
 				para,
 				leaser.clone(),
 				period_begin,
@@ -470,16 +476,13 @@ impl<T: Config> Leaser for Module<T> {
 	}
 }
 
-/// tests for this module
+/// tests for this pallet
 #[cfg(test)]
 mod tests {
 	use super::*;
 
 	use crate::{mock::TestRegistrar, slots};
-	use frame_support::{
-		assert_noop, assert_ok, parameter_types,
-		traits::{OnFinalize, OnInitialize},
-	};
+	use frame_support::{assert_noop, assert_ok, parameter_types};
 	use pallet_balances;
 	use primitives::v1::{BlockNumber, Header};
 	use sp_core::H256;
@@ -504,7 +507,7 @@ mod tests {
 		pub const BlockHashCount: u32 = 250;
 	}
 	impl frame_system::Config for Test {
-		type BaseCallFilter = frame_support::traits::Everything;
+		type BaseCallFilter = frame_support::traits::AllowAll;
 		type BlockWeights = ();
 		type BlockLength = ();
 		type Origin = Origin;
@@ -926,7 +929,7 @@ mod benchmarking {
 
 	use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 
-	use crate::slots::Module as Slots;
+	use crate::slots::Pallet as Slots;
 
 	fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 		let events = frame_system::Pallet::<T>::events();
@@ -964,7 +967,7 @@ mod benchmarking {
 			let period_count = 3u32.into();
 		}: _(RawOrigin::Root, para, leaser.clone(), amount, period_begin, period_count)
 		verify {
-			assert_last_event::<T>(RawEvent::Leased(para, leaser, period_begin, period_count, amount, amount).into());
+			assert_last_event::<T>(Event::<T>::Leased(para, leaser, period_begin, period_count, amount, amount).into());
 		}
 
 		// Worst case scenario, T parathreads onboard, and C parachains offboard.
