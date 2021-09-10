@@ -188,6 +188,25 @@ pub mod pallet {
 
 		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 			if let Call::transact(transaction) = call {
+				// We must ensure a transaction can pay the cost of its data bytes.
+				// If it can't it should not be included in a block.
+				let mut gasometer = evm::gasometer::Gasometer::new(
+					transaction.gas_limit.low_u64(),
+					<T as pallet_evm::Config>::config(),
+				);
+				let transaction_cost = match transaction.action {
+					TransactionAction::Call(_) =>
+						evm::gasometer::call_transaction_cost(&transaction.input),
+					TransactionAction::Create =>
+						evm::gasometer::create_transaction_cost(&transaction.input),
+				};
+				if gasometer.record_transaction(transaction_cost).is_err() {
+					return InvalidTransaction::Custom(
+						TransactionValidationError::InvalidGasLimit as u8,
+					)
+					.into()
+				}
+
 				if let Some(chain_id) = transaction.signature.chain_id() {
 					if chain_id != T::ChainId::get() {
 						return InvalidTransaction::Custom(
@@ -326,7 +345,7 @@ impl<T: Config> Pallet<T> {
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
 		let transaction_index = Pending::<T>::get().len() as u32;
 
-		let (to, contract_address, info) = Self::execute(
+		let (to, _contract_address, info) = Self::execute(
 			source,
 			transaction.input.clone(),
 			transaction.value,
@@ -337,7 +356,7 @@ impl<T: Config> Pallet<T> {
 			None,
 		)?;
 
-		let (reason, status, used_gas) = match info {
+		let (reason, status, used_gas, dest) = match info {
 			CallOrCreateInfo::Call(info) => (
 				info.exit_reason,
 				TransactionStatus {
@@ -354,6 +373,7 @@ impl<T: Config> Pallet<T> {
 					},
 				},
 				info.used_gas,
+				to,
 			),
 			CallOrCreateInfo::Create(info) => (
 				info.exit_reason,
@@ -371,6 +391,7 @@ impl<T: Config> Pallet<T> {
 					},
 				},
 				info.used_gas,
+				Some(info.value),
 			),
 		};
 
@@ -390,7 +411,7 @@ impl<T: Config> Pallet<T> {
 
 		Self::deposit_event(Event::Executed(
 			source,
-			contract_address.unwrap_or_default(),
+			dest.unwrap_or_default(),
 			transaction_hash,
 			reason,
 		));
