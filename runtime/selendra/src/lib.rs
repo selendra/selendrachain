@@ -116,10 +116,7 @@ pub use sp_runtime::BuildStorage;
 
 /// Constant values used within the runtime.
 pub mod constants;
-use constants::{
-	currency::*, fee::*, merge_account::MergeAccountEvm, permission::*,
-	precompiles::SelendraPrecompiles, time::*,
-};
+use constants::{currency::*, fee::*, merge_account::MergeAccountEvm, permission::*, time::*};
 
 // Weights used in the runtime.
 mod weights;
@@ -1372,7 +1369,7 @@ impl FeeCalculator for FixedGasPrice {
 }
 
 parameter_types! {
-	pub const ChainId: u64 = 2000;
+	pub const ChainId: u64 = 222;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
 }
 
@@ -1386,7 +1383,21 @@ impl pallet_evm::Config for Runtime {
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type Precompiles = SelendraPrecompiles<Self>;
+	type Precompiles = (
+		pallet_evm_precompile_simple::ECRecover,
+		pallet_evm_precompile_simple::Sha256,
+		pallet_evm_precompile_simple::Ripemd160,
+		pallet_evm_precompile_simple::Identity,
+		pallet_evm_precompile_simple::ECRecoverPublicKey,
+		pallet_evm_precompile_modexp::Modexp,
+		pallet_evm_precompile_bn128::Bn128Add,
+		pallet_evm_precompile_bn128::Bn128Mul,
+		pallet_evm_precompile_bn128::Bn128Pairing,
+		pallet_evm_precompile_simple::ECRecoverPublicKey,
+		pallet_evm_precompile_sha3fips::Sha3FIPS256,
+		pallet_evm_precompile_sha3fips::Sha3FIPS512,
+		pallet_evm_precompile_dispatch::Dispatch<Self>,
+	);
 	type ChainId = ChainId;
 	type OnChargeTransaction = ();
 	type BlockGasLimit = BlockGasLimit;
