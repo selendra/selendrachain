@@ -48,6 +48,9 @@ use pallet_evm::{Account as EvmAccount, EnsureAddressTruncated, FeeCalculator, R
 pub struct SelendraGasWeightMapping;
 use evm_accounts::EvmAddressMapping;
 
+pub use pallet_bridge;
+pub use pallet_bridge_transfer;
+
 use runtime_parachains::{
 	configuration as parachains_configuration, dmp as parachains_dmp, hrmp as parachains_hrmp,
 	inclusion as parachains_inclusion, initializer as parachains_initializer,
@@ -1453,6 +1456,31 @@ impl evm_accounts::Config for Runtime {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const BridgeChainId: u8 = 1;
+	pub const ProposalLifetime: BlockNumber = 50;
+}
+
+impl pallet_bridge::Config for Runtime {
+	type Event = Event;
+	type BridgeCommitteeOrigin = MoreThanHalfCouncil;
+	type Proposal = Call;
+	type BridgeChainId = BridgeChainId;
+	type ProposalLifetime = ProposalLifetime;
+}
+
+parameter_types! {
+	pub const BridgeTokenId: [u8; 32] = hex_literal::hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
+}
+
+impl pallet_bridge_transfer::Config for Runtime {
+	type Event = Event;
+	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
+	type Currency = Balances;
+	type BridgeTokenId = BridgeTokenId;
+	type OnFeePay = ();
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -1492,6 +1520,10 @@ construct_runtime! {
 		Evm: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 19,
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned}= 20,
 		EvmAccounts: evm_accounts::{Pallet, Call, Storage, Event<T>} = 21,
+
+		// Bridge
+		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 22,
+		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 23,
 
 		// Utility module.
 		Utility: pallet_utility::{Pallet, Call, Event} = 24,
