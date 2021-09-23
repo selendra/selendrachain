@@ -1470,7 +1470,7 @@ impl pallet_bridge::Config for Runtime {
 }
 
 parameter_types! {
-	pub const BridgeTokenId: [u8; 32] = hex_literal::hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
+	pub const BridgeTokenId: [u8; 32] = hex_literal::hex!("000000000000000000000030bAb6B88dB781129c6a4e9B7926738e3314Cf1C38");
 }
 
 impl pallet_bridge_transfer::Config for Runtime {
