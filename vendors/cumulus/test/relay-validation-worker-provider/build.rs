@@ -66,7 +66,7 @@ fn create_project(out_dir: &Path) -> PathBuf {
 		r#"
 			[package]
 			name = "{project_name}"
-			version = "0.1.1"
+			version = "0.1.2"
 			authors = ["Parity Technologies <admin@parity.io>"]
 			edition = "2018"
 

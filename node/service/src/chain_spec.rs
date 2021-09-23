@@ -394,7 +394,7 @@ pub fn selendra_testnet_genesis(
 ) -> selendra::GenesisConfig {
 	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 
-	const ENDOWMENT: u128 = 130_899_693 * SEL;
+	const ENDOWMENT: u128 = 500000 * SEL;
 	const STASH: u128 = 31416 * SEL;
 
 	selendra::GenesisConfig {
