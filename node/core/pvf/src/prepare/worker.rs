@@ -15,17 +15,17 @@
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{
-	LOG_TARGET,
 	artifacts::Artifact,
 	worker_common::{
-		IdleWorker, SpawnErr, WorkerHandle, bytes_to_path, framed_recv, framed_send, path_to_bytes,
-		spawn_with_program_path, tmpfile_in, worker_event_loop,
+		bytes_to_path, framed_recv, framed_send, path_to_bytes, spawn_with_program_path,
+		tmpfile_in, worker_event_loop, IdleWorker, SpawnErr, WorkerHandle,
 	},
+	LOG_TARGET,
 };
 use async_std::{
 	io,
 	os::unix::net::UnixStream,
-	path::{PathBuf, Path},
+	path::{Path, PathBuf},
 };
 use futures::FutureExt as _;
 use futures_timer::Delay;
@@ -43,18 +43,15 @@ pub async fn spawn(
 	program_path: &Path,
 	spawn_timeout: Duration,
 ) -> Result<(IdleWorker, WorkerHandle), SpawnErr> {
-	spawn_with_program_path(
-		"prepare",
-		program_path,
-		&["prepare-worker"],
-		spawn_timeout,
-	)
-	.await
+	spawn_with_program_path("prepare", program_path, &["prepare-worker"], spawn_timeout).await
 }
 
 pub enum Outcome {
 	/// The worker has finished the work assigned to it.
 	Concluded(IdleWorker),
+	/// The host tried to reach the worker but failed. This is most likely because the worked was
+	/// killed by the system.
+	Unreachable,
 	/// The execution was interrupted abruptly and the worker is not available anymore. For example,
 	/// this could've happen because the worker hadn't finished the work until the given deadline.
 	///
@@ -96,7 +93,7 @@ pub async fn start_work(
 				"failed to send a prepare request: {:?}",
 				err,
 			);
-			return Outcome::DidntMakeIt;
+			return Outcome::Unreachable
 		}
 
 		// Wait for the result from the worker, keeping in mind that there may be a timeout, the
@@ -169,13 +166,13 @@ pub async fn start_work(
 			Selected::Done => {
 				renice(pid, NICENESS_FOREGROUND);
 				Outcome::Concluded(IdleWorker { stream, pid })
-			}
+			},
 			Selected::IoErr | Selected::Deadline => {
 				let bytes = Artifact::DidntMakeIt.serialize();
 				// best effort: there is nothing we can do here if the write fails.
 				let _ = async_std::fs::write(&artifact_path, &bytes).await;
 				Outcome::DidntMakeIt
-			}
+			},
 		}
 	})
 	.await
@@ -199,8 +196,8 @@ where
 				"failed to create a temp file for the artifact: {:?}",
 				err,
 			);
-			return Outcome::DidntMakeIt;
-		}
+			return Outcome::DidntMakeIt
+		},
 	};
 
 	let outcome = f(tmp_file.clone()).await;
@@ -220,7 +217,7 @@ where
 				"failed to remove the tmp file: {:?}",
 				err,
 			);
-		}
+		},
 	}
 
 	outcome
@@ -301,9 +298,7 @@ pub fn worker_entrypoint(socket_path: &str) {
 
 fn prepare_artifact(code: &[u8]) -> Artifact {
 	let blob = match crate::executor_intf::prevalidate(code) {
-		Err(err) => {
-			return Artifact::PrevalidationErr(format!("{:?}", err));
-		}
+		Err(err) => return Artifact::PrevalidationErr(format!("{:?}", err)),
 		Ok(b) => b,
 	};
 

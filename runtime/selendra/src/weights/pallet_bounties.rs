@@ -33,7 +33,7 @@
 // --header=./file_header.txt
 // --output=./runtime/selendra/src/weights/
 
-
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
@@ -43,62 +43,87 @@ use sp_std::marker::PhantomData;
 /// Weight functions for pallet_bounties.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_bounties::WeightInfo for WeightInfo<T> {
+	// Storage: Treasury BountyCount (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
+	// Storage: Treasury BountyDescriptions (r:0 w:1)
+	// Storage: Treasury Bounties (r:0 w:1)
 	fn propose_bounty(d: u32, ) -> Weight {
-		(42_863_000 as Weight)
+		(45_118_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((1_000 as Weight).saturating_mul(d as Weight))
+			.saturating_add((2_000 as Weight).saturating_mul(d as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+	// Storage: Treasury Bounties (r:1 w:1)
+	// Storage: Treasury BountyApprovals (r:1 w:1)
 	fn approve_bounty() -> Weight {
-		(11_260_000 as Weight)
+		(11_415_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Treasury Bounties (r:1 w:1)
 	fn propose_curator() -> Weight {
-		(8_487_000 as Weight)
+		(9_395_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: Treasury Bounties (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
 	fn unassign_curator() -> Weight {
-		(52_302_000 as Weight)
+		(54_272_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Treasury Bounties (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
 	fn accept_curator() -> Weight {
-		(36_396_000 as Weight)
+		(37_448_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Treasury Bounties (r:1 w:1)
 	fn award_bounty() -> Weight {
-		(24_492_000 as Weight)
+		(25_722_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: Treasury Bounties (r:1 w:1)
+	// Storage: System Account (r:3 w:3)
+	// Storage: Treasury BountyDescriptions (r:0 w:1)
 	fn claim_bounty() -> Weight {
-		(124_315_000 as Weight)
+		(132_949_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
+	// Storage: Treasury Bounties (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
+	// Storage: Treasury BountyDescriptions (r:0 w:1)
 	fn close_bounty_proposed() -> Weight {
-		(51_443_000 as Weight)
+		(54_351_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+	// Storage: Treasury Bounties (r:1 w:1)
+	// Storage: System Account (r:2 w:2)
+	// Storage: Treasury BountyDescriptions (r:0 w:1)
 	fn close_bounty_active() -> Weight {
-		(82_325_000 as Weight)
+		(85_377_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+	// Storage: Treasury Bounties (r:1 w:1)
 	fn extend_bounty_expiry() -> Weight {
-		(23_740_000 as Weight)
+		(24_264_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: Treasury BountyApprovals (r:1 w:1)
+	// Storage: Treasury Bounties (r:1 w:1)
+	// Storage: System Account (r:2 w:2)
 	fn spend_funds(b: u32, ) -> Weight {
 		(0 as Weight)
-			// Standard Error: 12_000
-			.saturating_add((59_403_000 as Weight).saturating_mul(b as Weight))
+			// Standard Error: 25_000
+			.saturating_add((62_351_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(b as Weight)))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))

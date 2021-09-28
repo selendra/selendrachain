@@ -16,21 +16,21 @@
 
 //! Selendra chain configurations.
 
-use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
-use sp_consensus_babe::AuthorityId as BabeId;
 use beefy_primitives::crypto::AuthorityId as BeefyId;
 use grandpa::AuthorityId as GrandpaId;
-use selendra_runtime as selendra;
-use selendra_runtime::constants::currency::UNITS as SEL;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use selendra_primitives::v1::{AccountId, AccountPublic, AssignmentId, ValidatorId};
+use selendra_runtime as selendra;
+use selendra_runtime::constants::currency::UNITS as SEL;
+use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
+use sp_consensus_babe::AuthorityId as BabeId;
 
 use sc_chain_spec::{ChainSpecExtension, ChainType};
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::{traits::IdentifyAccount, Perbill};
-use telemetry::TelemetryEndpoints;
 use std::collections::BTreeMap;
+use telemetry::TelemetryEndpoints;
 
 const SELENDRA_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 const DEFAULT_PROTOCOL_ID: &str = "sel";
@@ -46,6 +46,10 @@ pub struct Extensions {
 	pub fork_blocks: sc_client_api::ForkBlocks<selendra_primitives::v1::Block>,
 	/// Known bad block hashes.
 	pub bad_blocks: sc_client_api::BadBlocks<selendra_primitives::v1::Block>,
+	// The light sync state.
+	///
+	/// This value will be set by the `sync-state rpc` implementation.
+	pub light_sync_state: sc_sync_state_rpc::LightSyncStateExtension,
 }
 
 /// The `ChainSpec` parameterized for the selendra runtime.
@@ -56,9 +60,10 @@ pub fn selendra_config() -> Result<SelendraChainSpec, String> {
 }
 
 /// The default parachains host configuration.
-fn default_parachains_host_configuration() ->
-	selendra_runtime_parachains::configuration::HostConfiguration<selendra_primitives::v1::BlockNumber>
-{
+fn default_parachains_host_configuration(
+) -> selendra_runtime_parachains::configuration::HostConfiguration<
+	selendra_primitives::v1::BlockNumber,
+> {
 	use selendra_primitives::v1::{MAX_CODE_SIZE, MAX_POV_SIZE};
 
 	selendra_runtime_parachains::configuration::HostConfiguration {
@@ -82,7 +87,6 @@ fn default_parachains_host_configuration() ->
 		ump_service_total_weight: 4 * 1_000_000_000,
 		max_upward_message_size: 1024 * 1024,
 		max_upward_message_num_per_candidate: 5,
-		hrmp_open_request_ttl: 5,
 		hrmp_sender_deposit: 0,
 		hrmp_recipient_deposit: 0,
 		hrmp_channel_max_capacity: 8,
@@ -130,7 +134,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		// 5CDkUQaKd39SJq9LaUyK8QXbqCTDVgCiDCSu6izYe2pkumBx
 		hex!["06e603f736d04565b4fbb38074c0f52a7687c68ffaf58d1438f47cd6de0d397b"].into(),
 	];
-	
+
 	let initial_authorities: Vec<(
 		AccountId,
 		AccountId,
@@ -192,7 +196,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 	];
 
 	const ENDOWMENT: u128 = 1570796325 * SEL;
-	const STASH: u128 =  31416 * SEL;
+	const STASH: u128 = 31416 * SEL;
 
 	selendra::GenesisConfig {
 		system: selendra::SystemConfig {
@@ -231,14 +235,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 			minimum_validator_count: 2,
 			stakers: initial_authorities
 				.iter()
-				.map(|x| {
-					(
-						x.0.clone(),
-						x.1.clone(),
-						STASH,
-						selendra::StakerStatus::Validator,
-					)
-				})
+				.map(|x| (x.0.clone(), x.1.clone(), STASH, selendra::StakerStatus::Validator))
 				.collect(),
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
 			slash_reward_fraction: Perbill::from_percent(10),
@@ -248,10 +245,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		},
 		phragmen_election: Default::default(),
 		democracy: Default::default(),
-		council: selendra::CouncilConfig {
-			members: vec![],
-			phantom: Default::default(),
-		},
+		council: selendra::CouncilConfig { members: vec![], phantom: Default::default() },
 		technical_committee: selendra::TechnicalCommitteeConfig {
 			members: vec![],
 			phantom: Default::default(),
@@ -266,21 +260,16 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		authority_discovery: selendra::AuthorityDiscoveryConfig { keys: vec![] },
 		vesting: selendra::VestingConfig { vesting: vec![] },
 		treasury: Default::default(),
-		parachains_configuration: selendra::ParachainsConfigurationConfig {
+		configuration: selendra::ConfigurationConfig {
 			config: default_parachains_host_configuration(),
 		},
 		gilt: Default::default(),
 		paras: Default::default(),
-		sudo: selendra::SudoConfig {
-			key: endowed_accounts[0].clone(),
-		},
-		evm: selendra::EvmConfig { 
-			accounts: BTreeMap::new(),
-		},
+		sudo: selendra::SudoConfig { key: endowed_accounts[0].clone() },
+		evm: selendra::EvmConfig { accounts: BTreeMap::new() },
 		ethereum: selendra::EthereumConfig {},
 	}
 }
-
 
 /// Staging testnet config.
 pub fn selendra_staging_testnet_config() -> Result<SelendraChainSpec, String> {
@@ -299,14 +288,14 @@ pub fn selendra_staging_testnet_config() -> Result<SelendraChainSpec, String> {
 		),
 		Some(DEFAULT_PROTOCOL_ID),
 		Some(
-            serde_json::from_str(
-                "{
+			serde_json::from_str(
+				"{
             \"tokenDecimals\": 18,
             \"tokenSymbol\": \"SEL\"
         	}",
-            )
-            .expect("Provided valid json map"),
-        ),
+			)
+			.expect("Provided valid json map"),
+		),
 		Default::default(),
 	))
 }
@@ -341,9 +330,7 @@ pub fn get_authority_keys_from_seed(
 	BeefyId,
 ) {
 	let keys = get_authority_keys_from_seed_no_beefy(seed);
-	(
-		keys.0, keys.1, keys.2, keys.3, keys.4, keys.5, keys.6, keys.7, get_from_seed::<BeefyId>(seed)
-	)
+	(keys.0, keys.1, keys.2, keys.3, keys.4, keys.5, keys.6, keys.7, get_from_seed::<BeefyId>(seed))
 }
 
 /// Helper function to generate stash, controller and session key from seed
@@ -388,7 +375,6 @@ fn testnet_accounts() -> Vec<AccountId> {
 	]
 }
 
-
 /// Helper function to create selendra GenesisConfig for testing
 pub fn selendra_testnet_genesis(
 	wasm_binary: &[u8],
@@ -407,7 +393,7 @@ pub fn selendra_testnet_genesis(
 ) -> selendra::GenesisConfig {
 	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 
-	const ENDOWMENT: u128 = 130_899_693 * SEL;
+	const ENDOWMENT: u128 = 500000 * SEL;
 	const STASH: u128 = 31416 * SEL;
 
 	selendra::GenesisConfig {
@@ -417,10 +403,7 @@ pub fn selendra_testnet_genesis(
 		},
 		indices: selendra::IndicesConfig { indices: vec![] },
 		balances: selendra::BalancesConfig {
-			balances: endowed_accounts
-				.iter()
-				.map(|k| (k.clone(), ENDOWMENT))
-				.collect(),
+			balances: endowed_accounts.iter().map(|k| (k.clone(), ENDOWMENT)).collect(),
 		},
 		session: selendra::SessionConfig {
 			keys: initial_authorities
@@ -446,14 +429,7 @@ pub fn selendra_testnet_genesis(
 			validator_count: initial_authorities.len() as u32,
 			stakers: initial_authorities
 				.iter()
-				.map(|x| {
-					(
-						x.0.clone(),
-						x.1.clone(),
-						STASH,
-						selendra::StakerStatus::Validator,
-					)
-				})
+				.map(|x| (x.0.clone(), x.1.clone(), STASH, selendra::StakerStatus::Validator))
 				.collect(),
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
 			slash_reward_fraction: Perbill::from_percent(10),
@@ -463,10 +439,7 @@ pub fn selendra_testnet_genesis(
 		},
 		phragmen_election: Default::default(),
 		democracy: selendra::DemocracyConfig::default(),
-		council: selendra::CouncilConfig {
-			members: vec![],
-			phantom: Default::default(),
-		},
+		council: selendra::CouncilConfig { members: vec![], phantom: Default::default() },
 		technical_committee: selendra::TechnicalCommitteeConfig {
 			members: vec![],
 			phantom: Default::default(),
@@ -481,17 +454,13 @@ pub fn selendra_testnet_genesis(
 		authority_discovery: selendra::AuthorityDiscoveryConfig { keys: vec![] },
 		vesting: selendra::VestingConfig { vesting: vec![] },
 		treasury: Default::default(),
-		parachains_configuration: selendra::ParachainsConfigurationConfig {
+		configuration: selendra::ConfigurationConfig {
 			config: default_parachains_host_configuration(),
 		},
 		gilt: Default::default(),
 		paras: Default::default(),
-		sudo: selendra::SudoConfig {
-			key: endowed_accounts[0].clone(),
-		},
-		evm: selendra::EvmConfig { 
-			accounts: BTreeMap::new(),
-		},
+		sudo: selendra::SudoConfig { key: endowed_accounts[0].clone() },
+		evm: selendra::EvmConfig { accounts: BTreeMap::new() },
 		ethereum: selendra::EthereumConfig {},
 	}
 }
@@ -518,14 +487,14 @@ pub fn selendra_development_config() -> Result<SelendraChainSpec, String> {
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
 		Some(
-            serde_json::from_str(
-                "{
+			serde_json::from_str(
+				"{
             \"tokenDecimals\": 18,
             \"tokenSymbol\": \"SEL\"
         	}",
-            )
-            .expect("Provided valid json map"),
-        ),
+			)
+			.expect("Provided valid json map"),
+		),
 		Default::default(),
 	))
 }
@@ -555,14 +524,14 @@ pub fn selendra_local_testnet_config() -> Result<SelendraChainSpec, String> {
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
 		Some(
-            serde_json::from_str(
-                "{
+			serde_json::from_str(
+				"{
             \"tokenDecimals\": 18,
             \"tokenSymbol\": \"SEL\"
         	}",
-            )
-            .expect("Provided valid json map"),
-        ),
+			)
+			.expect("Provided valid json map"),
+		),
 		Default::default(),
 	))
 }

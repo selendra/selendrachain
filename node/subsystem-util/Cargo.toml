@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-subsystem-util"
-version = "0.1.0"
+version = "0.1.3"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 description = "Subsystem traits and message definitions"
@@ -16,20 +16,23 @@ pin-project = "1.0.7"
 rand = "0.8.3"
 thiserror = "1.0.23"
 tracing = "0.1.26"
-lru = "0.6.5"
+derive_more = "0.99.11"
+lru = "0.6.6"
 
 selendra-node-primitives = { path = "../primitives" }
 selendra-node-subsystem = { path = "../subsystem" }
 selendra-node-jaeger = { path = "../jaeger" }
+selendra-node-metrics = { path = "../metrics" }
 selendra-node-network-protocol = { path = "../network/protocol" }
 selendra-primitives = { path = "../../primitives" }
+selendra-overseer = { path = "../overseer" }
 metered-channel = { path = "../metered-channel"}
 
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
-substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
 
 [dev-dependencies]
 assert_matches = "1.4.0"

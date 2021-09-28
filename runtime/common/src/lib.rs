@@ -18,48 +18,51 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod slots;
 pub mod auctions;
 pub mod crowdloan;
-pub mod purchase;
+pub mod elections;
 pub mod impls;
-pub mod mmr;
-pub mod paras_sudo_wrapper;
 pub mod paras_registrar;
+pub mod paras_sudo_wrapper;
+pub mod purchase;
 pub mod slot_range;
+pub mod slots;
 pub mod traits;
 pub mod xcm_sender;
-pub mod elections;
 
-#[cfg(test)]
-mod mock;
 #[cfg(test)]
 mod integration_tests;
+#[cfg(test)]
+mod mock;
 
-use beefy_primitives::crypto::AuthorityId as BeefyId;
-use primitives::v1::{AccountId, AssignmentId, BlockNumber, ValidatorId};
-use sp_runtime::{Perquintill, Perbill, FixedPointNumber};
-use frame_system::limits;
-use frame_support::{
-	parameter_types, traits::{Currency, OneSessionHandler},
-	weights::{Weight, constants::WEIGHT_PER_SECOND, DispatchClass},
+pub use frame_support::weights::constants::{
+	BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight,
 };
-use pallet_transaction_payment::{TargetedFeeAdjustment, Multiplier};
+use frame_support::{
+	parameter_types,
+	traits::{Currency, OneSessionHandler},
+	weights::{constants::WEIGHT_PER_SECOND, DispatchClass, Weight},
+};
+use frame_system::limits;
+use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
+use primitives::v1::{AssignmentId, BlockNumber, ValidatorId};
+use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
 use static_assertions::const_assert;
-pub use frame_support::weights::constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
 
+pub use elections::{OffchainSolutionLengthLimit, OffchainSolutionWeightLimit};
+pub use pallet_balances::Call as BalancesCall;
 #[cfg(feature = "std")]
 pub use pallet_staking::StakerStatus;
+pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-pub use pallet_timestamp::Call as TimestampCall;
-pub use pallet_balances::Call as BalancesCall;
-pub use elections::{OffchainSolutionLengthLimit, OffchainSolutionWeightLimit};
 
 /// Implementations of some helper traits passed into runtime modules as associated types.
 pub use impls::ToAuthor;
 
-pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
+pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
+	<T as frame_system::Config>::AccountId,
+>>::NegativeImbalance;
 
 /// We assume that an on-initialize consumes 1% of the weight on average, hence a single extrinsic
 /// will not be allowed to consume more than `AvailableBlockRatio - 1%`.
@@ -79,7 +82,6 @@ pub const GAS_PER_SECOND: u64 = 40_000_000;
 /// Approximate ratio of the amount of Weight per Gas.
 /// u64 works for approximations because Weight is a very small unit compared to gas.
 pub const WEIGHT_PER_GAS: u64 = WEIGHT_PER_SECOND / GAS_PER_SECOND;
-
 
 const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct());
 
@@ -121,12 +123,8 @@ parameter_types! {
 }
 
 /// Parameterized slow adjusting fee updated based on
-pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
-	R,
-	TargetBlockFullness,
-	AdjustmentVariable,
-	MinimumMultiplier
->;
+pub type SlowAdjustingFeeUpdate<R> =
+	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 
 /// The type used for currency conversion.
 ///
@@ -141,25 +139,26 @@ impl<T> sp_runtime::BoundToRuntimeAppPublic for ParachainSessionKeyPlaceholder<T
 	type Public = ValidatorId;
 }
 
-impl<T: pallet_session::Config> OneSessionHandler<T::AccountId> for ParachainSessionKeyPlaceholder<T>
+impl<T: pallet_session::Config> OneSessionHandler<T::AccountId>
+	for ParachainSessionKeyPlaceholder<T>
 {
 	type Key = ValidatorId;
 
-	fn on_genesis_session<'a, I: 'a>(_validators: I) where
+	fn on_genesis_session<'a, I: 'a>(_validators: I)
+	where
 		I: Iterator<Item = (&'a T::AccountId, ValidatorId)>,
-		T::AccountId: 'a
+		T::AccountId: 'a,
 	{
-
 	}
 
-	fn on_new_session<'a, I: 'a>(_changed: bool, _v: I, _q: I) where
+	fn on_new_session<'a, I: 'a>(_changed: bool, _v: I, _q: I)
+	where
 		I: Iterator<Item = (&'a T::AccountId, ValidatorId)>,
-		T::AccountId: 'a
+		T::AccountId: 'a,
 	{
-
 	}
 
-	fn on_disabled(_: usize) { }
+	fn on_disabled(_: usize) {}
 }
 
 /// A placeholder since there is currently no provided session key handler for parachain validator
@@ -169,39 +168,26 @@ impl<T> sp_runtime::BoundToRuntimeAppPublic for AssignmentSessionKeyPlaceholder<
 	type Public = AssignmentId;
 }
 
-impl<T: pallet_session::Config> OneSessionHandler<T::AccountId> for AssignmentSessionKeyPlaceholder<T>
+impl<T: pallet_session::Config> OneSessionHandler<T::AccountId>
+	for AssignmentSessionKeyPlaceholder<T>
 {
 	type Key = AssignmentId;
 
-	fn on_genesis_session<'a, I: 'a>(_validators: I) where
+	fn on_genesis_session<'a, I: 'a>(_validators: I)
+	where
 		I: Iterator<Item = (&'a T::AccountId, AssignmentId)>,
-		T::AccountId: 'a
+		T::AccountId: 'a,
 	{
-
 	}
 
-	fn on_new_session<'a, I: 'a>(_changed: bool, _v: I, _q: I) where
+	fn on_new_session<'a, I: 'a>(_changed: bool, _v: I, _q: I)
+	where
 		I: Iterator<Item = (&'a T::AccountId, AssignmentId)>,
-		T::AccountId: 'a
+		T::AccountId: 'a,
 	{
-
 	}
 
-	fn on_disabled(_: usize) { }
-}
-
-/// Generates a `BeefyId` from the given `AccountId`. The resulting `BeefyId` is
-/// a dummy value and this is a utility function meant to be used when migration
-/// session keys.
-pub fn dummy_beefy_id_from_account_id(a: AccountId) -> BeefyId {
-	let mut id = BeefyId::default();
-	let id_raw: &mut [u8] = id.as_mut();
-
-	// NOTE: AccountId is 32 bytes, whereas BeefyId is 33 bytes.
-	id_raw[1..].copy_from_slice(a.as_ref());
-	id_raw[0..4].copy_from_slice(b"beef");
-
-	id
+	fn on_disabled(_: usize) {}
 }
 
 #[cfg(test)]
@@ -211,7 +197,7 @@ mod multiplier_tests {
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
-		traits::{BlakeTwo256, IdentityLookup, Convert, One},
+		traits::{BlakeTwo256, Convert, IdentityLookup, One},
 		Perbill,
 	};
 
@@ -238,7 +224,7 @@ mod multiplier_tests {
 	}
 
 	impl frame_system::Config for Runtime {
-		type BaseCallFilter = ();
+		type BaseCallFilter = frame_support::traits::Everything;
 		type BlockWeights = BlockWeights;
 		type BlockLength = ();
 		type DbWeight = ();
@@ -263,9 +249,14 @@ mod multiplier_tests {
 		type OnSetCode = ();
 	}
 
-	fn run_with_system_weight<F>(w: Weight, mut assertions: F) where F: FnMut() -> () {
-		let mut t: sp_io::TestExternalities =
-			frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap().into();
+	fn run_with_system_weight<F>(w: Weight, mut assertions: F)
+	where
+		F: FnMut() -> (),
+	{
+		let mut t: sp_io::TestExternalities = frame_system::GenesisConfig::default()
+			.build_storage::<Runtime>()
+			.unwrap()
+			.into();
 		t.execute_with(|| {
 			System::set_block_consumed_resources(w, 0);
 			assertions()
@@ -291,9 +282,9 @@ mod multiplier_tests {
 		// assume the multiplier is initially set to its minimum. We update it with values twice the
 		//target (target is 25%, thus 50%) and we see at which point it reaches 1.
 		let mut multiplier = MinimumMultiplier::get();
-		let block_weight = TargetBlockFullness::get()
-			* BlockWeights::get().get(DispatchClass::Normal).max_total.unwrap()
-			* 2;
+		let block_weight = TargetBlockFullness::get() *
+			BlockWeights::get().get(DispatchClass::Normal).max_total.unwrap() *
+			2;
 		let mut blocks = 0;
 		while multiplier <= Multiplier::one() {
 			run_with_system_weight(block_weight, || {
@@ -305,16 +296,5 @@ mod multiplier_tests {
 			blocks += 1;
 			println!("block = {} multiplier {:?}", blocks, multiplier);
 		}
-	}
-
-	#[test]
-	fn generate_dummy_unique_beefy_id_from_account_id() {
-		let acc1 = AccountId::new([0; 32]);
-		let acc2 = AccountId::new([1; 32]);
-
-		let beefy_id1 = dummy_beefy_id_from_account_id(acc1);
-		let beefy_id2 = dummy_beefy_id_from_account_id(acc2);
-
-		assert_ne!(beefy_id1, beefy_id2);
 	}
 }

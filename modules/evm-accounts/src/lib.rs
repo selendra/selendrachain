@@ -27,7 +27,7 @@
 use codec::Encode;
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
-	traits::{Currency, HandleLifetime, OnKilledAccount, ReservableCurrency, },
+	traits::{Currency, HandleLifetime, OnKilledAccount, ReservableCurrency},
 	weights::Weight,
 	StorageMap,
 };
@@ -35,26 +35,24 @@ use frame_system::ensure_signed;
 use pallet_evm::AddressMapping;
 use sp_core::{crypto::AccountId32, ecdsa, H160};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
-use sp_std::marker::PhantomData;
-use sp_std::vec::Vec;
+use sp_std::{marker::PhantomData, vec::Vec};
 
-pub mod utilities;
 pub mod account;
 pub mod default_weight;
+pub mod utilities;
 
-use utilities::with_transaction_result;
 use account::MergeAccount;
+use utilities::with_transaction_result;
 
 pub trait WeightInfo {
 	fn claim_account() -> Weight;
 }
 
-
 pub type EcdsaSignature = ecdsa::Signature;
 /// Evm Address.
 pub type EvmAddress = sp_core::H160;
 
-pub trait Config: frame_system::Config{
+pub trait Config: frame_system::Config {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
 	/// The Currency for managing Evm account assets.
@@ -189,20 +187,21 @@ impl<T: Config> Module<T> {
 	pub fn eth_recover(s: &EcdsaSignature, what: &[u8], extra: &[u8]) -> Option<EvmAddress> {
 		let msg = keccak_256(&Self::ethereum_signable_message(what, extra));
 		let mut res = EvmAddress::default();
-		res.0
-			.copy_from_slice(&keccak_256(&secp256k1_ecdsa_recover(s.as_ref(), &msg).ok()?[..])[12..]);
+		res.0.copy_from_slice(
+			&keccak_256(&secp256k1_ecdsa_recover(s.as_ref(), &msg).ok()?[..])[12..],
+		);
 		Some(res)
 	}
 
-	pub fn eth_public(secret: &secp256k1::SecretKey) -> secp256k1::PublicKey {
-		secp256k1::PublicKey::from_secret_key(secret)
+	pub fn eth_public(secret: &libsecp256k1::SecretKey) -> libsecp256k1::PublicKey {
+		libsecp256k1::PublicKey::from_secret_key(secret)
 	}
-	pub fn eth_address(secret: &secp256k1::SecretKey) -> EvmAddress {
+	pub fn eth_address(secret: &libsecp256k1::SecretKey) -> EvmAddress {
 		EvmAddress::from_slice(&keccak_256(&Self::eth_public(secret).serialize()[1..65])[12..])
 	}
-	pub fn eth_sign(secret: &secp256k1::SecretKey, what: &[u8], extra: &[u8]) -> EcdsaSignature {
+	pub fn eth_sign(secret: &libsecp256k1::SecretKey, what: &[u8], extra: &[u8]) -> EcdsaSignature {
 		let msg = keccak_256(&Self::ethereum_signable_message(&to_ascii_hex(what)[..], extra));
-		let (sig, recovery_id) = secp256k1::sign(&secp256k1::Message::parse(&msg), secret);
+		let (sig, recovery_id) = libsecp256k1::sign(&libsecp256k1::Message::parse(&msg), secret);
 		let mut r = [0u8; 65];
 		r[0..64].copy_from_slice(&sig.serialize()[..]);
 		r[64] = recovery_id.serialize();
@@ -234,7 +233,7 @@ where
 		}
 	}
 
-  	fn to_evm_address(account_id: &T::AccountId) -> Option<H160> {
+	fn to_evm_address(account_id: &T::AccountId) -> Option<H160> {
 		EvmAddresses::<T>::get(account_id).or_else(|| {
 			let data: [u8; 32] = account_id.clone().into().into();
 			if data.starts_with(b"evm:") {

@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-use service::{IdentifyVariant, self};
-use sc_cli::{SubstrateCli, RuntimeVersion, Role};
 use crate::cli::{Cli, Subcommand};
 use futures::future::TryFutureExt;
+use sc_cli::{Role, RuntimeVersion, SubstrateCli};
+use service::{self, IdentifyVariant};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -50,28 +50,45 @@ fn get_exec_name() -> Option<String> {
 }
 
 impl SubstrateCli for Cli {
-	fn impl_name() -> String { "Selendra-Chain".into() }
+	fn impl_name() -> String {
+		"Selendra-Chain".into()
+	}
 
-	fn impl_version() -> String { env!("SUBSTRATE_CLI_IMPL_VERSION").into() }
+	fn impl_version() -> String {
+		env!("SUBSTRATE_CLI_IMPL_VERSION").into()
+	}
 
-	fn description() -> String { env!("CARGO_PKG_DESCRIPTION").into() }
+	fn description() -> String {
+		env!("CARGO_PKG_DESCRIPTION").into()
+	}
 
-	fn author() -> String { env!("CARGO_PKG_AUTHORS").into() }
+	fn author() -> String {
+		env!("CARGO_PKG_AUTHORS").into()
+	}
 
-	fn support_url() -> String { "https://github.com/selendra/selendra-chain/issues/new".into() }
+	fn support_url() -> String {
+		"https://github.com/selendra/selendra-chain/issues/new".into()
+	}
 
-	fn copyright_start_year() -> i32 { 2017 }
+	fn copyright_start_year() -> i32 {
+		2017
+	}
 
-	fn executable_name() -> String { "selendra".into() }
+	fn executable_name() -> String {
+		"selendra".into()
+	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		let id = if id == "" {
 			let n = get_exec_name().unwrap_or_default();
-			["selendra"].iter()
+			["selendra"]
+				.iter()
 				.cloned()
 				.find(|&chain| n.starts_with(chain))
 				.unwrap_or("selendra")
-		} else { id };
+		} else {
+			id
+		};
 		Ok(match id {
 			"selendra" => Box::new(service::chain_spec::selendra_config()?),
 			"dev" => Box::new(service::chain_spec::selendra_development_config()?),
@@ -79,7 +96,8 @@ impl SubstrateCli for Cli {
 			"staging" => Box::new(service::chain_spec::selendra_staging_testnet_config()?),
 			path => {
 				let path = std::path::PathBuf::from(path);
-				let chain_spec = Box::new(service::SelendraChainSpec::from_json_file(path.clone())?) as Box<dyn service::ChainSpec>;
+				let chain_spec = Box::new(service::SelendraChainSpec::from_json_file(path.clone())?)
+					as Box<dyn service::ChainSpec>;
 				chain_spec
 			},
 		})
@@ -108,8 +126,7 @@ fn ensure_dev(spec: &Box<dyn service::ChainSpec>) -> std::result::Result<(), Str
 }
 
 fn run_node_inner(cli: Cli, overseer_gen: impl service::OverseerGen) -> Result<()> {
-	let runner = cli.create_runner(&cli.run.base)
-		.map_err(Error::from)?;
+	let runner = cli.create_runner(&cli.run.base).map_err(Error::from)?;
 	let chain_spec = &runner.config().chain_spec;
 
 	set_default_ss58_version(chain_spec);
@@ -127,7 +144,9 @@ fn run_node_inner(cli: Cli, overseer_gen: impl service::OverseerGen) -> Result<(
 
 		match role {
 			#[cfg(feature = "browser")]
-			Role::Light => service::build_light(config).map(|(task_manager, _)| task_manager).map_err(Into::into),
+			Role::Light => service::build_light(config)
+				.map(|(task_manager, _)| task_manager)
+				.map_err(Into::into),
 			#[cfg(not(feature = "browser"))]
 			Role::Light => Err(Error::Other("Light client not enabled".into())),
 			_ => service::build_full(
@@ -138,7 +157,9 @@ fn run_node_inner(cli: Cli, overseer_gen: impl service::OverseerGen) -> Result<(
 				jaeger_agent,
 				None,
 				overseer_gen,
-			).map(|full| full.task_manager).map_err(Into::into)
+			)
+			.map(|full| full.task_manager)
+			.map_err(Into::into),
 		}
 	})
 }
@@ -151,19 +172,17 @@ pub fn run() -> Result<()> {
 		None => run_node_inner(cli, service::RealOverseerGen),
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			Ok(runner.sync_run(|config| {
-				cmd.run(config.chain_spec, config.network)
-			})?)
+			Ok(runner.sync_run(|config| cmd.run(config.chain_spec, config.network))?)
 		},
 		Some(Subcommand::CheckBlock(cmd)) => {
-			let runner = cli.create_runner(cmd)
-				.map_err(Error::SubstrateCli)?;
+			let runner = cli.create_runner(cmd).map_err(Error::SubstrateCli)?;
 			let chain_spec = &runner.config().chain_spec;
 
 			set_default_ss58_version(chain_spec);
 
 			runner.async_run(|mut config| {
-				let (client, _, import_queue, task_manager) = service::new_chain_ops(&mut config, None)?;
+				let (client, _, import_queue, task_manager) =
+					service::new_chain_ops(&mut config, None)?;
 				Ok((cmd.run(client, import_queue).map_err(Error::SubstrateCli), task_manager))
 			})
 		},
@@ -174,8 +193,8 @@ pub fn run() -> Result<()> {
 			set_default_ss58_version(chain_spec);
 
 			Ok(runner.async_run(|mut config| {
-				let (client, _, _, task_manager) = service::new_chain_ops(&mut config, None)
-					.map_err(Error::SelendraService)?;
+				let (client, _, _, task_manager) =
+					service::new_chain_ops(&mut config, None).map_err(Error::SelendraService)?;
 				Ok((cmd.run(client, config.database).map_err(Error::SubstrateCli), task_manager))
 			})?)
 		},
@@ -197,7 +216,8 @@ pub fn run() -> Result<()> {
 			set_default_ss58_version(chain_spec);
 
 			Ok(runner.async_run(|mut config| {
-				let (client, _, import_queue, task_manager) = service::new_chain_ops(&mut config, None)?;
+				let (client, _, import_queue, task_manager) =
+					service::new_chain_ops(&mut config, None)?;
 				Ok((cmd.run(client, import_queue).map_err(Error::SubstrateCli), task_manager))
 			})?)
 		},
@@ -223,9 +243,10 @@ pub fn run() -> Result<()> {
 
 			#[cfg(any(target_os = "android", feature = "browser"))]
 			{
-				return Err(
-					sc_cli::Error::Input("PVF preparation workers are not supported under this platform".into()).into()
-				);
+				return Err(sc_cli::Error::Input(
+					"PVF preparation workers are not supported under this platform".into(),
+				)
+				.into())
 			}
 
 			#[cfg(not(any(target_os = "android", feature = "browser")))]
@@ -241,9 +262,10 @@ pub fn run() -> Result<()> {
 
 			#[cfg(any(target_os = "android", feature = "browser"))]
 			{
-				return Err(
-					sc_cli::Error::Input("PVF execution workers are not supported under this platform".into()).into()
-				);
+				return Err(sc_cli::Error::Input(
+					"PVF execution workers are not supported under this platform".into(),
+				)
+				.into())
 			}
 
 			#[cfg(not(any(target_os = "android", feature = "browser")))]
@@ -274,25 +296,27 @@ pub fn run() -> Result<()> {
 
 			use sc_service::TaskManager;
 			let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
-			let task_manager = TaskManager::new(
-				runner.config().task_executor.clone(),
-				*registry,
-			).map_err(|e| Error::SubstrateService(sc_service::Error::Prometheus(e)))?;
+			let task_manager =
+				TaskManager::new(runner.config().task_executor.clone(), *registry)
+					.map_err(|e| Error::SubstrateService(sc_service::Error::Prometheus(e)))?;
 
 			ensure_dev(chain_spec).map_err(Error::Other)?;
 			// else we assume it is selendra.
 			runner.async_run(|config| {
-				Ok((cmd.run::<
-					service::selendra_runtime::Block,
-					service::SelendraExecutor,
-				>(config).map_err(Error::SubstrateCli), task_manager))
+				Ok((
+					cmd.run::<service::selendra_runtime::Block, service::SelendraExecutor>(config)
+						.map_err(Error::SubstrateCli),
+					task_manager,
+				))
 			})
 		},
 		#[cfg(not(feature = "try-runtime"))]
-		Some(Subcommand::TryRuntime) => {
-			Err(Error::Other("TryRuntime wasn't enabled when building the node. \
-				You can enable it with `--features try-runtime`.".into()).into())
-		},
+		Some(Subcommand::TryRuntime) => Err(Error::Other(
+			"TryRuntime wasn't enabled when building the node. \
+				You can enable it with `--features try-runtime`."
+				.into(),
+		)
+		.into()),
 	}?;
 	Ok(())
 }

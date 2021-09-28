@@ -1,6 +1,6 @@
 [package]
 name = "metered-channel"
-version = "0.1.0"
+version = "0.1.3"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 description = "Channels with attached Meters"

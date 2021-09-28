@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-use sp_std::result::Result;
-use xcm::v0::{Xcm, MultiLocation};
 use frame_support::weights::Weight;
+use sp_std::result::Result;
+use xcm::latest::{MultiLocation, Xcm};
 
 /// Trait to determine whether the execution engine should actually execute a given XCM.
 ///
@@ -58,6 +58,15 @@ impl ShouldExecute for Tuple {
 				_ => (),
 			}
 		)* );
+		log::trace!(
+			target: "xcm::should_execute",
+			"did not pass barrier: origin: {:?}, top_level: {:?}, message: {:?}, shallow_weight: {:?}, weight_credit: {:?}",
+			origin,
+			top_level,
+			message,
+			shallow_weight,
+			weight_credit,
+		);
 		Err(())
 	}
 }

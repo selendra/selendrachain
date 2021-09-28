@@ -18,18 +18,19 @@
 //!
 //! Configuration can change only at session boundaries and is buffered until then.
 
-use sp_std::prelude::*;
-use primitives::v1::{Balance, SessionIndex, MAX_CODE_SIZE, MAX_POV_SIZE};
-use frame_support::{
-	decl_storage, decl_module, decl_error,
-	ensure,
-	dispatch::DispatchResult,
-	weights::{DispatchClass, Weight},
-};
-use parity_scale_codec::{Encode, Decode};
-use frame_system::ensure_root;
-use sp_runtime::traits::Zero;
 use crate::shared;
+use frame_support::{pallet_prelude::*, weights::constants::WEIGHT_PER_MILLIS};
+use frame_system::pallet_prelude::*;
+use parity_scale_codec::{Decode, Encode};
+use primitives::v1::{Balance, SessionIndex, MAX_CODE_SIZE, MAX_POV_SIZE};
+use sp_runtime::traits::Zero;
+use sp_std::prelude::*;
+
+pub use pallet::*;
+
+pub mod migration;
+
+const LOG_TARGET: &str = "runtime::configuration";
 
 /// All configuration of the runtime with respect to parachains and parathreads.
 #[derive(Clone, Encode, Decode, PartialEq, sp_core::RuntimeDebug)]
@@ -41,7 +42,6 @@ pub struct HostConfiguration<BlockNumber> {
 	// A parachain requested this struct can only depend on the subset of this struct. Specifically,
 	// only a first few fields can be depended upon. These fields cannot be changed without
 	// corresponding migration of the parachains.
-
 	/**
 	 * The parameters that are required for the parachains.
 	 */
@@ -95,8 +95,6 @@ pub struct HostConfiguration<BlockNumber> {
 	pub hrmp_max_parachain_outbound_channels: u32,
 	/// The maximum number of outbound HRMP channels a parathread is allowed to open.
 	pub hrmp_max_parathread_outbound_channels: u32,
-	/// Number of sessions after which an HRMP open channel request expires.
-	pub hrmp_open_request_ttl: u32,
 	/// The deposit that the sender should provide for opening an HRMP channel.
 	pub hrmp_sender_deposit: Balance,
 	/// The deposit that the recipient should provide for accepting opening an HRMP channel.
@@ -146,7 +144,7 @@ pub struct HostConfiguration<BlockNumber> {
 	///
 	/// `None` means no maximum.
 	pub max_validators_per_core: Option<u32>,
-	/// The maximum number of valdiators to use for parachain consensus, period.
+	/// The maximum number of validators to use for parachain consensus, period.
 	///
 	/// `None` means no maximum.
 	pub max_validators: Option<u32>,
@@ -170,8 +168,11 @@ pub struct HostConfiguration<BlockNumber> {
 	pub zeroth_delay_tranche_width: u32,
 	/// The number of validators needed to approve a block.
 	pub needed_approvals: u32,
-	/// The number of samples to do of the RelayVRFModulo approval assignment criterion.
+	/// The number of samples to do of the `RelayVRFModulo` approval assignment criterion.
 	pub relay_vrf_modulo_samples: u32,
+	/// The maximum amount of weight any individual upward message may consume. Messages above this
+	/// weight go into the overweight queue and may only be serviced explicitly.
+	pub ump_max_individual_weight: Weight,
 }
 
 impl<BlockNumber: Default + From<u32>> Default for HostConfiguration<BlockNumber> {
@@ -206,7 +207,6 @@ impl<BlockNumber: Default + From<u32>> Default for HostConfiguration<BlockNumber
 			ump_service_total_weight: Default::default(),
 			max_upward_message_size: Default::default(),
 			max_upward_message_num_per_candidate: Default::default(),
-			hrmp_open_request_ttl: Default::default(),
 			hrmp_sender_deposit: Default::default(),
 			hrmp_recipient_deposit: Default::default(),
 			hrmp_channel_max_capacity: Default::default(),
@@ -217,6 +217,7 @@ impl<BlockNumber: Default + From<u32>> Default for HostConfiguration<BlockNumber
 			hrmp_max_parachain_outbound_channels: Default::default(),
 			hrmp_max_parathread_outbound_channels: Default::default(),
 			hrmp_max_message_num_per_candidate: Default::default(),
+			ump_max_individual_weight: 20 * WEIGHT_PER_MILLIS,
 		}
 	}
 }
@@ -247,8 +248,7 @@ impl<BlockNumber: Zero> HostConfiguration<BlockNumber> {
 		if self.max_code_size > MAX_CODE_SIZE {
 			panic!(
 				"`max_code_size` ({}) is bigger than allowed by the client ({})",
-				self.max_code_size,
-				MAX_CODE_SIZE,
+				self.max_code_size, MAX_CODE_SIZE,
 			)
 		}
 
@@ -258,37 +258,63 @@ impl<BlockNumber: Zero> HostConfiguration<BlockNumber> {
 	}
 }
 
-pub trait Config: frame_system::Config + shared::Config { }
+#[frame_support::pallet]
+pub mod pallet {
+	use super::*;
 
-decl_storage! {
-	trait Store for Module<T: Config> as Configuration {
-		/// The active configuration for the current session.
-		ActiveConfig get(fn config) config(): HostConfiguration<T::BlockNumber>;
-		/// Pending configuration (if any) for the next session.
-		PendingConfig: map hasher(twox_64_concat) SessionIndex => Option<HostConfiguration<T::BlockNumber>>;
-	}
-	add_extra_genesis {
-		build(|config: &Self| {
-			config.config.check_consistency();
-		})
-	}
-}
+	#[pallet::pallet]
+	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::storage_version(migration::STORAGE_VERSION)]
+	pub struct Pallet<T>(_);
 
-decl_error! {
-	pub enum Error for Module<T: Config> {
+	#[pallet::config]
+	pub trait Config: frame_system::Config + shared::Config {}
+
+	#[pallet::error]
+	pub enum Error<T> {
 		/// The new value for a configuration parameter is invalid.
 		InvalidNewValue,
 	}
-}
 
-decl_module! {
-	/// The parachains configuration module.
-	pub struct Module<T: Config> for enum Call where origin: <T as frame_system::Config>::Origin {
-		type Error = Error<T>;
+	/// The active configuration for the current session.
+	#[pallet::storage]
+	#[pallet::getter(fn config)]
+	pub(crate) type ActiveConfig<T: Config> =
+		StorageValue<_, HostConfiguration<T::BlockNumber>, ValueQuery>;
 
+	/// Pending configuration (if any) for the next session.
+	#[pallet::storage]
+	pub(crate) type PendingConfig<T: Config> =
+		StorageMap<_, Twox64Concat, SessionIndex, HostConfiguration<T::BlockNumber>>;
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub config: HostConfiguration<T::BlockNumber>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			GenesisConfig { config: Default::default() }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			self.config.check_consistency();
+			ActiveConfig::<T>::put(&self.config);
+		}
+	}
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
 		/// Set the validation upgrade frequency.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_validation_upgrade_frequency(origin, new: T::BlockNumber) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_validation_upgrade_frequency(
+			origin: OriginFor<T>,
+			new: T::BlockNumber,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.validation_upgrade_frequency, new) != new
@@ -297,8 +323,11 @@ decl_module! {
 		}
 
 		/// Set the validation upgrade delay.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_validation_upgrade_delay(origin, new: T::BlockNumber) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_validation_upgrade_delay(
+			origin: OriginFor<T>,
+			new: T::BlockNumber,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.validation_upgrade_delay, new) != new
@@ -307,8 +336,11 @@ decl_module! {
 		}
 
 		/// Set the acceptance period for an included candidate.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_code_retention_period(origin, new: T::BlockNumber) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_code_retention_period(
+			origin: OriginFor<T>,
+			new: T::BlockNumber,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.code_retention_period, new) != new
@@ -317,8 +349,8 @@ decl_module! {
 		}
 
 		/// Set the max validation code size for incoming upgrades.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_max_code_size(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_max_code_size(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			ensure!(new <= MAX_CODE_SIZE, Error::<T>::InvalidNewValue);
 			Self::update_config_member(|config| {
@@ -328,8 +360,8 @@ decl_module! {
 		}
 
 		/// Set the max POV block size for incoming upgrades.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_max_pov_size(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_max_pov_size(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			ensure!(new <= MAX_POV_SIZE, Error::<T>::InvalidNewValue);
 			Self::update_config_member(|config| {
@@ -339,8 +371,8 @@ decl_module! {
 		}
 
 		/// Set the max head data size for paras.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_max_head_data_size(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_max_head_data_size(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.max_head_data_size, new) != new
@@ -349,8 +381,8 @@ decl_module! {
 		}
 
 		/// Set the number of parathread execution cores.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_parathread_cores(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_parathread_cores(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.parathread_cores, new) != new
@@ -359,8 +391,8 @@ decl_module! {
 		}
 
 		/// Set the number of retries for a particular parathread.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_parathread_retries(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_parathread_retries(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.parathread_retries, new) != new
@@ -368,10 +400,12 @@ decl_module! {
 			Ok(())
 		}
 
-
 		/// Set the parachain validator-group rotation frequency
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_group_rotation_frequency(origin, new: T::BlockNumber) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_group_rotation_frequency(
+			origin: OriginFor<T>,
+			new: T::BlockNumber,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 
 			ensure!(!new.is_zero(), Error::<T>::InvalidNewValue);
@@ -383,8 +417,11 @@ decl_module! {
 		}
 
 		/// Set the availability period for parachains.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_chain_availability_period(origin, new: T::BlockNumber) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_chain_availability_period(
+			origin: OriginFor<T>,
+			new: T::BlockNumber,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 
 			ensure!(!new.is_zero(), Error::<T>::InvalidNewValue);
@@ -396,8 +433,11 @@ decl_module! {
 		}
 
 		/// Set the availability period for parathreads.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_thread_availability_period(origin, new: T::BlockNumber) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_thread_availability_period(
+			origin: OriginFor<T>,
+			new: T::BlockNumber,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 
 			ensure!(!new.is_zero(), Error::<T>::InvalidNewValue);
@@ -409,8 +449,8 @@ decl_module! {
 		}
 
 		/// Set the scheduling lookahead, in expected number of blocks at peak throughput.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_scheduling_lookahead(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_scheduling_lookahead(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.scheduling_lookahead, new) != new
@@ -419,8 +459,11 @@ decl_module! {
 		}
 
 		/// Set the maximum number of validators to assign to any core.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_max_validators_per_core(origin, new: Option<u32>) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_max_validators_per_core(
+			origin: OriginFor<T>,
+			new: Option<u32>,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.max_validators_per_core, new) != new
@@ -429,8 +472,8 @@ decl_module! {
 		}
 
 		/// Set the maximum number of validators to use in parachain consensus.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_max_validators(origin, new: Option<u32>) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_max_validators(origin: OriginFor<T>, new: Option<u32>) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.max_validators, new) != new
@@ -439,8 +482,8 @@ decl_module! {
 		}
 
 		/// Set the dispute period, in number of sessions to keep for disputes.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_dispute_period(origin, new: SessionIndex) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_dispute_period(origin: OriginFor<T>, new: SessionIndex) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.dispute_period, new) != new
@@ -449,21 +492,22 @@ decl_module! {
 		}
 
 		/// Set the dispute post conclusion acceptance period.
-		#[weight = (1_000, DispatchClass::Operational)]
+		#[pallet::weight((1_000, DispatchClass::Operational))]
 		pub fn set_dispute_post_conclusion_acceptance_period(
-			origin,
+			origin: OriginFor<T>,
 			new: T::BlockNumber,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
-				sp_std::mem::replace(&mut config.dispute_post_conclusion_acceptance_period, new) != new
+				sp_std::mem::replace(&mut config.dispute_post_conclusion_acceptance_period, new) !=
+					new
 			});
 			Ok(())
 		}
 
 		/// Set the maximum number of dispute spam slots.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_dispute_max_spam_slots(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_dispute_max_spam_slots(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.dispute_max_spam_slots, new) != new
@@ -472,10 +516,11 @@ decl_module! {
 		}
 
 		/// Set the dispute conclusion by time out period.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_dispute_conclusion_by_time_out_period(origin, new: T::BlockNumber)
-			-> DispatchResult
-		{
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_dispute_conclusion_by_time_out_period(
+			origin: OriginFor<T>,
+			new: T::BlockNumber,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.dispute_conclusion_by_time_out_period, new) != new
@@ -485,8 +530,8 @@ decl_module! {
 
 		/// Set the no show slots, in number of number of consensus slots.
 		/// Must be at least 1.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_no_show_slots(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_no_show_slots(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 
 			ensure!(!new.is_zero(), Error::<T>::InvalidNewValue);
@@ -498,8 +543,8 @@ decl_module! {
 		}
 
 		/// Set the total number of delay tranches.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_n_delay_tranches(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_n_delay_tranches(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.n_delay_tranches, new) != new
@@ -508,8 +553,8 @@ decl_module! {
 		}
 
 		/// Set the zeroth delay tranche width.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_zeroth_delay_tranche_width(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_zeroth_delay_tranche_width(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.zeroth_delay_tranche_width, new) != new
@@ -518,8 +563,8 @@ decl_module! {
 		}
 
 		/// Set the number of validators needed to approve a block.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_needed_approvals(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_needed_approvals(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.needed_approvals, new) != new
@@ -527,9 +572,9 @@ decl_module! {
 			Ok(())
 		}
 
-		/// Set the number of samples to do of the RelayVRFModulo approval assignment criterion.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_relay_vrf_modulo_samples(origin, new: u32) -> DispatchResult {
+		/// Set the number of samples to do of the `RelayVRFModulo` approval assignment criterion.
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_relay_vrf_modulo_samples(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.relay_vrf_modulo_samples, new) != new
@@ -538,8 +583,8 @@ decl_module! {
 		}
 
 		/// Sets the maximum items that can present in a upward dispatch queue at once.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_max_upward_queue_count(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_max_upward_queue_count(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.max_upward_queue_count, new) != new
@@ -548,8 +593,8 @@ decl_module! {
 		}
 
 		/// Sets the maximum total size of items that can present in a upward dispatch queue at once.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_max_upward_queue_size(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_max_upward_queue_size(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.max_upward_queue_size, new) != new
@@ -558,8 +603,8 @@ decl_module! {
 		}
 
 		/// Set the critical downward message size.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_max_downward_message_size(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_max_downward_message_size(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.max_downward_message_size, new) != new
@@ -568,8 +613,8 @@ decl_module! {
 		}
 
 		/// Sets the soft limit for the phase of dispatching dispatchable upward messages.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_ump_service_total_weight(origin, new: Weight) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_ump_service_total_weight(origin: OriginFor<T>, new: Weight) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.ump_service_total_weight, new) != new
@@ -578,8 +623,8 @@ decl_module! {
 		}
 
 		/// Sets the maximum size of an upward message that can be sent by a candidate.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_max_upward_message_size(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_max_upward_message_size(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.max_upward_message_size, new) != new
@@ -588,8 +633,11 @@ decl_module! {
 		}
 
 		/// Sets the maximum number of messages that a candidate can contain.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_max_upward_message_num_per_candidate(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_max_upward_message_num_per_candidate(
+			origin: OriginFor<T>,
+			new: u32,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.max_upward_message_num_per_candidate, new) != new
@@ -598,18 +646,16 @@ decl_module! {
 		}
 
 		/// Sets the number of sessions after which an HRMP open channel request expires.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_hrmp_open_request_ttl(origin, new: u32) -> DispatchResult {
-			ensure_root(origin)?;
-			Self::update_config_member(|config| {
-				sp_std::mem::replace(&mut config.hrmp_open_request_ttl, new) != new
-			});
-			Ok(())
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		// Deprecated, but is not marked as such, because that would trigger warnings coming from
+		// the macro.
+		pub fn set_hrmp_open_request_ttl(_origin: OriginFor<T>, _new: u32) -> DispatchResult {
+			Err("this doesn't have any effect".into())
 		}
 
 		/// Sets the amount of funds that the sender should provide for opening an HRMP channel.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_hrmp_sender_deposit(origin, new: Balance) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_hrmp_sender_deposit(origin: OriginFor<T>, new: Balance) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.hrmp_sender_deposit, new) != new
@@ -619,8 +665,8 @@ decl_module! {
 
 		/// Sets the amount of funds that the recipient should provide for accepting opening an HRMP
 		/// channel.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_hrmp_recipient_deposit(origin, new: Balance) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_hrmp_recipient_deposit(origin: OriginFor<T>, new: Balance) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.hrmp_recipient_deposit, new) != new
@@ -629,8 +675,8 @@ decl_module! {
 		}
 
 		/// Sets the maximum number of messages allowed in an HRMP channel at once.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_hrmp_channel_max_capacity(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_hrmp_channel_max_capacity(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.hrmp_channel_max_capacity, new) != new
@@ -639,8 +685,8 @@ decl_module! {
 		}
 
 		/// Sets the maximum total size of messages in bytes allowed in an HRMP channel at once.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_hrmp_channel_max_total_size(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_hrmp_channel_max_total_size(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.hrmp_channel_max_total_size, new) != new
@@ -649,8 +695,11 @@ decl_module! {
 		}
 
 		/// Sets the maximum number of inbound HRMP channels a parachain is allowed to accept.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_hrmp_max_parachain_inbound_channels(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_hrmp_max_parachain_inbound_channels(
+			origin: OriginFor<T>,
+			new: u32,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.hrmp_max_parachain_inbound_channels, new) != new
@@ -659,8 +708,11 @@ decl_module! {
 		}
 
 		/// Sets the maximum number of inbound HRMP channels a parathread is allowed to accept.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_hrmp_max_parathread_inbound_channels(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_hrmp_max_parathread_inbound_channels(
+			origin: OriginFor<T>,
+			new: u32,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.hrmp_max_parathread_inbound_channels, new) != new
@@ -669,8 +721,8 @@ decl_module! {
 		}
 
 		/// Sets the maximum size of a message that could ever be put into an HRMP channel.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_hrmp_channel_max_message_size(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_hrmp_channel_max_message_size(origin: OriginFor<T>, new: u32) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.hrmp_channel_max_message_size, new) != new
@@ -679,8 +731,11 @@ decl_module! {
 		}
 
 		/// Sets the maximum number of outbound HRMP channels a parachain is allowed to open.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_hrmp_max_parachain_outbound_channels(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_hrmp_max_parachain_outbound_channels(
+			origin: OriginFor<T>,
+			new: u32,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.hrmp_max_parachain_outbound_channels, new) != new
@@ -689,8 +744,11 @@ decl_module! {
 		}
 
 		/// Sets the maximum number of outbound HRMP channels a parathread is allowed to open.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_hrmp_max_parathread_outbound_channels(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_hrmp_max_parathread_outbound_channels(
+			origin: OriginFor<T>,
+			new: u32,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.hrmp_max_parathread_outbound_channels, new) != new
@@ -699,30 +757,57 @@ decl_module! {
 		}
 
 		/// Sets the maximum number of outbound HRMP messages can be sent by a candidate.
-		#[weight = (1_000, DispatchClass::Operational)]
-		pub fn set_hrmp_max_message_num_per_candidate(origin, new: u32) -> DispatchResult {
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_hrmp_max_message_num_per_candidate(
+			origin: OriginFor<T>,
+			new: u32,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 			Self::update_config_member(|config| {
 				sp_std::mem::replace(&mut config.hrmp_max_message_num_per_candidate, new) != new
 			});
 			Ok(())
 		}
+
+		/// Sets the maximum amount of weight any individual upward message may consume.
+		#[pallet::weight((1_000, DispatchClass::Operational))]
+		pub fn set_ump_max_individual_weight(origin: OriginFor<T>, new: Weight) -> DispatchResult {
+			ensure_root(origin)?;
+			Self::update_config_member(|config| {
+				sp_std::mem::replace(&mut config.ump_max_individual_weight, new) != new
+			});
+			Ok(())
+		}
+	}
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> Weight {
+			migration::migrate_to_latest::<T>()
+		}
+
+		fn integrity_test() {
+			assert_eq!(
+				&ActiveConfig::<T>::hashed_key(),
+				primitives::v1::well_known_keys::ACTIVE_CONFIG,
+				"`well_known_keys::ACTIVE_CONFIG` doesn't match key of `ActiveConfig`! Make sure that the name of the\
+				 configuration pallet is `Configuration` in the runtime!",
+			);
+		}
 	}
 }
 
-impl<T: Config> Module<T> {
+impl<T: Config> Pallet<T> {
 	/// Called by the initializer to initialize the configuration module.
 	pub(crate) fn initializer_initialize(_now: T::BlockNumber) -> Weight {
 		0
 	}
 
 	/// Called by the initializer to finalize the configuration module.
-	pub(crate) fn initializer_finalize() { }
+	pub(crate) fn initializer_finalize() {}
 
 	/// Called by the initializer to note that a new session has started.
-	pub(crate) fn initializer_on_new_session(
-		session_index: &SessionIndex,
-	) {
+	pub(crate) fn initializer_on_new_session(session_index: &SessionIndex) {
 		if let Some(pending) = <Self as Store>::PendingConfig::take(session_index) {
 			<Self as Store>::ActiveConfig::set(pending);
 		}
@@ -730,7 +815,7 @@ impl<T: Config> Module<T> {
 
 	/// Return the session index that should be used for any future scheduled changes.
 	fn scheduled_session() -> SessionIndex {
-		shared::Module::<T>::scheduled_session()
+		shared::Pallet::<T>::scheduled_session()
 	}
 
 	/// Forcibly set the active config. This should be used with extreme care, and typically
@@ -745,9 +830,7 @@ impl<T: Config> Module<T> {
 	// duplicated code (making this function to show up in the top of heaviest functions) only for
 	// the sake of essentially avoiding an indirect call. Doesn't worth it.
 	#[inline(never)]
-	fn update_config_member(
-		updater: impl FnOnce(&mut HostConfiguration<T::BlockNumber>) -> bool,
-	) {
+	fn update_config_member(updater: impl FnOnce(&mut HostConfiguration<T::BlockNumber>) -> bool) {
 		let scheduled_session = Self::scheduled_session();
 		let pending = <Self as Store>::PendingConfig::get(scheduled_session);
 		let mut prev = pending.unwrap_or_else(Self::config);
@@ -823,7 +906,6 @@ mod tests {
 				ump_service_total_weight: 20000,
 				max_upward_message_size: 448,
 				max_upward_message_num_per_candidate: 5,
-				hrmp_open_request_ttl: 1312,
 				hrmp_sender_deposit: 22,
 				hrmp_recipient_deposit: 4905,
 				hrmp_channel_max_capacity: 3921,
@@ -834,143 +916,178 @@ mod tests {
 				hrmp_max_parachain_outbound_channels: 100,
 				hrmp_max_parathread_outbound_channels: 200,
 				hrmp_max_message_num_per_candidate: 20,
+				ump_max_individual_weight: 909,
 			};
 
 			assert!(<Configuration as Store>::PendingConfig::get(shared::SESSION_DELAY).is_none());
 
 			Configuration::set_validation_upgrade_frequency(
-				Origin::root(), new_config.validation_upgrade_frequency,
-			).unwrap();
+				Origin::root(),
+				new_config.validation_upgrade_frequency,
+			)
+			.unwrap();
 			Configuration::set_validation_upgrade_delay(
-				Origin::root(), new_config.validation_upgrade_delay,
-			).unwrap();
+				Origin::root(),
+				new_config.validation_upgrade_delay,
+			)
+			.unwrap();
 			Configuration::set_code_retention_period(
-				Origin::root(), new_config.code_retention_period,
-			).unwrap();
-			Configuration::set_max_code_size(
-				Origin::root(), new_config.max_code_size,
-			).unwrap();
-			Configuration::set_max_pov_size(
-				Origin::root(), new_config.max_pov_size,
-			).unwrap();
-			Configuration::set_max_head_data_size(
-				Origin::root(), new_config.max_head_data_size,
-			).unwrap();
-			Configuration::set_parathread_cores(
-				Origin::root(), new_config.parathread_cores,
-			).unwrap();
-			Configuration::set_parathread_retries(
-				Origin::root(), new_config.parathread_retries,
-			).unwrap();
+				Origin::root(),
+				new_config.code_retention_period,
+			)
+			.unwrap();
+			Configuration::set_max_code_size(Origin::root(), new_config.max_code_size).unwrap();
+			Configuration::set_max_pov_size(Origin::root(), new_config.max_pov_size).unwrap();
+			Configuration::set_max_head_data_size(Origin::root(), new_config.max_head_data_size)
+				.unwrap();
+			Configuration::set_parathread_cores(Origin::root(), new_config.parathread_cores)
+				.unwrap();
+			Configuration::set_parathread_retries(Origin::root(), new_config.parathread_retries)
+				.unwrap();
 			Configuration::set_group_rotation_frequency(
-				Origin::root(), new_config.group_rotation_frequency,
-			).unwrap();
+				Origin::root(),
+				new_config.group_rotation_frequency,
+			)
+			.unwrap();
 			Configuration::set_chain_availability_period(
-				Origin::root(), new_config.chain_availability_period,
-			).unwrap();
+				Origin::root(),
+				new_config.chain_availability_period,
+			)
+			.unwrap();
 			Configuration::set_thread_availability_period(
-				Origin::root(), new_config.thread_availability_period,
-			).unwrap();
+				Origin::root(),
+				new_config.thread_availability_period,
+			)
+			.unwrap();
 			Configuration::set_scheduling_lookahead(
-				Origin::root(), new_config.scheduling_lookahead,
-			).unwrap();
+				Origin::root(),
+				new_config.scheduling_lookahead,
+			)
+			.unwrap();
 			Configuration::set_max_validators_per_core(
-				Origin::root(), new_config.max_validators_per_core,
-			).unwrap();
-			Configuration::set_max_validators(
-				Origin::root(), new_config.max_validators,
-			).unwrap();
-			Configuration::set_dispute_period(
-				Origin::root(), new_config.dispute_period,
-			).unwrap();
+				Origin::root(),
+				new_config.max_validators_per_core,
+			)
+			.unwrap();
+			Configuration::set_max_validators(Origin::root(), new_config.max_validators).unwrap();
+			Configuration::set_dispute_period(Origin::root(), new_config.dispute_period).unwrap();
 			Configuration::set_dispute_post_conclusion_acceptance_period(
-				Origin::root(), new_config.dispute_post_conclusion_acceptance_period,
-			).unwrap();
+				Origin::root(),
+				new_config.dispute_post_conclusion_acceptance_period,
+			)
+			.unwrap();
 			Configuration::set_dispute_max_spam_slots(
-				Origin::root(), new_config.dispute_max_spam_slots,
-			).unwrap();
+				Origin::root(),
+				new_config.dispute_max_spam_slots,
+			)
+			.unwrap();
 			Configuration::set_dispute_conclusion_by_time_out_period(
-				Origin::root(), new_config.dispute_conclusion_by_time_out_period,
-			).unwrap();
-			Configuration::set_no_show_slots(
-				Origin::root(), new_config.no_show_slots,
-			).unwrap();
-			Configuration::set_n_delay_tranches(
-				Origin::root(), new_config.n_delay_tranches,
-			).unwrap();
+				Origin::root(),
+				new_config.dispute_conclusion_by_time_out_period,
+			)
+			.unwrap();
+			Configuration::set_no_show_slots(Origin::root(), new_config.no_show_slots).unwrap();
+			Configuration::set_n_delay_tranches(Origin::root(), new_config.n_delay_tranches)
+				.unwrap();
 			Configuration::set_zeroth_delay_tranche_width(
-				Origin::root(), new_config.zeroth_delay_tranche_width,
-			).unwrap();
-			Configuration::set_needed_approvals(
-				Origin::root(), new_config.needed_approvals,
-			).unwrap();
+				Origin::root(),
+				new_config.zeroth_delay_tranche_width,
+			)
+			.unwrap();
+			Configuration::set_needed_approvals(Origin::root(), new_config.needed_approvals)
+				.unwrap();
 			Configuration::set_relay_vrf_modulo_samples(
-				Origin::root(), new_config.relay_vrf_modulo_samples,
-			).unwrap();
+				Origin::root(),
+				new_config.relay_vrf_modulo_samples,
+			)
+			.unwrap();
 			Configuration::set_max_upward_queue_count(
-				Origin::root(), new_config.max_upward_queue_count,
-			).unwrap();
+				Origin::root(),
+				new_config.max_upward_queue_count,
+			)
+			.unwrap();
 			Configuration::set_max_upward_queue_size(
-				Origin::root(), new_config.max_upward_queue_size,
-			).unwrap();
+				Origin::root(),
+				new_config.max_upward_queue_size,
+			)
+			.unwrap();
 			Configuration::set_max_downward_message_size(
-				Origin::root(), new_config.max_downward_message_size,
-			).unwrap();
+				Origin::root(),
+				new_config.max_downward_message_size,
+			)
+			.unwrap();
 			Configuration::set_ump_service_total_weight(
-				Origin::root(), new_config.ump_service_total_weight,
-			).unwrap();
+				Origin::root(),
+				new_config.ump_service_total_weight,
+			)
+			.unwrap();
 			Configuration::set_max_upward_message_size(
-				Origin::root(), new_config.max_upward_message_size,
-			).unwrap();
+				Origin::root(),
+				new_config.max_upward_message_size,
+			)
+			.unwrap();
 			Configuration::set_max_upward_message_num_per_candidate(
-				Origin::root(), new_config.max_upward_message_num_per_candidate,
-			).unwrap();
-			Configuration::set_hrmp_open_request_ttl(
 				Origin::root(),
-				new_config.hrmp_open_request_ttl,
-			).unwrap();
-			Configuration::set_hrmp_sender_deposit(
-				Origin::root(),
-				new_config.hrmp_sender_deposit,
-			).unwrap();
+				new_config.max_upward_message_num_per_candidate,
+			)
+			.unwrap();
+			Configuration::set_hrmp_sender_deposit(Origin::root(), new_config.hrmp_sender_deposit)
+				.unwrap();
 			Configuration::set_hrmp_recipient_deposit(
 				Origin::root(),
 				new_config.hrmp_recipient_deposit,
-			).unwrap();
+			)
+			.unwrap();
 			Configuration::set_hrmp_channel_max_capacity(
 				Origin::root(),
 				new_config.hrmp_channel_max_capacity,
-			).unwrap();
+			)
+			.unwrap();
 			Configuration::set_hrmp_channel_max_total_size(
 				Origin::root(),
 				new_config.hrmp_channel_max_total_size,
-			).unwrap();
+			)
+			.unwrap();
 			Configuration::set_hrmp_max_parachain_inbound_channels(
 				Origin::root(),
 				new_config.hrmp_max_parachain_inbound_channels,
-			).unwrap();
+			)
+			.unwrap();
 			Configuration::set_hrmp_max_parathread_inbound_channels(
 				Origin::root(),
 				new_config.hrmp_max_parathread_inbound_channels,
-			).unwrap();
+			)
+			.unwrap();
 			Configuration::set_hrmp_channel_max_message_size(
 				Origin::root(),
 				new_config.hrmp_channel_max_message_size,
-			).unwrap();
+			)
+			.unwrap();
 			Configuration::set_hrmp_max_parachain_outbound_channels(
 				Origin::root(),
 				new_config.hrmp_max_parachain_outbound_channels,
-			).unwrap();
+			)
+			.unwrap();
 			Configuration::set_hrmp_max_parathread_outbound_channels(
 				Origin::root(),
 				new_config.hrmp_max_parathread_outbound_channels,
-			).unwrap();
+			)
+			.unwrap();
 			Configuration::set_hrmp_max_message_num_per_candidate(
 				Origin::root(),
 				new_config.hrmp_max_message_num_per_candidate,
-			).unwrap();
+			)
+			.unwrap();
+			Configuration::set_ump_max_individual_weight(
+				Origin::root(),
+				new_config.ump_max_individual_weight,
+			)
+			.unwrap();
 
-			assert_eq!(<Configuration as Store>::PendingConfig::get(shared::SESSION_DELAY), Some(new_config));
+			assert_eq!(
+				<Configuration as Store>::PendingConfig::get(shared::SESSION_DELAY),
+				Some(new_config)
+			);
 		})
 	}
 
@@ -984,7 +1101,8 @@ mod tests {
 	#[test]
 	fn setting_config_to_same_as_current_is_noop() {
 		new_test_ext(Default::default()).execute_with(|| {
-			Configuration::set_validation_upgrade_delay(Origin::root(), Default::default()).unwrap();
+			Configuration::set_validation_upgrade_delay(Origin::root(), Default::default())
+				.unwrap();
 			assert!(<Configuration as Store>::PendingConfig::get(shared::SESSION_DELAY).is_none())
 		});
 	}

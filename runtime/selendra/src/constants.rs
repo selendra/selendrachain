@@ -30,7 +30,7 @@ pub mod currency {
 
 /// Time and blocks.
 pub mod time {
-	use primitives::v0::{Moment, BlockNumber};
+	use primitives::v0::{BlockNumber, Moment};
 	pub const MILLISECS_PER_BLOCK: Moment = 6000;
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
 	pub const EPOCH_DURATION_IN_SLOTS: BlockNumber = 4 * HOURS;
@@ -47,13 +47,13 @@ pub mod time {
 
 /// Fee-related.
 pub mod fee {
-	pub use sp_runtime::Perbill;
+	use frame_support::weights::{
+		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
+	};
 	use primitives::v0::Balance;
 	use runtime_common::ExtrinsicBaseWeight;
-	use frame_support::weights::{
-		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients,
-	};
 	use smallvec::smallvec;
+	pub use sp_runtime::Perbill;
 
 	/// The block saturation level. Fees will be updates based on this value.
 	pub const TARGET_BLOCK_FULLNESS: Perbill = Perbill::from_percent(25);
@@ -85,139 +85,80 @@ pub mod fee {
 }
 
 pub mod permission {
-	use frame_system::{EnsureRoot, EnsureOneOf};
+	use crate::CouncilCollective;
+	use frame_system::{EnsureOneOf, EnsureRoot};
 	use primitives::v0::AccountId;
 	use sp_core::u32_trait::{_1, _2, _3, _5};
-	use crate::CouncilCollective;
 
 	pub type ApproveOrigin = EnsureOneOf<
 		AccountId,
 		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>
+		pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>,
 	>;
 
 	pub type MoreThanHalfCouncil = EnsureOneOf<
 		AccountId,
 		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>
+		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
 	>;
 
 	pub type ScheduleOrigin = EnsureOneOf<
 		AccountId,
 		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>
+		pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>,
 	>;
 
 	pub type SlashCancelOrigin = EnsureOneOf<
 		AccountId,
 		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>
+		pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>,
 	>;
 
 	pub type AuctionInitiate = EnsureOneOf<
 		AccountId,
 		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, CouncilCollective>
+		pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, CouncilCollective>,
 	>;
 }
 
 pub mod merge_account {
-	use frame_support::transactional;
-	use frame_support::traits::ReservableCurrency;
-	use evm_accounts::account::MergeAccount;
-	use sp_runtime::DispatchResult;
-	use primitives::v1::AccountId;
 	use crate::Balances;
+	use evm_accounts::account::MergeAccount;
+	use frame_support::{traits::ReservableCurrency, transactional};
+	use primitives::v1::AccountId;
+	use sp_runtime::DispatchResult;
 
 	pub struct MergeAccountEvm;
 	impl MergeAccount<AccountId> for MergeAccountEvm {
-	#[transactional]
-	fn merge_account(source: &AccountId, dest: &AccountId) -> DispatchResult {
-		// unreserve all reserved currency
-		<Balances as ReservableCurrency<_>>::unreserve(source, Balances::reserved_balance(source));
+		#[transactional]
+		fn merge_account(source: &AccountId, dest: &AccountId) -> DispatchResult {
+			// unreserve all reserved currency
+			<Balances as ReservableCurrency<_>>::unreserve(
+				source,
+				Balances::reserved_balance(source),
+			);
 
-		// transfer all free to dest
-		match Balances::transfer(Some(source.clone()).into(), dest.clone().into(), Balances::free_balance(source)) {
-		Ok(_) => Ok(()),
-		Err(e) => Err(e.error),
-		}
-	  }
-	}
-}
-
-pub mod precompiles {
-	use parity_scale_codec::Decode;
-	use evm::{executor::PrecompileOutput, Context, ExitError};
-	use frame_support::dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo};
-	use pallet_evm::{Precompile, PrecompileSet};
-	use pallet_evm_precompile_bn128::{Bn128Add, Bn128Mul, Bn128Pairing};
-	use pallet_evm_precompile_dispatch::Dispatch;
-	use pallet_evm_precompile_modexp::Modexp;
-	use pallet_evm_precompile_sha3fips::Sha3FIPS256;
-	use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripemd160, Sha256};
-	use sp_core::H160;
-	use sp_std::{fmt::Debug, marker::PhantomData};
-	#[derive(Debug, Clone, Copy)]
-	pub struct SelendraPrecompiles<R>(PhantomData<R>);
-
-	impl<R: frame_system::Config> SelendraPrecompiles<R> {
-		/// Return all addresses that contain precompiles. This can be used to
-		/// populate dummy code under the precompile, and potentially in the future
-		/// to prevent using accounts that have precompiles at their addresses
-		/// explicitly using something like SignedExtra.
-		#[allow(dead_code)]
-		fn used_addresses() -> impl Iterator<Item = H160> {
-			sp_std::vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 1024, 1025, 1026, 1027, 1028, 1029]
-				.into_iter()
-				.map(|x| hash(x).into())
-		}
-	}
-
-	/// The following distribution has been decided for the precompiles
-	/// 0-1023: Ethereum Mainnet Precompiles
-	/// 1024-2047 Precompiles that are not in Ethereum Mainnet but are neither
-	/// Selendra specific
-	impl<R: frame_system::Config + pallet_evm::Config> PrecompileSet for SelendraPrecompiles<R>
-	where
-		R::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Decode,
-		<R::Call as Dispatchable>::Origin: From<Option<R::AccountId>>,
-	{
-		fn execute(
-			address: H160,
-			input: &[u8],
-			target_gas: Option<u64>,
-			context: &Context,
-		) -> Option<core::result::Result<PrecompileOutput, ExitError>> {
-			match address {
-				// Ethereum precompiles
-				a if a == hash(1) => Some(ECRecover::execute(input, target_gas, context)),
-				a if a == hash(2) => Some(Sha256::execute(input, target_gas, context)),
-				a if a == hash(3) => Some(Ripemd160::execute(input, target_gas, context)),
-				a if a == hash(4) => Some(Identity::execute(input, target_gas, context)),
-				a if a == hash(5) => Some(Modexp::execute(input, target_gas, context)),
-				a if a == hash(6) => Some(Bn128Add::execute(input, target_gas, context)),
-				a if a == hash(7) => Some(Bn128Mul::execute(input, target_gas, context)),
-				a if a == hash(8) => Some(Bn128Pairing::execute(input, target_gas, context)),
-				// Non-Selendra specific nor Ethereum precompiles :
-				a if a == hash(1024) => Some(Sha3FIPS256::execute(input, target_gas, context)),
-				a if a == hash(1025) => Some(Dispatch::<R>::execute(input, target_gas, context)),
-				a if a == hash(1026) => Some(ECRecoverPublicKey::execute(input, target_gas, context)),
-				_ => None,
+			// transfer all free to dest
+			match Balances::transfer(
+				Some(source.clone()).into(),
+				dest.clone().into(),
+				Balances::free_balance(source),
+			) {
+				Ok(_) => Ok(()),
+				Err(e) => Err(e.error),
 			}
 		}
-	}
-
-	fn hash(a: u64) -> H160 {
-		H160::from_low_u64_be(a)
 	}
 }
 
 #[cfg(test)]
 mod tests {
+	use super::{
+		currency::{CENTS, MILLICENTS},
+		fee::WeightToFee,
+	};
 	use frame_support::weights::WeightToFeePolynomial;
-	use runtime_common::{MAXIMUM_BLOCK_WEIGHT, ExtrinsicBaseWeight};
-	use super::fee::WeightToFee;
-	use super::currency::{CENTS, MILLICENTS};
+	use runtime_common::{ExtrinsicBaseWeight, MAXIMUM_BLOCK_WEIGHT};
 
 	#[test]
 	// This function tests that the fee for `MAXIMUM_BLOCK_WEIGHT` of weight is correct

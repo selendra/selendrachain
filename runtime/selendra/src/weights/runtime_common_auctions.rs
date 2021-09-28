@@ -33,7 +33,7 @@
 // --header=./file_header.txt
 // --output=./runtime/selendra/src/weights/runtime_common_auctions.rs
 
-
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
@@ -43,23 +43,48 @@ use sp_std::marker::PhantomData;
 /// Weight functions for runtime_common::auctions.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> runtime_common::auctions::WeightInfo for WeightInfo<T> {
+	// Storage: Auctions AuctionInfo (r:1 w:1)
+	// Storage: Auctions AuctionCounter (r:1 w:1)
 	fn new_auction() -> Weight {
-		(29_554_000 as Weight)
+		(24_443_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Paras ParaLifecycles (r:1 w:0)
+	// Storage: Auctions AuctionCounter (r:1 w:0)
+	// Storage: Auctions AuctionInfo (r:1 w:0)
+	// Storage: Slots Leases (r:1 w:0)
+	// Storage: Auctions Winning (r:1 w:1)
+	// Storage: Auctions ReservedAmounts (r:2 w:2)
+	// Storage: System Account (r:1 w:1)
 	fn bid() -> Weight {
-		(154_464_000 as Weight)
+		(139_081_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+	// Storage: Auctions AuctionInfo (r:1 w:1)
+	// Storage: Babe NextRandomness (r:1 w:0)
+	// Storage: Babe EpochStart (r:1 w:0)
+	// Storage: Auctions AuctionCounter (r:1 w:0)
+	// Storage: Auctions Winning (r:3600 w:3600)
+	// Storage: Auctions ReservedAmounts (r:37 w:36)
+	// Storage: System Account (r:36 w:36)
+	// Storage: Slots Leases (r:7 w:7)
+	// Storage: Paras ParaLifecycles (r:1 w:1)
+	// Storage: ParasShared CurrentSessionIndex (r:1 w:0)
+	// Storage: Paras ActionsQueue (r:1 w:1)
+	// Storage: Registrar Paras (r:1 w:1)
 	fn on_initialize() -> Weight {
-		(33_239_172_000 as Weight)
+		(22_131_598_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3688 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3683 as Weight))
 	}
+	// Storage: Auctions ReservedAmounts (r:37 w:36)
+	// Storage: System Account (r:36 w:36)
+	// Storage: Auctions Winning (r:0 w:3600)
+	// Storage: Auctions AuctionInfo (r:0 w:1)
 	fn cancel_auction() -> Weight {
-		(7_021_314_000 as Weight)
+		(4_937_389_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(73 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3673 as Weight))
 	}

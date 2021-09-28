@@ -1,6 +1,6 @@
 [package]
 name = "selendra-availability-bitfield-distribution"
-version = "0.1.0"
+version = "0.1.3"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
@@ -15,9 +15,9 @@ selendra-node-network-protocol = { path = "../../network/protocol" }
 [dev-dependencies]
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
 bitvec = { version = "0.20.1", default-features = false, features = ["alloc"] }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
 maplit = "1.0.2"
 log = "0.4.13"
 env_logger = "0.8.4"

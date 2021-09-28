@@ -33,7 +33,7 @@
 // --header=./file_header.txt
 // --output=./runtime/selendra/src/weights/
 
-
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
@@ -43,12 +43,14 @@ use sp_std::marker::PhantomData;
 /// Weight functions for pallet_timestamp.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_timestamp::WeightInfo for WeightInfo<T> {
+	// Storage: Timestamp Now (r:1 w:1)
+	// Storage: Babe CurrentSlot (r:1 w:0)
 	fn set() -> Weight {
-		(10_330_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+		(9_907_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	fn on_finalize() -> Weight {
-		(4_458_000 as Weight)
+		(4_485_000 as Weight)
 	}
 }

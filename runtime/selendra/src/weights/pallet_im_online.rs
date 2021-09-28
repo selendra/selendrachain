@@ -33,7 +33,7 @@
 // --header=./file_header.txt
 // --output=./runtime/selendra/src/weights/
 
-
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
@@ -43,12 +43,17 @@ use sp_std::marker::PhantomData;
 /// Weight functions for pallet_im_online.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_im_online::WeightInfo for WeightInfo<T> {
+	// Storage: Session Validators (r:1 w:0)
+	// Storage: Session CurrentIndex (r:1 w:0)
+	// Storage: ImOnline ReceivedHeartbeats (r:1 w:1)
+	// Storage: ImOnline AuthoredBlocks (r:1 w:0)
+	// Storage: ImOnline Keys (r:1 w:0)
 	fn validate_unsigned_and_then_heartbeat(k: u32, e: u32, ) -> Weight {
-		(87_465_000 as Weight)
+		(90_356_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((169_000 as Weight).saturating_mul(k as Weight))
-			// Standard Error: 1_000
-			.saturating_add((335_000 as Weight).saturating_mul(e as Weight))
+			.saturating_add((189_000 as Weight).saturating_mul(k as Weight))
+			// Standard Error: 3_000
+			.saturating_add((408_000 as Weight).saturating_mul(e as Weight))
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}

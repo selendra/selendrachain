@@ -33,7 +33,7 @@
 // --header=./file_header.txt
 // --output=./runtime/selendra/src/weights/runtime_common_crowdloan.rs
 
-
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
@@ -43,57 +43,92 @@ use sp_std::marker::PhantomData;
 /// Weight functions for runtime_common::crowdloan.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> runtime_common::crowdloan::WeightInfo for WeightInfo<T> {
+	// Storage: Crowdloan Funds (r:1 w:1)
+	// Storage: Registrar Paras (r:1 w:1)
+	// Storage: Paras ParaLifecycles (r:1 w:0)
+	// Storage: Crowdloan NextTrieIndex (r:1 w:1)
 	fn create() -> Weight {
-		(93_538_000 as Weight)
+		(83_569_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+	// Storage: Crowdloan Funds (r:1 w:1)
+	// Storage: Slots Leases (r:1 w:0)
+	// Storage: Auctions AuctionInfo (r:1 w:0)
+	// Storage: System Account (r:1 w:1)
+	// Storage: Crowdloan EndingsCount (r:1 w:0)
+	// Storage: Crowdloan NewRaise (r:1 w:1)
+	// Storage: unknown [0xd861ea1ebf4800d4b89f4ff787ad79ee96d9a708c85b57da7eb8f9ddeda61291] (r:1 w:1)
 	fn contribute() -> Weight {
-		(581_495_000 as Weight)
+		(318_125_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+	// Storage: Crowdloan Funds (r:1 w:1)
+	// Storage: System Account (r:2 w:2)
+	// Storage: unknown [0xc85982571aa615c788ef9b2c16f54f25773fd439e8ee1ed2aa3ae43d48e880f0] (r:1 w:1)
 	fn withdraw() -> Weight {
-		(127_588_000 as Weight)
+		(111_247_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+	// Storage: Crowdloan Funds (r:1 w:1)
+	// Storage: System Account (r:1 w:0)
+	// Storage: unknown [0x] (r:1 w:0)
 	fn refund(k: u32, ) -> Weight {
 		(0 as Weight)
-			// Standard Error: 52_000
-			.saturating_add((56_719_000 as Weight).saturating_mul(k as Weight))
+			// Standard Error: 19_000
+			.saturating_add((41_461_000 as Weight).saturating_mul(k as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().reads((2 as Weight).saturating_mul(k as Weight)))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes((2 as Weight).saturating_mul(k as Weight)))
 	}
+	// Storage: Crowdloan Funds (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
 	fn dissolve() -> Weight {
-		(68_758_000 as Weight)
+		(63_042_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Crowdloan Funds (r:1 w:1)
 	fn edit() -> Weight {
-		(42_049_000 as Weight)
+		(40_164_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: Crowdloan Funds (r:1 w:0)
+	// Storage: unknown [0xd861ea1ebf4800d4b89f4ff787ad79ee96d9a708c85b57da7eb8f9ddeda61291] (r:1 w:1)
 	fn add_memo() -> Weight {
-		(65_306_000 as Weight)
+		(60_252_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: Crowdloan Funds (r:1 w:0)
+	// Storage: Crowdloan NewRaise (r:1 w:1)
 	fn poke() -> Weight {
-		(51_610_000 as Weight)
+		(44_887_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: Auctions AuctionInfo (r:1 w:0)
+	// Storage: Crowdloan EndingsCount (r:1 w:1)
+	// Storage: Crowdloan NewRaise (r:1 w:1)
+	// Storage: Crowdloan Funds (r:2 w:0)
+	// Storage: Auctions AuctionCounter (r:1 w:0)
+	// Storage: Paras ParaLifecycles (r:2 w:0)
+	// Storage: Slots Leases (r:2 w:0)
+	// Storage: Auctions Winning (r:1 w:1)
+	// Storage: Auctions ReservedAmounts (r:2 w:2)
+	// Storage: System Account (r:2 w:2)
 	fn on_initialize(n: u32, ) -> Weight {
 		(0 as Weight)
-			// Standard Error: 32_000
-			.saturating_add((131_978_000 as Weight).saturating_mul(n as Weight))
+			// Standard Error: 30_000
+			.saturating_add((117_975_000 as Weight).saturating_mul(n as Weight))
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().reads((5 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes((2 as Weight).saturating_mul(n as Weight)))
 	}
 }
+

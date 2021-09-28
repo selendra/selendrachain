@@ -33,7 +33,7 @@
 // --header=./file_header.txt
 // --output=./runtime/selendra/src/weights/
 
-
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
@@ -43,33 +43,39 @@ use sp_std::marker::PhantomData;
 /// Weight functions for pallet_balances.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_balances::WeightInfo for WeightInfo<T> {
+	// Storage: System Account (r:1 w:1)
 	fn transfer() -> Weight {
-		(72_443_000 as Weight)
+		(76_551_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: System Account (r:1 w:1)
 	fn transfer_keep_alive() -> Weight {
-		(52_788_000 as Weight)
+		(56_690_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: System Account (r:1 w:1)
 	fn set_balance_creating() -> Weight {
-		(28_510_000 as Weight)
+		(30_874_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: System Account (r:1 w:1)
 	fn set_balance_killing() -> Weight {
-		(34_621_000 as Weight)
+		(37_879_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: System Account (r:2 w:2)
 	fn force_transfer() -> Weight {
-		(70_962_000 as Weight)
+		(78_054_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: System Account (r:1 w:1)
 	fn transfer_all() -> Weight {
-		(66_162_000 as Weight)
+		(72_108_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}

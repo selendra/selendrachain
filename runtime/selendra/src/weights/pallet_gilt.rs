@@ -33,7 +33,7 @@
 // --header=./file_header.txt
 // --output=./runtime/selendra/src/weights/
 
-
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
@@ -43,51 +43,69 @@ use sp_std::marker::PhantomData;
 /// Weight functions for pallet_gilt.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_gilt::WeightInfo for WeightInfo<T> {
+	// Storage: Gilt Queues (r:1 w:1)
+	// Storage: Gilt QueueTotals (r:1 w:1)
 	fn place_bid(l: u32, ) -> Weight {
-		(51_257_000 as Weight)
+		(58_619_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((171_000 as Weight).saturating_mul(l as Weight))
+			.saturating_add((217_000 as Weight).saturating_mul(l as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Gilt Queues (r:1 w:1)
+	// Storage: Gilt QueueTotals (r:1 w:1)
 	fn place_bid_max() -> Weight {
-		(196_161_000 as Weight)
+		(227_396_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Gilt Queues (r:1 w:1)
+	// Storage: Gilt QueueTotals (r:1 w:1)
 	fn retract_bid(l: u32, ) -> Weight {
-		(51_317_000 as Weight)
+		(59_138_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((144_000 as Weight).saturating_mul(l as Weight))
+			.saturating_add((166_000 as Weight).saturating_mul(l as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Gilt ActiveTotal (r:1 w:1)
 	fn set_target() -> Weight {
-		(5_785_000 as Weight)
+		(6_062_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: Gilt Active (r:1 w:1)
+	// Storage: Gilt ActiveTotal (r:1 w:1)
 	fn thaw() -> Weight {
-		(68_092_000 as Weight)
+		(72_715_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Gilt ActiveTotal (r:1 w:0)
 	fn pursue_target_noop() -> Weight {
-		(3_242_000 as Weight)
+		(3_064_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
+	// Storage: Gilt ActiveTotal (r:1 w:1)
+	// Storage: Gilt QueueTotals (r:1 w:1)
+	// Storage: Gilt Queues (r:1 w:1)
+	// Storage: Gilt Active (r:0 w:1)
 	fn pursue_target_per_item(b: u32, ) -> Weight {
-		(52_205_000 as Weight)
-			// Standard Error: 1_000
-			.saturating_add((9_944_000 as Weight).saturating_mul(b as Weight))
+		(56_509_000 as Weight)
+			// Standard Error: 3_000
+			.saturating_add((10_960_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(b as Weight)))
 	}
+	// Storage: Gilt ActiveTotal (r:1 w:1)
+	// Storage: Gilt QueueTotals (r:1 w:1)
+	// Storage: Gilt Queues (r:1 w:1)
+	// Storage: Gilt Active (r:0 w:1)
 	fn pursue_target_per_queue(q: u32, ) -> Weight {
-		(16_887_000 as Weight)
-			// Standard Error: 6_000
-			.saturating_add((16_321_000 as Weight).saturating_mul(q as Weight))
+		(24_234_000 as Weight)
+			// Standard Error: 9_000
+			.saturating_add((17_246_000 as Weight).saturating_mul(q as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(q as Weight)))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
