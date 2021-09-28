@@ -28,6 +28,7 @@ use std::{
 
 use sc_network::{Event as NetworkEvent, IfDisconnected};
 
+use sc_network::Multiaddr;
 use selendra_node_network_protocol::{request_response::outgoing::Requests, view, ObservedRole};
 use selendra_node_subsystem_test_helpers::{
 	SingleItemSink, SingleItemStream, TestSubsystemContextHandle,
@@ -41,7 +42,6 @@ use selendra_subsystem::{
 	},
 	ActiveLeavesUpdate, FromOverseer, LeafStatus, OverseerSignal,
 };
-use sc_network::Multiaddr;
 use sp_keyring::Sr25519Keyring;
 
 use crate::{network::Network, validator_discovery::AuthorityDiscovery, Rep};
@@ -1202,10 +1202,12 @@ fn spread_event_to_subsystems_is_up_to_date() {
 			AllMessages::StatementDistribution(_) => {
 				cnt += 1;
 			},
-			AllMessages::AvailabilityDistribution(_) =>
-				unreachable!("Not interested in network events"),
-			AllMessages::AvailabilityRecovery(_) =>
-				unreachable!("Not interested in network events"),
+			AllMessages::AvailabilityDistribution(_) => {
+				unreachable!("Not interested in network events")
+			},
+			AllMessages::AvailabilityRecovery(_) => {
+				unreachable!("Not interested in network events")
+			},
 			AllMessages::BitfieldDistribution(_) => {
 				cnt += 1;
 			},
@@ -1221,8 +1223,9 @@ fn spread_event_to_subsystems_is_up_to_date() {
 			},
 			AllMessages::GossipSupport(_) => unreachable!("Not interested in network events"),
 			AllMessages::DisputeCoordinator(_) => unreachable!("Not interested in network events"),
-			AllMessages::DisputeParticipation(_) =>
-				unreachable!("Not interested in network events"),
+			AllMessages::DisputeParticipation(_) => {
+				unreachable!("Not interested in network events")
+			},
 			AllMessages::DisputeDistribution(_) => unreachable!("Not interested in network events"),
 			AllMessages::ChainSelection(_) => unreachable!("Not interested in network events"),
 			// Add variants here as needed, `{ cnt += 1; }` for those that need to be

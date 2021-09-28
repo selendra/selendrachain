@@ -17,7 +17,7 @@ pub mod pallet {
 	pub use pallet_bridge as bridge;
 	use sp_arithmetic::traits::SaturatedConversion;
 	use sp_core::U256;
-	use sp_std::{prelude::*};
+	use sp_std::prelude::*;
 
 	type ResourceId = bridge::ResourceId;
 

@@ -92,14 +92,14 @@ pub enum Error {
 	#[error(transparent)]
 	ValidationFailed(#[from] ValidationFailed),
 	#[error(transparent)]
-	Mpsc(#[from] mpsc::SendError),
+	BackgroundValidationMpsc(#[from] mpsc::SendError),
 	#[error(transparent)]
 	UtilError(#[from] util::Error),
 }
 
 /// PoV data to validate.
 enum PoVData {
-	/// Allready available (from candidate selection).
+	/// Already available (from candidate selection).
 	Ready(Arc<PoV>),
 	/// Needs to be fetched from validator (we are checking a signed statement).
 	FetchFromValidator {
@@ -444,7 +444,7 @@ async fn validate_and_make_available(
 					tx_command
 						.send(ValidatedCandidateCommand::AttestNoPoV(candidate.hash()))
 						.await
-						.map_err(Error::Mpsc)?;
+						.map_err(Error::BackgroundValidationMpsc)?;
 					return Ok(())
 				},
 				Err(err) => return Err(err),
@@ -650,11 +650,19 @@ impl CandidateBackingJob {
 			// spawn background task.
 			let bg = async move {
 				if let Err(e) = validate_and_make_available(params).await {
-					tracing::error!(
-						target: LOG_TARGET,
-						"Failed to validate and make available: {:?}",
-						e
-					);
+					if let Error::BackgroundValidationMpsc(error) = e {
+						tracing::debug!(
+							target: LOG_TARGET,
+							?error,
+							"Mpsc background validation mpsc died during validation - leaf no longer active?"
+						);
+					} else {
+						tracing::error!(
+							target: LOG_TARGET,
+							"Failed to validate and make available: {:?}",
+							e
+						);
+					}
 				}
 			};
 			sender
@@ -851,7 +859,7 @@ impl CandidateBackingJob {
 	/// This also does bounds-checking on the validator index and will return an error if the
 	/// validator index is out of bounds for the current validator set. It's expected that
 	/// this should never happen due to the interface of the candidate backing subsystem -
-	/// the networking component repsonsible for feeding statements to the backing subsystem
+	/// the networking component responsible for feeding statements to the backing subsystem
 	/// is meant to check the signature and provenance of all statements before submission.
 	async fn dispatch_new_statement_to_dispute_coordinator(
 		&self,
@@ -901,7 +909,7 @@ impl CandidateBackingJob {
 
 			match confirmation_rx.await {
 				Err(oneshot::Canceled) => {
-					tracing::debug!(target: LOG_TARGET, "Dispute coordinator confirmation lost")
+					tracing::debug!(target: LOG_TARGET, "Dispute coordinator confirmation lost",)
 				},
 				Ok(ImportStatementsResult::ValidImport) => {},
 				Ok(ImportStatementsResult::InvalidImport) => {
