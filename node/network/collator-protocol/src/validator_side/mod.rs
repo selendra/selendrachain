@@ -36,7 +36,7 @@ use selendra_node_network_protocol::{
 	peer_set::PeerSet,
 	request_response as req_res,
 	request_response::{
-		request::{Recipient, RequestError},
+		outgoing::{Recipient, RequestError},
 		v1::{CollationFetchingRequest, CollationFetchingResponse},
 		OutgoingRequest, Requests,
 	},
@@ -53,6 +53,8 @@ use selendra_subsystem::{
 	},
 	overseer, FromOverseer, OverseerSignal, PerLeafSpan, SubsystemContext, SubsystemSender,
 };
+
+use crate::error::FatalResult;
 
 use super::{modify_reputation, Result, LOG_TARGET};
 
@@ -77,7 +79,7 @@ const BENEFIT_NOTIFY_GOOD: Rep =
 ///
 /// This is to protect from a single slow collator preventing collations from happening.
 ///
-/// With a collation size of 5Meg and bandwidth of 500Mbit/s (requirement for Kusama validators),
+/// With a collation size of 5MB and bandwidth of 500Mbit/s (requirement for Kusama validators),
 /// the transfer should be possible within 0.1 seconds. 400 milliseconds should therefore be
 /// plenty, even with multiple heads and should be low enough for later collators to still be able
 /// to finish on time.
@@ -395,7 +397,7 @@ impl ActiveParas {
 						)
 					},
 					None => {
-						tracing::trace!(target: LOG_TARGET, ?relay_parent, "Not a validator",);
+						tracing::trace!(target: LOG_TARGET, ?relay_parent, "Not a validator");
 
 						continue
 					},
@@ -566,9 +568,8 @@ impl CollationsPerRelayParent {
 				self.waiting_collation = next.as_ref().map(|(_, collator_id)| collator_id.clone());
 				next
 			},
-			CollationStatus::WaitingOnValidation | CollationStatus::Fetching => {
-				unreachable!("We have reset the status above!")
-			},
+			CollationStatus::WaitingOnValidation | CollationStatus::Fetching =>
+				unreachable!("We have reset the status above!"),
 		}
 	}
 }
@@ -713,7 +714,7 @@ async fn notify_collation_seconded<Context>(
 }
 
 /// A peer's view has changed. A number of things should be done:
-///  - Ongoing collation requests have to be cancelled.
+///  - Ongoing collation requests have to be canceled.
 ///  - Advertisements by this peer that are no longer relevant have to be removed.
 async fn handle_peer_view_change(state: &mut State, peer_id: PeerId, view: View) -> Result<()> {
 	let peer_data = state.peer_data.entry(peer_id.clone()).or_default();
@@ -730,7 +731,7 @@ async fn handle_peer_view_change(state: &mut State, peer_id: PeerId, view: View)
 /// This function will
 ///  - Check for duplicate requests.
 ///  - Check if the requested collation is in our view.
-///  - Update PerRequest records with the `result` field if necessary.
+///  - Update `PerRequest` records with the `result` field if necessary.
 /// And as such invocations of this function may rely on that.
 async fn request_collation<Context>(
 	ctx: &mut Context,
@@ -1080,12 +1081,6 @@ async fn process_msg<Context>(
 				);
 			}
 		},
-		CollationFetchingRequest(_) => {
-			tracing::warn!(
-				target: LOG_TARGET,
-				"CollationFetchingRequest message is not expected on the validator side of the protocol",
-			);
-		},
 		Seconded(parent, stmt) => {
 			if let Some(collation_event) = state.pending_candidates.remove(&parent) {
 				let (collator_id, pending_collation) = collation_event;
@@ -1147,7 +1142,7 @@ pub(crate) async fn run<Context>(
 	keystore: SyncCryptoStorePtr,
 	eviction_policy: crate::CollatorEvictionPolicy,
 	metrics: Metrics,
-) -> Result<()>
+) -> FatalResult<()>
 where
 	Context: overseer::SubsystemContext<Message = CollatorProtocolMessage>,
 	Context: SubsystemContext<Message = CollatorProtocolMessage>,

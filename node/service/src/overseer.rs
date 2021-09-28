@@ -15,17 +15,18 @@
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::{AuthorityDiscoveryApi, Block, Error, Hash, IsCollator, Registry, SpawnNamed};
-use sc_authority_discovery::Service as AuthorityDiscoveryService;
-use sc_client_api::AuxStore;
-use sc_keystore::LocalKeystore;
-use selendra_network_bridge::RequestMultiplexer;
+use selendra_availability_distribution::IncomingRequestReceivers;
 use selendra_node_core_approval_voting::Config as ApprovalVotingConfig;
 use selendra_node_core_av_store::Config as AvailabilityConfig;
 use selendra_node_core_candidate_validation::Config as CandidateValidationConfig;
 use selendra_node_core_chain_selection::Config as ChainSelectionConfig;
 use selendra_node_core_dispute_coordinator::Config as DisputeCoordinatorConfig;
+use selendra_node_network_protocol::request_response::{v1 as request_v1, IncomingRequestReceiver};
 use selendra_overseer::{AllSubsystems, BlockInfo, Overseer, OverseerHandle};
 use selendra_primitives::v1::ParachainHost;
+use sc_authority_discovery::Service as AuthorityDiscoveryService;
+use sc_client_api::AuxStore;
+use sc_keystore::LocalKeystore;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_consensus_babe::BabeApi;
@@ -72,8 +73,14 @@ where
 	pub network_service: Arc<sc_network::NetworkService<Block, Hash>>,
 	/// Underlying authority discovery service.
 	pub authority_discovery_service: AuthorityDiscoveryService,
-	/// A multiplexer to arbitrate incoming `IncomingRequest`s from the network.
-	pub request_multiplexer: RequestMultiplexer,
+	/// POV request receiver
+	pub pov_req_receiver: IncomingRequestReceiver<request_v1::PoVFetchingRequest>,
+	pub chunk_req_receiver: IncomingRequestReceiver<request_v1::ChunkFetchingRequest>,
+	pub collation_req_receiver: IncomingRequestReceiver<request_v1::CollationFetchingRequest>,
+	pub available_data_req_receiver:
+		IncomingRequestReceiver<request_v1::AvailableDataFetchingRequest>,
+	pub statement_req_receiver: IncomingRequestReceiver<request_v1::StatementFetchingRequest>,
+	pub dispute_req_receiver: IncomingRequestReceiver<request_v1::DisputeRequest>,
 	/// Prometheus registry, commonly used for production systems, less so for test.
 	pub registry: Option<&'a Registry>,
 	/// Task spawner to be used throughout the overseer and the APIs it provides.
@@ -103,7 +110,12 @@ pub fn create_default_subsystems<'a, Spawner, RuntimeClient>(
 		parachains_db,
 		network_service,
 		authority_discovery_service,
-		request_multiplexer,
+		pov_req_receiver,
+		chunk_req_receiver,
+		collation_req_receiver,
+		available_data_req_receiver,
+		statement_req_receiver,
+		dispute_req_receiver,
 		registry,
 		spawner,
 		is_collator,
@@ -153,9 +165,12 @@ where
 	let all_subsystems = AllSubsystems {
 		availability_distribution: AvailabilityDistributionSubsystem::new(
 			keystore.clone(),
+			IncomingRequestReceivers { pov_req_receiver, chunk_req_receiver },
 			Metrics::register(registry)?,
 		),
-		availability_recovery: AvailabilityRecoverySubsystem::with_chunks_only(),
+		availability_recovery: AvailabilityRecoverySubsystem::with_chunks_only(
+			available_data_req_receiver,
+		),
 		availability_store: AvailabilityStoreSubsystem::new(
 			parachains_db.clone(),
 			availability_config,
@@ -183,6 +198,7 @@ where
 				IsCollator::Yes(collator_pair) => ProtocolSide::Collator(
 					network_service.local_peer_id().clone(),
 					collator_pair,
+					collation_req_receiver,
 					Metrics::register(registry)?,
 				),
 				IsCollator::No => ProtocolSide::Validator {
@@ -196,7 +212,6 @@ where
 		network_bridge: NetworkBridgeSubsystem::new(
 			network_service.clone(),
 			authority_discovery_service.clone(),
-			request_multiplexer,
 			Box::new(network_service.clone()),
 			Metrics::register(registry)?,
 		),
@@ -208,6 +223,7 @@ where
 		),
 		statement_distribution: StatementDistributionSubsystem::new(
 			keystore.clone(),
+			statement_req_receiver,
 			Metrics::register(registry)?,
 		),
 		approval_distribution: ApprovalDistributionSubsystem::new(Metrics::register(registry)?),
@@ -227,6 +243,7 @@ where
 		dispute_participation: DisputeParticipationSubsystem::new(),
 		dispute_distribution: DisputeDistributionSubsystem::new(
 			keystore.clone(),
+			dispute_req_receiver,
 			authority_discovery_service.clone(),
 			Metrics::register(registry)?,
 		),

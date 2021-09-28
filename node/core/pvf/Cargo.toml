@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-core-pvf"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
@@ -9,7 +9,7 @@ name = "puppet_worker"
 path = "bin/puppet_worker.rs"
 
 [dependencies]
-always-assert = "0.1"
+always-assert = "0.1.2"
 async-std = { version = "1.8.0", features = ["attributes"] }
 async-process = "1.1.0"
 assert_matches = "1.4.0"
@@ -23,15 +23,15 @@ rand = "0.8.3"
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
 selendra-parachain = { path = "../../../modules/parachain" }
 selendra-core-primitives = { path = "../../../primitives/core-primitives" }
-sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
-sc-executor-wasmtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
-sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
-sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
-sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
-sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sc-executor-wasmtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
 
 [dev-dependencies]
 adder = { package = "test-parachain-adder", path = "../../../modules/parachain/test-parachains/adder" }

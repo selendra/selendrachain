@@ -16,10 +16,10 @@
 
 use parity_scale_codec::{Decode, Encode};
 use sp_std::{borrow::Borrow, convert::TryFrom, prelude::*, result::Result};
-use xcm::v0::{MultiLocation, OriginKind};
+use xcm::latest::{MultiLocation, OriginKind};
 
 /// Generic third-party conversion trait. Use this when you don't want to force the user to use default
-/// impls of `From` and `Into` for the types you wish to convert between.
+/// implementations of `From` and `Into` for the types you wish to convert between.
 ///
 /// One of `convert`/`convert_ref` and `reverse`/`reverse_ref` MUST be implemented. If possible, implement
 /// `convert_ref`, since this will never result in a clone. Use `convert` when you definitely need to consume
@@ -132,22 +132,22 @@ impl<T: Clone + Encode + Decode> Convert<Vec<u8>, T> for Decoded {
 	}
 }
 
-/// A convertor trait for origin types.
+/// A converter `trait` for origin types.
 ///
 /// Can be amalgamated into tuples. If any of the tuple elements returns `Ok(_)`, it short circuits. Else, the `Err(_)`
 /// of the last tuple item is returned. Each intermediate `Err(_)` might return a different `origin` of type `Origin`
 /// which is passed to the next convert item.
 ///
 /// ```rust
-/// # use xcm::v0::{MultiLocation, Junction, OriginKind};
+/// # use xcm::latest::{MultiLocation, Junctions, Junction, OriginKind};
 /// # use xcm_executor::traits::ConvertOrigin;
 /// // A convertor that will bump the para id and pass it to the next one.
 /// struct BumpParaId;
 /// impl ConvertOrigin<u32> for BumpParaId {
 /// 	fn convert_origin(origin: MultiLocation, _: OriginKind) -> Result<u32, MultiLocation> {
-/// 		match origin {
-/// 			MultiLocation::X1(Junction::Parachain(id)) => {
-/// 				Err(MultiLocation::X1(Junction::Parachain(id + 1)))
+/// 		match origin.interior() {
+/// 			Junctions::X1(Junction::Parachain(id)) if origin.parent_count() == 0 => {
+/// 				Err(Junctions::X1(Junction::Parachain(id + 1)).into())
 /// 			}
 /// 			_ => unreachable!()
 /// 		}
@@ -157,8 +157,8 @@ impl<T: Clone + Encode + Decode> Convert<Vec<u8>, T> for Decoded {
 /// struct AcceptPara7;
 /// impl ConvertOrigin<u32> for AcceptPara7 {
 /// 	fn convert_origin(origin: MultiLocation, _: OriginKind) -> Result<u32, MultiLocation> {
-/// 		match origin {
-/// 			MultiLocation::X1(Junction::Parachain(id)) if id == 7 => {
+/// 		match origin.interior() {
+/// 			Junctions::X1(Junction::Parachain(id)) if id == &7 && origin.parent_count() == 0 => {
 /// 				Ok(7)
 /// 			}
 /// 			_ => Err(origin)
@@ -166,7 +166,7 @@ impl<T: Clone + Encode + Decode> Convert<Vec<u8>, T> for Decoded {
 /// 	}
 /// }
 /// # fn main() {
-/// let origin = MultiLocation::X1(Junction::Parachain(6));
+/// let origin: MultiLocation = Junctions::X1(Junction::Parachain(6)).into();
 /// assert!(
 /// 	<(BumpParaId, AcceptPara7) as ConvertOrigin<u32>>::convert_origin(origin, OriginKind::Native)
 /// 		.is_ok()

@@ -36,12 +36,15 @@ use selendra_runtime_parachains::{
 use authority_discovery_primitives::AuthorityId as AuthorityDiscoveryId;
 use beefy_primitives::crypto::AuthorityId as BeefyId;
 use frame_support::{
-	construct_runtime, parameter_types, traits::KeyOwnerProofSystem, weights::Weight,
+	construct_runtime, parameter_types,
+	traits::{Everything, KeyOwnerProofSystem},
+	weights::Weight,
 };
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId};
 use pallet_mmr_primitives as mmr;
 use pallet_session::historical as session_historical;
 use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
+use selendra_runtime_parachains::reward_points::RewardValidatorsWithEraPoints;
 use primitives::v1::{
 	AccountId, AccountIndex, Balance, BlockNumber, CandidateEvent, CommittedCandidateReceipt,
 	CoreState, GroupRotationInfo, Hash as HashT, Id as ParaId, InboundDownwardMessage,
@@ -52,7 +55,6 @@ use primitives::v1::{
 use runtime_common::{
 	paras_sudo_wrapper, BlockHashCount, BlockLength, BlockWeights, SlowAdjustingFeeUpdate,
 };
-use selendra_runtime_parachains::reward_points::RewardValidatorsWithEraPoints;
 use sp_core::OpaqueMetadata;
 use sp_runtime::{
 	create_runtime_str,
@@ -81,6 +83,7 @@ pub use sp_runtime::BuildStorage;
 
 /// Constant values used within the runtime.
 pub mod constants;
+pub mod xcm_config;
 use constants::{currency::*, fee::*, time::*};
 
 // Make the WASM binary available.
@@ -169,7 +172,7 @@ impl pallet_babe::Config for Runtime {
 	// session module is the trigger
 	type EpochChangeTrigger = pallet_babe::ExternalTrigger;
 
-	type DisabledValidators = Session;
+	type DisabledValidators = ();
 
 	type KeyOwnerProofSystem = ();
 
@@ -476,6 +479,29 @@ impl parachains_ump::Config for Runtime {
 	type Event = Event;
 	type UmpSink = ();
 	type FirstMessageFactorPercent = FirstMessageFactorPercent;
+	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
+}
+
+parameter_types! {
+	pub const BaseXcmWeight: frame_support::weights::Weight = 1_000;
+	pub const AnyNetwork: xcm::latest::NetworkId = xcm::latest::NetworkId::Any;
+}
+
+pub type LocalOriginToLocation = xcm_builder::SignedToAccountId32<Origin, AccountId, AnyNetwork>;
+
+impl pallet_xcm::Config for Runtime {
+	// The config types here are entirely configurable, since the only one that is sorely needed
+	// is `XcmExecutor`, which will be used in unit tests located in xcm-executor.
+	type Event = Event;
+	type ExecuteXcmOrigin = xcm_builder::EnsureXcmOrigin<Origin, LocalOriginToLocation>;
+	type LocationInverter = xcm_config::InvertNothing;
+	type SendXcmOrigin = xcm_builder::EnsureXcmOrigin<Origin, LocalOriginToLocation>;
+	type Weigher = xcm_builder::FixedWeightBounds<BaseXcmWeight, Call>;
+	type XcmRouter = xcm_config::DoNothingRouter;
+	type XcmExecuteFilter = Everything;
+	type XcmExecutor = xcm_executor::XcmExecutor<xcm_config::XcmConfig>;
+	type XcmTeleportFilter = Everything;
+	type XcmReserveTransferFilter = Everything;
 }
 
 impl parachains_hrmp::Config for Runtime {
@@ -622,15 +648,16 @@ construct_runtime! {
 		Configuration: parachains_configuration::{Pallet, Call, Storage, Config<T>},
 		ParaInclusion: parachains_inclusion::{Pallet, Call, Storage, Event<T>},
 		ParaInherent: parachains_paras_inherent::{Pallet, Call, Storage, Inherent},
-		ParasShared: parachains_shared::{Pallet, Call, Storage},
 		Initializer: parachains_initializer::{Pallet, Call, Storage},
 		Paras: parachains_paras::{Pallet, Call, Storage, Origin, Event},
+		ParasShared: parachains_shared::{Pallet, Call, Storage},
 		Scheduler: parachains_scheduler::{Pallet, Storage},
 		ParasSudoWrapper: paras_sudo_wrapper::{Pallet, Call},
 		ParaSessionInfo: parachains_session_info::{Pallet, Storage},
 		Hrmp: parachains_hrmp::{Pallet, Call, Storage, Event<T>},
 		Ump: parachains_ump::{Pallet, Call, Storage, Event},
 		Dmp: parachains_dmp::{Pallet, Call, Storage},
+		Xcm: pallet_xcm::{Pallet, Call, Event<T>, Origin},
 		ParasDisputes: parachains_disputes::{Pallet, Storage, Event<T>},
 
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
@@ -648,9 +675,9 @@ pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
-/// BlockId type as expected by this runtime.
+/// `BlockId` type as expected by this runtime.
 pub type BlockId = generic::BlockId<Block>;
-/// The SignedExtension to the basic transaction logic.
+/// The `SignedExtension` to the basic transaction logic.
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
@@ -968,7 +995,6 @@ sp_api::impl_runtime_apis! {
 		fn current_set_id() -> fg_primitives::SetId {
 			Grandpa::current_set_id()
 		}
-
 
 		fn submit_report_equivocation_unsigned_extrinsic(
 			_equivocation_proof: fg_primitives::EquivocationProof<

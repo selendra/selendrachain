@@ -341,11 +341,11 @@ mod tests {
 	use sp_runtime::{testing::Header, traits::{IdentityLookup, BlakeTwo256}};
 	use sp_runtime::DispatchError::BadOrigin;
 	use sp_version::RuntimeVersion;
-	use xcm::v0::{MultiLocation, OriginKind};
+	use xcm::latest::{MultiLocation, OriginKind};
 
 	type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 	type Block = frame_system::mocking::MockBlock<Test>;
-	type Xcm = xcm::v0::Xcm<Call>;
+	type Xcm = xcm::latest::Xcm<Call>;
 
 	frame_support::construct_runtime!(
 		pub enum Test where

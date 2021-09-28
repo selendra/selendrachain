@@ -126,7 +126,7 @@ mod tests {
 	use async_trait::async_trait;
 	use futures::stream::BoxStream;
 	use sc_network::{Event as NetworkEvent, IfDisconnected};
-	use selendra_node_network_protocol::{request_response::request::Requests, PeerId};
+	use selendra_node_network_protocol::{request_response::outgoing::Requests, PeerId};
 	use sp_keyring::Sr25519Keyring;
 	use std::{borrow::Cow, collections::HashMap};
 

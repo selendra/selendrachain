@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-core-bitfield-signing"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
@@ -10,7 +10,7 @@ tracing = "0.1.26"
 selendra-primitives = { path = "../../../primitives" }
 selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
 wasm-timer = "0.2.5"
 thiserror = "1.0.23"
 

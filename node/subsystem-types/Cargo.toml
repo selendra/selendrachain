@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-subsystem-types"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 description = "Subsystem traits and message definitions"
@@ -11,7 +11,7 @@ async-trait = "0.1.42"
 derive_more = "0.99.11"
 futures = "0.3.12"
 futures-timer = "3.0.2"
-mick-jaeger = "0.1.2"
+mick-jaeger = "0.1.3"
 lazy_static = "1.4"
 tracing = "0.1.26"
 parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
@@ -23,10 +23,10 @@ selendra-node-network-protocol = { path = "../network/protocol" }
 selendra-statement-table = { path = "../../modules/statement-table" }
 selendra-node-jaeger = { path = "../jaeger" }
 selendra-overseer-gen = { path = "../overseer/overseer-gen" }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
 smallvec = "1.6.1"
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
-substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
 thiserror = "1.0.23"
 log = "0.4.13"
 

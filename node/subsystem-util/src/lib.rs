@@ -74,8 +74,6 @@ pub use metered_channel as metered;
 pub use selendra_node_network_protocol::MIN_GOSSIP_PEERS;
 
 pub use determine_new_blocks::determine_new_blocks;
-/// Error classification.
-pub use error_handling::{unwrap_non_fatal, Fault};
 
 /// These reexports are required so that external crates can use the `delegated_subsystem` macro properly.
 pub mod reexports {
@@ -88,7 +86,6 @@ pub mod rolling_session_window;
 pub mod runtime;
 
 mod determine_new_blocks;
-mod error_handling;
 
 #[cfg(test)]
 mod tests;
@@ -116,7 +113,7 @@ pub enum Error {
 	/// The type system wants this even though it doesn't make sense
 	#[error(transparent)]
 	Infallible(#[from] std::convert::Infallible),
-	/// Attempted to convert from an AllMessages to a FromJob, and failed.
+	/// Attempted to convert from an `AllMessages` to a `FromJob`, and failed.
 	#[error("AllMessage not relevant to Job")]
 	SenderConversion(String),
 	/// The local node is not a validator.
@@ -277,7 +274,7 @@ pub fn choose_random_subset<T, F: FnMut(&T) -> bool>(
 	v
 }
 
-/// Returns a bool with a probability of `a / b` of being true.
+/// Returns a `bool` with a probability of `a / b` of being true.
 pub fn gen_ratio(a: usize, b: usize) -> bool {
 	use rand::Rng as _;
 	let mut rng = rand::thread_rng();
@@ -364,7 +361,7 @@ impl Drop for AbortOnDrop {
 	}
 }
 
-/// A JobHandle manages a particular job for a subsystem.
+/// A `JobHandle` manages a particular job for a subsystem.
 struct JobHandle<ToJob> {
 	_abort_handle: AbortOnDrop,
 	to_job: mpsc::Sender<ToJob>,
