@@ -25,7 +25,7 @@ selendra-parachain = { path = "../../../../modules/parachain" }
 codec = { package = "parity-scale-codec", version = "2.0.0", features = [ "derive" ] }
 futures = { version = "0.3.1", features = ["compat"] }
 futures-timer = "3.0.2"
-tracing = "0.1.32"
+tracing = "0.1.26"
 parking_lot = "0.10.2"
 derive_more = "0.99.2"
 

@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
 
-use selendra_primitives::v1::{Hash as PHash, PersistedValidationData};
 use sc_consensus::BlockImport;
+use selendra_primitives::v1::{Hash as PHash, PersistedValidationData};
 use sp_runtime::traits::Block as BlockT;
 
 mod parachain_consensus;
@@ -65,9 +65,7 @@ impl<B: BlockT> ParachainConsensus<B> for Box<dyn ParachainConsensus<B> + Send +
 		relay_parent: PHash,
 		validation_data: &PersistedValidationData,
 	) -> Option<ParachainCandidate<B>> {
-		(*self)
-			.produce_candidate(parent, relay_parent, validation_data)
-			.await
+		(*self).produce_candidate(parent, relay_parent, validation_data).await
 	}
 }
 

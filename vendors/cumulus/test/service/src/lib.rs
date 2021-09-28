@@ -29,7 +29,6 @@ use cumulus_client_service::{
 };
 use cumulus_primitives_core::ParaId;
 use cumulus_test_runtime::{Hash, Header, NodeBlock as Block, RuntimeApi};
-use selendra_primitives::v1::{CollatorPair, Hash as PHash, PersistedValidationData};
 use sc_client_api::execution_extensions::ExecutionStrategies;
 use sc_executor::native_executor_instance;
 pub use sc_executor::NativeExecutor;
@@ -42,6 +41,7 @@ use sc_service::{
 	BasePath, ChainSpec, Configuration, Error as ServiceError, PartialComponents, Role,
 	RpcHandlers, TFullBackend, TFullClient, TaskExecutor, TaskManager,
 };
+use selendra_primitives::v1::{CollatorPair, Hash as PHash, PersistedValidationData};
 use sp_arithmetic::traits::SaturatedConversion;
 use sp_blockchain::HeaderBackend;
 use sp_core::{Pair, H256};
@@ -167,7 +167,7 @@ where
 		+ 'static,
 {
 	if matches!(parachain_config.role, Role::Light) {
-		return Err("Light client not supported!".into());
+		return Err("Light client not supported!".into())
 	}
 
 	let mut parachain_config = prepare_node_config(parachain_config);
@@ -260,37 +260,35 @@ where
 				let relay_chain_client = relay_chain_full_node.client.clone();
 				let relay_chain_backend = relay_chain_full_node.backend.clone();
 
-				Box::new(
-					cumulus_client_consensus_relay_chain::RelayChainConsensus::new(
-						para_id,
-						proposer_factory,
-						move |_, (relay_parent, validation_data)| {
-							let parachain_inherent =
-								cumulus_primitives_parachain_inherent::ParachainInherentData::create_at(
-									relay_parent,
-									&*relay_chain_client,
-									&*relay_chain_backend,
-									&validation_data,
-									para_id,
-								);
+				Box::new(cumulus_client_consensus_relay_chain::RelayChainConsensus::new(
+					para_id,
+					proposer_factory,
+					move |_, (relay_parent, validation_data)| {
+						let parachain_inherent =
+							cumulus_primitives_parachain_inherent::ParachainInherentData::create_at(
+								relay_parent,
+								&*relay_chain_client,
+								&*relay_chain_backend,
+								&validation_data,
+								para_id,
+							);
 
-							async move {
-								let time = sp_timestamp::InherentDataProvider::from_system_time();
+						async move {
+							let time = sp_timestamp::InherentDataProvider::from_system_time();
 
-								let parachain_inherent = parachain_inherent.ok_or_else(|| {
-									Box::<dyn std::error::Error + Send + Sync>::from(String::from(
-										"error",
-									))
-								})?;
-								Ok((time, parachain_inherent))
-							}
-						},
-						client.clone(),
-						relay_chain_full_node.client.clone(),
-						relay_chain_full_node.backend.clone(),
-					),
-				)
-			}
+							let parachain_inherent = parachain_inherent.ok_or_else(|| {
+								Box::<dyn std::error::Error + Send + Sync>::from(String::from(
+									"error",
+								))
+							})?;
+							Ok((time, parachain_inherent))
+						}
+					},
+					client.clone(),
+					relay_chain_full_node.client.clone(),
+					relay_chain_full_node.backend.clone(),
+				))
+			},
 			Consensus::Null => Box::new(NullConsensus),
 		};
 
@@ -452,8 +450,7 @@ impl TestNodeBuilder {
 		mut self,
 		nodes: impl IntoIterator<Item = &'a selendra_test_service::SelendraTestNode>,
 	) -> Self {
-		self.relay_chain_nodes
-			.extend(nodes.into_iter().map(|n| n.addr.clone()));
+		self.relay_chain_nodes.extend(nodes.into_iter().map(|n| n.addr.clone()));
 		self
 	}
 
@@ -487,8 +484,7 @@ impl TestNodeBuilder {
 	/// Build the [`TestNode`].
 	pub async fn build(self) -> TestNode {
 		let parachain_config = node_config(
-			self.storage_update_func_parachain
-				.unwrap_or_else(|| Box::new(|| ())),
+			self.storage_update_func_parachain.unwrap_or_else(|| Box::new(|| ())),
 			self.task_executor.clone(),
 			self.key.clone(),
 			self.parachain_nodes,
@@ -498,8 +494,7 @@ impl TestNodeBuilder {
 		)
 		.expect("could not generate Configuration");
 		let mut relay_chain_config = selendra_test_service::node_config(
-			self.storage_update_func_relay_chain
-				.unwrap_or_else(|| Box::new(|| ())),
+			self.storage_update_func_relay_chain.unwrap_or_else(|| Box::new(|| ())),
 			self.task_executor,
 			self.key,
 			self.relay_chain_nodes,
@@ -525,13 +520,7 @@ impl TestNodeBuilder {
 		let peer_id = network.local_peer_id().clone();
 		let addr = MultiaddrWithPeerId { multiaddr, peer_id };
 
-		TestNode {
-			task_manager,
-			client,
-			network,
-			addr,
-			rpc_handlers,
-		}
+		TestNode { task_manager, client, network, addr, rpc_handlers }
 	}
 }
 
@@ -552,18 +541,11 @@ pub fn node_config(
 ) -> Result<Configuration, ServiceError> {
 	let base_path = BasePath::new_temp_dir()?;
 	let root = base_path.path().to_path_buf();
-	let role = if is_collator {
-		Role::Authority
-	} else {
-		Role::Full
-	};
+	let role = if is_collator { Role::Authority } else { Role::Full };
 	let key_seed = key.to_seed();
 	let mut spec = Box::new(chain_spec::get_chain_spec(para_id));
 
-	let mut storage = spec
-		.as_storage_builder()
-		.build_storage()
-		.expect("could not build storage");
+	let mut storage = spec.as_storage_builder().build_storage().expect("could not build storage");
 
 	BasicExternalities::execute_with_storage(&mut storage, storage_update_func);
 	spec.set_storage(storage);
@@ -600,10 +582,7 @@ pub fn node_config(
 		network: network_config,
 		keystore: KeystoreConfig::InMemory,
 		keystore_remote: Default::default(),
-		database: DatabaseConfig::RocksDb {
-			path: root.join("db"),
-			cache_size: 128,
-		},
+		database: DatabaseConfig::RocksDb { path: root.join("db"), cache_size: 128 },
 		state_cache_size: 67108864,
 		state_cache_child_ratio: None,
 		state_pruning: PruningMode::ArchiveAll,
@@ -631,10 +610,7 @@ pub fn node_config(
 		telemetry_endpoints: None,
 		telemetry_external_transport: None,
 		default_heap_pages: None,
-		offchain_worker: OffchainWorkerConfig {
-			enabled: true,
-			indexing_enabled: false,
-		},
+		offchain_worker: OffchainWorkerConfig { enabled: true, indexing_enabled: false },
 		force_authoring: false,
 		disable_grandpa: false,
 		dev_key_seed: Some(key_seed),
@@ -711,14 +687,7 @@ pub fn construct_extrinsic(
 	let raw_payload = runtime::SignedPayload::from_raw(
 		function.clone(),
 		extra.clone(),
-		(
-			runtime::VERSION.spec_version,
-			genesis_block,
-			current_block_hash,
-			(),
-			(),
-			(),
-		),
+		(runtime::VERSION.spec_version, genesis_block, current_block_hash, (), (), ()),
 	);
 	let signature = raw_payload.using_encoded(|e| caller.sign(e));
 	runtime::UncheckedExtrinsic::new_signed(

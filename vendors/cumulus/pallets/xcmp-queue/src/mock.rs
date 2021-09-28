@@ -15,15 +15,14 @@
 
 use super::*;
 use crate as xcmp_queue;
-use sp_core::H256;
 use frame_support::parameter_types;
+use sp_core::H256;
 use sp_runtime::{
+	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	testing::{Header},
 };
 use xcm_builder::{
-	FixedWeightBounds, IsConcrete, LocationInverter, NativeAsset, CurrencyAdapter,
-	ParentIsDefault,
+	CurrencyAdapter, FixedWeightBounds, IsConcrete, LocationInverter, NativeAsset, ParentIsDefault,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -107,10 +106,8 @@ impl cumulus_pallet_parachain_system::Config for Test {
 }
 
 parameter_types! {
-	pub const RelayChain: MultiLocation = MultiLocation::X1(Junction::Parent);
-	pub Ancestry: MultiLocation = MultiLocation::X1(
-		Junction::Parachain(1u32.into())
-	);
+	pub const RelayChain: MultiLocation = MultiLocation::parent();
+	pub Ancestry: MultiLocation = X1(Parachain(1u32.into())).into();
 	pub UnitWeightCost: Weight = 1_000_000;
 }
 
@@ -128,9 +125,7 @@ pub type LocalAssetTransactor = CurrencyAdapter<
 	(),
 >;
 
-pub type LocationToAccountId = (
-	ParentIsDefault<AccountId>,
-);
+pub type LocationToAccountId = (ParentIsDefault<AccountId>,);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -157,6 +152,7 @@ impl Config for Test {
 	type Event = Event;
 	type XcmExecutor = xcm_executor::XcmExecutor<XcmConfig>;
 	type ChannelInfo = ParachainSystem;
+	type VersionWrapper = ();
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

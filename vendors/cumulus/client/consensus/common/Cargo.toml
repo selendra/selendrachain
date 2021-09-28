@@ -26,7 +26,7 @@ selendra-runtime = { path = "../../../../../runtime/selendra" }
 # Other deps
 futures = { version = "0.3.8", features = ["compat"] }
 codec = { package = "parity-scale-codec", version = "2.0.0", features = [ "derive" ] }
-tracing = "0.1.35"
+tracing = "0.1.26"
 async-trait = "0.1.42"
 dyn-clone = "1.0.4"
 

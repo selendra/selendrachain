@@ -17,7 +17,7 @@
 //! A Cumulus test client.
 
 mod block_builder;
-use codec::{Encode, Decode};
+use codec::{Decode, Encode};
 use runtime::{
 	Balance, Block, BlockHashCount, Call, GenesisConfig, Runtime, Signature, SignedExtra,
 	SignedPayload, UncheckedExtrinsic, VERSION,
@@ -32,8 +32,8 @@ use sp_runtime::{generic::Era, BuildStorage, SaturatedConversion};
 
 pub use block_builder::*;
 pub use cumulus_test_runtime as runtime;
-pub use selendra_parachain::primitives::{BlockData, HeadData, ValidationParams, ValidationResult};
 pub use sc_executor::error::Result as ExecutorResult;
+pub use selendra_parachain::primitives::{BlockData, HeadData, ValidationParams, ValidationResult};
 pub use substrate_test_client::*;
 
 pub type ParachainBlockData = cumulus_primitives_core::ParachainBlockData<Block>;
@@ -120,10 +120,8 @@ pub fn generate_extrinsic(
 	let current_block = client.info().best_number.saturated_into();
 	let genesis_block = client.hash(0).unwrap().unwrap();
 	let nonce = 0;
-	let period = BlockHashCount::get()
-		.checked_next_power_of_two()
-		.map(|c| c / 2)
-		.unwrap_or(2) as u64;
+	let period =
+		BlockHashCount::get().checked_next_power_of_two().map(|c| c / 2).unwrap_or(2) as u64;
 	let tip = 0;
 	let extra: SignedExtra = (
 		frame_system::CheckSpecVersion::<Runtime>::new(),
@@ -136,14 +134,7 @@ pub fn generate_extrinsic(
 	let raw_payload = SignedPayload::from_raw(
 		function.clone(),
 		extra.clone(),
-		(
-			VERSION.spec_version,
-			genesis_block,
-			current_block_hash,
-			(),
-			(),
-			(),
-		),
+		(VERSION.spec_version, genesis_block, current_block_hash, (), (), ()),
 	);
 	let signature = raw_payload.using_encoded(|e| origin.sign(e));
 

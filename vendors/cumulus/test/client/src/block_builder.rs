@@ -19,8 +19,8 @@ use cumulus_primitives_core::{ParachainBlockData, PersistedValidationData};
 use cumulus_primitives_parachain_inherent::{ParachainInherentData, INHERENT_IDENTIFIER};
 use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
 use cumulus_test_runtime::{Block, GetLastTimestamp, Hash, Header};
-use selendra_primitives::v1::{BlockNumber as PBlockNumber, Hash as PHash};
 use sc_block_builder::{BlockBuilder, BlockBuilderProvider};
+use selendra_primitives::v1::{BlockNumber as PBlockNumber, Hash as PHash};
 use sp_api::ProvideRuntimeApi;
 use sp_runtime::{
 	generic::BlockId,
@@ -107,9 +107,7 @@ fn init_block_builder<'a>(
 		)
 		.expect("Put validation function params failed");
 
-	let inherents = block_builder
-		.create_inherents(inherent_data)
-		.expect("Creates inherents");
+	let inherents = block_builder.create_inherents(inherent_data).expect("Creates inherents");
 
 	inherents
 		.into_iter()
@@ -138,10 +136,8 @@ impl InitBlockBuilder for Client {
 		validation_data: Option<PersistedValidationData<PHash, PBlockNumber>>,
 		relay_sproof_builder: RelayStateSproofBuilder,
 	) -> BlockBuilder<Block, Client, Backend> {
-		let last_timestamp = self
-			.runtime_api()
-			.get_last_timestamp(&at)
-			.expect("Get last timestamp");
+		let last_timestamp =
+			self.runtime_api().get_last_timestamp(&at).expect("Get last timestamp");
 
 		let timestamp = last_timestamp + cumulus_test_runtime::MinimumPeriod::get();
 

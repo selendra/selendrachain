@@ -16,7 +16,7 @@
 
 //! The actual implementation of the validate block functionality.
 
-use frame_support::traits::{ExecuteBlock, ExtrinsicCall, IsSubType, Get};
+use frame_support::traits::{ExecuteBlock, ExtrinsicCall, Get, IsSubType};
 use sp_runtime::traits::{Block as BlockT, Extrinsic, HashFor, Header as HeaderT, NumberFor};
 
 use sp_io::KillStorageResult;
@@ -64,10 +64,7 @@ where
 	let head_data = HeadData(header.encode());
 
 	let block = B::new(header, extrinsics);
-	assert!(
-		parent_head.hash() == *block.header().parent_hash(),
-		"Invalid parent hash",
-	);
+	assert!(parent_head.hash() == *block.header().parent_hash(), "Invalid parent hash",);
 
 	// Uncompress
 	let mut db = MemoryDB::default();
@@ -196,7 +193,7 @@ fn host_storage_read(key: &[u8], value_out: &mut [u8], value_offset: u32) -> Opt
 			let written = sp_std::cmp::min(data.len(), value_out.len());
 			value_out[..written].copy_from_slice(&data[..written]);
 			Some(value.len() as u32)
-		}
+		},
 		None => None,
 	}
 }
@@ -276,7 +273,7 @@ fn host_default_child_storage_read(
 			let written = sp_std::cmp::min(data.len(), value_out.len());
 			value_out[..written].copy_from_slice(&data[..written]);
 			Some(value.len() as u32)
-		}
+		},
 		None => None,
 	}
 }
@@ -312,7 +309,11 @@ fn host_default_child_storage_exists(storage_key: &[u8], key: &[u8]) -> bool {
 	with_externalities(|ext| ext.exists_child_storage(&child_info, key))
 }
 
-fn host_default_child_storage_clear_prefix(storage_key: &[u8], prefix: &[u8], limit: Option<u32>) -> KillStorageResult {
+fn host_default_child_storage_clear_prefix(
+	storage_key: &[u8],
+	prefix: &[u8],
+	limit: Option<u32>,
+) -> KillStorageResult {
 	let child_info = ChildInfo::new_default(storage_key);
 	with_externalities(|ext| {
 		let (all_removed, num_removed) = ext.clear_child_prefix(&child_info, prefix, limit);

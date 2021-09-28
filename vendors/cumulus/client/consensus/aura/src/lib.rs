@@ -31,11 +31,11 @@ use cumulus_primitives_core::{
 	PersistedValidationData,
 };
 use futures::lock::Mutex;
-use selendra_client::ClientHandle;
 use sc_client_api::{backend::AuxStore, Backend, BlockOf};
 use sc_consensus::BlockImport;
 use sc_consensus_slots::{BackoffAuthoringBlocksStrategy, SlotInfo};
 use sc_telemetry::TelemetryHandle;
+use selendra_client::ClientHandle;
 use sp_api::ProvideRuntimeApi;
 use sp_application_crypto::AppPublic;
 use sp_blockchain::{HeaderBackend, ProvideCache};
@@ -215,9 +215,8 @@ where
 		relay_parent: PHash,
 		validation_data: &PersistedValidationData,
 	) -> Option<ParachainCandidate<B>> {
-		let (inherent_data, inherent_data_providers) = self
-			.inherent_data(parent.hash(), validation_data, relay_parent)
-			.await?;
+		let (inherent_data, inherent_data_providers) =
+			self.inherent_data(parent.hash(), validation_data, relay_parent).await?;
 
 		let info = SlotInfo::new(
 			inherent_data_providers.slot(),
@@ -234,10 +233,7 @@ where
 
 		let res = self.aura_worker.lock().await.on_slot(info).await?;
 
-		Some(ParachainCandidate {
-			block: res.block,
-			proof: res.storage_proof,
-		})
+		Some(ParachainCandidate { block: res.block, proof: res.storage_proof })
 	}
 }
 
