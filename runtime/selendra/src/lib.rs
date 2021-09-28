@@ -1199,7 +1199,7 @@ pub type XcmRouter = (
 
 parameter_types! {
 	pub const Selendra: MultiAssetFilter = Wild(AllOf { fun: WildFungible, id: Concrete(SelLocation::get()) });
-	pub const SelendraForIndracore: (MultiAssetFilter, MultiLocation) = (Selendra::get(), Parachain(972).into()); 
+	pub const SelendraForIndracore: (MultiAssetFilter, MultiLocation) = (Selendra::get(), Parachain(972).into());
 }
 
 pub type TrustedTeleporters = (xcm_builder::Case<SelendraForIndracore>,);

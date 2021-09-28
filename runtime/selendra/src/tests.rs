@@ -21,7 +21,7 @@ use frame_support::weights::{GetDispatchInfo, WeightToFeePolynomial};
 use pallet_transaction_payment::Multiplier;
 use parity_scale_codec::Encode;
 use separator::Separatable;
-use sp_runtime::{FixedPointNumber, assert_eq_error_rate};
+use sp_runtime::{assert_eq_error_rate, FixedPointNumber};
 
 #[test]
 fn remove_keys_weight_is_sensible() {
@@ -168,7 +168,6 @@ fn era_payout_should_give_sensible_results() {
 	assert_eq!(era_payout(75, 100, Perquintill::from_percent(10), Perquintill::one(), 0,), (10, 0));
 	assert_eq!(era_payout(80, 100, Perquintill::from_percent(10), Perquintill::one(), 0,), (6, 4));
 }
-
 
 #[test]
 fn signed_deposit_is_sensible() {
