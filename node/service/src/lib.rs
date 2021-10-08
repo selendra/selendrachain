@@ -24,7 +24,7 @@ mod open_fb;
 mod parachains_db;
 mod relay_chain_selection;
 
-#[cfg(test)]
+#[cfg(all(test, feature = "disputes"))]
 mod tests;
 
 #[cfg(feature = "full-node")]
