@@ -23,9 +23,9 @@ use parity_scale_codec::{Decode, Encode};
 use selendra_primitives::v1::{BlockNumber, Hash};
 use std::{collections::HashMap, fmt};
 
-pub use sc_network::{IfDisconnected, PeerId};
 #[doc(hidden)]
 pub use selendra_node_jaeger as jaeger;
+pub use sc_network::{IfDisconnected, PeerId};
 #[doc(hidden)]
 pub use std::sync::Arc;
 
@@ -272,7 +272,7 @@ impl View {
 
 	/// Check if two views have the same heads.
 	///
-	/// Equivalent to the `PartialEq` fn,
+	/// Equivalent to the `PartialEq` function,
 	/// but ignores the `finalized_number` field.
 	pub fn check_heads_eq(&self, other: &Self) -> bool {
 		self.heads == other.heads
@@ -294,6 +294,8 @@ pub mod v1 {
 		UncheckedSignedFullStatement,
 	};
 
+	use crate::WrongVariant;
+
 	/// Network messages used by the bitfield distribution subsystem.
 	#[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
 	pub enum BitfieldDistributionMessage {
@@ -311,7 +313,7 @@ pub mod v1 {
 		/// Seconded statement with large payload (e.g. containing a runtime upgrade).
 		///
 		/// We only gossip the hash in that case, actual payloads can be fetched from sending node
-		/// via req/response.
+		/// via request/response.
 		#[codec(index = 1)]
 		LargeStatement(StatementMetadata),
 	}
@@ -386,6 +388,10 @@ pub mod v1 {
 		Approvals(Vec<IndirectSignedApprovalVote>),
 	}
 
+	/// Dummy network message type, so we will receive connect/disconnect events.
+	#[derive(Debug, Clone, PartialEq, Eq)]
+	pub enum GossipSuppportNetworkMessage {}
+
 	/// Network messages used by the collator protocol subsystem
 	#[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
 	pub enum CollatorProtocolMessage {
@@ -419,6 +425,20 @@ pub mod v1 {
 	impl_try_from!(ValidationProtocol, BitfieldDistribution, BitfieldDistributionMessage);
 	impl_try_from!(ValidationProtocol, StatementDistribution, StatementDistributionMessage);
 	impl_try_from!(ValidationProtocol, ApprovalDistribution, ApprovalDistributionMessage);
+
+	impl TryFrom<ValidationProtocol> for GossipSuppportNetworkMessage {
+		type Error = WrongVariant;
+		fn try_from(_: ValidationProtocol) -> Result<Self, Self::Error> {
+			Err(WrongVariant)
+		}
+	}
+
+	impl<'a> TryFrom<&'a ValidationProtocol> for &'a GossipSuppportNetworkMessage {
+		type Error = WrongVariant;
+		fn try_from(_: &'a ValidationProtocol) -> Result<Self, Self::Error> {
+			Err(WrongVariant)
+		}
+	}
 
 	/// All network messages on the collation peer-set.
 	#[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]

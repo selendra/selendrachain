@@ -41,7 +41,7 @@
 //! 		.with_string_fmt_debug_tag("foo", foo)
 //! 		// anything that implements `trait std::str::ToString`
 //! 		.with_string_tag("again", 1337_u32)
-//! 		// add a `Stage` for [`sel-jaeger`]
+//! 		// add a `Stage` for [`dot-jaeger`](https://github.com/paritytech/dot-jaeger)
 //! 		.with_stage(jaeger::Stage::CandidateBacking);
 //! 		// complete by design, no completion required
 //! # }
@@ -84,11 +84,11 @@
 //! ```
 
 use parity_scale_codec::Encode;
-use sc_network::PeerId;
 use selendra_node_primitives::PoV;
 use selendra_primitives::v1::{
 	BlakeTwo256, CandidateHash, Hash, HashT, Id as ParaId, ValidatorIndex,
 };
+use sc_network::PeerId;
 
 use std::{fmt, sync::Arc};
 
@@ -328,7 +328,7 @@ impl Span {
 
 	/// Add an additional int tag to the span without consuming.
 	///
-	/// Should be used sparingly, introduction of new types is prefered.
+	/// Should be used sparingly, introduction of new types is preferred.
 	#[inline(always)]
 	pub fn with_int_tag(mut self, tag: &'static str, i: i64) -> Self {
 		self.add_int_tag(tag, i);
@@ -357,11 +357,11 @@ impl Span {
 		}
 	}
 
-	/// Add a pov hash meta tag with lazy hash eval, without consuming the span.
+	/// Add a PoV hash meta tag with lazy hash evaluation, without consuming the span.
 	#[inline(always)]
 	pub fn add_pov(&mut self, pov: &PoV) {
 		if self.is_enabled() {
-			// avoid computing the pov hash if jaeger is not enabled
+			// avoid computing the PoV hash if jaeger is not enabled
 			self.add_string_fmt_debug_tag("pov", pov.hash());
 		}
 	}

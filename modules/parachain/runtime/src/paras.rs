@@ -31,6 +31,7 @@ use primitives::v1::{
 	ConsensusLog, HeadData, Id as ParaId, SessionIndex, UpgradeGoAhead, UpgradeRestriction,
 	ValidationCode, ValidationCodeHash,
 };
+use scale_info::TypeInfo;
 use sp_core::RuntimeDebug;
 use sp_runtime::{traits::One, DispatchResult, SaturatedConversion};
 use sp_std::{prelude::*, result};
@@ -40,10 +41,14 @@ use serde::{Deserialize, Serialize};
 
 pub use crate::Origin as ParachainOrigin;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+pub mod weights;
+
 pub use pallet::*;
 
 // the two key times necessary to track for every code replacement.
-#[derive(Default, Encode, Decode)]
+#[derive(Default, Encode, Decode, TypeInfo)]
 #[cfg_attr(test, derive(Debug, Clone, PartialEq))]
 pub struct ReplacementTimes<N> {
 	/// The relay-chain block number that the code upgrade was expected to be activated.
@@ -58,7 +63,7 @@ pub struct ReplacementTimes<N> {
 
 /// Metadata used to track previous parachain validation code that we keep in
 /// the state.
-#[derive(Default, Encode, Decode)]
+#[derive(Default, Encode, Decode, TypeInfo)]
 #[cfg_attr(test, derive(Debug, Clone, PartialEq))]
 pub struct ParaPastCodeMeta<N> {
 	/// Block numbers where the code was expected to be replaced and where the code
@@ -87,7 +92,7 @@ enum UseCodeAt<N> {
 /// If the para is in a "transition state", it is expected that the parachain is
 /// queued in the `ActionsQueue` to transition it into a stable state. Its lifecycle
 /// state will be used to determine the state transition to apply to the para.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum ParaLifecycle {
 	/// Para is new and is onboarding as a Parathread or Parachain.
 	Onboarding,
@@ -255,7 +260,7 @@ impl<N: Ord + Copy + PartialEq> ParaPastCodeMeta<N> {
 }
 
 /// Arguments for initializing a para.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct ParaGenesisArgs {
 	/// The initial head data to use.
@@ -264,6 +269,14 @@ pub struct ParaGenesisArgs {
 	pub validation_code: ValidationCode,
 	/// True if parachain, false if parathread.
 	pub parachain: bool,
+}
+
+pub trait WeightInfo {
+	fn force_set_current_code(c: u32) -> Weight;
+	fn force_set_current_head(s: u32) -> Weight;
+	fn force_schedule_code_upgrade(c: u32) -> Weight;
+	fn force_note_new_head(s: u32) -> Weight;
+	fn force_queue_action() -> Weight;
 }
 
 #[frame_support::pallet]
@@ -282,6 +295,9 @@ pub mod pallet {
 			+ Into<result::Result<Origin, <Self as Config>::Origin>>;
 
 		type Event: From<Event> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::event]
@@ -489,7 +505,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Set the storage for the parachain validation code immediately.
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::force_set_current_code(new_code.0.len() as u32))]
 		pub fn force_set_current_code(
 			origin: OriginFor<T>,
 			para: ParaId,
@@ -508,7 +524,7 @@ pub mod pallet {
 		}
 
 		/// Set the storage for the current parachain head data immediately.
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::force_set_current_head(new_head.0.len() as u32))]
 		pub fn force_set_current_head(
 			origin: OriginFor<T>,
 			para: ParaId,
@@ -521,7 +537,7 @@ pub mod pallet {
 		}
 
 		/// Schedule an upgrade as if it was scheduled in the given relay parent block.
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::force_schedule_code_upgrade(new_code.0.len() as u32))]
 		pub fn force_schedule_code_upgrade(
 			origin: OriginFor<T>,
 			para: ParaId,
@@ -536,7 +552,7 @@ pub mod pallet {
 		}
 
 		/// Note a new block head for para within the context of the current block.
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::force_note_new_head(new_head.0.len() as u32))]
 		pub fn force_note_new_head(
 			origin: OriginFor<T>,
 			para: ParaId,
@@ -552,7 +568,7 @@ pub mod pallet {
 		/// Put a parachain directly into the next session's action queue.
 		/// We can't queue it any sooner than this without going into the
 		/// initializer...
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::force_queue_action())]
 		pub fn force_queue_action(origin: OriginFor<T>, para: ParaId) -> DispatchResult {
 			ensure_root(origin)?;
 			let next_session = shared::Pallet::<T>::session_index().saturating_add(One::one());
@@ -1538,7 +1554,7 @@ mod tests {
 			{
 				Paras::note_new_head(para_id, Default::default(), expected_at);
 
-				assert_eq!(Paras::past_code_meta(&para_id).most_recent_change(), Some(expected_at),);
+				assert_eq!(Paras::past_code_meta(&para_id).most_recent_change(), Some(expected_at));
 				assert_eq!(
 					<Paras as Store>::PastCodeHash::get(&(para_id, expected_at)),
 					Some(original_code.hash()),
@@ -1629,7 +1645,7 @@ mod tests {
 
 				Paras::note_new_head(para_id, Default::default(), expected_at + 4);
 
-				assert_eq!(Paras::past_code_meta(&para_id).most_recent_change(), Some(expected_at),);
+				assert_eq!(Paras::past_code_meta(&para_id).most_recent_change(), Some(expected_at));
 
 				// Some hypothetical block which would have triggered the code change
 				// should still use the old code.
@@ -2000,7 +2016,7 @@ mod tests {
 			run_to_block(10, None);
 			Paras::note_new_head(para_id, Default::default(), 7);
 
-			assert_eq!(Paras::past_code_meta(&para_id).upgrade_times, vec![upgrade_at(2, 10)],);
+			assert_eq!(Paras::past_code_meta(&para_id).upgrade_times, vec![upgrade_at(2, 10)]);
 
 			assert_eq!(fetch_validation_code_at(para_id, 2, None), Some(old_code.clone()));
 			assert_eq!(fetch_validation_code_at(para_id, 3, None), Some(old_code.clone()));

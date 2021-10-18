@@ -22,13 +22,6 @@ pub mod chain_spec;
 
 pub use chain_spec::*;
 use futures::future::Future;
-use sc_chain_spec::ChainSpec;
-use sc_client_api::execution_extensions::ExecutionStrategies;
-use sc_executor::native_executor_instance;
-use sc_network::{
-	config::{NetworkConfiguration, TransportConfig},
-	multiaddr,
-};
 use selendra_node_primitives::{CollationGenerationConfig, CollatorFn};
 use selendra_node_subsystem::messages::{CollationGenerationMessage, CollatorProtocolMessage};
 use selendra_overseer::Handle;
@@ -40,10 +33,15 @@ use selendra_test_runtime::{
 	ParasSudoWrapperCall, Runtime, SignedExtra, SignedPayload, SudoCall, UncheckedExtrinsic,
 	VERSION,
 };
+use sc_chain_spec::ChainSpec;
+use sc_client_api::execution_extensions::ExecutionStrategies;
+use sc_network::{
+	config::{NetworkConfiguration, TransportConfig},
+	multiaddr,
+};
 use service::{
-	config::{DatabaseConfig, KeystoreConfig, MultiaddrWithPeerId, WasmExecutionMethod},
-	BasePath, Configuration, KeepBlocks, Role, RpcHandlers, TaskExecutor, TaskManager,
-	TransactionStorageMode,
+	config::{DatabaseSource, KeystoreConfig, MultiaddrWithPeerId, WasmExecutionMethod},
+	BasePath, Configuration, KeepBlocks, Role, RpcHandlers, TaskManager, TransactionStorageMode,
 };
 use sp_arithmetic::traits::SaturatedConversion;
 use sp_blockchain::HeaderBackend;
@@ -55,15 +53,24 @@ use substrate_test_client::{
 	BlockchainEventsExt, RpcHandlersExt, RpcTransactionError, RpcTransactionOutput,
 };
 
-native_executor_instance!(
-	pub SelendraTestExecutor,
-	selendra_test_runtime::api::dispatch,
-	selendra_test_runtime::native_version,
-	frame_benchmarking::benchmarking::HostFunctions,
-);
+/// Declare an instance of the native executor named `SelendraTestExecutorDispatch`. Include the wasm binary as the
+/// equivalent wasm code.
+pub struct SelendraTestExecutorDispatch;
+
+impl sc_executor::NativeExecutionDispatch for SelendraTestExecutorDispatch {
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+
+	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+		selendra_test_runtime::api::dispatch(method, data)
+	}
+
+	fn native_version() -> sc_executor::NativeVersion {
+		selendra_test_runtime::native_version()
+	}
+}
 
 /// The client type being used by the test service.
-pub type Client = FullClient<selendra_test_runtime::RuntimeApi, SelendraTestExecutor>;
+pub type Client = FullClient<selendra_test_runtime::RuntimeApi, SelendraTestExecutorDispatch>;
 
 pub use selendra_service::FullBackend;
 
@@ -74,7 +81,7 @@ pub fn new_full(
 	is_collator: IsCollator,
 	worker_program_path: Option<PathBuf>,
 ) -> Result<NewFull<Arc<Client>>, Error> {
-	selendra_service::new_full::<selendra_test_runtime::RuntimeApi, SelendraTestExecutor, _>(
+	selendra_service::new_full::<selendra_test_runtime::RuntimeApi, SelendraTestExecutorDispatch, _>(
 		config,
 		is_collator,
 		None,
@@ -104,7 +111,7 @@ impl ClientHandle for TestClient {
 /// and can be used to make adjustments to the runtime genesis storage.
 pub fn node_config(
 	storage_update_func: impl Fn(),
-	task_executor: TaskExecutor,
+	tokio_handle: tokio::runtime::Handle,
 	key: Sr25519Keyring,
 	boot_nodes: Vec<MultiaddrWithPeerId>,
 	is_validator: bool,
@@ -141,12 +148,12 @@ pub fn node_config(
 		impl_name: "selendra-test-node".to_string(),
 		impl_version: "0.1".to_string(),
 		role,
-		task_executor,
+		tokio_handle,
 		transaction_pool: Default::default(),
 		network: network_config,
 		keystore: KeystoreConfig::InMemory,
 		keystore_remote: Default::default(),
-		database: DatabaseConfig::RocksDb { path: root.join("db"), cache_size: 128 },
+		database: DatabaseSource::RocksDb { path: root.join("db"), cache_size: 128 },
 		state_cache_size: 16777216,
 		state_cache_child_ratio: None,
 		state_pruning: Default::default(),
@@ -163,7 +170,6 @@ pub fn node_config(
 			offchain_worker: sc_client_api::ExecutionStrategy::NativeWhenPossible,
 			other: sc_client_api::ExecutionStrategy::NativeWhenPossible,
 		},
-		rpc_http_threads: None,
 		rpc_http: None,
 		rpc_ws: None,
 		rpc_ipc: None,
@@ -173,7 +179,6 @@ pub fn node_config(
 		rpc_methods: Default::default(),
 		prometheus_config: None,
 		telemetry_endpoints: None,
-		telemetry_external_transport: None,
 		default_heap_pages: None,
 		offchain_worker: Default::default(),
 		force_authoring: false,
@@ -197,13 +202,13 @@ pub fn node_config(
 /// The `storage_update_func` function will be executed in an externalities provided environment
 /// and can be used to make adjustments to the runtime genesis storage.
 pub fn run_validator_node(
-	task_executor: TaskExecutor,
+	tokio_handle: tokio::runtime::Handle,
 	key: Sr25519Keyring,
 	storage_update_func: impl Fn(),
 	boot_nodes: Vec<MultiaddrWithPeerId>,
 	worker_program_path: Option<PathBuf>,
 ) -> SelendraTestNode {
-	let config = node_config(storage_update_func, task_executor, key, boot_nodes, true);
+	let config = node_config(storage_update_func, tokio_handle, key, boot_nodes, true);
 	let multiaddr = config.network.listen_addresses[0].clone();
 	let NewFull { task_manager, client, network, rpc_handlers, overseer_handle, .. } =
 		new_full(config, IsCollator::No, worker_program_path)
@@ -229,13 +234,13 @@ pub fn run_validator_node(
 /// The collator functionality still needs to be registered at the node! This can be done using
 /// [`SelendraTestNode::register_collator`].
 pub fn run_collator_node(
-	task_executor: TaskExecutor,
+	tokio_handle: tokio::runtime::Handle,
 	key: Sr25519Keyring,
 	storage_update_func: impl Fn(),
 	boot_nodes: Vec<MultiaddrWithPeerId>,
 	collator_pair: CollatorPair,
 ) -> SelendraTestNode {
-	let config = node_config(storage_update_func, task_executor, key, boot_nodes, false);
+	let config = node_config(storage_update_func, tokio_handle, key, boot_nodes, false);
 	let multiaddr = config.network.listen_addresses[0].clone();
 	let NewFull { task_manager, client, network, rpc_handlers, overseer_handle, .. } =
 		new_full(config, IsCollator::Yes(collator_pair), None)
@@ -269,7 +274,7 @@ impl SelendraTestNode {
 		function: impl Into<selendra_test_runtime::Call>,
 		caller: Sr25519Keyring,
 	) -> Result<RpcTransactionOutput, RpcTransactionError> {
-		let extrinsic = construct_extrinsic(&*self.client, function, caller);
+		let extrinsic = construct_extrinsic(&*self.client, function, caller, 0);
 
 		self.rpc_handlers.send_transaction(extrinsic.into()).await
 	}
@@ -281,16 +286,16 @@ impl SelendraTestNode {
 		validation_code: impl Into<ValidationCode>,
 		genesis_head: impl Into<HeadData>,
 	) -> Result<(), RpcTransactionError> {
-		let call = ParasSudoWrapperCall::sudo_schedule_para_initialize(
+		let call = ParasSudoWrapperCall::sudo_schedule_para_initialize {
 			id,
-			ParaGenesisArgs {
+			genesis: ParaGenesisArgs {
 				genesis_head: genesis_head.into(),
 				validation_code: validation_code.into(),
 				parachain: true,
 			},
-		);
+		};
 
-		self.send_extrinsic(SudoCall::sudo(Box::new(call.into())), Sr25519Keyring::Alice)
+		self.send_extrinsic(SudoCall::sudo { call: Box::new(call.into()) }, Sr25519Keyring::Alice)
 			.await
 			.map(drop)
 	}
@@ -325,12 +330,12 @@ pub fn construct_extrinsic(
 	client: &Client,
 	function: impl Into<selendra_test_runtime::Call>,
 	caller: Sr25519Keyring,
+	nonce: u32,
 ) -> UncheckedExtrinsic {
 	let function = function.into();
 	let current_block_hash = client.info().best_hash;
 	let current_block = client.info().best_number.saturated_into();
 	let genesis_block = client.hash(0).unwrap().unwrap();
-	let nonce = 0;
 	let period =
 		BlockHashCount::get().checked_next_power_of_two().map(|c| c / 2).unwrap_or(2) as u64;
 	let tip = 0;
@@ -372,10 +377,10 @@ pub fn construct_transfer_extrinsic(
 	dest: sp_keyring::AccountKeyring,
 	value: Balance,
 ) -> UncheckedExtrinsic {
-	let function = selendra_test_runtime::Call::Balances(pallet_balances::Call::transfer(
-		MultiSigner::from(dest.public()).into_account().into(),
+	let function = selendra_test_runtime::Call::Balances(pallet_balances::Call::transfer {
+		dest: MultiSigner::from(dest.public()).into_account().into(),
 		value,
-	));
+	});
 
-	construct_extrinsic(client, function, origin)
+	construct_extrinsic(client, function, origin, 0)
 }

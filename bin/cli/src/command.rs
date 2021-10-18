@@ -71,7 +71,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn copyright_start_year() -> i32 {
-		2017
+		2020
 	}
 
 	fn executable_name() -> String {
@@ -143,11 +143,6 @@ fn run_node_inner(cli: Cli, overseer_gen: impl service::OverseerGen) -> Result<(
 		let role = config.role.clone();
 
 		match role {
-			#[cfg(feature = "browser")]
-			Role::Light => service::build_light(config)
-				.map(|(task_manager, _)| task_manager)
-				.map_err(Into::into),
-			#[cfg(not(feature = "browser"))]
 			Role::Light => Err(Error::Other("Light client not enabled".into())),
 			_ => service::build_full(
 				config,
@@ -241,7 +236,7 @@ pub fn run() -> Result<()> {
 			builder.with_colors(false);
 			let _ = builder.init();
 
-			#[cfg(any(target_os = "android", feature = "browser"))]
+			#[cfg(target_os = "android")]
 			{
 				return Err(sc_cli::Error::Input(
 					"PVF preparation workers are not supported under this platform".into(),
@@ -249,7 +244,7 @@ pub fn run() -> Result<()> {
 				.into())
 			}
 
-			#[cfg(not(any(target_os = "android", feature = "browser")))]
+			#[cfg(not(target_os = "android"))]
 			{
 				selendra_node_core_pvf::prepare_worker_entrypoint(&cmd.socket_path);
 				Ok(())
@@ -260,7 +255,7 @@ pub fn run() -> Result<()> {
 			builder.with_colors(false);
 			let _ = builder.init();
 
-			#[cfg(any(target_os = "android", feature = "browser"))]
+			#[cfg(target_os = "android")]
 			{
 				return Err(sc_cli::Error::Input(
 					"PVF execution workers are not supported under this platform".into(),
@@ -268,7 +263,7 @@ pub fn run() -> Result<()> {
 				.into())
 			}
 
-			#[cfg(not(any(target_os = "android", feature = "browser")))]
+			#[cfg(not(target_os = "android"))]
 			{
 				selendra_node_core_pvf::execute_worker_entrypoint(&cmd.socket_path);
 				Ok(())
@@ -281,9 +276,8 @@ pub fn run() -> Result<()> {
 
 			ensure_dev(chain_spec).map_err(Error::Other)?;
 
-			// else we assume it is selendra.
-			Ok(runner.sync_run(|config| {
-				cmd.run::<service::selendra_runtime::Block, service::SelendraExecutor>(config)
+			return Ok(runner.sync_run(|config| {
+				cmd.run::<service::selendra_runtime::Block, service::SelendraExecutorDispatch>(config)
 					.map_err(|e| Error::SubstrateCli(e))
 			})?)
 		},
@@ -296,16 +290,17 @@ pub fn run() -> Result<()> {
 
 			use sc_service::TaskManager;
 			let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
-			let task_manager =
-				TaskManager::new(runner.config().task_executor.clone(), *registry)
-					.map_err(|e| Error::SubstrateService(sc_service::Error::Prometheus(e)))?;
+			let task_manager = TaskManager::new(runner.config().tokio_handle.clone(), *registry)
+				.map_err(|e| Error::SubstrateService(sc_service::Error::Prometheus(e)))?;
 
 			ensure_dev(chain_spec).map_err(Error::Other)?;
-			// else we assume it is selendra.
-			runner.async_run(|config| {
+
+			return runner.async_run(|config| {
 				Ok((
-					cmd.run::<service::selendra_runtime::Block, service::SelendraExecutor>(config)
-						.map_err(Error::SubstrateCli),
+					cmd.run::<service::selendra_runtime::Block, service::SelendraExecutorDispatch>(
+						config,
+					)
+					.map_err(Error::SubstrateCli),
 					task_manager,
 				))
 			})

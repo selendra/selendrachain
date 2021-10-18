@@ -5,14 +5,14 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
-futures = "0.3.15"
-tracing = "0.1.26"
+futures = "0.3.17"
+tracing = "0.1.28"
 selendra-primitives = { path = "../../../primitives" }
 selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 wasm-timer = "0.2.5"
-thiserror = "1.0.23"
+thiserror = "1.0.26"
 
 [dev-dependencies]
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }

@@ -5,10 +5,9 @@ authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
-async-trait = "0.1.42"
-client = { package = "sc-client-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-futures = "0.3.15"
+client = { package = "sc-client-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+futures = "0.3.17"
 futures-timer = "3.0.2"
 parking_lot = "0.11.1"
 selendra-node-network-protocol = { path = "../network/protocol" }
@@ -17,17 +16,16 @@ selendra-node-subsystem-types = { path = "../subsystem-types" }
 selendra-node-metrics = { path = "../metrics" }
 selendra-primitives = { path = "../../primitives" }
 selendra-overseer-gen = { path = "./overseer-gen" }
-selendra-overseer-all-subsystems-gen = { path = "./all-subsystems-gen" }
-tracing = "0.1.26"
+tracing = "0.1.28"
 lru = "0.6"
+parity-util-mem = { version = ">= 0.10.1", default-features = false }
 
 [dev-dependencies]
 metered-channel = { path = "../metered-channel" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-futures = { version = "0.3.15", features = ["thread-pool"] }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+futures = { version = "0.3.17", features = ["thread-pool"] }
 femme = "2.1.1"
-kv-log-macro = "1.0.7"
 assert_matches = "1.4.0"
 
 [features]
-memory-stats = []
+default = []

@@ -22,8 +22,8 @@ use std::{collections::HashMap, sync::Arc};
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 
-use sc_keystore::LocalKeystore;
 use selendra_node_network_protocol::{authority_discovery::AuthorityDiscovery, PeerId};
+use sc_keystore::LocalKeystore;
 use sp_application_crypto::AppKey;
 use sp_keyring::Sr25519Keyring;
 use sp_keystore::{SyncCryptoStore, SyncCryptoStorePtr};
@@ -53,7 +53,7 @@ pub const ALICE_INDEX: ValidatorIndex = ValidatorIndex(1);
 
 lazy_static! {
 
-/// Mocked AuthorityDiscovery service.
+/// Mocked `AuthorityDiscovery` service.
 pub static ref MOCK_AUTHORITY_DISCOVERY: MockAuthorityDiscovery = MockAuthorityDiscovery::new();
 // Creating an innocent looking `SessionInfo` is really expensive in a debug build. Around
 // 700ms on my machine, We therefore cache those keys here:
@@ -77,7 +77,7 @@ pub static ref MOCK_SESSION_INFO: SessionInfo =
 		..Default::default()
 	};
 
-/// SessionInfo for the second session. (No more validators, but two more authorities.
+/// `SessionInfo` for the second session. (No more validators, but two more authorities.
 pub static ref MOCK_NEXT_SESSION_INFO: SessionInfo =
 	SessionInfo {
 		discovery_keys:

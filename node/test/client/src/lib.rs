@@ -20,15 +20,16 @@
 
 mod block_builder;
 
-use sc_service::client;
 use selendra_primitives::v1::Block;
+use sc_service::client;
 use sp_core::storage::Storage;
 use sp_runtime::BuildStorage;
 
 pub use block_builder::*;
 pub use selendra_test_runtime as runtime;
 pub use selendra_test_service::{
-	construct_extrinsic, construct_transfer_extrinsic, Client, FullBackend, SelendraTestExecutor,
+	construct_extrinsic, construct_transfer_extrinsic, Client, FullBackend,
+	SelendraTestExecutorDispatch,
 };
 pub use substrate_test_client::*;
 
@@ -36,14 +37,14 @@ pub use substrate_test_client::*;
 pub type Executor = client::LocalCallExecutor<
 	Block,
 	FullBackend,
-	sc_executor::NativeExecutor<SelendraTestExecutor>,
+	sc_executor::NativeElseWasmExecutor<SelendraTestExecutorDispatch>,
 >;
 
 /// Test client builder for Selendra.
 pub type TestClientBuilder =
 	substrate_test_client::TestClientBuilder<Block, Executor, FullBackend, GenesisParameters>;
 
-/// LongestChain type for the test runtime/client.
+/// `LongestChain` type for the test runtime/client.
 pub type LongestChain = sc_consensus::LongestChain<FullBackend, Block>;
 
 /// Parameters of test-client builder with test-runtime.

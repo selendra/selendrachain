@@ -19,7 +19,6 @@ use assert_matches::assert_matches;
 use futures::executor::{self, block_on};
 use futures_timer::Delay;
 use parity_scale_codec::{Decode, Encode};
-use sc_keystore::LocalKeystore;
 use selendra_node_network_protocol::{
 	request_response::{
 		v1::{StatementFetchingRequest, StatementFetchingResponse},
@@ -35,6 +34,7 @@ use selendra_subsystem::{
 	messages::{RuntimeApiMessage, RuntimeApiRequest},
 	ActivatedLeaf, LeafStatus,
 };
+use sc_keystore::LocalKeystore;
 use sp_application_crypto::{sr25519::Pair, AppKey, Pair as TraitPair};
 use sp_keyring::Sr25519Keyring;
 use sp_keystore::{CryptoStore, SyncCryptoStore, SyncCryptoStorePtr};

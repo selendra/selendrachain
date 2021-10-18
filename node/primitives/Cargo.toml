@@ -6,22 +6,23 @@ edition = "2018"
 description = "Primitives types for the Node-side"
 
 [dependencies]
-futures = "0.3.15"
+bounded-vec = "0.4"
+futures = "0.3.17"
 selendra-primitives = { path = "../../primitives" }
-selendra-statement-table = { path = "../../modules/statement-table" }
-parity-scale-codec = { version = "2.0.0", default-features = false, features = ["derive"] }
-runtime_primitives = { package = "sp-runtime", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.10" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-sp-consensus-vrf = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-sp-maybe-compressed-blob  = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive"] }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-consensus-vrf = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 selendra-parachain = { path = "../../modules/parachain", default-features = false }
 schnorrkel = "0.9.1"
-thiserror = "1.0.22"
-tracing = "0.1.26"
-serde = { version = "1.0.123", features = ["derive"] }
+thiserror = "1.0.26"
+serde = { version = "1.0.130", features = ["derive"] }
 
 [target.'cfg(not(target_os = "unknown"))'.dependencies]
-zstd = "0.6.0"
+zstd = "0.9.0"
+
+[dev-dependencies]
+selendra-erasure-coding = { path = "../../modules/erasure-coding" }

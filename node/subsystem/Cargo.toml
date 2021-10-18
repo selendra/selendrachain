@@ -9,3 +9,4 @@ description = "Subsystem traits and message definitions"
 selendra-overseer = { path = "../overseer" }
 selendra-node-subsystem-types = { path = "../subsystem-types" }
 selendra-node-jaeger = { path = "../jaeger" }
+

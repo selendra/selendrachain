@@ -13,10 +13,11 @@ parity-scale-codec = { version = "2.0.0", default-features = false, features = [
 parity-util-mem = { version = "0.10.0", optional = true }
 derive_more = "0.99.11"
 selendra-core-primitives = { path = "../../primitives/core-primitives", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.10" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.10" }
-sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.10" }
-frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.10" }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 
 # all optional crates.
 serde = { version = "1.0.117", default-features = false, features = [ "derive" ], optional = true }
@@ -26,6 +27,7 @@ default = ["std"]
 wasm-api = []
 std = [
 	"parity-scale-codec/std",
+	"scale-info/std",
 	"serde/std",
 	"sp-std/std",
 	"sp-runtime/std",

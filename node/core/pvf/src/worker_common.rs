@@ -47,14 +47,38 @@ pub async fn spawn_with_program_path(
 	with_transient_socket_path(debug_id, |socket_path| {
 		let socket_path = socket_path.to_owned();
 		async move {
-			let listener = UnixListener::bind(&socket_path).await.map_err(|_| SpawnErr::Bind)?;
+			let listener = UnixListener::bind(&socket_path).await.map_err(|err| {
+				tracing::warn!(
+					target: LOG_TARGET,
+					%debug_id,
+					"cannot bind unix socket: {:?}",
+					err,
+				);
+				SpawnErr::Bind
+			})?;
 
-			let handle = WorkerHandle::spawn(program_path, extra_args, socket_path)
-				.map_err(|_| SpawnErr::ProcessSpawn)?;
+			let handle =
+				WorkerHandle::spawn(program_path, extra_args, socket_path).map_err(|err| {
+					tracing::warn!(
+						target: LOG_TARGET,
+						%debug_id,
+						"cannot spawn a worker: {:?}",
+						err,
+					);
+					SpawnErr::ProcessSpawn
+				})?;
 
 			futures::select! {
 				accept_result = listener.accept().fuse() => {
-					let (stream, _) = accept_result.map_err(|_| SpawnErr::Accept)?;
+					let (stream, _) = accept_result.map_err(|err| {
+						tracing::warn!(
+							target: LOG_TARGET,
+							%debug_id,
+							"cannot accept a worker: {:?}",
+							err,
+						);
+						SpawnErr::Accept
+					})?;
 					Ok((IdleWorker { stream, pid: handle.id() }, handle))
 				}
 				_ = Delay::new(spawn_timeout).fuse() => {
@@ -148,7 +172,7 @@ where
 /// A struct that represents an idle worker.
 ///
 /// This struct is supposed to be used as a token that is passed by move into a subroutine that
-/// initiates a job. If the worker dies on the duty, then the token is not returned back.
+/// initiates a job. If the worker dies on the duty, then the token is not returned.
 #[derive(Debug)]
 pub struct IdleWorker {
 	/// The stream to which the child process is connected.
@@ -169,7 +193,7 @@ pub enum SpawnErr {
 	Accept,
 	/// An error happened during spawning the process.
 	ProcessSpawn,
-	/// The deadline alloted for the worker spawning and connecting to the socket has elapsed.
+	/// The deadline allotted for the worker spawning and connecting to the socket has elapsed.
 	AcceptTimeout,
 }
 
@@ -179,7 +203,7 @@ pub enum SpawnErr {
 /// has been terminated. Since the worker is running in another process it is obviously not necessarily
 ///  to poll this future to make the worker run, it's only for termination detection.
 ///
-/// This future relies on the fact that a child process's stdout fd is closed upon it's termination.
+/// This future relies on the fact that a child process's stdout `fd` is closed upon it's termination.
 #[pin_project]
 pub struct WorkerHandle {
 	child: async_process::Child,

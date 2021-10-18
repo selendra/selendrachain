@@ -6,28 +6,27 @@ edition = "2018"
 
 [dependencies]
 bitvec = { version = "0.20.1", default-features = false, features = ["alloc"] }
-futures = "0.3.12"
-tracing = "0.1.26"
+futures = "0.3.17"
+tracing = "0.1.28"
 parity-scale-codec = "2"
 kvdb = "0.10.0"
 derive_more = "0.99.14"
-thiserror = "1.0.23"
+thiserror = "1.0.26"
 
 selendra-primitives = { path = "../../../primitives" }
 selendra-node-primitives = { path = "../../primitives" }
 selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 
-sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 
 [dev-dependencies]
 kvdb-memorydb = "0.10.0"
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers"}
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 assert_matches = "1.4.0"
-selendra-overseer = { path = "../../overseer" }
 
 [features]
 # If not enabled, the dispute coordinator will do nothing.

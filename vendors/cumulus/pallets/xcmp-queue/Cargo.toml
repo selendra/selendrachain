@@ -12,10 +12,10 @@ rand = { version = "0.8.3", default-features = false }
 rand_chacha = { version = "0.3.0", default-features = false }
 
 # Substrate Dependencies
-sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.10" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.10" }
-frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.10" }
-frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.10" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
 
 # Selendra Dependencies
 xcm = { path = "../../../../modules/xcm", default-features = false }
@@ -25,11 +25,11 @@ xcm-executor = { path = "../../../../modules/xcm/xcm-executor", default-features
 cumulus-primitives-core = { path = "../../primitives/core", default-features = false }
 
 [dev-dependencies]
-sp-core = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.10" }
-sp-io = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.10" }
+sp-core = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.11" }
+sp-io = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.11" }
 cumulus-pallet-parachain-system = { path = "../parachain-system" }
 xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.9" }
-pallet-balances = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.10" }
+pallet-balances = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.11" }
 
 [features]
 default = [ "std" ]

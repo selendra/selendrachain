@@ -19,16 +19,15 @@
 use babe_primitives::AuthorityId as BabeId;
 use grandpa::AuthorityId as GrandpaId;
 use pallet_staking::Forcing;
-use sc_chain_spec::{ChainSpec, ChainType};
 use selendra_primitives::v1::{AccountId, AssignmentId, ValidatorId, MAX_CODE_SIZE, MAX_POV_SIZE};
 use selendra_service::chain_spec::{get_account_id_from_seed, get_from_seed, Extensions};
 use selendra_test_runtime::{constants::currency::DOTS, BABE_GENESIS_EPOCH_CONFIG};
+use sc_chain_spec::{ChainSpec, ChainType};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::sr25519;
 use sp_runtime::Perbill;
-use std::collections::BTreeMap;
 
-const DEFAULT_PROTOCOL_ID: &str = "sel";
+const DEFAULT_PROTOCOL_ID: &str = "dot";
 
 /// The `ChainSpec` parameterized for selendra test runtime.
 pub type SelendraChainSpec =
@@ -90,7 +89,7 @@ fn testnet_accounts() -> Vec<AccountId> {
 	]
 }
 
-/// Helper function to create selendra GenesisConfig for testing
+/// Helper function to create selendra `GenesisConfig` for testing
 fn selendra_testnet_genesis(
 	initial_authorities: Vec<(
 		AccountId,

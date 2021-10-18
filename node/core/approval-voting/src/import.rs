@@ -28,7 +28,6 @@
 //!
 //! We maintain a rolling window of session indices. This starts as empty
 
-use sc_keystore::LocalKeystore;
 use selendra_node_jaeger as jaeger;
 use selendra_node_primitives::approval::{
 	self as approval_types, BlockApprovalMeta, RelayVRFStory,
@@ -48,6 +47,7 @@ use selendra_primitives::v1::{
 	BlockNumber, CandidateEvent, CandidateHash, CandidateReceipt, ConsensusLog, CoreIndex,
 	GroupIndex, Hash, Header, SessionIndex,
 };
+use sc_keystore::LocalKeystore;
 use sp_consensus_slots::Slot;
 
 use bitvec::order::Lsb0 as BitOrderLsb0;
@@ -324,7 +324,7 @@ pub(crate) async fn handle_new_head(
 		}
 	};
 
-	match state.session_window.cache_session_info_for_head(ctx, head, &header).await {
+	match state.session_window.cache_session_info_for_head(ctx, head).await {
 		Err(e) => {
 			tracing::debug!(
 				target: LOG_TARGET,
@@ -501,7 +501,7 @@ pub(crate) async fn handle_new_head(
 		};
 
 		if let Some(up_to) = force_approve {
-			tracing::debug!(target: LOG_TARGET, ?block_hash, up_to, "Enacting force-approve",);
+			tracing::debug!(target: LOG_TARGET, ?block_hash, up_to, "Enacting force-approve");
 
 			let approved_hashes = crate::ops::force_approve(db, block_hash, up_to)
 				.map_err(|e| SubsystemError::with_origin("approval-voting", e))?;
@@ -1235,7 +1235,7 @@ pub(crate) mod tests {
 					h,
 					RuntimeApiRequest::SessionIndexForChild(c_tx),
 				)) => {
-					assert_eq!(h, parent_hash.clone());
+					assert_eq!(h, hash);
 					let _ = c_tx.send(Ok(session));
 				}
 			);

@@ -16,9 +16,9 @@
 
 use crate::{Client, FullBackend};
 use parity_scale_codec::{Decode, Encode};
-use sc_block_builder::{BlockBuilder, BlockBuilderProvider};
 use selendra_primitives::v1::{Block, InherentData as ParachainsInherentData};
 use selendra_test_runtime::{GetLastTimestamp, UncheckedExtrinsic};
+use sc_block_builder::{BlockBuilder, BlockBuilderProvider};
 use sp_api::ProvideRuntimeApi;
 use sp_consensus_babe::{
 	digests::{PreDigest, SecondaryPlainPreDigest},
@@ -27,7 +27,7 @@ use sp_consensus_babe::{
 use sp_runtime::{generic::BlockId, Digest, DigestItem};
 use sp_state_machine::BasicExternalities;
 
-/// An extension for the test client to init a Selendra specific block builder.
+/// An extension for the test client to initialize a Selendra specific block builder.
 pub trait InitSelendraBlockBuilder {
 	/// Init a Selendra specific block builder that works for the test runtime.
 	///

@@ -18,16 +18,15 @@
 
 #![warn(missing_docs)]
 
-#[cfg(feature = "browser")]
-mod browser;
 #[cfg(feature = "cli")]
 mod cli;
 #[cfg(feature = "cli")]
 mod command;
 
-pub use service::{
-	self, Block, CoreApi, IdentifyVariant, ProvideRuntimeApi, RuntimeApiCollection, TFullClient,
-};
+#[cfg(feature = "full-node")]
+pub use service::RuntimeApiCollection;
+#[cfg(feature = "service")]
+pub use service::{self, Block, CoreApi, IdentifyVariant, ProvideRuntimeApi, TFullClient};
 
 #[cfg(feature = "cli")]
 pub use cli::*;

@@ -6,14 +6,12 @@ edition = "2018"
 description = "Subsystem traits and message definitions"
 
 [dependencies]
-async-trait = "0.1.42"
-futures = "0.3.15"
+futures = "0.3.17"
 futures-timer = "3.0.2"
 
-metered-channel = { path = "../metered-channel"}
+metered-channel = { path = "../metered-channel" }
 
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+
+[features]
+default = []

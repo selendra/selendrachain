@@ -1,18 +1,18 @@
 // Copyright 2020-2021 Parity Technologies (UK) Ltd.
-// This file is part of Cumulus.
+// This file is part of Polkadot.
 
-// Substrate is free software: you can redistribute it and/or modify
+// Polkadot is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Substrate is distributed in the hope that it will be useful,
+// Polkadot is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
+// along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Cross-Consensus Message format data structures.
 
@@ -42,7 +42,7 @@ use parity_scale_codec::{self, Decode, Encode};
 /// This specific `MultiLocation` implementation uses a Rust `enum` in order to make pattern matching easier.
 ///
 /// The `MultiLocation` value of `Null` simply refers to the interpreting consensus system.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, Debug)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, Debug, scale_info::TypeInfo)]
 pub enum MultiLocation {
 	/// The interpreting consensus system.
 	Null,
@@ -348,7 +348,7 @@ impl MultiLocation {
 	///
 	/// # Example
 	/// ```rust
-	/// # use xcm::latest::{MultiLocation::*, Junction::*};
+	/// # use xcm::v0::{MultiLocation::*, Junction::*};
 	/// # fn main() {
 	/// let mut m = X3(Parent, PalletInstance(3), OnlyChild);
 	/// assert_eq!(m.match_and_split(&X2(Parent, PalletInstance(3))), Some(&OnlyChild));
@@ -488,7 +488,7 @@ impl MultiLocation {
 	///
 	/// # Example
 	/// ```rust
-	/// # use xcm::latest::{MultiLocation::*, Junction::*};
+	/// # use xcm::v0::{MultiLocation::*, Junction::*};
 	/// # fn main() {
 	/// let mut m = X3(Parent, Parachain(21), OnlyChild);
 	/// assert_eq!(m.append_with(X2(Parent, PalletInstance(3))), Ok(()));
@@ -515,7 +515,7 @@ impl MultiLocation {
 	///
 	/// # Example
 	/// ```rust
-	/// # use xcm::latest::{MultiLocation::*, Junction::*, NetworkId::Any};
+	/// # use xcm::v0::{MultiLocation::*, Junction::*, NetworkId::Any};
 	/// # fn main() {
 	/// let mut m = X3(Parent, Parent, PalletInstance(3));
 	/// assert_eq!(m.prepend_with(X3(Parent, Parachain(21), OnlyChild)), Ok(()));
@@ -572,7 +572,7 @@ impl MultiLocation {
 	///
 	/// # Example
 	/// ```rust
-	/// # use xcm::latest::{MultiLocation::*, Junction::*, NetworkId::Any};
+	/// # use xcm::v0::{MultiLocation::*, Junction::*, NetworkId::Any};
 	/// # fn main() {
 	/// let parent = X1(Parent);
 	/// assert_eq!(parent.is_interior(), false);
