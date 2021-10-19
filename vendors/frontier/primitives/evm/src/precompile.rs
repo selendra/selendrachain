@@ -15,7 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
+pub use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 use impl_trait_for_tuples::impl_for_tuples;
 use sp_core::H160;
 use sp_std::vec::Vec;
@@ -87,7 +87,12 @@ impl<T: LinearCostPrecompile> Precompile for T {
 		let cost = ensure_linear_cost(target_gas, input.len() as u64, T::BASE, T::WORD)?;
 
 		let (exit_status, output) = T::execute(input, cost)?;
-		Ok(PrecompileOutput { exit_status, cost, output, logs: Default::default() })
+		Ok(PrecompileOutput {
+			exit_status,
+			cost,
+			output,
+			logs: Default::default(),
+		})
 	}
 }
 
@@ -99,12 +104,15 @@ fn ensure_linear_cost(
 	word: u64,
 ) -> Result<u64, ExitError> {
 	let cost = base
-		.checked_add(word.checked_mul(len.saturating_add(31) / 32).ok_or(ExitError::OutOfGas)?)
+		.checked_add(
+			word.checked_mul(len.saturating_add(31) / 32)
+				.ok_or(ExitError::OutOfGas)?,
+		)
 		.ok_or(ExitError::OutOfGas)?;
 
 	if let Some(target_gas) = target_gas {
 		if cost > target_gas {
-			return Err(ExitError::OutOfGas)
+			return Err(ExitError::OutOfGas);
 		}
 	}
 

@@ -114,7 +114,7 @@ impl configuration::Config for Runtime {
 // aims to closely emulate the Kusama XcmConfig
 parameter_types! {
 	pub const KsmLocation: MultiLocation = MultiLocation::here();
-	pub const KusamaNetwork: NetworkId = NetworkId::Kusama;
+	pub const KusamaNetwork: NetworkId = NetworkId::Selendra;
 	pub Ancestry: MultiLocation = Here.into();
 	pub CheckAccount: AccountId = XcmPallet::check_account();
 }

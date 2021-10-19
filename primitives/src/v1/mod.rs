@@ -1111,9 +1111,9 @@ pub enum UpgradeGoAhead {
 }
 
 /// Consensus engine id for Selendra v1 consensus engine.
-pub const selendra_ENGINE_ID: runtime_primitives::ConsensusEngineId = *b"POL1";
+pub const SELENDRA_ENGINE_ID: runtime_primitives::ConsensusEngineId = *b"POL1";
 
-/// A consensus log item for Selendra validation. To be used with [`selendra_ENGINE_ID`].
+/// A consensus log item for Selendra validation. To be used with [`SELENDRA_ENGINE_ID`].
 #[derive(Decode, Encode, Clone, PartialEq, Eq)]
 pub enum ConsensusLog {
 	/// A parachain or parathread upgraded its code.
@@ -1144,7 +1144,7 @@ impl ConsensusLog {
 		digest_item: &runtime_primitives::DigestItem<H>,
 	) -> Result<Option<Self>, parity_scale_codec::Error> {
 		match digest_item {
-			runtime_primitives::DigestItem::Consensus(id, encoded) if id == &selendra_ENGINE_ID =>
+			runtime_primitives::DigestItem::Consensus(id, encoded) if id == &SELENDRA_ENGINE_ID =>
 				Ok(Some(Self::decode(&mut &encoded[..])?)),
 			_ => Ok(None),
 		}
@@ -1153,7 +1153,7 @@ impl ConsensusLog {
 
 impl<H> From<ConsensusLog> for runtime_primitives::DigestItem<H> {
 	fn from(c: ConsensusLog) -> runtime_primitives::DigestItem<H> {
-		Self::Consensus(selendra_ENGINE_ID, c.encode())
+		Self::Consensus(SELENDRA_ENGINE_ID, c.encode())
 	}
 }
 

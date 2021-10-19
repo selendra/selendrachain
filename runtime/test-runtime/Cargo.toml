@@ -7,6 +7,7 @@ build = "build.rs"
 
 [dependencies]
 bitvec = { version = "0.20.1", default-features = false, features = ["alloc"] }
+getrandom = { version = "0.2.1", features = ["js"] }
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive"] }
 log = { version = "0.4.14", default-features = false }
 rustc-hex = { version = "2.1.0", default-features = false }
@@ -137,7 +138,7 @@ std = [
 	"runtime-common/std",
 	"log/std",
 	"frame-election-provider-support/std",
-		"pallet-evm/std",
+	"pallet-evm/std",
 	"evm/std",
 	"fp-rpc/std",
 	"pallet-evm/std",

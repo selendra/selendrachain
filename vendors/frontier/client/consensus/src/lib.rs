@@ -87,7 +87,12 @@ where
 	C::Api: BlockBuilderApi<B>,
 {
 	pub fn new(inner: I, client: Arc<C>, backend: Arc<fc_db::Backend<B>>) -> Self {
-		Self { inner, client, backend, _marker: PhantomData }
+		Self {
+			inner,
+			client,
+			backend,
+			_marker: PhantomData,
+		}
 	}
 }
 
@@ -121,6 +126,9 @@ where
 		// worker.
 		ensure_log(&block.header.digest()).map_err(|e| Error::from(e))?;
 
-		self.inner.import_block(block, new_cache).await.map_err(Into::into)
+		self.inner
+			.import_block(block, new_cache)
+			.await
+			.map_err(Into::into)
 	}
 }

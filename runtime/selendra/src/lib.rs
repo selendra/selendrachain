@@ -29,15 +29,13 @@ use primitives::v1::{
 	ValidationCode, ValidationCodeHash, ValidatorId, ValidatorIndex,
 };
 use runtime_common::{
-	auctions, crowdloan, impls::DealWithFees, paras_registrar, slots, xcm_sender,
-	BlockHashCount, BlockLength, BlockWeights, CurrencyToVote, OffchainSolutionLengthLimit,
+	auctions, crowdloan, impls::DealWithFees, paras_registrar, slots, xcm_sender, BlockHashCount,
+	BlockLength, BlockWeights, CurrencyToVote, OffchainSolutionLengthLimit,
 	OffchainSolutionWeightLimit, RocksDbWeight, SlowAdjustingFeeUpdate, ToAuthor,
 };
-use sp_core::u32_trait::{_1, _2, _3, _5};
-use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 use sp_core::{
 	crypto::Public,
-	u32_trait::{_1, _2, _3},
+	u32_trait::{_1, _2, _3, _5},
 	H160, H256, U256,
 };
 use sp_std::{collections::btree_map::BTreeMap, convert::TryFrom, marker::PhantomData, prelude::*};
@@ -66,8 +64,8 @@ use beefy_primitives::crypto::AuthorityId as BeefyId;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		Contains, Everything, FindAuthor, InstanceFilter, KeyOwnerProofSystem, LockIdentifier, Nothing,
-		OnRuntimeUpgrade,
+		Contains, Everything, FindAuthor, InstanceFilter, KeyOwnerProofSystem, LockIdentifier,
+		Nothing, OnRuntimeUpgrade,
 	},
 	weights::Weight,
 	ConsensusEngineId, PalletId, RuntimeDebug,
@@ -182,7 +180,8 @@ impl frame_system::Config for Runtime {
 	type PalletInfo = PalletInfo;
 	type AccountData = pallet_balances::AccountData<Balance>;
 	type OnNewAccount = ();
-	type OnKilledAccount = (pallet_evm::CallKillAccount<Runtime>, evm_accounts::CallKillAccount<Runtime>);
+	type OnKilledAccount =
+		(pallet_evm::CallKillAccount<Runtime>, evm_accounts::CallKillAccount<Runtime>);
 	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();

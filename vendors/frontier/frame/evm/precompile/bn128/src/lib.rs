@@ -20,13 +20,12 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
-use fp_evm::Precompile;
+use fp_evm::{Context, ExitError, ExitSucceed, Precompile, PrecompileOutput};
 use sp_core::U256;
 
 fn read_fr(input: &[u8], start_inx: usize) -> Result<bn::Fr, ExitError> {
 	if input.len() < start_inx + 32 {
-		return Err(ExitError::Other("Input not long enough".into()))
+		return Err(ExitError::Other("Input not long enough".into()));
 	}
 
 	bn::Fr::from_slice(&input[start_inx..(start_inx + 32)])
@@ -37,7 +36,7 @@ fn read_point(input: &[u8], start_inx: usize) -> Result<bn::G1, ExitError> {
 	use bn::{AffineG1, Fq, Group, G1};
 
 	if input.len() < start_inx + 64 {
-		return Err(ExitError::Other("Input not long enough".into()))
+		return Err(ExitError::Other("Input not long enough".into()));
 	}
 
 	let px = Fq::from_slice(&input[start_inx..(start_inx + 32)])
@@ -152,11 +151,11 @@ impl Precompile for Bn128Pairing {
 			// (a, b_a, b_b - each 64-byte affine coordinates)
 			let elements = input.len() / 192;
 
-			let gas_cost: u64 = Bn128Pairing::BASE_GAS_COST +
-				(elements as u64 * Bn128Pairing::GAS_COST_PER_PAIRING);
+			let gas_cost: u64 = Bn128Pairing::BASE_GAS_COST
+				+ (elements as u64 * Bn128Pairing::GAS_COST_PER_PAIRING);
 			if let Some(gas_left) = target_gas {
 				if gas_left < gas_cost {
-					return Err(ExitError::OutOfGas)
+					return Err(ExitError::OutOfGas);
 				}
 			}
 

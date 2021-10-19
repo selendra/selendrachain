@@ -30,7 +30,9 @@ type Balances = pallet_balances::Pallet<Test>;
 type EVM = Pallet<Test>;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut t = frame_system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap();
 
 	let mut accounts = BTreeMap::new();
 	accounts.insert(
@@ -115,7 +117,10 @@ fn fee_deduction() {
 fn find_author() {
 	new_test_ext().execute_with(|| {
 		let author = EVM::find_author();
-		assert_eq!(author, H160::from_str("1234500000000000000000000000000000000000").unwrap());
+		assert_eq!(
+			author,
+			H160::from_str("1234500000000000000000000000000000000000").unwrap()
+		);
 	});
 }
 

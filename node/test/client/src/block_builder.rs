@@ -16,9 +16,9 @@
 
 use crate::{Client, FullBackend};
 use parity_scale_codec::{Decode, Encode};
+use sc_block_builder::{BlockBuilder, BlockBuilderProvider};
 use selendra_primitives::v1::{Block, InherentData as ParachainsInherentData};
 use selendra_test_runtime::{GetLastTimestamp, UncheckedExtrinsic};
-use sc_block_builder::{BlockBuilder, BlockBuilderProvider};
 use sp_api::ProvideRuntimeApi;
 use sp_consensus_babe::{
 	digests::{PreDigest, SecondaryPlainPreDigest},

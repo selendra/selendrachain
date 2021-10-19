@@ -267,7 +267,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		paras: Default::default(),
 		sudo: selendra::SudoConfig { key: endowed_accounts[0].clone() },
 		evm: selendra::EvmConfig { accounts: BTreeMap::new() },
-		ethereum: selendra::EthereumConfig {}, 
+		ethereum: selendra::EthereumConfig {},
 	}
 }
 

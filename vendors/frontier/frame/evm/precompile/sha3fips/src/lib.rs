@@ -22,8 +22,7 @@ extern crate alloc;
 use alloc::vec::Vec;
 use tiny_keccak::Hasher;
 
-use evm::{ExitError, ExitSucceed};
-use fp_evm::LinearCostPrecompile;
+use fp_evm::{ExitError, ExitSucceed, LinearCostPrecompile};
 
 pub struct Sha3FIPS256;
 
@@ -73,10 +72,10 @@ mod tests {
 			Ok((_, out)) => {
 				assert_eq!(out, expected);
 				Ok(())
-			},
+			}
 			Err(e) => {
 				panic!("Test not expected to fail: {:?}", e);
-			},
+			}
 		}
 	}
 
@@ -94,10 +93,10 @@ mod tests {
 			Ok((_, out)) => {
 				assert_eq!(out, expected);
 				Ok(())
-			},
+			}
 			Err(e) => {
 				panic!("Test not expected to fail: {:?}", e);
-			},
+			}
 		}
 	}
 
@@ -115,10 +114,10 @@ mod tests {
 			Ok((_, out)) => {
 				assert_eq!(out, expected);
 				Ok(())
-			},
+			}
 			Err(e) => {
 				panic!("Test not expected to fail: {:?}", e);
-			},
+			}
 		}
 	}
 
@@ -138,10 +137,10 @@ mod tests {
 			Ok((_, out)) => {
 				assert_eq!(out, expected);
 				Ok(())
-			},
+			}
 			Err(e) => {
 				panic!("Test not expected to fail: {:?}", e);
-			},
+			}
 		}
 	}
 }

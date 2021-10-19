@@ -74,7 +74,10 @@ impl Serialize for BlockNumber {
 		S: Serializer,
 	{
 		match *self {
-			BlockNumber::Hash { hash, require_canonical } => serializer.serialize_str(&format!(
+			BlockNumber::Hash {
+				hash,
+				require_canonical,
+			} => serializer.serialize_str(&format!(
 				"{{ 'hash': '{}', 'requireCanonical': '{}'  }}",
 				hash, require_canonical
 			)),
@@ -92,7 +95,10 @@ impl<'a> Visitor<'a> for BlockNumberVisitor {
 	type Value = BlockNumber;
 
 	fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-		write!(formatter, "a block number or 'latest', 'earliest' or 'pending'")
+		write!(
+			formatter,
+			"a block number or 'latest', 'earliest' or 'pending'"
+		)
 	}
 
 	fn visit_map<V>(self, mut visitor: V) -> Result<Self::Value, V::Error>
@@ -115,19 +121,19 @@ impl<'a> Visitor<'a> for BlockNumberVisitor {
 							})?;
 
 							block_number = Some(number);
-							break
+							break;
 						} else {
 							return Err(Error::custom(
 								"Invalid block number: missing 0x prefix".to_string(),
-							))
+							));
 						}
-					},
+					}
 					"blockHash" => {
 						block_hash = Some(visitor.next_value()?);
-					},
+					}
 					"requireCanonical" => {
 						require_canonical = visitor.next_value()?;
-					},
+					}
 					key => return Err(Error::custom(format!("Unknown key: {}", key))),
 				},
 				None => break,
@@ -135,14 +141,17 @@ impl<'a> Visitor<'a> for BlockNumberVisitor {
 		}
 
 		if let Some(number) = block_number {
-			return Ok(BlockNumber::Num(number))
+			return Ok(BlockNumber::Num(number));
 		}
 
 		if let Some(hash) = block_hash {
-			return Ok(BlockNumber::Hash { hash, require_canonical })
+			return Ok(BlockNumber::Hash {
+				hash,
+				require_canonical,
+			});
 		}
 
-		return Err(Error::custom("Invalid input"))
+		return Err(Error::custom("Invalid input"));
 	}
 
 	fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
@@ -156,9 +165,13 @@ impl<'a> Visitor<'a> for BlockNumberVisitor {
 			_ if value.starts_with("0x") => u64::from_str_radix(&value[2..], 16)
 				.map(BlockNumber::Num)
 				.map_err(|e| Error::custom(format!("Invalid block number: {}", e))),
-			_ => u64::from_str_radix(&value, 10).map(BlockNumber::Num).map_err(|_| {
-				Error::custom("Invalid block number: non-decimal or missing 0x prefix".to_string())
-			}),
+			_ => u64::from_str_radix(&value, 10)
+				.map(BlockNumber::Num)
+				.map_err(|_| {
+					Error::custom(
+						"Invalid block number: non-decimal or missing 0x prefix".to_string(),
+					)
+				}),
 		}
 	}
 

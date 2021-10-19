@@ -11,7 +11,7 @@ frame-system = { git = "https://github.com/paritytech/substrate", branch = "polk
 futures = "0.3.17"
 pallet-xcm = { path = "../../pallet-xcm" }
 selendra-test-client = { path = "../../../node/test/client" }
-selendra-test-runtime = { path = "../../../runtime/test-runtime" }
+# selendra-test-runtime = { path = "../../../runtime/test-runtime" }
 selendra-test-service = { path = "../../../node/test/service" }
 sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }

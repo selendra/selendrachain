@@ -21,7 +21,7 @@ selendra-runtime-common = { path = "../../../runtime/common" }
 selendra-service = { path = "../../service" }
 selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-primitives = { path = "../../primitives" }
-selendra-test-runtime = { path = "../../../runtime/test-runtime" }
+# selendra-test-runtime = { path = "../../../runtime/test-runtime" }
 selendra-runtime-parachains = { path = "../../../modules/parachain/runtime" }
 
 # Substrate dependencies

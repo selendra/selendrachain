@@ -32,16 +32,19 @@ use fp_storage::PALLET_ETHEREUM_SCHEMA;
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
 	ensure,
-	traits::Get,
+	traits::{EnsureOrigin, Get},
 	weights::{Pays, PostDispatchInfo, Weight},
 };
+use frame_system::pallet_prelude::OriginFor;
 use pallet_evm::{BlockHashMapping, FeeCalculator, GasWeightMapping, Runner};
 use sha3::{Digest, Keccak256};
 use sp_runtime::{
 	generic::DigestItem,
 	traits::{One, Saturating, UniqueSaturatedInto, Zero},
-	transaction_validity::ValidTransactionBuilder,
-	DispatchError,
+	transaction_validity::{
+		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransactionBuilder,
+	},
+	DispatchError, RuntimeDebug,
 };
 use sp_std::{marker::PhantomData, prelude::*};
 
@@ -55,6 +58,91 @@ pub use fp_rpc::TransactionStatus;
 mod mock;
 #[cfg(all(feature = "std", test))]
 mod tests;
+
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, scale_info::TypeInfo)]
+pub enum RawOrigin {
+	EthereumTransaction(H160),
+}
+
+pub fn ensure_ethereum_transaction<OuterOrigin>(o: OuterOrigin) -> Result<H160, &'static str>
+where
+	OuterOrigin: Into<Result<RawOrigin, OuterOrigin>>,
+{
+	match o.into() {
+		Ok(RawOrigin::EthereumTransaction(n)) => Ok(n),
+		_ => Err("bad origin: expected to be an Ethereum transaction"),
+	}
+}
+
+pub struct EnsureEthereumTransaction;
+impl<O: Into<Result<RawOrigin, O>> + From<RawOrigin>> EnsureOrigin<O>
+	for EnsureEthereumTransaction
+{
+	type Success = H160;
+	fn try_origin(o: O) -> Result<Self::Success, O> {
+		o.into().and_then(|o| match o {
+			RawOrigin::EthereumTransaction(id) => Ok(id),
+		})
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn successful_origin() -> O {
+		O::from(RawOrigin::EthereumTransaction(Default::default()))
+	}
+}
+
+impl<T: Config> Call<T>
+where
+	OriginFor<T>: Into<Result<RawOrigin, OriginFor<T>>>,
+{
+	pub fn is_self_contained(&self) -> bool {
+		match self {
+			Call::transact { .. } => true,
+			_ => false,
+		}
+	}
+
+	pub fn check_self_contained(&self) -> Option<Result<H160, TransactionValidityError>> {
+		if let Call::transact { transaction } = self {
+			let check = || {
+				let origin = Pallet::<T>::recover_signer(&transaction).ok_or_else(|| {
+					InvalidTransaction::Custom(TransactionValidationError::InvalidSignature as u8)
+				})?;
+
+				Ok(origin)
+			};
+
+			Some(check())
+		} else {
+			None
+		}
+	}
+
+	pub fn pre_dispatch_self_contained(
+		&self,
+		origin: &H160,
+	) -> Option<Result<(), TransactionValidityError>> {
+		if let Call::transact { transaction } = self {
+			Some(Pallet::<T>::validate_transaction_in_block(
+				*origin,
+				&transaction,
+			))
+		} else {
+			None
+		}
+	}
+
+	pub fn validate_self_contained(&self, origin: &H160) -> Option<TransactionValidity> {
+		if let Call::transact { transaction } = self {
+			Some(Pallet::<T>::validate_transaction_in_pool(
+				*origin,
+				transaction,
+			))
+		} else {
+			None
+		}
+	}
+}
 
 pub use pallet::*;
 
@@ -76,9 +164,13 @@ pub mod pallet {
 		/// How Ethereum state root is calculated.
 		type StateRoot: Get<H256>;
 	}
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(PhantomData<T>);
+
+	#[pallet::origin]
+	pub type Origin = RawOrigin;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -91,7 +183,9 @@ pub mod pallet {
 			);
 			// move block hash pruning window by one block
 			let block_hash_count = T::BlockHashCount::get();
-			let to_remove = n.saturating_sub(block_hash_count).saturating_sub(One::one());
+			let to_remove = n
+				.saturating_sub(block_hash_count)
+				.saturating_sub(One::one());
 			// keep genesis hash
 			if !to_remove.is_zero() {
 				<BlockHash<T>>::remove(U256::from(
@@ -103,12 +197,21 @@ pub mod pallet {
 		fn on_initialize(_: T::BlockNumber) -> Weight {
 			Pending::<T>::kill();
 
+			// If the digest contain an existing ethereum block(encoded as PreLog), If contains,
+			// execute the imported block firstly and disable transact dispatch function.
 			if let Ok(log) = fp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()) {
 				let PreLog::Block(block) = log;
 
 				for transaction in block.transactions {
-					Self::do_transact(transaction).expect(
+					let source = Self::recover_signer(&transaction).expect(
+						"pre-block transaction signature invalid; the block cannot be built",
+					);
+
+					Self::validate_transaction_in_block(source, &transaction).expect(
 						"pre-block transaction verification failed; the block cannot be built",
+					);
+					Self::apply_validated_transaction(source, transaction).expect(
+						"pre-block transaction execution failed; the block cannot be built",
 					);
 				}
 			}
@@ -118,16 +221,24 @@ pub mod pallet {
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
+	impl<T: Config> Pallet<T>
+	where
+		OriginFor<T>: Into<Result<RawOrigin, OriginFor<T>>>,
+	{
 		/// Transact an Ethereum transaction.
 		#[pallet::weight(<T as pallet_evm::Config>::GasWeightMapping::gas_to_weight(transaction.gas_limit.unique_saturated_into()))]
 		pub fn transact(
 			origin: OriginFor<T>,
 			transaction: Transaction,
 		) -> DispatchResultWithPostInfo {
-			ensure_none(origin)?;
+			let source = ensure_ethereum_transaction(origin)?;
+			// Disable transact functionality if PreLog exist.
+			ensure!(
+				fp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
+				Error::<T>::PreLogExists,
+			);
 
-			Self::do_transact(transaction)
+			Self::apply_validated_transaction(source, transaction)
 		}
 	}
 
@@ -181,85 +292,6 @@ pub mod pallet {
 			);
 		}
 	}
-
-	#[pallet::validate_unsigned]
-	impl<T: Config> ValidateUnsigned for Pallet<T> {
-		type Call = Call<T>;
-
-		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
-			if let Call::transact(transaction) = call {
-				// We must ensure a transaction can pay the cost of its data bytes.
-				// If it can't it should not be included in a block.
-				let mut gasometer = evm::gasometer::Gasometer::new(
-					transaction.gas_limit.low_u64(),
-					<T as pallet_evm::Config>::config(),
-				);
-				let transaction_cost = match transaction.action {
-					TransactionAction::Call(_) =>
-						evm::gasometer::call_transaction_cost(&transaction.input),
-					TransactionAction::Create =>
-						evm::gasometer::create_transaction_cost(&transaction.input),
-				};
-				if gasometer.record_transaction(transaction_cost).is_err() {
-					return InvalidTransaction::Custom(
-						TransactionValidationError::InvalidGasLimit as u8,
-					)
-					.into()
-				}
-
-				if let Some(chain_id) = transaction.signature.chain_id() {
-					if chain_id != T::ChainId::get() {
-						return InvalidTransaction::Custom(
-							TransactionValidationError::InvalidChainId as u8,
-						)
-						.into()
-					}
-				}
-
-				let origin = Self::recover_signer(&transaction).ok_or_else(|| {
-					InvalidTransaction::Custom(TransactionValidationError::InvalidSignature as u8)
-				})?;
-
-				if transaction.gas_limit >= T::BlockGasLimit::get() {
-					return InvalidTransaction::Custom(
-						TransactionValidationError::InvalidGasLimit as u8,
-					)
-					.into()
-				}
-
-				let account_data = pallet_evm::Pallet::<T>::account_basic(&origin);
-
-				if transaction.nonce < account_data.nonce {
-					return InvalidTransaction::Stale.into()
-				}
-
-				let fee = transaction.gas_price.saturating_mul(transaction.gas_limit);
-				let total_payment = transaction.value.saturating_add(fee);
-				if account_data.balance < total_payment {
-					return InvalidTransaction::Payment.into()
-				}
-
-				let min_gas_price = T::FeeCalculator::min_gas_price();
-
-				if transaction.gas_price < min_gas_price {
-					return InvalidTransaction::Payment.into()
-				}
-
-				let mut builder = ValidTransactionBuilder::default()
-					.and_provides((origin, transaction.nonce))
-					.priority(transaction.gas_price.unique_saturated_into());
-
-				if transaction.nonce > account_data.nonce {
-					if let Some(prev_nonce) = transaction.nonce.checked_sub(1.into()) {
-						builder = builder.and_requires((origin, prev_nonce))
-					}
-				}
-				builder.build()
-			} else {
-				Err(InvalidTransaction::Call.into())
-			}
-		}
-	}
 }
 
 impl<T: Config> Pallet<T> {
@@ -272,7 +304,9 @@ impl<T: Config> Pallet<T> {
 		msg.copy_from_slice(&LegacyTransactionMessage::from(transaction.clone()).hash()[..]);
 
 		let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
-		Some(H160::from(H256::from_slice(Keccak256::digest(&pubkey).as_slice())))
+		Some(H160::from(H256::from_slice(
+			Keccak256::digest(&pubkey).as_slice(),
+		)))
 	}
 
 	fn store_block(post_log: bool, block_number: U256) {
@@ -299,7 +333,10 @@ impl<T: Config> Pallet<T> {
 			difficulty: U256::zero(),
 			number: block_number,
 			gas_limit: T::BlockGasLimit::get(),
-			gas_used: receipts.clone().into_iter().fold(U256::zero(), |acc, r| acc + r.used_gas),
+			gas_used: receipts
+				.clone()
+				.into_iter()
+				.fold(U256::zero(), |acc, r| acc + r.used_gas),
 			timestamp: UniqueSaturatedInto::<u64>::unique_saturated_into(
 				pallet_timestamp::Pallet::<T>::get(),
 			),
@@ -332,20 +369,103 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn do_transact(transaction: Transaction) -> DispatchResultWithPostInfo {
-		ensure!(
-			fp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
-			Error::<T>::PreLogExists,
+	// Common controls to be performed in the same way by the pool and the
+	// State Transition Function (STF).
+	// This is the case for all controls except those concerning the nonce.
+	fn validate_transaction_common(
+		origin: H160,
+		transaction: &Transaction,
+	) -> Result<U256, TransactionValidityError> {
+		// We must ensure a transaction can pay the cost of its data bytes.
+		// If it can't it should not be included in a block.
+		let mut gasometer = evm::gasometer::Gasometer::new(
+			transaction.gas_limit.low_u64(),
+			<T as pallet_evm::Config>::config(),
 		);
+		let transaction_cost = match transaction.action {
+			TransactionAction::Call(_) => evm::gasometer::call_transaction_cost(&transaction.input),
+			TransactionAction::Create => {
+				evm::gasometer::create_transaction_cost(&transaction.input)
+			}
+		};
+		if gasometer.record_transaction(transaction_cost).is_err() {
+			return Err(InvalidTransaction::Custom(
+				TransactionValidationError::InvalidGasLimit as u8,
+			)
+			.into());
+		}
 
-		let source =
-			Self::recover_signer(&transaction).ok_or_else(|| Error::<T>::InvalidSignature)?;
+		if let Some(chain_id) = transaction.signature.chain_id() {
+			if chain_id != T::ChainId::get() {
+				return Err(InvalidTransaction::Custom(
+					TransactionValidationError::InvalidChainId as u8,
+				)
+				.into());
+			}
+		}
 
+		if transaction.gas_limit >= T::BlockGasLimit::get() {
+			return Err(InvalidTransaction::Custom(
+				TransactionValidationError::InvalidGasLimit as u8,
+			)
+			.into());
+		}
+
+		let account_data = pallet_evm::Pallet::<T>::account_basic(&origin);
+
+		let fee = transaction.gas_price.saturating_mul(transaction.gas_limit);
+		let total_payment = transaction.value.saturating_add(fee);
+		if account_data.balance < total_payment {
+			return Err(InvalidTransaction::Payment.into());
+		}
+
+		let min_gas_price = T::FeeCalculator::min_gas_price();
+
+		if transaction.gas_price < min_gas_price {
+			return Err(InvalidTransaction::Payment.into());
+		}
+
+		Ok(account_data.nonce)
+	}
+
+	// Controls that must be performed by the pool.
+	// The controls common with the State Transition Function (STF) are in
+	// the function `validate_transaction_common`.
+	fn validate_transaction_in_pool(
+		origin: H160,
+		transaction: &Transaction,
+	) -> TransactionValidity {
+		let account_nonce = Self::validate_transaction_common(origin, transaction)?;
+
+		if transaction.nonce < account_nonce {
+			return Err(InvalidTransaction::Stale.into());
+		}
+
+		// The tag provides and requires must be filled correctly according to the nonce.
+		let mut builder = ValidTransactionBuilder::default()
+			.and_provides((origin, transaction.nonce))
+			.priority(transaction.gas_price.unique_saturated_into());
+
+		// In the context of the pool, a transaction with
+		// too high a nonce is still considered valid
+		if transaction.nonce > account_nonce {
+			if let Some(prev_nonce) = transaction.nonce.checked_sub(1.into()) {
+				builder = builder.and_requires((origin, prev_nonce))
+			}
+		}
+
+		builder.build()
+	}
+
+	fn apply_validated_transaction(
+		source: H160,
+		transaction: Transaction,
+	) -> DispatchResultWithPostInfo {
 		let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
 		let transaction_index = Pending::<T>::get().len() as u32;
 
-		let (to, _contract_address, info) = Self::execute(
+		let (to, _, info) = Self::execute(
 			source,
 			transaction.input.clone(),
 			transaction.value,
@@ -470,7 +590,7 @@ impl<T: Config> Pallet<T> {
 				.map_err(Into::into)?;
 
 				Ok((Some(target), None, CallOrCreateInfo::Call(res)))
-			},
+			}
 			ethereum::TransactionAction::Create => {
 				let res = T::Runner::create(
 					from,
@@ -484,7 +604,30 @@ impl<T: Config> Pallet<T> {
 				.map_err(Into::into)?;
 
 				Ok((None, Some(res.value), CallOrCreateInfo::Create(res)))
-			},
+			}
+		}
+	}
+
+	/// Validate an Ethereum transaction already in block
+	///
+	/// This function must be called during the pre-dispatch phase
+	/// (just before applying the extrinsic).
+	pub fn validate_transaction_in_block(
+		origin: H160,
+		transaction: &ethereum::TransactionV0,
+	) -> Result<(), TransactionValidityError> {
+		let account_nonce = Self::validate_transaction_common(origin, transaction)?;
+
+		// In the context of the block, a transaction with a nonce that is
+		// too high should be considered invalid and make the whole block invalid.
+		if transaction.nonce > account_nonce {
+			Err(TransactionValidityError::Invalid(
+				InvalidTransaction::Future,
+			))
+		} else if transaction.nonce < account_nonce {
+			Err(TransactionValidityError::Invalid(InvalidTransaction::Stale))
+		} else {
+			Ok(())
 		}
 	}
 }

@@ -21,8 +21,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use core::cmp::min;
-use evm::{ExitError, ExitSucceed};
-use fp_evm::LinearCostPrecompile;
+use fp_evm::{ExitError, ExitSucceed, LinearCostPrecompile};
 
 /// The identity precompile.
 pub struct Identity;
@@ -60,7 +59,7 @@ impl LinearCostPrecompile for ECRecover {
 				let mut address = sp_io::hashing::keccak_256(&pubkey);
 				address[0..12].copy_from_slice(&[0u8; 12]);
 				address.to_vec()
-			},
+			}
 			Err(_) => [0u8; 0].to_vec(),
 		};
 

@@ -277,8 +277,10 @@ pub fn run() -> Result<()> {
 			ensure_dev(chain_spec).map_err(Error::Other)?;
 
 			return Ok(runner.sync_run(|config| {
-				cmd.run::<service::selendra_runtime::Block, service::SelendraExecutorDispatch>(config)
-					.map_err(|e| Error::SubstrateCli(e))
+				cmd.run::<service::selendra_runtime::Block, service::SelendraExecutorDispatch>(
+					config,
+				)
+				.map_err(|e| Error::SubstrateCli(e))
 			})?)
 		},
 		Some(Subcommand::Key(cmd)) => Ok(cmd.run(&cli)?),

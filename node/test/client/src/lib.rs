@@ -20,8 +20,8 @@
 
 mod block_builder;
 
-use selendra_primitives::v1::Block;
 use sc_service::client;
+use selendra_primitives::v1::Block;
 use sp_core::storage::Storage;
 use sp_runtime::BuildStorage;
 

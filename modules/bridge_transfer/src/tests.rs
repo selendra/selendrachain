@@ -18,7 +18,7 @@ const TEST_THRESHOLD: u32 = 2;
 
 fn make_transfer_proposal(to: u64, amount: u64) -> Call {
 	let resource_id = BridgeTokenId::get();
-	Call::BridgeTransfer(crate::Call::transfer(to, amount.into(), resource_id))
+	Call::BridgeTransfer(crate::Call::transfer{ to: to, amount: amount.into(), rid: resource_id})
 }
 
 #[test]

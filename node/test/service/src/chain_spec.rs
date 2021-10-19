@@ -19,10 +19,10 @@
 use babe_primitives::AuthorityId as BabeId;
 use grandpa::AuthorityId as GrandpaId;
 use pallet_staking::Forcing;
+use sc_chain_spec::{ChainSpec, ChainType};
 use selendra_primitives::v1::{AccountId, AssignmentId, ValidatorId, MAX_CODE_SIZE, MAX_POV_SIZE};
 use selendra_service::chain_spec::{get_account_id_from_seed, get_from_seed, Extensions};
 use selendra_test_runtime::{constants::currency::DOTS, BABE_GENESIS_EPOCH_CONFIG};
-use sc_chain_spec::{ChainSpec, ChainType};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::sr25519;
 use sp_runtime::Perbill;

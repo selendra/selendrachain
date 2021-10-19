@@ -46,12 +46,12 @@ pub fn sync_block<Block: BlockT>(
 			backend.mapping().write_hashes(mapping_commitment)?;
 
 			Ok(())
-		},
+		}
 		Err(FindLogError::NotFound) => {
 			backend.mapping().write_none(header.hash())?;
 
 			Ok(())
-		},
+		}
 		Err(FindLogError::MultipleLogs) => Err("Multiple logs found".to_string()),
 	}
 }
@@ -73,8 +73,14 @@ where
 		.map_err(|e| format!("{:?}", e))?;
 
 	if has_api {
-		let block = client.runtime_api().current_block(&id).map_err(|e| format!("{:?}", e))?;
-		let block_hash = block.ok_or("Ethereum genesis block not found".to_string())?.header.hash();
+		let block = client
+			.runtime_api()
+			.current_block(&id)
+			.map_err(|e| format!("{:?}", e))?;
+		let block_hash = block
+			.ok_or("Ethereum genesis block not found".to_string())?
+			.header
+			.hash();
 		let mapping_commitment = fc_db::MappingCommitment::<Block> {
 			block_hash: header.hash(),
 			ethereum_block_hash: block_hash,
@@ -104,7 +110,7 @@ where
 	if current_syncing_tips.is_empty() {
 		let mut leaves = substrate_backend.leaves().map_err(|e| format!("{:?}", e))?;
 		if leaves.is_empty() {
-			return Ok(false)
+			return Ok(false);
 		}
 
 		current_syncing_tips.append(&mut leaves);
@@ -119,16 +125,18 @@ where
 			.map_err(|e| format!("{:?}", e))?
 		{
 			operating_tip = Some(checking_tip);
-			break
+			break;
 		}
 	}
 
 	let operating_tip = match operating_tip {
 		Some(operating_tip) => operating_tip,
 		None => {
-			frontier_backend.meta().write_current_syncing_tips(current_syncing_tips)?;
-			return Ok(false)
-		},
+			frontier_backend
+				.meta()
+				.write_current_syncing_tips(current_syncing_tips)?;
+			return Ok(false);
+		}
 	};
 
 	let operating_header = substrate_backend
@@ -139,18 +147,22 @@ where
 	if operating_header.number() == &Zero::zero() {
 		sync_genesis_block(client, frontier_backend, &operating_header)?;
 
-		frontier_backend.meta().write_current_syncing_tips(current_syncing_tips)?;
+		frontier_backend
+			.meta()
+			.write_current_syncing_tips(current_syncing_tips)?;
 		Ok(true)
 	} else {
-		if SyncStrategy::Parachain == strategy &&
-			operating_header.number() > &client.info().best_number
+		if SyncStrategy::Parachain == strategy
+			&& operating_header.number() > &client.info().best_number
 		{
-			return Ok(false)
+			return Ok(false);
 		}
 		sync_block(frontier_backend, &operating_header)?;
 
 		current_syncing_tips.push(*operating_header.parent_hash());
-		frontier_backend.meta().write_current_syncing_tips(current_syncing_tips)?;
+		frontier_backend
+			.meta()
+			.write_current_syncing_tips(current_syncing_tips)?;
 		Ok(true)
 	}
 }

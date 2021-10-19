@@ -21,8 +21,7 @@ extern crate alloc;
 
 use codec::Decode;
 use core::marker::PhantomData;
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
-use fp_evm::Precompile;
+use fp_evm::{Context, ExitError, ExitSucceed, Precompile, PrecompileOutput};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	weights::{DispatchClass, Pays},
@@ -50,13 +49,13 @@ where
 
 		let valid_call = info.pays_fee == Pays::Yes && info.class == DispatchClass::Normal;
 		if !valid_call {
-			return Err(ExitError::Other("invalid call".into()))
+			return Err(ExitError::Other("invalid call".into()));
 		}
 
 		if let Some(gas) = target_gas {
 			let valid_weight = info.weight <= T::GasWeightMapping::gas_to_weight(gas);
 			if !valid_weight {
-				return Err(ExitError::OutOfGas)
+				return Err(ExitError::OutOfGas);
 			}
 		}
 
@@ -73,7 +72,7 @@ where
 					output: Default::default(),
 					logs: Default::default(),
 				})
-			},
+			}
 			Err(_) => Err(ExitError::Other("dispatch execution failed".into())),
 		}
 	}

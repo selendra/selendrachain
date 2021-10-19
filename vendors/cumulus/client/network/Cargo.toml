@@ -22,7 +22,7 @@ selendra-client = { path = "../../../../node/client" }
 selendra-parachain = { path = "../../../../modules/parachain" }
 
 # other deps
-codec = { package = "parity-scale-codec", version = "2.0.0", features = [ "derive" ] }
+codec = { package = "parity-scale-codec", version = "2.3.1", features = [ "derive" ] }
 futures = { version = "0.3.1", features = ["compat"] }
 futures-timer = "3.0.2"
 tracing = "0.1.26"

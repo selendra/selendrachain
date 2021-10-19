@@ -9,11 +9,11 @@ homepage = "https://substrate.dev"
 repository = "https://github.com/paritytech/frontier/"
 
 [dependencies]
-sp-std = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-runtime = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-core = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
-ethereum = { version = "0.9.0", default-features = false, features = ["with-codec"] }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+codec = { package = "parity-scale-codec", version = "2.3.1", default-features = false, features = ["derive"] }
+ethereum = { git = "https://github.com/purestake/ethereum", branch = "joshy-scale-info", features = ["with-codec"] }
 rlp = { version = "0.5", default-features = false }
 sha3 = { version = "0.8", default-features = false }
 

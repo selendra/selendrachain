@@ -21,8 +21,8 @@ mod eth_pubsub;
 mod overrides;
 
 pub use eth::{
-	EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthTask, NetApi, NetApiServer, Web3Api,
-	Web3ApiServer,
+	EthApi, EthApiServer, EthBlockDataCache, EthFilterApi, EthFilterApiServer, EthTask, NetApi,
+	NetApiServer, Web3Api, Web3ApiServer,
 };
 pub use eth_pubsub::{EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider};
 pub use overrides::{OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride};
@@ -89,7 +89,7 @@ pub mod frontier_backend_client {
 			.map_err(|err| internal_err(format!("fetch aux store failed: {:?}", err)))?;
 
 		if let Some(substrate_hash) = substrate_hash {
-			return Ok(Some(BlockId::Hash(substrate_hash)))
+			return Ok(Some(BlockId::Hash(substrate_hash)));
 		}
 		Ok(None)
 	}
@@ -152,7 +152,7 @@ pub mod frontier_backend_client {
 	{
 		if let Ok(Some(number)) = client.number(target_hash) {
 			if let Ok(Some(header)) = client.header(BlockId::Number(number)) {
-				return header.hash() == target_hash
+				return header.hash() == target_hash;
 			}
 		}
 		false
@@ -195,7 +195,11 @@ pub mod frontier_backend_client {
 }
 
 pub fn internal_err<T: ToString>(message: T) -> Error {
-	Error { code: ErrorCode::InternalError, message: message.to_string(), data: None }
+	Error {
+		code: ErrorCode::InternalError,
+		message: message.to_string(),
+		data: None,
+	}
 }
 
 pub fn error_on_execution_failure(reason: &ExitReason, data: &[u8]) -> Result<(), Error> {
@@ -208,14 +212,14 @@ pub fn error_on_execution_failure(reason: &ExitReason, data: &[u8]) -> Result<()
 					code: ErrorCode::ServerError(0),
 					message: format!("out of gas"),
 					data: None,
-				})
+				});
 			}
 			Err(Error {
 				code: ErrorCode::InternalError,
 				message: format!("evm error: {:?}", e),
 				data: Some(Value::String("0x".to_string())),
 			})
-		},
+		}
 		ExitReason::Revert(_) => {
 			let mut message = "VM Exception while processing transaction: revert".to_string();
 			// A minimum size of error function selector (4) + offset (32) + string length (32)
@@ -232,7 +236,7 @@ pub fn error_on_execution_failure(reason: &ExitReason, data: &[u8]) -> Result<()
 				message,
 				data: Some(Value::String(data.to_hex())),
 			})
-		},
+		}
 		ExitReason::Fatal(e) => Err(Error {
 			code: ErrorCode::InternalError,
 			message: format!("evm fatal: {:?}", e),
@@ -334,7 +338,7 @@ impl EthSigner for EthDevSigner {
 						.ok_or(internal_err("signer generated invalid signature"))?,
 				});
 
-				break
+				break;
 			}
 		}
 

@@ -80,7 +80,10 @@ where
 	C: Send + Sync + 'static,
 {
 	pub fn new(client: Arc<C>) -> Self {
-		Self { client, _marker: PhantomData }
+		Self {
+			client,
+			_marker: PhantomData,
+		}
 	}
 }
 
@@ -93,12 +96,18 @@ where
 {
 	/// For a given account address, returns pallet_evm::AccountCodes.
 	fn account_code_at(&self, block: &BlockId<Block>, address: H160) -> Option<Vec<u8>> {
-		self.client.runtime_api().account_code_at(&block, address).ok()
+		self.client
+			.runtime_api()
+			.account_code_at(&block, address)
+			.ok()
 	}
 
 	/// For a given account address and index, returns pallet_evm::AccountStorages.
 	fn storage_at(&self, block: &BlockId<Block>, address: H160, index: U256) -> Option<H256> {
-		self.client.runtime_api().storage_at(&block, address, index).ok()
+		self.client
+			.runtime_api()
+			.storage_at(&block, address, index)
+			.ok()
 	}
 
 	/// Return the current block.
@@ -116,6 +125,9 @@ where
 		&self,
 		block: &BlockId<Block>,
 	) -> Option<Vec<TransactionStatus>> {
-		self.client.runtime_api().current_transaction_statuses(&block).ok()?
+		self.client
+			.runtime_api()
+			.current_transaction_statuses(&block)
+			.ok()?
 	}
 }
