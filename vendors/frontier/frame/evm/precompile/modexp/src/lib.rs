@@ -20,7 +20,8 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use fp_evm::{Context, ExitError, ExitSucceed, Precompile, PrecompileOutput};
+use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
+use fp_evm::Precompile;
 use num::{BigUint, FromPrimitive, One, ToPrimitive, Zero};
 
 use core::{cmp::max, ops::BitAnd};

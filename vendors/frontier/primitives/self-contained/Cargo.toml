@@ -11,8 +11,8 @@ documentation = "https://docs.rs/fp-ethereum"
 
 [dependencies]
 serde = { version = "1.0.101", optional = true, features = ["derive"] }
-codec = { package = "parity-scale-codec", version = "2.3.1", default-features = false }
-ethereum = { git = "https://github.com/purestake/ethereum", branch = "joshy-scale-info", features = ["with-codec"] }
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
+ethereum = { git = "https://github.com/rust-blockchain/ethereum.git", branch = "master", default-features = false, features = ["with-codec"] }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }

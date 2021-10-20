@@ -21,7 +21,6 @@ use crate::{
 };
 use ethereum::{BlockV0 as EthereumBlock, TransactionV0 as EthereumTransaction};
 use ethereum_types::{H160, H256, H512, H64, U256, U64};
-use evm::ExitReason;
 use fc_rpc_core::{
 	types::{
 		Block, BlockNumber, BlockTransactions, Bytes, CallRequest, Filter, FilterChanges,
@@ -32,7 +31,7 @@ use fc_rpc_core::{
 };
 use fp_rpc::{ConvertTransaction, EthereumRuntimeRPCApi, TransactionStatus};
 use futures::{future::TryFutureExt, StreamExt};
-use jsonrpc_core::{futures::future, BoxFuture, Result};
+use jsonrpc_core::{futures::future, BoxFuture, ErrorCode, Result};
 use lru::LruCache;
 use sc_client_api::{
 	backend::{Backend, StateBackend, StorageProvider},
@@ -943,69 +942,29 @@ where
 	}
 
 	fn estimate_gas(&self, request: CallRequest, _: Option<BlockNumber>) -> Result<U256> {
-		// Get best hash
-		let best_hash = self.client.info().best_hash;
+		let gas_limit = {
+			// query current block's gas limit
+			let substrate_hash = self.client.info().best_hash;
+			let id = BlockId::Hash(substrate_hash);
+			let schema =
+				frontier_backend_client::onchain_storage_schema::<B, C, BE>(&self.client, id);
+			let handler = self
+				.overrides
+				.schemas
+				.get(&schema)
+				.unwrap_or(&self.overrides.fallback);
 
-		// Get gas price
-		let gas_price = request.gas_price.unwrap_or_default();
-
-		// Determine the highest possible gas limits
-		let mut highest = match request.gas {
-			Some(gas) => gas,
-			None => {
-				// query current block's gas limit
-				let substrate_hash = self.client.info().best_hash;
-				let id = BlockId::Hash(substrate_hash);
-				let schema =
-					frontier_backend_client::onchain_storage_schema::<B, C, BE>(&self.client, id);
-				let handler = self
-					.overrides
-					.schemas
-					.get(&schema)
-					.unwrap_or(&self.overrides.fallback);
-
-				let block = self.block_data_cache.current_block(handler, substrate_hash);
-				if let Some(block) = block {
-					block.header.gas_limit
-				} else {
-					return Err(internal_err("block unavailable, cannot query gas limit"));
-				}
+			let block = self.block_data_cache.current_block(handler, substrate_hash);
+			if let Some(block) = block {
+				block.header.gas_limit
+			} else {
+				return Err(internal_err("block unavailable, cannot query gas limit"));
 			}
 		};
 
-		// Recap the highest gas allowance with account's balance.
-		if let Some(from) = request.from {
-			if gas_price > U256::zero() {
-				let balance = self
-					.client
-					.runtime_api()
-					.account_basic(&BlockId::Hash(best_hash), from)
-					.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?
-					.balance;
-				let mut available = balance;
-				if let Some(value) = request.value {
-					if value > available {
-						return Err(internal_err("insufficient funds for transfer"));
-					}
-					available -= value;
-				}
-				let allowance = available / gas_price;
-				if highest > allowance {
-					log::warn!(
-						"Gas estimation capped by limited funds original {} balance {} sent {} feecap {} fundable {}",
-						highest,
-						balance,
-						request.value.unwrap_or_default(),
-						gas_price,
-						allowance
-					);
-					highest = allowance;
-				}
-			}
-		}
+		let calculate_gas_used = |request, gas_limit| -> Result<U256> {
+			let hash = self.client.info().best_hash;
 
-		// Create a helper to check if a gas allowance results in an executable transaction
-		let executable = move |request: CallRequest, gas_limit| -> Result<Option<U256>> {
 			let CallRequest {
 				from,
 				to,
@@ -1021,13 +980,13 @@ where
 
 			let data = data.map(|d| d.0).unwrap_or_default();
 
-			let (exit_reason, data, used_gas) = match to {
+			let used_gas = match to {
 				Some(to) => {
 					let info = self
 						.client
 						.runtime_api()
 						.call(
-							&BlockId::Hash(best_hash),
+							&BlockId::Hash(hash),
 							from.unwrap_or_default(),
 							to,
 							data,
@@ -1040,14 +999,16 @@ where
 						.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?
 						.map_err(|err| internal_err(format!("execution fatal: {:?}", err)))?;
 
-					(info.exit_reason, info.value, info.used_gas)
+					error_on_execution_failure(&info.exit_reason, &info.value)?;
+
+					info.used_gas
 				}
 				None => {
 					let info = self
 						.client
 						.runtime_api()
 						.create(
-							&BlockId::Hash(best_hash),
+							&BlockId::Hash(hash),
 							from.unwrap_or_default(),
 							data,
 							value.unwrap_or_default(),
@@ -1059,55 +1020,69 @@ where
 						.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?
 						.map_err(|err| internal_err(format!("execution fatal: {:?}", err)))?;
 
-					(info.exit_reason, Vec::new(), info.used_gas)
+					error_on_execution_failure(&info.exit_reason, &[])?;
+
+					info.used_gas
 				}
 			};
 
-			match exit_reason {
-				ExitReason::Succeed(_) => Ok(Some(used_gas)),
-				ExitReason::Revert(_) | ExitReason::Error(evm::ExitError::OutOfGas) => Ok(None),
-				other => error_on_execution_failure(&other, &data).map(|()| Some(used_gas)),
-			}
-		};
-
-		// verify that the transaction suceed with highest capacity
-		let cap = highest;
-		let used_gas = executable(request.clone(), highest)?.ok_or(internal_err(format!(
-			"gas required exceeds allowance {}",
-			cap
-		)))?;
-
-		#[cfg(not(feature = "rpc_binary_search_estimate"))]
-		{
 			Ok(used_gas)
-		}
-		#[cfg(feature = "rpc_binary_search_estimate")]
-		{
-			// Start close to the used gas for faster binary search
-			let mut mid = used_gas * 3;
+		};
+		if cfg!(feature = "rpc_binary_search_estimate") {
+			const MAX_OOG_PER_ESTIMATE_QUERY: u32 = 2;
 
-			// Define the lower bound of the binary search
-			const MIN_GAS_PER_TX: U256 = U256([21_000, 0, 0, 0]);
-			let mut lowest = MIN_GAS_PER_TX;
+			let mut lower = U256::from(21_000);
+			// TODO: get a good upper limit, but below U64::max to operation overflow
+			let mut upper = U256::from(gas_limit);
+			let mut mid = upper;
+			let mut best = mid;
+			let mut old_best: U256;
+			let mut num_oog = 0;
 
-			// Execute the binary search and hone in on an executable gas limit.
-			let mut previous_highest = highest;
-			while (highest - lowest) > U256::one() {
-				if executable(request.clone(), mid)?.is_some() {
-					highest = mid;
-					// If the variation in the estimate is less than 10%,
-					// then the estimate is considered sufficiently accurate.
-					if (previous_highest - highest) * 10 / previous_highest < U256::one() {
-						return Ok(highest);
+			// if the gas estimation depends on the gas limit, then we want to binary
+			// search until the change is under some threshold. but if not dependent,
+			// we want to stop immediately.
+			let mut change_pct = U256::from(100);
+			let threshold_pct = U256::from(10);
+
+			// invariant: lower <= mid <= upper
+			while change_pct > threshold_pct {
+				let mut test_request = request.clone();
+				test_request.gas = Some(mid);
+				match calculate_gas_used(test_request, gas_limit) {
+					// if Ok -- try to reduce the gas used
+					Ok(used_gas) => {
+						old_best = best;
+						best = used_gas;
+						change_pct = (U256::from(100) * (old_best - best)) / old_best;
+						upper = mid;
+						mid = (lower + upper + 1) / 2;
 					}
-					previous_highest = highest;
-				} else {
-					lowest = mid;
-				}
-				mid = (highest + lowest) / 2;
-			}
 
-			Ok(highest)
+					Err(err) => {
+						// if Err == OutofGas, we need more gas
+						if err.code == ErrorCode::ServerError(0) {
+							num_oog += 1;
+							// don't try more than twice if we oog
+							if num_oog >= MAX_OOG_PER_ESTIMATE_QUERY {
+								return Err(err);
+							}
+
+							lower = mid;
+							mid = (lower + upper + 1) / 2;
+							if mid == lower {
+								break;
+							}
+						} else {
+							// Other errors, return directly
+							return Err(err);
+						}
+					}
+				}
+			}
+			Ok(best)
+		} else {
+			calculate_gas_used(request, gas_limit)
 		}
 	}
 

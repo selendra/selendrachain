@@ -9,9 +9,10 @@ repository = "https://github.com/paritytech/frontier/"
 description = "BN128 precompiles for EVM pallet."
 
 [dependencies]
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 fp-evm = { version = "3.0.0-dev", default-features = false, path = "../../../../primitives/evm" }
+evm = { path = "../../../../../evm", default-features = false, features = ["with-codec"] }
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 
 [dev-dependencies]
@@ -23,4 +24,5 @@ std = [
 	"sp-core/std",
 	"sp-io/std",
 	"fp-evm/std",
+	"evm/std",
 ]

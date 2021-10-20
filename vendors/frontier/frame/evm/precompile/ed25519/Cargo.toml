@@ -9,9 +9,10 @@ repository = "https://github.com/paritytech/frontier/"
 description = "ED25519 precompiles for EVM pallet."
 
 [dependencies]
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 fp-evm = { version = "3.0.0-dev", default-features = false, path = "../../../../primitives/evm" }
+evm = { path = "../../../../../evm", default-features = false, features = ["with-codec"] }
 ed25519-dalek = { version = "1.0.0", features = ["alloc", "u64_backend"], default-features = false }
 
 [features]
@@ -20,5 +21,6 @@ std = [
 	"sp-core/std",
 	"sp-io/std",
 	"fp-evm/std",
+	"evm/std",
 	"ed25519-dalek/std",
 ]

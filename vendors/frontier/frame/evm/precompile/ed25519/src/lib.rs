@@ -22,7 +22,8 @@ extern crate alloc;
 use alloc::vec::Vec;
 use core::convert::TryFrom;
 use ed25519_dalek::{PublicKey, Signature, Verifier};
-use fp_evm::{ExitError, ExitSucceed, LinearCostPrecompile};
+use evm::{ExitError, ExitSucceed};
+use fp_evm::LinearCostPrecompile;
 
 pub struct Ed25519Verify;
 

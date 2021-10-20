@@ -7,16 +7,16 @@ description = "Runtime primitives for Ethereum RPC (web3) compatibility layer fo
 license = "Apache-2.0"
 
 [dependencies]
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 fp-evm = { version = "3.0.0-dev", default-features = false, path = "../../primitives/evm" }
-ethereum = { git = "https://github.com/purestake/ethereum", branch = "joshy-scale-info", features = ["with-codec"] }
-ethereum-types = { version = "0.12", default-features = false }
-codec = { package = "parity-scale-codec", version = "2.3.1", default-features = false }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
+ethereum = { git = "https://github.com/rust-blockchain/ethereum.git", branch = "master", default-features = false, features = ["with-codec"] }
+ethereum-types = { version = "0.12.1", default-features = false }
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
+scale-info = { version = "1.0", features = ["derive"], default-features = false }
 
 [features]
 default = ["std"]
@@ -30,4 +30,5 @@ std = [
 	"sp-runtime/std",
 	"sp-std/std",
 	"sp-io/std",
+	"scale-info/std",
 ]
