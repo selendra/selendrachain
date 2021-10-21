@@ -28,10 +28,10 @@ use selendra_overseer::{
 	OverseerConnector, OverseerHandle,
 };
 
-use selendra_primitives::v1::ParachainHost;
 use sc_authority_discovery::Service as AuthorityDiscoveryService;
 use sc_client_api::AuxStore;
 use sc_keystore::LocalKeystore;
+use selendra_primitives::v1::ParachainHost;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_consensus_babe::BabeApi;

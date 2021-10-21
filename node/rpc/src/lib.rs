@@ -20,7 +20,6 @@
 
 use std::sync::Arc;
 
-use selendra_primitives::v0::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
 use sc_client_api::{
 	light::{Fetcher, RemoteBlockchain},
 	AuxStore,
@@ -29,6 +28,7 @@ use sc_consensus_babe::Epoch;
 use sc_finality_grandpa::FinalityProofProvider;
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 use sc_sync_state_rpc::{SyncStateRpcApi, SyncStateRpcHandler};
+use selendra_primitives::v0::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};

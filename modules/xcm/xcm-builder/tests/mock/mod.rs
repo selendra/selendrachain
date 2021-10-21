@@ -212,7 +212,9 @@ construct_runtime!(
 	}
 );
 
-pub fn selendra_like_with_balances(balances: Vec<(AccountId, Balance)>) -> sp_io::TestExternalities {
+pub fn selendra_like_with_balances(
+	balances: Vec<(AccountId, Balance)>,
+) -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
 	pallet_balances::GenesisConfig::<Runtime> { balances }

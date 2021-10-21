@@ -115,8 +115,7 @@ fn set_default_ss58_version(_spec: &Box<dyn service::ChainSpec>) {
 	sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 
-const DEV_ONLY_ERROR_PATTERN: &'static str =
-	"can only use subcommand with --chain selendra-dev ";
+const DEV_ONLY_ERROR_PATTERN: &'static str = "can only use subcommand with --chain selendra-dev ";
 
 fn ensure_dev(spec: &Box<dyn service::ChainSpec>) -> std::result::Result<(), String> {
 	if spec.is_dev() {

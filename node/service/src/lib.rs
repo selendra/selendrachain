@@ -35,6 +35,7 @@ mod tests;
 #[cfg(feature = "full-node")]
 use {
 	grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider},
+	sc_client_api::ExecutorProvider,
 	selendra_node_core_approval_voting::Config as ApprovalVotingConfig,
 	selendra_node_core_av_store::Config as AvailabilityConfig,
 	selendra_node_core_av_store::Error as AvailabilityError,
@@ -44,7 +45,6 @@ use {
 	},
 	selendra_node_core_dispute_coordinator::Config as DisputeCoordinatorConfig,
 	selendra_overseer::BlockInfo,
-	sc_client_api::ExecutorProvider,
 	sp_trie::PrefixedMemoryDB,
 	tracing::info,
 };
@@ -52,10 +52,10 @@ use {
 pub use sp_core::traits::SpawnNamed;
 #[cfg(feature = "full-node")]
 pub use {
-	selendra_overseer::{Handle, Overseer, OverseerConnector, OverseerHandle},
-	selendra_primitives::v1::ParachainHost,
 	relay_chain_selection::SelectRelayChain,
 	sc_client_api::AuxStore,
+	selendra_overseer::{Handle, Overseer, OverseerConnector, OverseerHandle},
+	selendra_primitives::v1::ParachainHost,
 	sp_authority_discovery::AuthorityDiscoveryApi,
 	sp_blockchain::HeaderBackend,
 	sp_consensus_babe::BabeApi,
@@ -78,16 +78,17 @@ pub use selendra_client::SelendraExecutorDispatch;
 
 pub use chain_spec::SelendraChainSpec;
 pub use consensus_common::{block_validation::Chain, Proposal, SelectChain};
+pub use sc_client_api::{Backend, CallExecutor, ExecutionStrategy};
+pub use sc_consensus::{BlockImport, LongestChain};
+use sc_executor::NativeElseWasmExecutor;
+pub use sc_executor::NativeExecutionDispatch;
 #[cfg(feature = "full-node")]
 pub use selendra_client::{
 	AbstractClient, Client, ClientHandle, ExecuteWithClient, FullBackend, FullClient,
 	RuntimeApiCollection,
 };
 pub use selendra_primitives::v1::{Block, BlockId, CollatorPair, Hash, Id as ParaId};
-pub use sc_client_api::{Backend, CallExecutor, ExecutionStrategy};
-pub use sc_consensus::{BlockImport, LongestChain};
-use sc_executor::NativeElseWasmExecutor;
-pub use sc_executor::NativeExecutionDispatch;
+pub use selendra_runtime;
 pub use service::{
 	config::{DatabaseSource, PrometheusConfig},
 	ChainSpec, Configuration, Error as SubstrateServiceError, PruningMode, Role, RuntimeGenesis,
@@ -102,7 +103,6 @@ pub use sp_runtime::{
 		Header as HeaderT, NumberFor,
 	},
 };
-pub use selendra_runtime;
 
 /// The maximum number of active leaves we forward to the [`Overseer`] on startup.
 #[cfg(any(test, feature = "full-node"))]
@@ -664,7 +664,8 @@ where
 	let overseer_handle = Handle::new(overseer_connector.handle());
 
 	let local_keystore = basics.keystore_container.local_keystore();
-	let requires_overseer_for_chain_sel = local_keystore.is_some() && (role.is_authority() || is_collator.is_collator());
+	let requires_overseer_for_chain_sel =
+		local_keystore.is_some() && (role.is_authority() || is_collator.is_collator());
 
 	let select_chain = SelectRelayChain::new(
 		basics.backend.clone(),

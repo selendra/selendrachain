@@ -84,11 +84,11 @@
 //! ```
 
 use parity_scale_codec::Encode;
+use sc_network::PeerId;
 use selendra_node_primitives::PoV;
 use selendra_primitives::v1::{
 	BlakeTwo256, CandidateHash, Hash, HashT, Id as ParaId, ValidatorIndex,
 };
-use sc_network::PeerId;
 
 use std::{fmt, sync::Arc};
 

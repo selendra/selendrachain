@@ -29,9 +29,10 @@ use primitives::v1::{
 	ValidationCode, ValidationCodeHash, ValidatorId, ValidatorIndex,
 };
 use runtime_common::{
-	auctions, crowdloan, impls::DealWithFees, paras_registrar, slots, xcm_sender, paras_sudo_wrapper,
-	BlockHashCount, BlockLength, BlockWeights, CurrencyToVote, OffchainSolutionLengthLimit,
-	OffchainSolutionWeightLimit, RocksDbWeight, SlowAdjustingFeeUpdate, ToAuthor, 
+	auctions, crowdloan, impls::DealWithFees, paras_registrar, paras_sudo_wrapper, slots,
+	xcm_sender, BlockHashCount, BlockLength, BlockWeights, CurrencyToVote,
+	OffchainSolutionLengthLimit, OffchainSolutionWeightLimit, RocksDbWeight,
+	SlowAdjustingFeeUpdate, ToAuthor,
 };
 use sp_core::u32_trait::{_1, _2, _3, _5};
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
@@ -57,6 +58,8 @@ use frame_support::{
 	PalletId, RuntimeDebug,
 };
 use frame_system::{EnsureOneOf, EnsureRoot};
+pub use pallet_bridge;
+pub use pallet_bridge_transfer;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId};
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_mmr_primitives as mmr;
@@ -87,8 +90,6 @@ use xcm_builder::{
 	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 };
 use xcm_executor::XcmExecutor;
-pub use pallet_bridge;
-pub use pallet_bridge_transfer;
 
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_election_provider_multi_phase::Call as EPMCall;
@@ -1391,7 +1392,6 @@ impl pallet_sudo::Config for Runtime {
 }
 
 impl paras_sudo_wrapper::Config for Runtime {}
-
 
 parameter_types! {
 	pub const BridgeChainId: u8 = 1;

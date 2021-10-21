@@ -33,8 +33,8 @@ use primitives::RuntimeDebug;
 use runtime_primitives::traits::{AppVerify, Block as BlockT};
 
 pub use parity_scale_codec::Compact;
-pub use selendra_core_primitives::*;
 pub use runtime_primitives::traits::{BlakeTwo256, Hash as HashT, IdentifyAccount, Verify};
+pub use selendra_core_primitives::*;
 
 pub use selendra_parachain::primitives::{
 	BlockData, HeadData, Id, UpwardMessage, ValidationCode, LOWEST_USER_ID,

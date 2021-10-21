@@ -79,7 +79,7 @@ pub fn channel<T>(
 	let (tx, rx) = oneshot::channel();
 
 	(
-		MeteredSender { name: name, inner: tx },
+		MeteredSender { name, inner: tx },
 		MeteredReceiver {
 			name,
 			inner: rx,

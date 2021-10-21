@@ -17,13 +17,13 @@
 //! Assignment criteria VRF generation and checking.
 
 use parity_scale_codec::{Decode, Encode};
+use sc_keystore::LocalKeystore;
 use selendra_node_primitives::approval::{
 	self as approval_types, AssignmentCert, AssignmentCertKind, DelayTranche, RelayVRFStory,
 };
 use selendra_primitives::v1::{
 	AssignmentId, AssignmentPair, CandidateHash, CoreIndex, GroupIndex, SessionInfo, ValidatorIndex,
 };
-use sc_keystore::LocalKeystore;
 use sp_application_crypto::Public;
 
 use merlin::Transcript;

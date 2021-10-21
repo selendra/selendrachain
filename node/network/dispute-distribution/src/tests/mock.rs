@@ -22,8 +22,8 @@ use std::{collections::HashMap, sync::Arc};
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 
-use selendra_node_network_protocol::{authority_discovery::AuthorityDiscovery, PeerId};
 use sc_keystore::LocalKeystore;
+use selendra_node_network_protocol::{authority_discovery::AuthorityDiscovery, PeerId};
 use sp_application_crypto::AppKey;
 use sp_keyring::Sr25519Keyring;
 use sp_keystore::{SyncCryptoStore, SyncCryptoStorePtr};
