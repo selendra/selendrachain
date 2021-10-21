@@ -17,7 +17,7 @@
 mod mock;
 
 use mock::{
-	kusama_like_with_balances, AccountId, Balance, Balances, BaseXcmWeight, XcmConfig, CENTS,
+	selendra_like_with_balances, AccountId, Balance, Balances, BaseXcmWeight, XcmConfig, CENTS,
 };
 use selendra_parachain::primitives::Id as ParaId;
 use sp_runtime::traits::AccountIdConversion;
@@ -42,7 +42,7 @@ fn buy_execution<C>() -> Instruction<C> {
 fn withdraw_and_deposit_works() {
 	let para_acc: AccountId = ParaId::from(PARA_ID).into_account();
 	let balances = vec![(ALICE, INITIAL_BALANCE), (para_acc.clone(), INITIAL_BALANCE)];
-	kusama_like_with_balances(balances).execute_with(|| {
+	selendra_like_with_balances(balances).execute_with(|| {
 		let other_para_id = 3000;
 		let amount = REGISTER_AMOUNT;
 		let weight = 3 * BaseXcmWeight::get();
@@ -79,7 +79,7 @@ fn query_holding_works() {
 	use xcm::opaque::latest::prelude::*;
 	let para_acc: AccountId = ParaId::from(PARA_ID).into_account();
 	let balances = vec![(ALICE, INITIAL_BALANCE), (para_acc.clone(), INITIAL_BALANCE)];
-	kusama_like_with_balances(balances).execute_with(|| {
+	selendra_like_with_balances(balances).execute_with(|| {
 		let other_para_id = 3000;
 		let amount = REGISTER_AMOUNT;
 		let query_id = 1234;
@@ -156,11 +156,11 @@ fn query_holding_works() {
 }
 
 /// Scenario:
-/// A parachain wants to move KSM from Kusama to Statemine.
+/// A parachain wants to move SEL from Selendra to Statemine.
 /// The parachain sends an XCM to withdraw funds combined with a teleport to the destination.
 ///
 /// This way of moving funds from a relay to a parachain will only work for trusted chains.
-/// Reserve based transfer should be used to move KSM to a community parachain.
+/// Reserve based transfer should be used to move SEL to a community parachain.
 ///
 /// Asserts that the balances are updated accordingly and the correct XCM is sent.
 #[test]
@@ -168,7 +168,7 @@ fn teleport_to_statemine_works() {
 	use xcm::opaque::latest::prelude::*;
 	let para_acc: AccountId = ParaId::from(PARA_ID).into_account();
 	let balances = vec![(ALICE, INITIAL_BALANCE), (para_acc.clone(), INITIAL_BALANCE)];
-	kusama_like_with_balances(balances).execute_with(|| {
+	selendra_like_with_balances(balances).execute_with(|| {
 		let statemine_id = 1000;
 		let other_para_id = 3000;
 		let amount = REGISTER_AMOUNT;
@@ -208,7 +208,7 @@ fn teleport_to_statemine_works() {
 			)]
 		);
 
-		// teleports are allowed from statemine to kusama.
+		// teleports are allowed from statemine to selendra.
 		let r = XcmExecutor::<XcmConfig>::execute_xcm(
 			Parachain(PARA_ID).into(),
 			Xcm(vec![
@@ -248,7 +248,7 @@ fn teleport_to_statemine_works() {
 }
 
 /// Scenario:
-/// A parachain wants to move KSM from Kusama to the parachain.
+/// A parachain wants to move SEL from Selendra to the parachain.
 /// It withdraws funds and then deposits them into the reserve account of the destination chain.
 /// to the destination.
 ///
@@ -258,7 +258,7 @@ fn reserve_based_transfer_works() {
 	use xcm::opaque::latest::prelude::*;
 	let para_acc: AccountId = ParaId::from(PARA_ID).into_account();
 	let balances = vec![(ALICE, INITIAL_BALANCE), (para_acc.clone(), INITIAL_BALANCE)];
-	kusama_like_with_balances(balances).execute_with(|| {
+	selendra_like_with_balances(balances).execute_with(|| {
 		let other_para_id = 3000;
 		let amount = REGISTER_AMOUNT;
 		let transfer_effects = vec![

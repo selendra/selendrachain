@@ -29,26 +29,12 @@ use primitives::v1::{
 	ValidationCode, ValidationCodeHash, ValidatorId, ValidatorIndex,
 };
 use runtime_common::{
-	auctions, crowdloan, impls::DealWithFees, paras_registrar, slots, xcm_sender, BlockHashCount,
-	BlockLength, BlockWeights, CurrencyToVote, OffchainSolutionLengthLimit,
-	OffchainSolutionWeightLimit, RocksDbWeight, SlowAdjustingFeeUpdate, ToAuthor,
+	auctions, crowdloan, impls::DealWithFees, paras_registrar, slots, xcm_sender, paras_sudo_wrapper,
+	BlockHashCount, BlockLength, BlockWeights, CurrencyToVote, OffchainSolutionLengthLimit,
+	OffchainSolutionWeightLimit, RocksDbWeight, SlowAdjustingFeeUpdate, ToAuthor, 
 };
-use sp_core::{
-	crypto::Public,
-	u32_trait::{_1, _2, _3, _5},
-	H160, H256, U256,
-};
-use sp_std::{collections::btree_map::BTreeMap, convert::TryFrom, marker::PhantomData, prelude::*};
-
-use fp_rpc::TransactionStatus;
-use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
-use pallet_evm::{Account as EvmAccount, EnsureAddressTruncated, FeeCalculator, Runner};
-
-pub struct SelendraGasWeightMapping;
-use evm_accounts::EvmAddressMapping;
-
-pub use pallet_bridge;
-pub use pallet_bridge_transfer;
+use sp_core::u32_trait::{_1, _2, _3, _5};
+use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 
 use runtime_parachains::{
 	configuration as parachains_configuration, dmp as parachains_dmp, hrmp as parachains_hrmp,
@@ -64,11 +50,11 @@ use beefy_primitives::crypto::AuthorityId as BeefyId;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		Contains, Everything, FindAuthor, InstanceFilter, KeyOwnerProofSystem, LockIdentifier,
-		Nothing, OnRuntimeUpgrade,
+		Contains, Everything, InstanceFilter, KeyOwnerProofSystem, LockIdentifier, Nothing,
+		OnRuntimeUpgrade,
 	},
 	weights::Weight,
-	ConsensusEngineId, PalletId, RuntimeDebug,
+	PalletId, RuntimeDebug,
 };
 use frame_system::{EnsureOneOf, EnsureRoot};
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId};
@@ -101,6 +87,8 @@ use xcm_builder::{
 	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 };
 use xcm_executor::XcmExecutor;
+pub use pallet_bridge;
+pub use pallet_bridge_transfer;
 
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_election_provider_multi_phase::Call as EPMCall;
@@ -112,7 +100,7 @@ pub use sp_runtime::BuildStorage;
 
 /// Constant values used within the runtime.
 pub mod constants;
-use constants::{currency::*, fee::*, merge_account::MergeAccountEvm, permission::*, time::*};
+use constants::{currency::*, fee::*, time::*};
 
 // Weights used in the runtime.
 mod weights;
@@ -130,16 +118,23 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 /// Runtime version (Selendra).
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("selendra"),
-	impl_name: create_runtime_str!("selendra-chain"),
+	impl_name: create_runtime_str!("parity-selendra"),
 	authoring_version: 1,
-	spec_version: 113,
-	impl_version: 1,
+	spec_version: 114,
+	impl_version: 0,
 	#[cfg(not(feature = "disable-runtime-api"))]
 	apis: RUNTIME_API_VERSIONS,
 	#[cfg(feature = "disable-runtime-api")]
 	apis: version::create_apis_vec![[]],
 	transaction_version: 1,
 };
+
+/// The BABE epoch configuration at genesis.
+pub const BABE_GENESIS_EPOCH_CONFIG: babe_primitives::BabeEpochConfiguration =
+	babe_primitives::BabeEpochConfiguration {
+		c: PRIMARY_PROBABILITY,
+		allowed_slots: babe_primitives::AllowedSlots::PrimaryAndSecondaryVRFSlots,
+	};
 
 /// Native version.
 #[cfg(any(feature = "std", test))]
@@ -155,9 +150,15 @@ impl Contains<Call> for BaseFilter {
 	}
 }
 
+type MoreThanHalfCouncil = EnsureOneOf<
+	AccountId,
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
+>;
+
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u16 = 972;
+	pub const SS58Prefix: u8 = 42;
 }
 
 impl frame_system::Config for Runtime {
@@ -180,8 +181,7 @@ impl frame_system::Config for Runtime {
 	type PalletInfo = PalletInfo;
 	type AccountData = pallet_balances::AccountData<Balance>;
 	type OnNewAccount = ();
-	type OnKilledAccount =
-		(pallet_evm::CallKillAccount<Runtime>, evm_accounts::CallKillAccount<Runtime>);
+	type OnKilledAccount = ();
 	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
@@ -192,6 +192,12 @@ parameter_types! {
 		BlockWeights::get().max_block;
 	pub const MaxScheduledPerBlock: u32 = 50;
 }
+
+type ScheduleOrigin = EnsureOneOf<
+	AccountId,
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>,
+>;
 
 impl pallet_scheduler::Config for Runtime {
 	type Event = Event;
@@ -241,7 +247,7 @@ impl pallet_babe::Config for Runtime {
 }
 
 parameter_types! {
-	pub const IndexDeposit: Balance = 5000 * CENTS;
+	pub const IndexDeposit: Balance = 100 * CENTS;
 }
 
 impl pallet_indices::Config for Runtime {
@@ -253,7 +259,7 @@ impl pallet_indices::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: Balance = 1000 * CENTS;
+	pub const ExistentialDeposit: Balance = 1 * CENTS;
 	pub const MaxLocks: u32 = 50;
 	pub const MaxReserves: u32 = 50;
 }
@@ -271,7 +277,7 @@ impl pallet_balances::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 500 * NANO;
+	pub const TransactionByteFee: Balance = 10 * MILLICENTS;
 	/// This value increases the priority of `Operational` transactions by adding
 	/// a "virtual tip" that's equal to the `OperationalFeeMultiplier * final_fee`.
 	pub const OperationalFeeMultiplier: u8 = 5;
@@ -289,7 +295,7 @@ parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
 }
 impl pallet_timestamp::Config for Runtime {
-	type Moment = Moment;
+	type Moment = u64;
 	type OnTimestampSet = Babe;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = weights::pallet_timestamp::WeightInfo<Runtime>;
@@ -494,6 +500,12 @@ parameter_types! {
 	pub const SlashDeferDuration: pallet_staking::EraIndex = 27;
 	pub const MaxNominatorRewardedPerValidator: u32 = 256;
 }
+
+type SlashCancelOrigin = EnsureOneOf<
+	AccountId,
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>,
+>;
 
 impl frame_election_provider_support::onchain::Config for Runtime {
 	type Accuracy = runtime_common::elections::OnOnChainAccuracy;
@@ -703,6 +715,12 @@ parameter_types! {
 	pub const MaxPeerDataEncodingSize: u32 = 1_000;
 }
 
+type ApproveOrigin = EnsureOneOf<
+	AccountId,
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>,
+>;
+
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
@@ -857,9 +875,10 @@ where
 }
 
 parameter_types! {
-	pub const BasicDeposit: Balance = 1 * UNITS;       // 258 bytes on-chain
-	pub const FieldDeposit: Balance = 2 * UNITS;        // 66 bytes on-chain
-	pub const SubAccountDeposit: Balance = 2 * UNITS;   // 53 bytes on-chain
+	// Minimum 100 bytes/SEL deposited (1 CENT/byte)
+	pub const BasicDeposit: Balance = 1000 * CENTS;       // 258 bytes on-chain
+	pub const FieldDeposit: Balance = 250 * CENTS;        // 66 bytes on-chain
+	pub const SubAccountDeposit: Balance = 200 * CENTS;   // 53 bytes on-chain
 	pub const MaxSubAccounts: u32 = 100;
 	pub const MaxAdditionalFields: u32 = 100;
 	pub const MaxRegistrars: u32 = 20;
@@ -905,10 +924,10 @@ impl pallet_multisig::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ConfigDepositBase: Balance = 5 * UNITS;
-	pub const FriendDepositFactor: Balance = 3 * UNITS;
+	pub const ConfigDepositBase: Balance = 500 * CENTS;
+	pub const FriendDepositFactor: Balance = 50 * CENTS;
 	pub const MaxFriends: u16 = 9;
-	pub const RecoveryDeposit: Balance = 5 * UNITS;
+	pub const RecoveryDeposit: Balance = 500 * CENTS;
 }
 
 impl pallet_recovery::Config for Runtime {
@@ -922,7 +941,7 @@ impl pallet_recovery::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MinVestedTransfer: Balance = 1000 * CENTS;
+	pub const MinVestedTransfer: Balance = 100 * CENTS;
 }
 
 impl pallet_vesting::Config for Runtime {
@@ -1225,7 +1244,7 @@ pub type SovereignAccountOf = (
 /// Our asset transactor. This is what allows us to interest with the runtime facilities from the point of
 /// view of XCM-only concepts like `MultiLocation` and `MultiAsset`.
 ///
-/// Ours is only aware of the Balances pallet, which is mapped to `SELLocation`.
+/// Ours is only aware of the Balances pallet, which is mapped to `SelLocation`.
 pub type LocalAssetTransactor = XcmCurrencyAdapter<
 	// Use this currency:
 	Balances,
@@ -1268,9 +1287,9 @@ pub type XcmRouter = (
 
 parameter_types! {
 	pub const Selendra: MultiAssetFilter = Wild(AllOf { fun: WildFungible, id: Concrete(SelLocation::get()) });
-	pub const SelendraForIndracore: (MultiAssetFilter, MultiLocation) = (Selendra::get(), Parachain(1000).into());
+	pub const SelendraForStatemint: (MultiAssetFilter, MultiLocation) = (Selendra::get(), Parachain(1000).into());
 }
-pub type TrustedTeleporters = (xcm_builder::Case<SelendraForIndracore>,);
+pub type TrustedTeleporters = (xcm_builder::Case<SelendraForStatemint>,);
 
 /// The barriers one of which must be passed for an XCM message to be executed.
 pub type Barrier = (
@@ -1294,7 +1313,7 @@ impl xcm_executor::Config for XcmConfig {
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<BaseXcmWeight, Call, MaxInstructions>;
 	// The weight trader piggybacks on the existing transaction-fee conversion logic.
-	type Trader = UsingComponents<WeightToFee, SELLocation, AccountId, Balances, ToAuthor<Runtime>>;
+	type Trader = UsingComponents<WeightToFee, SelLocation, AccountId, Balances, ToAuthor<Runtime>>;
 	type ResponseHandler = XcmPallet;
 	type AssetTrap = XcmPallet;
 	type AssetClaims = XcmPallet;
@@ -1318,7 +1337,6 @@ pub type LocalOriginToLocation = (
 	// And a usual Signed origin to be used in XCM as a corresponding AccountId32
 	SignedToAccountId32<Origin, AccountId, SelendraNetwork>,
 );
-
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
 	type SendXcmOrigin = xcm_builder::EnsureXcmOrigin<Origin, LocalOriginToLocation>;
@@ -1344,7 +1362,7 @@ parameter_types! {
 	pub const MaxQueueLen: u32 = 1000;
 	pub const FifoQueueLen: u32 = 250;
 	pub const GiltPeriod: BlockNumber = 30 * DAYS;
-	pub const MinFreeze: Balance = 500 * CENTS;
+	pub const MinFreeze: Balance = 10_000 * CENTS;
 	pub const IntakePeriod: BlockNumber = 5 * MINUTES;
 	pub const MaxIntakeBids: u32 = 100;
 }
@@ -1367,113 +1385,13 @@ impl pallet_gilt::Config for Runtime {
 	type WeightInfo = weights::pallet_gilt::WeightInfo<Runtime>;
 }
 
-impl paras_sudo_wrapper::Config for Runtime {}
-
 impl pallet_sudo::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 }
 
-impl pallet_evm::GasWeightMapping for SelendraGasWeightMapping {
-	fn gas_to_weight(gas: u64) -> Weight {
-		gas.saturating_mul(WEIGHT_PER_GAS)
-	}
-	fn weight_to_gas(weight: Weight) -> u64 {
-		u64::try_from(weight.wrapping_div(WEIGHT_PER_GAS)).unwrap_or(u32::MAX as u64)
-	}
-}
+impl paras_sudo_wrapper::Config for Runtime {}
 
-pub struct FixedGasPrice;
-impl FeeCalculator for FixedGasPrice {
-	fn min_gas_price() -> U256 {
-		(5 * NANO).into()
-	}
-}
-
-parameter_types! {
-	pub const ChainId: u64 = 222;
-	pub BlockGasLimit: U256 = U256::from(u32::max_value());
-}
-
-impl pallet_evm::Config for Runtime {
-	type FeeCalculator = FixedGasPrice;
-	type GasWeightMapping = SelendraGasWeightMapping;
-	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
-	type CallOrigin = EnsureAddressTruncated;
-	type WithdrawOrigin = EnsureAddressTruncated;
-	type AddressMapping = EvmAddressMapping<Runtime>;
-	type Currency = Balances;
-	type Event = Event;
-	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type Precompiles = (
-		pallet_evm_precompile_simple::ECRecover,
-		pallet_evm_precompile_simple::Sha256,
-		pallet_evm_precompile_simple::Ripemd160,
-		pallet_evm_precompile_simple::Identity,
-		pallet_evm_precompile_simple::ECRecoverPublicKey,
-		pallet_evm_precompile_modexp::Modexp,
-		pallet_evm_precompile_bn128::Bn128Add,
-		pallet_evm_precompile_bn128::Bn128Mul,
-		pallet_evm_precompile_bn128::Bn128Pairing,
-		pallet_evm_precompile_simple::ECRecoverPublicKey,
-		pallet_evm_precompile_sha3fips::Sha3FIPS256,
-		pallet_evm_precompile_sha3fips::Sha3FIPS512,
-		pallet_evm_precompile_dispatch::Dispatch<Self>,
-	);
-	type ChainId = ChainId;
-	type OnChargeTransaction = ();
-	type BlockGasLimit = BlockGasLimit;
-	type FindAuthor = EthereumFindAuthor<Babe>;
-}
-
-pub struct EthereumFindAuthor<F>(PhantomData<F>);
-impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
-	fn find_author<'a, I>(digests: I) -> Option<H160>
-	where
-		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
-	{
-		if let Some(author_index) = F::find_author(digests) {
-			let authority_id = Babe::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.0.to_raw_vec()[4..24]))
-		}
-		None
-	}
-}
-
-pub struct TransactionConverter;
-
-impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: EthereumTransaction) -> UncheckedExtrinsic {
-		UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact(transaction).into(),
-		)
-	}
-}
-
-impl fp_rpc::ConvertTransaction<sp_runtime::OpaqueExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: EthereumTransaction) -> sp_runtime::OpaqueExtrinsic {
-		let extrinsic = UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact(transaction).into(),
-		);
-		let encoded = extrinsic.encode();
-		sp_runtime::OpaqueExtrinsic::decode(&mut &encoded[..])
-			.expect("Encoded extrinsic is always valid")
-	}
-}
-
-impl pallet_ethereum::Config for Runtime {
-	type Event = Event;
-	type StateRoot = pallet_ethereum::IntermediateStateRoot;
-}
-
-impl evm_accounts::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type KillAccount = frame_system::Consumer<Runtime>;
-	type AddressMapping = EvmAddressMapping<Runtime>;
-	type MergeAccount = MergeAccountEvm;
-	type WeightInfo = ();
-}
 
 parameter_types! {
 	pub const BridgeChainId: u8 = 1;
@@ -1535,14 +1453,12 @@ construct_runtime! {
 		TechnicalMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 17,
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 18,
 
-	// Evm
-	Evm: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 19,
-	Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned}= 20,
-	EvmAccounts: evm_accounts::{Pallet, Call, Storage, Event<T>} = 21,
+		// Sudo.
+		Sudo: pallet_sudo::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
 
-	// Bridge
-	ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 22,
-	BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 23,
+		// Bridge
+		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 22,
+		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 23,
 
 		// Utility module.
 		Utility: pallet_utility::{Pallet, Call, Event} = 24,
@@ -1599,12 +1515,10 @@ construct_runtime! {
 		Slots: slots::{Pallet, Call, Storage, Event<T>} = 71,
 		Auctions: auctions::{Pallet, Call, Storage, Event<T>} = 72,
 		Crowdloan: crowdloan::{Pallet, Call, Storage, Event<T>} = 73,
+		ParasSudoWrapper: paras_sudo_wrapper::{Pallet, Call} = 74,
 
 		// Pallet for sending XCM.
 		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin} = 99,
-
-		// sudo
-		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 100,
 	}
 }
 
@@ -1637,16 +1551,185 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPallets,
+	(
+		CouncilStoragePrefixMigration,
+		TechnicalCommitteeStoragePrefixMigration,
+		TechnicalMembershipStoragePrefixMigration,
+		MigrateTipsPalletPrefix,
+		BountiesPrefixMigration,
+		StakingBagsListMigrationV8,
+	),
 >;
 /// The payload being signed in the transactions.
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
-/// The BABE epoch configuration at genesis.
-pub const BABE_GENESIS_EPOCH_CONFIG: babe_primitives::BabeEpochConfiguration =
-	babe_primitives::BabeEpochConfiguration {
-		c: PRIMARY_PROBABILITY,
-		allowed_slots: babe_primitives::AllowedSlots::PrimaryAndSecondaryVRFSlots,
-	};
+const BOUNTIES_OLD_PREFIX: &str = "Treasury";
+
+/// Migrate from 'Treasury' to the new prefix 'Bounties'
+pub struct BountiesPrefixMigration;
+
+impl OnRuntimeUpgrade for BountiesPrefixMigration {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		use frame_support::traits::PalletInfo;
+		let name = <Runtime as frame_system::Config>::PalletInfo::name::<Bounties>()
+			.expect("Bounties is part of runtime, so it has a name; qed");
+		pallet_bounties::migrations::v4::migrate::<Runtime, Bounties, _>(BOUNTIES_OLD_PREFIX, name)
+	}
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<(), &'static str> {
+		use frame_support::traits::PalletInfo;
+		let name = <Runtime as frame_system::Config>::PalletInfo::name::<Bounties>()
+			.expect("Bounties is part of runtime, so it has a name; qed");
+		pallet_bounties::migrations::v4::pre_migration::<Runtime, Bounties, _>(
+			BOUNTIES_OLD_PREFIX,
+			name,
+		);
+		Ok(())
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade() -> Result<(), &'static str> {
+		use frame_support::traits::PalletInfo;
+		let name = <Runtime as frame_system::Config>::PalletInfo::name::<Bounties>()
+			.expect("Bounties is part of runtime, so it has a name; qed");
+		pallet_bounties::migrations::v4::post_migration::<Runtime, Bounties, _>(
+			BOUNTIES_OLD_PREFIX,
+			name,
+		);
+		Ok(())
+	}
+}
+
+const COUNCIL_OLD_PREFIX: &str = "Instance1Collective";
+/// Migrate from `Instance1Collective` to the new pallet prefix `Council`
+pub struct CouncilStoragePrefixMigration;
+
+impl OnRuntimeUpgrade for CouncilStoragePrefixMigration {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		pallet_collective::migrations::v4::migrate::<Runtime, Council, _>(COUNCIL_OLD_PREFIX)
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<(), &'static str> {
+		pallet_collective::migrations::v4::pre_migrate::<Council, _>(COUNCIL_OLD_PREFIX);
+		Ok(())
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade() -> Result<(), &'static str> {
+		pallet_collective::migrations::v4::post_migrate::<Council, _>(COUNCIL_OLD_PREFIX);
+		Ok(())
+	}
+}
+
+const TECHNICAL_COMMITTEE_OLD_PREFIX: &str = "Instance2Collective";
+/// Migrate from `Instance2Collective` to the new pallet prefix `TechnicalCommittee`
+pub struct TechnicalCommitteeStoragePrefixMigration;
+
+impl OnRuntimeUpgrade for TechnicalCommitteeStoragePrefixMigration {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		pallet_collective::migrations::v4::migrate::<Runtime, TechnicalCommittee, _>(
+			TECHNICAL_COMMITTEE_OLD_PREFIX,
+		)
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<(), &'static str> {
+		pallet_collective::migrations::v4::pre_migrate::<TechnicalCommittee, _>(
+			TECHNICAL_COMMITTEE_OLD_PREFIX,
+		);
+		Ok(())
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade() -> Result<(), &'static str> {
+		pallet_collective::migrations::v4::post_migrate::<TechnicalCommittee, _>(
+			TECHNICAL_COMMITTEE_OLD_PREFIX,
+		);
+		Ok(())
+	}
+}
+
+const TECHNICAL_MEMBERSHIP_OLD_PREFIX: &str = "Instance1Membership";
+/// Migrate from `Instance1Membership` to the new pallet prefix `TechnicalMembership`
+pub struct TechnicalMembershipStoragePrefixMigration;
+
+impl OnRuntimeUpgrade for TechnicalMembershipStoragePrefixMigration {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		use frame_support::traits::PalletInfo;
+		let name = <Runtime as frame_system::Config>::PalletInfo::name::<TechnicalMembership>()
+			.expect("TechnicalMembership is part of runtime, so it has a name; qed");
+		pallet_membership::migrations::v4::migrate::<Runtime, TechnicalMembership, _>(
+			TECHNICAL_MEMBERSHIP_OLD_PREFIX,
+			name,
+		)
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<(), &'static str> {
+		use frame_support::traits::PalletInfo;
+		let name = <Runtime as frame_system::Config>::PalletInfo::name::<TechnicalMembership>()
+			.expect("TechnicalMembership is part of runtime, so it has a name; qed");
+		pallet_membership::migrations::v4::pre_migrate::<TechnicalMembership, _>(
+			TECHNICAL_MEMBERSHIP_OLD_PREFIX,
+			name,
+		);
+		Ok(())
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade() -> Result<(), &'static str> {
+		use frame_support::traits::PalletInfo;
+		let name = <Runtime as frame_system::Config>::PalletInfo::name::<TechnicalMembership>()
+			.expect("TechnicalMembership is part of runtime, so it has a name; qed");
+		pallet_membership::migrations::v4::post_migrate::<TechnicalMembership, _>(
+			TECHNICAL_MEMBERSHIP_OLD_PREFIX,
+			name,
+		);
+		Ok(())
+	}
+}
+
+const TIPS_OLD_PREFIX: &str = "Treasury";
+/// Migrate pallet-tips from `Treasury` to the new pallet prefix `Tips`
+pub struct MigrateTipsPalletPrefix;
+
+impl OnRuntimeUpgrade for MigrateTipsPalletPrefix {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		pallet_tips::migrations::v4::migrate::<Runtime, Tips, _>(TIPS_OLD_PREFIX)
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<(), &'static str> {
+		pallet_tips::migrations::v4::pre_migrate::<Runtime, Tips, _>(TIPS_OLD_PREFIX);
+		Ok(())
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade() -> Result<(), &'static str> {
+		pallet_tips::migrations::v4::post_migrate::<Runtime, Tips, _>(TIPS_OLD_PREFIX);
+		Ok(())
+	}
+}
+
+// Migration to generate pallet staking's `SortedListProvider` from pre-existing nominators.
+pub struct StakingBagsListMigrationV8;
+
+impl OnRuntimeUpgrade for StakingBagsListMigrationV8 {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		pallet_staking::migrations::v8::migrate::<Runtime>()
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<(), &'static str> {
+		pallet_staking::migrations::v8::pre_migrate::<Runtime>()
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade() -> Result<(), &'static str> {
+		pallet_staking::migrations::v8::post_migrate::<Runtime>()
+	}
+}
 
 #[cfg(not(feature = "disable-runtime-api"))]
 sp_api::impl_runtime_apis! {
@@ -1849,6 +1932,7 @@ sp_api::impl_runtime_apis! {
 			// probability of a slot being empty), is done in accordance to the
 			// slot duration and expected target block time, for safely
 			// resisting network delays of maximum two seconds.
+			// <https://research.web3.foundation/en/latest/selendra/BABE/Babe/#6-practical-results>
 			babe_primitives::BabeGenesisConfiguration {
 				slot_duration: Babe::slot_duration(),
 				epoch_length: EpochDuration::get(),
@@ -1931,128 +2015,6 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl fp_rpc::EthereumRuntimeRPCApi<Block> for Runtime {
-		fn chain_id() -> u64 {
-			<Runtime as pallet_evm::Config>::ChainId::get()
-		}
-
-		fn account_basic(address: H160) -> EvmAccount {
-			Evm::account_basic(&address)
-		}
-
-		fn gas_price() -> U256 {
-			<Runtime as pallet_evm::Config>::FeeCalculator::min_gas_price()
-		}
-
-		fn account_code_at(address: H160) -> Vec<u8> {
-			Evm::account_codes(address)
-		}
-
-		fn author() -> H160 {
-			<pallet_evm::Pallet<Runtime>>::find_author()
-		}
-
-		fn storage_at(address: H160, index: U256) -> H256 {
-			let mut tmp = [0u8; 32];
-			index.to_big_endian(&mut tmp);
-			Evm::account_storages(address, H256::from_slice(&tmp[..]))
-		}
-
-		fn call(
-			from: H160,
-			to: H160,
-			data: Vec<u8>,
-			value: U256,
-			gas_limit: U256,
-			gas_price: Option<U256>,
-			nonce: Option<U256>,
-			estimate: bool,
-		) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
-			let config = if estimate {
-				let mut config = <Runtime as pallet_evm::Config>::config().clone();
-				config.estimate = true;
-				Some(config)
-			} else {
-				None
-			};
-
-			<Runtime as pallet_evm::Config>::Runner::call(
-				from,
-				to,
-				data,
-				value,
-				gas_limit.low_u64(),
-				gas_price,
-				nonce,
-				config
-					.as_ref()
-					.unwrap_or(<Runtime as pallet_evm::Config>::config()),
-			)
-			.map_err(|err| err.into())
-		}
-
-		fn create(
-			from: H160,
-			data: Vec<u8>,
-			value: U256,
-			gas_limit: U256,
-			gas_price: Option<U256>,
-			nonce: Option<U256>,
-			estimate: bool,
-		) -> Result<pallet_evm::CreateInfo, sp_runtime::DispatchError> {
-			let config = if estimate {
-				let mut config = <Runtime as pallet_evm::Config>::config().clone();
-				config.estimate = true;
-				Some(config)
-			} else {
-				None
-			};
-
-			<Runtime as pallet_evm::Config>::Runner::create(
-				from,
-				data,
-				value,
-				gas_limit.low_u64(),
-				gas_price,
-				nonce,
-				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
-			).map_err(|err| err.into())
-		}
-
-		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
-			Ethereum::current_transaction_statuses()
-		}
-
-		fn current_block() -> Option<pallet_ethereum::Block> {
-			Ethereum::current_block()
-		}
-
-		fn current_receipts() -> Option<Vec<pallet_ethereum::Receipt>> {
-			Ethereum::current_receipts()
-		}
-
-		fn current_all() -> (
-			Option<pallet_ethereum::Block>,
-			Option<Vec<pallet_ethereum::Receipt>>,
-			Option<Vec<TransactionStatus>>
-		) {
-			(
-				Ethereum::current_block(),
-				Ethereum::current_receipts(),
-				Ethereum::current_transaction_statuses()
-			)
-		}
-
-		fn extrinsic_filter(
-			xts: Vec<<Block as BlockT>::Extrinsic>,
-		) -> Vec<EthereumTransaction> {
-			xts.into_iter().filter_map(|xt| match xt.function {
-				Call::Ethereum(transact(t)) => Some(t),
-				_ => None
-			}).collect::<Vec<EthereumTransaction>>()
-		}
-	}
-
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade() -> (Weight, Weight) {
@@ -2080,6 +2042,7 @@ sp_api::impl_runtime_apis! {
 
 			let mut list = Vec::<BenchmarkList>::new();
 
+			// Selendra
 			// NOTE: Make sure to prefix these `runtime_common::` so that path resolves correctly
 			// in the generated file.
 			list_benchmark!(list, extra, runtime_common::auctions, Auctions);
@@ -2155,6 +2118,7 @@ sp_api::impl_runtime_apis! {
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
+			// Selendra
 			// NOTE: Make sure to prefix these `runtime_common::` so that path resolves correctly
 			// in the generated file.
 			add_benchmark!(params, batches, runtime_common::auctions, Auctions);

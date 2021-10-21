@@ -6,7 +6,7 @@
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("westend-dev"), DB CACHE: 128
 
 // Executed Command:
-// ./target/release/Selendra
+// ./target/release/selendra
 // benchmark
 // --chain
 // westend-dev

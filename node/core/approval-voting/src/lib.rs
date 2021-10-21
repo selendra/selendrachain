@@ -22,7 +22,6 @@
 //! been sufficiently approved to finalize.
 
 use kvdb::KeyValueDB;
-use sc_keystore::LocalKeystore;
 use selendra_node_jaeger as jaeger;
 use selendra_node_primitives::{
 	approval::{
@@ -53,6 +52,7 @@ use selendra_primitives::v1::{
 	GroupIndex, Hash, SessionIndex, SessionInfo, ValidDisputeStatementKind, ValidatorId,
 	ValidatorIndex, ValidatorPair, ValidatorSignature,
 };
+use sc_keystore::LocalKeystore;
 use sp_application_crypto::Pair;
 use sp_consensus::SyncOracle;
 use sp_consensus_slots::Slot;

@@ -66,7 +66,7 @@ pub const VALIDATION_CODE_BOMB_LIMIT: usize = (MAX_CODE_SIZE * 4u32) as usize;
 pub const POV_BOMB_LIMIT: usize = (MAX_POV_SIZE * 4u32) as usize;
 
 /// It would be nice to draw this from the chain state, but we have no tools for it right now.
-/// On Polkadot this is 1 day, and on Selendra it's 6 hours.
+/// On Selendra this is 1 day, and on Selendra it's 6 hours.
 ///
 /// Number of sessions we want to consider in disputes.
 pub const DISPUTE_WINDOW: SessionIndex = 6;
@@ -203,7 +203,7 @@ impl PoV {
 ///
 /// This differs from `CandidateCommitments` in two ways:
 ///
-/// - does not contain the erasure root; that's computed at the Polkadot level, not at Cumulus
+/// - does not contain the erasure root; that's computed at the Selendra level, not at Cumulus
 /// - contains a proof of validity.
 #[derive(Clone, Encode, Decode)]
 pub struct Collation<BlockNumber = selendra_primitives::v1::BlockNumber> {

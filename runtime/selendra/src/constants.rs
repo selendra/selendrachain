@@ -18,13 +18,13 @@
 pub mod currency {
 	use primitives::v0::Balance;
 
-	pub const UNITS: Balance = 1_000_000_000_000_000_000;
-	pub const CENTS: Balance = UNITS / 10_000;
+	pub const UNITS: Balance = 1_000_000_000_000;
+	pub const CENTS: Balance = UNITS / 30_000;
+	pub const GRAND: Balance = CENTS * 100_000;
 	pub const MILLICENTS: Balance = CENTS / 1_000;
-	pub const NANO: Balance = MILLICENTS / 1000;
 
 	pub const fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 5_000 * CENTS + (bytes as Balance) * 50 * MILLICENTS
+		items as Balance * 2_000 * CENTS + (bytes as Balance) * 100 * MILLICENTS
 	}
 }
 
@@ -33,7 +33,7 @@ pub mod time {
 	use primitives::v0::{BlockNumber, Moment};
 	pub const MILLISECS_PER_BLOCK: Moment = 6000;
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-	pub const EPOCH_DURATION_IN_SLOTS: BlockNumber = 4 * HOURS;
+	pub const EPOCH_DURATION_IN_SLOTS: BlockNumber = 1 * HOURS;
 
 	// These time units are defined in number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
@@ -72,7 +72,8 @@ pub mod fee {
 	impl WeightToFeePolynomial for WeightToFee {
 		type Balance = Balance;
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-			let p = 100 * super::currency::MILLICENTS;
+			// in Selendra, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 CENT:
+			let p = super::currency::CENTS;
 			let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 			smallvec![WeightToFeeCoefficient {
 				degree: 1,
@@ -80,73 +81,6 @@ pub mod fee {
 				coeff_frac: Perbill::from_rational(p % q, q),
 				coeff_integer: p / q,
 			}]
-		}
-	}
-}
-
-pub mod permission {
-	use crate::CouncilCollective;
-	use frame_system::{EnsureOneOf, EnsureRoot};
-	use primitives::v0::AccountId;
-	use sp_core::u32_trait::{_1, _2, _3, _5};
-
-	pub type ApproveOrigin = EnsureOneOf<
-		AccountId,
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>,
-	>;
-
-	pub type MoreThanHalfCouncil = EnsureOneOf<
-		AccountId,
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
-	>;
-
-	pub type ScheduleOrigin = EnsureOneOf<
-		AccountId,
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>,
-	>;
-
-	pub type SlashCancelOrigin = EnsureOneOf<
-		AccountId,
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>,
-	>;
-
-	pub type AuctionInitiate = EnsureOneOf<
-		AccountId,
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, CouncilCollective>,
-	>;
-}
-
-pub mod merge_account {
-	use crate::Balances;
-	use evm_accounts::account::MergeAccount;
-	use frame_support::{traits::ReservableCurrency, transactional};
-	use primitives::v1::AccountId;
-	use sp_runtime::DispatchResult;
-
-	pub struct MergeAccountEvm;
-	impl MergeAccount<AccountId> for MergeAccountEvm {
-		#[transactional]
-		fn merge_account(source: &AccountId, dest: &AccountId) -> DispatchResult {
-			// unreserve all reserved currency
-			<Balances as ReservableCurrency<_>>::unreserve(
-				source,
-				Balances::reserved_balance(source),
-			);
-
-			// transfer all free to dest
-			match Balances::transfer(
-				Some(source.clone()).into(),
-				dest.clone().into(),
-				Balances::free_balance(source),
-			) {
-				Ok(_) => Ok(()),
-				Err(e) => Err(e.error),
-			}
 		}
 	}
 }

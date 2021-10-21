@@ -1,14 +1,10 @@
 [package]
 name = "selendra-client"
-version = "0.1.3"
-authors = ["Selendra <info@selendra.org>"]
+version = "0.1.4"
+authors = ["Selendra info@selendra.org"]
 edition = "2018"
 
 [dependencies]
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-
 sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
@@ -22,16 +18,18 @@ sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch 
 sp-offchain = { package = "sp-offchain", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 
+beefy-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+pallet-mmr-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+
 sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 
-pallet-mmr-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-beefy-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-
 # Selendra Runtimes
 selendra-runtime = { path = "../../runtime/selendra" }
 selendra-primitives = { path = "../../primitives" }
 
-fp-rpc = { path = "../../vendors/frontier/primitives/rpc"}

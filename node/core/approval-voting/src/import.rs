@@ -28,7 +28,6 @@
 //!
 //! We maintain a rolling window of session indices. This starts as empty
 
-use sc_keystore::LocalKeystore;
 use selendra_node_jaeger as jaeger;
 use selendra_node_primitives::approval::{
 	self as approval_types, BlockApprovalMeta, RelayVRFStory,
@@ -48,6 +47,7 @@ use selendra_primitives::v1::{
 	BlockNumber, CandidateEvent, CandidateHash, CandidateReceipt, ConsensusLog, CoreIndex,
 	GroupIndex, Hash, Header, SessionIndex,
 };
+use sc_keystore::LocalKeystore;
 use sp_consensus_slots::Slot;
 
 use bitvec::order::Lsb0 as BitOrderLsb0;

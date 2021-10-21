@@ -15,6 +15,7 @@
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Metered variant of oneshot channels to be able to extract delays caused by delayed responses.
+#![allow(dead_code)]
 
 use std::{
 	ops::Deref,
@@ -78,7 +79,7 @@ pub fn channel<T>(
 	let (tx, rx) = oneshot::channel();
 
 	(
-		MeteredSender { name, inner: tx },
+		MeteredSender { name: name, inner: tx },
 		MeteredReceiver {
 			name,
 			inner: rx,

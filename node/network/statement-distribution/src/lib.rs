@@ -21,6 +21,7 @@
 
 #![deny(unused_crate_dependencies)]
 #![warn(missing_docs)]
+#![allow(dead_code)]
 
 use error::{log_error, FatalResult, NonFatalResult};
 use parity_scale_codec::Encode;
@@ -565,7 +566,6 @@ struct FetchingInfo {
 	/// Task taking care of the request.
 	///
 	/// Will be killed once dropped.
-	#[allow(dead_code)]
 	fetching_task: RemoteHandle<()>,
 }
 

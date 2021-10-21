@@ -58,6 +58,7 @@
 // unused dependencies can not work for test and examples at the same time
 // yielding false positives
 #![warn(missing_docs)]
+#![allow(unreachable_code)]
 
 use std::{
 	collections::{hash_map, HashMap},
@@ -400,7 +401,7 @@ pub async fn forward_events<P: BlockchainEvents<Block>>(client: Arc<P>, mut hand
 /// # 	});
 /// # }
 /// ```
-#[allow(unreachable_code)]
+
 #[overlord(
 	gen=AllMessages,
 	event=Event,

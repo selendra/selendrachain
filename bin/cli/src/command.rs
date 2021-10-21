@@ -51,7 +51,7 @@ fn get_exec_name() -> Option<String> {
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Selendra-Chain".into()
+		"Selendra Selendra-Chain".into()
 	}
 
 	fn impl_version() -> String {
@@ -91,11 +91,12 @@ impl SubstrateCli for Cli {
 		};
 		Ok(match id {
 			"selendra" => Box::new(service::chain_spec::selendra_config()?),
-			"dev" => Box::new(service::chain_spec::selendra_development_config()?),
-			"local" => Box::new(service::chain_spec::selendra_local_testnet_config()?),
-			"staging" => Box::new(service::chain_spec::selendra_staging_testnet_config()?),
+			"selendra-dev" => Box::new(service::chain_spec::selendra_development_config()?),
+			"selendra-local" => Box::new(service::chain_spec::selendra_local_testnet_config()?),
+			"selendra-staging" => Box::new(service::chain_spec::selendra_staging_testnet_config()?),
 			path => {
 				let path = std::path::PathBuf::from(path);
+
 				let chain_spec = Box::new(service::SelendraChainSpec::from_json_file(path.clone())?)
 					as Box<dyn service::ChainSpec>;
 				chain_spec
@@ -104,18 +105,18 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(_spec: &Box<dyn service::ChainSpec>) -> &'static RuntimeVersion {
-		&service::selendra_runtime::VERSION
+		return &service::selendra_runtime::VERSION
 	}
 }
 
 fn set_default_ss58_version(_spec: &Box<dyn service::ChainSpec>) {
 	use sp_core::crypto::Ss58AddressFormat;
-	let ss58_version = Ss58AddressFormat::Custom(972);
+	let ss58_version = Ss58AddressFormat::SubstrateAccount;
 	sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 
 const DEV_ONLY_ERROR_PATTERN: &'static str =
-	"can only use subcommand with --chain [selendra-dev], got ";
+	"can only use subcommand with --chain selendra-dev ";
 
 fn ensure_dev(spec: &Box<dyn service::ChainSpec>) -> std::result::Result<(), String> {
 	if spec.is_dev() {
@@ -307,6 +308,7 @@ pub fn run() -> Result<()> {
 				))
 			})
 		},
+
 		#[cfg(not(feature = "try-runtime"))]
 		Some(Subcommand::TryRuntime) => Err(Error::Other(
 			"TryRuntime wasn't enabled when building the node. \

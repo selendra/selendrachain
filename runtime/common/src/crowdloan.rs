@@ -49,6 +49,8 @@
 //! the parachain remains active. Users can withdraw their funds once the slot is completed and funds are
 //! returned to the crowdloan account.
 
+#![allow(dead_code)]
+
 use crate::{
 	slot_range::SlotRange,
 	traits::{Auctioneer, Registrar},
@@ -79,7 +81,6 @@ type LeasePeriodOf<T> = <<T as Config>::Auctioneer as Auctioneer<
 >>::LeasePeriod;
 type BalanceOf<T> = <CurrencyOf<T> as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-#[allow(dead_code)]
 type NegativeImbalanceOf<T> =
 	<CurrencyOf<T> as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 

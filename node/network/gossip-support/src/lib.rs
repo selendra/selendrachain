@@ -67,8 +67,6 @@ const BACKOFF_DURATION: Duration = Duration::from_secs(5);
 /// Especially at startup low connectivity is expected (authority discovery cache needs to be
 /// populated). Authority discovery on Selendra takes around 8 minutes, so warning after 10 minutes
 /// should be fine:
-///
-/// https://github.com/paritytech/substrate/blob/fc49802f263529160635471c8a17888846035f5d/client/authority-discovery/src/lib.rs#L88
 const LOW_CONNECTIVITY_WARN_DELAY: Duration = Duration::from_secs(600);
 
 /// If connectivity is lower than this in percent, issue warning in logs.
@@ -385,6 +383,8 @@ async fn ensure_i_am_an_authority(
 /// groups (because not all validators are parachain validators and the group size is small),
 /// but formed randomly via BABE randomness from two epochs ago.
 /// This limits the amount of gossip peers to 2 * `sqrt(len)` and ensures the diameter of 2.
+///
+/// [web3]: https://research.web3.foundation/en/latest/selendra/networking/3-avail-valid.html#topology
 async fn update_gossip_topology<Context>(
 	ctx: &mut Context,
 	our_index: usize,

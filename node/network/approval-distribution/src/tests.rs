@@ -339,8 +339,6 @@ fn spam_attack_results_in_negative_reputation_change() {
 /// Imagine we send a message to peer A and peer B.
 /// Upon receiving them, they both will try to send the message each other.
 /// This test makes sure they will not punish each other for such duplicate messages.
-///
-/// See <https://github.com/paritytech/polkadot/issues/2499>.
 #[test]
 fn peer_sending_us_the_same_we_just_sent_them_is_ok() {
 	let parent_hash = Hash::repeat_byte(0xFF);

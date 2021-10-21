@@ -1,7 +1,7 @@
 [package]
 name = "selendra-rpc"
-version = "0.1.3"
-authors = ["Selendra <info@selendra.org>"]
+version = "0.1.4"
+authors = ["Selendra info@selendra.org"]
 edition = "2018"
 
 [dependencies]
@@ -28,10 +28,5 @@ pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrat
 sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 beefy-gadget = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 beefy-gadget-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-selendra-runtime = { path = "../../runtime/selendra" }
+
 selendra-primitives = { path = "../../primitives" }
-pallet-ethereum = { path = "../../vendors/frontier/frame/ethereum" }
-fp-rpc = { path = "../../vendors/frontier/primitives/rpc"}
-fc-rpc = { path = "../../vendors/frontier/client/rpc" }
-fc-rpc-core = { path = "../../vendors/frontier/client/rpc-core" }
-fc-db = { path = "../../vendors/frontier/client/db" }

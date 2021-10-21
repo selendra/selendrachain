@@ -31,6 +31,7 @@
 //! data, like what is the corresponding response type.
 //!
 //!  Versioned (v1 module): The actual requests and responses as sent over the network.
+#![allow(dead_code)]
 
 use std::{borrow::Cow, time::Duration, u64};
 
@@ -82,7 +83,6 @@ const MIN_BANDWIDTH_BYTES: u64 = 50 * 1024 * 1024;
 /// When decreasing this value, take into account that the very first request might need to open a
 /// connection, which can be slow. If this causes problems, we should ensure connectivity via peer
 /// sets.
-#[allow(dead_code)]
 const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(3);
 
 /// Request timeout where we can assume the connection is already open (e.g. we have peers in a

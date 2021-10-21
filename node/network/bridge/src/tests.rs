@@ -28,7 +28,6 @@ use std::{
 
 use sc_network::{Event as NetworkEvent, IfDisconnected};
 
-use sc_network::Multiaddr;
 use selendra_node_network_protocol::{request_response::outgoing::Requests, view, ObservedRole};
 use selendra_node_subsystem_test_helpers::{
 	SingleItemSink, SingleItemStream, TestSubsystemContextHandle,
@@ -43,6 +42,7 @@ use selendra_subsystem::{
 	},
 	ActiveLeavesUpdate, FromOverseer, LeafStatus, OverseerSignal,
 };
+use sc_network::Multiaddr;
 use sp_keyring::Sr25519Keyring;
 
 use crate::{network::Network, validator_discovery::AuthorityDiscovery, Rep};

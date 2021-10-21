@@ -18,10 +18,11 @@
 
 use beefy_primitives::crypto::AuthorityId as BeefyId;
 use grandpa::AuthorityId as GrandpaId;
-use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
-use selendra_primitives::v1::{AccountId, AccountPublic, AssignmentId, ValidatorId};
 use selendra_runtime as selendra;
 use selendra_runtime::constants::currency::UNITS as SEL;
+use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
+use pallet_staking::Forcing;
+use selendra_primitives::v1::{AccountId, AccountPublic, AssignmentId, ValidatorId};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
 
@@ -29,10 +30,9 @@ use sc_chain_spec::{ChainSpecExtension, ChainType};
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::{traits::IdentifyAccount, Perbill};
-use std::collections::BTreeMap;
 use telemetry::TelemetryEndpoints;
 
-const SELENDRA_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
+const SELENDRA_STAGING_TELEMETRY_URL: &str = "wss://telemetry.selendra.io/submit/";
 const DEFAULT_PROTOCOL_ID: &str = "sel";
 
 /// Node `ChainSpec` extensions.
@@ -59,7 +59,6 @@ pub fn selendra_config() -> Result<SelendraChainSpec, String> {
 	SelendraChainSpec::from_json_bytes(&include_bytes!("../res/selendra.json")[..])
 }
 
-/// The default parachains host configuration.
 fn default_parachains_host_configuration(
 ) -> selendra_runtime_parachains::configuration::HostConfiguration<
 	selendra_primitives::v1::BlockNumber,
@@ -131,10 +130,15 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 
 	// subkey inspect "$SECRET"
 	let endowed_accounts = vec![
-		// 5CDkUQaKd39SJq9LaUyK8QXbqCTDVgCiDCSu6izYe2pkumBx
-		hex!["06e603f736d04565b4fbb38074c0f52a7687c68ffaf58d1438f47cd6de0d397b"].into(),
+		// 5CVFESwfkk7NmhQ6FwHCM9roBvr9BGa4vJHFYU8DnGQxrXvz
+		hex!["12b782529c22032ed4694e0f6e7d486be7daa6d12088f6bc74d593b3900b8438"].into(),
 	];
 
+	// for i in 1 2 3 4; do for j in stash controller; do subkey inspect "$SECRET//$i//$j"; done; done
+	// for i in 1 2 3 4; do for j in babe; do subkey --sr25519 inspect "$SECRET//$i//$j"; done; done
+	// for i in 1 2 3 4; do for j in grandpa; do subkey --ed25519 inspect "$SECRET//$i//$j"; done; done
+	// for i in 1 2 3 4; do for j in im_online; do subkey --sr25519 inspect "$SECRET//$i//$j"; done; done
+	// for i in 1 2 3 4; do for j in para_validator para_assignment; do subkey --sr25519 inspect "$SECRET//$i//$j"; done; done
 	let initial_authorities: Vec<(
 		AccountId,
 		AccountId,
@@ -146,57 +150,33 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		AuthorityDiscoveryId,
 	)> = vec![
 		(
-			// 5HC5kafMxWYjXbE6ynh4RhoaouH9p5MetZ29VCsRFL1MpKt1
-			hex!["e2cd9722efce97d8f58c90aa36a260885487105b30f886595411ded8149e9d6a"].into(),
-			// 5FLbYZF48DjoxfAAPBiHz9nWQbp1sELvKpPoRdeDhYBpp1Ni
-			hex!["90d360b84b0fbb18f6c20a0220aa33be50b2c1a523774ce811e8d4f81a851c1f"].into(),
-			// 5CDLd7jXEm8u11MzqMPNWenHQGbSKPMREA29XsRNp293Frxw
-			hex!["0695bad3b95809621fe5300eab247f81ec3a76058178a39aac1d43df425d4d0a"]
+			// 5DD7Q4VEfPTLEdn11CnThoHT5f9xKCrnofWJL5SsvpTghaAT
+			hex!["32a5718e87d16071756d4b1370c411bbbb947eb62f0e6e0b937d5cbfc0ea633b"].into(),
+			// 5GNzaEqhrZAtUQhbMe2gn9jBuNWfamWFZHULryFwBUXyd1cG
+			hex!["bee39fe862c85c91aaf343e130d30b643c6ea0b4406a980206f1df8331f7093b"].into(),
+			// 5FpewyS2VY8Cj3tKgSckq8ECkjd1HKHvBRnWhiHqRQsWfFC1
+			hex!["a639b507ee1585e0b6498ff141d6153960794523226866d1b44eba3f25f36356"]
 				.unchecked_into(),
-			// 5Gpr9h1D7Rf5wfLBQgfR9rLonFWued1ehZH5qwM7BnrSaTiB
-			hex!["d29ba662a730a6ad2c834942d093af7bf83f0910b00a61a8ca43dcba98a320f5"]
+			// 5EjvdwATjyFFikdZibVvx1q5uBHhphS2Mnsq5c7yfaYK25vm
+			hex!["76620f7c98bce8619979c2b58cf2b0aff71824126d2b039358729dad993223db"]
 				.unchecked_into(),
-			// 5CDLd7jXEm8u11MzqMPNWenHQGbSKPMREA29XsRNp293Frxw
-			hex!["0695bad3b95809621fe5300eab247f81ec3a76058178a39aac1d43df425d4d0a"]
+			// 5FpewyS2VY8Cj3tKgSckq8ECkjd1HKHvBRnWhiHqRQsWfFC1
+			hex!["a639b507ee1585e0b6498ff141d6153960794523226866d1b44eba3f25f36356"]
 				.unchecked_into(),
-			// 5CDLd7jXEm8u11MzqMPNWenHQGbSKPMREA29XsRNp293Frxw
-			hex!["0695bad3b95809621fe5300eab247f81ec3a76058178a39aac1d43df425d4d0a"]
+			// 5FpewyS2VY8Cj3tKgSckq8ECkjd1HKHvBRnWhiHqRQsWfFC1
+			hex!["a639b507ee1585e0b6498ff141d6153960794523226866d1b44eba3f25f36356"]
 				.unchecked_into(),
-			// 5CDLd7jXEm8u11MzqMPNWenHQGbSKPMREA29XsRNp293Frxw
-			hex!["0695bad3b95809621fe5300eab247f81ec3a76058178a39aac1d43df425d4d0a"]
+			// 5FpewyS2VY8Cj3tKgSckq8ECkjd1HKHvBRnWhiHqRQsWfFC1
+			hex!["a639b507ee1585e0b6498ff141d6153960794523226866d1b44eba3f25f36356"]
 				.unchecked_into(),
-			// 5CDLd7jXEm8u11MzqMPNWenHQGbSKPMREA29XsRNp293Frxw
-			hex!["0695bad3b95809621fe5300eab247f81ec3a76058178a39aac1d43df425d4d0a"]
+			// 5FpewyS2VY8Cj3tKgSckq8ECkjd1HKHvBRnWhiHqRQsWfFC1
+			hex!["a639b507ee1585e0b6498ff141d6153960794523226866d1b44eba3f25f36356"]
 				.unchecked_into(),
-		),
-		(
-			// 5DAuhKbHNiY4L3TraxJ2zQ2KRUKgVF5qUKoTnZnY2iRrvZtZ
-			hex!["30f78f18042b49b301b9ae0b53fe69f28591fe8eb1bf6e5084d390dc4da6697a"].into(),
-			// 5D5GMz9fVCXThwEnLBy7h1bTguSeP6YBVVr3ifEs9nN9Tuqi
-			hex!["2ca9a818b785d75f03934ad728e7ac2e5f9d5ef6e5d1dfe8d42900f3d69f8a37"].into(),
-			// 5EuwnnxtbdDyBd4keWJjJ7vY8H9PE6BHwWje3tP3qLMMUwZo
-			hex!["7e06651e17c4968162f209e686bcb307a7eb432dc6a19f52da77cb79fe956217"]
-				.unchecked_into(),
-			// 5EFNmpGagFWCBHyj1tqkX9vK62posgPJJhZFyWded3bGh6fj
-			hex!["609beccc0b2448883bcdfb982e2032efc6c0808cc57d64c835c3680976df6a24"]
-				.unchecked_into(),
-			// 5EuwnnxtbdDyBd4keWJjJ7vY8H9PE6BHwWje3tP3qLMMUwZo
-			hex!["7e06651e17c4968162f209e686bcb307a7eb432dc6a19f52da77cb79fe956217"]
-				.unchecked_into(),
-			// 5EuwnnxtbdDyBd4keWJjJ7vY8H9PE6BHwWje3tP3qLMMUwZo
-			hex!["7e06651e17c4968162f209e686bcb307a7eb432dc6a19f52da77cb79fe956217"]
-				.unchecked_into(),
-			// 5EuwnnxtbdDyBd4keWJjJ7vY8H9PE6BHwWje3tP3qLMMUwZo
-			hex!["7e06651e17c4968162f209e686bcb307a7eb432dc6a19f52da77cb79fe956217"]
-				.unchecked_into(),
-			// 5EuwnnxtbdDyBd4keWJjJ7vY8H9PE6BHwWje3tP3qLMMUwZo
-			hex!["7e06651e17c4968162f209e686bcb307a7eb432dc6a19f52da77cb79fe956217"]
-				.unchecked_into(),
-		),
+		)
 	];
 
-	const ENDOWMENT: u128 = 1570796325 * SEL;
-	const STASH: u128 = 31416 * SEL;
+	const ENDOWMENT: u128 = 1_000_000 * SEL;
+	const STASH: u128 = 100 * SEL;
 
 	selendra::GenesisConfig {
 		system: selendra::SystemConfig {
@@ -231,16 +211,15 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 				.collect::<Vec<_>>(),
 		},
 		staking: selendra::StakingConfig {
-			validator_count: 2,
-			minimum_validator_count: 2,
+			validator_count: 50,
+			minimum_validator_count: 4,
 			stakers: initial_authorities
 				.iter()
 				.map(|x| (x.0.clone(), x.1.clone(), STASH, selendra::StakerStatus::Validator))
 				.collect(),
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
+			force_era: Forcing::ForceNone,
 			slash_reward_fraction: Perbill::from_percent(10),
-			min_nominator_bond: 314 * SEL,
-			min_validator_bond: STASH,
 			..Default::default()
 		},
 		phragmen_election: Default::default(),
@@ -266,8 +245,6 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		gilt: Default::default(),
 		paras: Default::default(),
 		sudo: selendra::SudoConfig { key: endowed_accounts[0].clone() },
-		evm: selendra::EvmConfig { accounts: BTreeMap::new() },
-		ethereum: selendra::EthereumConfig {},
 	}
 }
 
@@ -277,8 +254,8 @@ pub fn selendra_staging_testnet_config() -> Result<SelendraChainSpec, String> {
 	let boot_nodes = vec![];
 
 	Ok(SelendraChainSpec::from_genesis(
-		"SelendraTestnet",
-		"selendra_testnet",
+		"Selendra Staging Testnet",
+		"selendra_staging_testnet",
 		ChainType::Live,
 		move || selendra_staging_testnet_config_genesis(wasm_binary),
 		boot_nodes,
@@ -287,15 +264,7 @@ pub fn selendra_staging_testnet_config() -> Result<SelendraChainSpec, String> {
 				.expect("Selendra Staging telemetry url is valid; qed"),
 		),
 		Some(DEFAULT_PROTOCOL_ID),
-		Some(
-			serde_json::from_str(
-				"{
-            \"tokenDecimals\": 18,
-            \"tokenSymbol\": \"SEL\"
-        	}",
-			)
-			.expect("Provided valid json map"),
-		),
+		None,
 		Default::default(),
 	))
 }
@@ -375,7 +344,7 @@ fn testnet_accounts() -> Vec<AccountId> {
 	]
 }
 
-/// Helper function to create selendra GenesisConfig for testing
+/// Helper function to create selendra `GenesisConfig` for testing
 pub fn selendra_testnet_genesis(
 	wasm_binary: &[u8],
 	initial_authorities: Vec<(
@@ -393,8 +362,8 @@ pub fn selendra_testnet_genesis(
 ) -> selendra::GenesisConfig {
 	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 
-	const ENDOWMENT: u128 = 500000 * SEL;
-	const STASH: u128 = 31416 * SEL;
+	const ENDOWMENT: u128 = 1_000_000 * SEL;
+	const STASH: u128 = 100 * SEL;
 
 	selendra::GenesisConfig {
 		system: selendra::SystemConfig {
@@ -432,9 +401,8 @@ pub fn selendra_testnet_genesis(
 				.map(|x| (x.0.clone(), x.1.clone(), STASH, selendra::StakerStatus::Validator))
 				.collect(),
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
+			force_era: Forcing::NotForcing,
 			slash_reward_fraction: Perbill::from_percent(10),
-			min_nominator_bond: 314 * SEL,
-			min_validator_bond: STASH,
 			..Default::default()
 		},
 		phragmen_election: Default::default(),
@@ -460,8 +428,6 @@ pub fn selendra_testnet_genesis(
 		gilt: Default::default(),
 		paras: Default::default(),
 		sudo: selendra::SudoConfig { key: endowed_accounts[0].clone() },
-		evm: selendra::EvmConfig { accounts: BTreeMap::new() },
-		ethereum: selendra::EthereumConfig {},
 	}
 }
 
@@ -486,15 +452,7 @@ pub fn selendra_development_config() -> Result<SelendraChainSpec, String> {
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
-		Some(
-			serde_json::from_str(
-				"{
-            \"tokenDecimals\": 18,
-            \"tokenSymbol\": \"SEL\"
-        	}",
-			)
-			.expect("Provided valid json map"),
-		),
+		None,
 		Default::default(),
 	))
 }
@@ -523,15 +481,7 @@ pub fn selendra_local_testnet_config() -> Result<SelendraChainSpec, String> {
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
-		Some(
-			serde_json::from_str(
-				"{
-            \"tokenDecimals\": 18,
-            \"tokenSymbol\": \"SEL\"
-        	}",
-			)
-			.expect("Provided valid json map"),
-		),
+		None,
 		Default::default(),
 	))
 }

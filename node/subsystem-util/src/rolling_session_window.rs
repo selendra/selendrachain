@@ -19,6 +19,8 @@
 //! This is useful for consensus components which need to stay up-to-date about recent sessions but don't
 //! care about the state of particular blocks.
 
+#![allow(dead_code)]
+
 use selendra_primitives::v1::{Hash, SessionIndex, SessionInfo};
 
 use futures::channel::oneshot;

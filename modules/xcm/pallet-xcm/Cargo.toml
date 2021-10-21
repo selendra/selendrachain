@@ -1,9 +1,8 @@
 [package]
 name = "pallet-xcm"
-version = "0.1.3"
-authors = ["Selendra <info@selendra.org>"]
+version = "0.1.4"
+authors = ["Selendra info@selendra.org"]
 edition = "2018"
-
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
@@ -21,12 +20,12 @@ xcm = { path = "..", default-features = false }
 xcm-executor = { path = "../xcm-executor", default-features = false }
 
 [dev-dependencies]
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
-xcm-builder = { path = "../xcm-builder" }
-selendra-parachain = { path = "../../parachain" }
-selendra-runtime-parachains = { path = "../../parachain/runtime" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 
+selendra-runtime-parachains = { path = "../../parachain/runtime" }
+selendra-parachain = { path = "../../parachain" }
+xcm-builder = { path = "../xcm-builder" }
 
 [features]
 default = ["std"]

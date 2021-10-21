@@ -41,7 +41,7 @@
 //! 		.with_string_fmt_debug_tag("foo", foo)
 //! 		// anything that implements `trait std::str::ToString`
 //! 		.with_string_tag("again", 1337_u32)
-//! 		// add a `Stage` for [`dot-jaeger`](https://github.com/paritytech/dot-jaeger)
+//! 		// add a `Stage` for [`sel-jaeger`]
 //! 		.with_stage(jaeger::Stage::CandidateBacking);
 //! 		// complete by design, no completion required
 //! # }
@@ -84,11 +84,11 @@
 //! ```
 
 use parity_scale_codec::Encode;
-use sc_network::PeerId;
 use selendra_node_primitives::PoV;
 use selendra_primitives::v1::{
 	BlakeTwo256, CandidateHash, Hash, HashT, Id as ParaId, ValidatorIndex,
 };
+use sc_network::PeerId;
 
 use std::{fmt, sync::Arc};
 

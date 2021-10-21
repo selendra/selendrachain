@@ -1,7 +1,7 @@
 [package]
 name = "selendra-node-core-runtime-api"
-version = "0.1.3"
-authors = ["Selendra <info@selendra.org>"]
+version = "0.1.4"
+authors = ["Selendra info@selendra.org"]
 edition = "2018"
 
 [dependencies]
@@ -20,7 +20,7 @@ selendra-subsystem = { package = "selendra-node-subsystem", path = "../../subsys
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-futures = { version = "0.3.17", features = ["thread-pool"] }
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
 selendra-node-primitives = { path = "../../primitives" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+futures = { version = "0.3.17", features = ["thread-pool"] }

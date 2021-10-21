@@ -155,7 +155,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + configuration::Config + paras::Config {}
 
 	/// All the validator groups. One for each core. Indices are into `ActiveValidators` - not the
-	/// broader set of Polkadot validators, but instead just the subset used for parachains during
+	/// broader set of Selendra validators, but instead just the subset used for parachains during
 	/// this session.
 	///
 	/// Bound: The number of cores is the sum of the numbers of parachains and parathread multiplexers.
