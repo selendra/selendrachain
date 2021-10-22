@@ -168,7 +168,7 @@ type MoreThanHalfCouncil = EnsureOneOf<
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u8 = 42;
+	pub const SS58Prefix: u16 = 972;
 }
 
 impl frame_system::Config for Runtime {
@@ -191,7 +191,8 @@ impl frame_system::Config for Runtime {
 	type PalletInfo = PalletInfo;
 	type AccountData = pallet_balances::AccountData<Balance>;
 	type OnNewAccount = ();
-	type OnKilledAccount = ();
+	type OnKilledAccount =
+		(pallet_evm::CallKillAccount<Runtime>, pallet_evm_accounts::CallKillAccount<Runtime>);
 	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
@@ -257,7 +258,7 @@ impl pallet_babe::Config for Runtime {
 }
 
 parameter_types! {
-	pub const IndexDeposit: Balance = 100 * CENTS;
+	pub const IndexDeposit: Balance = 5000 * CENTS;
 }
 
 impl pallet_indices::Config for Runtime {
@@ -269,7 +270,7 @@ impl pallet_indices::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: Balance = 1 * CENTS;
+	pub const ExistentialDeposit: Balance = 1000 * CENTS;
 	pub const MaxLocks: u32 = 50;
 	pub const MaxReserves: u32 = 50;
 }
@@ -287,7 +288,7 @@ impl pallet_balances::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 10 * MILLICENTS;
+	pub const TransactionByteFee: Balance =  500 * NANO;
 	/// This value increases the priority of `Operational` transactions by adding
 	/// a "virtual tip" that's equal to the `OperationalFeeMultiplier * final_fee`.
 	pub const OperationalFeeMultiplier: u8 = 5;
@@ -553,11 +554,11 @@ parameter_types! {
 	pub const LaunchPeriod: BlockNumber = 7 * DAYS;
 	pub const VotingPeriod: BlockNumber = 7 * DAYS;
 	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
-	pub const MinimumDeposit: Balance = 100 * CENTS;
+	pub const MinimumDeposit: Balance = 1 * UNITS;
 	pub const EnactmentPeriod: BlockNumber = 8 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
 	// One cent: $10,000 / MB
-	pub const PreimageByteDeposit: Balance = 10 * MILLICENTS;
+	pub const PreimageByteDeposit: Balance = 1 * CENTS;
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -637,7 +638,7 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 }
 
 parameter_types! {
-	pub const CandidacyBond: Balance = 100 * CENTS;
+	pub const CandidacyBond: Balance = 5000 * CENTS;
 	// 1 storage item created, key size is 32 bytes, value size is 16+16.
 	pub const VotingBondBase: Balance = deposit(1, 64);
 	// additional data per vote is 32 bytes (account id).
@@ -703,21 +704,21 @@ impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
 
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub const ProposalBondMinimum: Balance = 2000 * CENTS;
+	pub const ProposalBondMinimum: Balance = 1 * UNITS;
 	pub const SpendPeriod: BlockNumber = 6 * DAYS;
 	pub const Burn: Permill = Permill::from_perthousand(2);
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 
 	pub const TipCountdown: BlockNumber = 1 * DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance = 100 * CENTS;
-	pub const DataDepositPerByte: Balance = 1 * CENTS;
-	pub const BountyDepositBase: Balance = 100 * CENTS;
+	pub const TipReportDepositBase: Balance = 5000 * CENTS;
+	pub const DataDepositPerByte: Balance = 100 * CENTS;
+	pub const BountyDepositBase: Balance = 5000 * CENTS;
 	pub const BountyDepositPayoutDelay: BlockNumber = 4 * DAYS;
 	pub const BountyUpdatePeriod: BlockNumber = 90 * DAYS;
 	pub const MaximumReasonLength: u32 = 16384;
 	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
-	pub const BountyValueMinimum: Balance = 200 * CENTS;
+	pub const BountyValueMinimum: Balance = 5000 * CENTS;
 	pub const MaxApprovals: u32 = 100;
 	pub const MaxAuthorities: u32 = 100_000;
 	pub const MaxKeys: u32 = 10_000;
@@ -886,9 +887,9 @@ where
 
 parameter_types! {
 	// Minimum 100 bytes/SEL deposited (1 CENT/byte)
-	pub const BasicDeposit: Balance = 1000 * CENTS;       // 258 bytes on-chain
-	pub const FieldDeposit: Balance = 250 * CENTS;        // 66 bytes on-chain
-	pub const SubAccountDeposit: Balance = 200 * CENTS;   // 53 bytes on-chain
+	pub const BasicDeposit: Balance = 1 * UNITS;       // 258 bytes on-chain
+	pub const FieldDeposit: Balance = 2 * UNITS;        // 66 bytes on-chain
+	pub const SubAccountDeposit: Balance = 2 * UNITS;   // 53 bytes on-chain
 	pub const MaxSubAccounts: u32 = 100;
 	pub const MaxAdditionalFields: u32 = 100;
 	pub const MaxRegistrars: u32 = 20;
@@ -934,10 +935,10 @@ impl pallet_multisig::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ConfigDepositBase: Balance = 500 * CENTS;
-	pub const FriendDepositFactor: Balance = 50 * CENTS;
+	pub const ConfigDepositBase: Balance = 5 * UNITS;
+	pub const FriendDepositFactor: Balance = 3 * UNITS;
 	pub const MaxFriends: u16 = 9;
-	pub const RecoveryDeposit: Balance = 500 * CENTS;
+	pub const RecoveryDeposit: Balance = 5 * UNITS;
 }
 
 impl pallet_recovery::Config for Runtime {
@@ -951,7 +952,7 @@ impl pallet_recovery::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MinVestedTransfer: Balance = 100 * CENTS;
+	pub const MinVestedTransfer: Balance = 1000 * CENTS;
 }
 
 impl pallet_vesting::Config for Runtime {
@@ -1155,7 +1156,7 @@ impl parachains_initializer::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ParaDeposit: Balance = 40 * UNITS;
+	pub const ParaDeposit: Balance = 5 * UNITS;
 }
 
 impl paras_registrar::Config for Runtime {
@@ -1184,8 +1185,8 @@ impl slots::Config for Runtime {
 
 parameter_types! {
 	pub const CrowdloanId: PalletId = PalletId(*b"py/cfund");
-	pub const SubmissionDeposit: Balance = 3 * CENTS; // ~ 10 SEL
-	pub const MinContribution: Balance = 3_000 * CENTS; // ~ .1 SEL
+	pub const SubmissionDeposit: Balance = 2 * UNITS;
+	pub const MinContribution: Balance = 1 * UNITS;
 	pub const RemoveKeysLimit: u32 = 1000;
 	// Allow 32 bytes for an additional memo to a crowdloan.
 	pub const MaxMemoLength: u8 = 32;
@@ -1372,7 +1373,7 @@ parameter_types! {
 	pub const MaxQueueLen: u32 = 1000;
 	pub const FifoQueueLen: u32 = 250;
 	pub const GiltPeriod: BlockNumber = 30 * DAYS;
-	pub const MinFreeze: Balance = 10_000 * CENTS;
+	pub const MinFreeze: Balance = 500 * CENTS;
 	pub const IntakePeriod: BlockNumber = 5 * MINUTES;
 	pub const MaxIntakeBids: u32 = 100;
 }

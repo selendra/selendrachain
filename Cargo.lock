@@ -8878,6 +8878,7 @@ dependencies = [
  "selendra-runtime-parachains",
  "selendra-statement-distribution",
  "serde",
+ "serde_json",
  "sp-api",
  "sp-authority-discovery",
  "sp-block-builder",
