@@ -109,6 +109,14 @@ selendra-node-core-provisioner = { path = "../core/provisioner", optional = true
 selendra-node-core-runtime-api = { path = "../core/runtime-api", optional = true }
 selendra-statement-distribution = { path = "../network/statement-distribution", optional = true }
 
+# Evm
+pallet-evm = { path = "../../vendors/frontier/frame/evm"}
+fc-db = { path = "../../vendors/frontier/client/db"}
+fc-rpc = { path = "../../vendors/frontier/client/rpc"}
+fc-consensus = { path = "../../vendors/frontier/client/consensus"}
+fc-rpc-core = { path = "../../vendors/frontier/client/rpc-core"}
+fc-mapping-sync = { path = "../../vendors/frontier/client/mapping-sync"}
+
 [dev-dependencies]
 env_logger = "0.9.0"
 log = "0.4.14"

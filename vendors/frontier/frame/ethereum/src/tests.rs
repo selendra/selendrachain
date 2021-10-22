@@ -85,7 +85,7 @@ fn transaction_without_enough_gas_should_not_work() {
 		let mut transaction = default_erc20_creation_transaction(alice);
 		transaction.gas_price = U256::from(11_000_000);
 
-		let call = crate::Call::<Test>::transact(transaction);
+		let call = crate::Call::<Test>::transact{transaction};
 		let source = call.check_self_contained().unwrap().unwrap();
 
 		assert_err!(call.validate_self_contained(&source).unwrap(), InvalidTransaction::Payment);
@@ -103,7 +103,7 @@ fn transaction_with_to_low_nonce_should_not_work() {
 		transaction.nonce = U256::from(1);
 
 		let signed = transaction.sign(&alice.private_key);
-		let call = crate::Call::<Test>::transact(signed);
+		let call = crate::Call::<Test>::transact{ transaction: signed};
 		let source = call.check_self_contained().unwrap().unwrap();
 
 		assert_eq!(
@@ -132,7 +132,7 @@ fn transaction_with_to_low_nonce_should_not_work() {
 		transaction.nonce = U256::from(0);
 
 		let signed2 = transaction.sign(&alice.private_key);
-		let call2 = crate::Call::<Test>::transact(signed2);
+		let call2 = crate::Call::<Test>::transact{ transaction:signed2 };
 		let source2 = call2.check_self_contained().unwrap().unwrap();
 
 		assert_err!(call2.validate_self_contained(&source2).unwrap(), InvalidTransaction::Stale);
@@ -149,7 +149,7 @@ fn transaction_with_to_hight_nonce_should_fail_in_block() {
 		transaction.nonce = U256::one();
 
 		let signed = transaction.sign(&alice.private_key);
-		let call = crate::Call::<Test>::transact(signed);
+		let call = crate::Call::<Test>::transact{ transaction:signed };
 		let source = call.check_self_contained().unwrap().unwrap();
 		let extrinsic = fp_self_contained::CheckedExtrinsic::<_, _, SignedExtra, _> {
 			signed: fp_self_contained::CheckedSignature::SelfContained(source),
@@ -173,7 +173,7 @@ fn transaction_with_invalid_chain_id_should_fail_in_block() {
 		let transaction =
 			default_erc20_creation_unsigned_transaction().sign_with_chain_id(&alice.private_key, 1);
 
-		let call = crate::Call::<Test>::transact(transaction);
+		let call = crate::Call::<Test>::transact{transaction};
 		let source = call.check_self_contained().unwrap().unwrap();
 		let extrinsic = fp_self_contained::CheckedExtrinsic::<_, _, SignedExtra, _> {
 			signed: fp_self_contained::CheckedSignature::SelfContained(source),

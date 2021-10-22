@@ -10,7 +10,7 @@ name = "selendra"
 path = "src/main.rs"
 
 [dependencies]
-selendra-cli = { path = ".cli" }
+selendra-cli = { path = "cli" }
 color-eyre = { version = "0.5.11", default-features = false }
 parity-util-mem = { version = "*", default-features = false, features = ["jemalloc-global"] }
 

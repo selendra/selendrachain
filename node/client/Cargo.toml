@@ -33,3 +33,5 @@ sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkad
 selendra-runtime = { path = "../../runtime/selendra" }
 selendra-primitives = { path = "../../primitives" }
 
+fp-rpc = { path = "../../vendors/frontier/primitives/rpc"}
+

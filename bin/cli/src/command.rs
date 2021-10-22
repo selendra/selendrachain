@@ -42,13 +42,6 @@ impl std::convert::From<String> for Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-fn get_exec_name() -> Option<String> {
-	std::env::current_exe()
-		.ok()
-		.and_then(|pb| pb.file_name().map(|s| s.to_os_string()))
-		.and_then(|s| s.into_string().ok())
-}
-
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
 		"Selendra Selendra-Chain".into()
@@ -79,21 +72,11 @@ impl SubstrateCli for Cli {
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-		let id = if id == "" {
-			let n = get_exec_name().unwrap_or_default();
-			["selendra"]
-				.iter()
-				.cloned()
-				.find(|&chain| n.starts_with(chain))
-				.unwrap_or("selendra")
-		} else {
-			id
-		};
 		Ok(match id {
 			"selendra" => Box::new(service::chain_spec::selendra_config()?),
-			"selendra-dev" => Box::new(service::chain_spec::selendra_development_config()?),
-			"selendra-local" => Box::new(service::chain_spec::selendra_local_testnet_config()?),
-			"selendra-staging" => Box::new(service::chain_spec::selendra_staging_testnet_config()?),
+			"dev" => Box::new(service::chain_spec::selendra_development_config()?),
+			"" | "local" => Box::new(service::chain_spec::selendra_local_testnet_config()?),
+			"staging" => Box::new(service::chain_spec::selendra_staging_testnet_config()?),
 			path => {
 				let path = std::path::PathBuf::from(path);
 

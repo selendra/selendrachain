@@ -25,6 +25,7 @@ use selendra_runtime as selendra;
 use selendra_runtime::constants::currency::UNITS as SEL;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
+use std::collections::BTreeMap;
 
 use sc_chain_spec::{ChainSpecExtension, ChainType};
 use serde::{Deserialize, Serialize};
@@ -237,6 +238,8 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		gilt: Default::default(),
 		paras: Default::default(),
 		sudo: selendra::SudoConfig { key: endowed_accounts[0].clone() },
+		evm: selendra::EvmConfig { accounts: BTreeMap::new() },
+		ethereum: selendra::EthereumConfig {},
 	}
 }
 
@@ -420,6 +423,8 @@ pub fn selendra_testnet_genesis(
 		gilt: Default::default(),
 		paras: Default::default(),
 		sudo: selendra::SudoConfig { key: endowed_accounts[0].clone() },
+		evm: selendra::EvmConfig { accounts: BTreeMap::new() },
+		ethereum: selendra::EthereumConfig {},
 	}
 }
 

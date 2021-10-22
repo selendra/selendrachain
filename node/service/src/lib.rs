@@ -20,6 +20,7 @@
 
 pub mod chain_spec;
 mod grandpa_support;
+mod open_fb;
 mod parachains_db;
 mod relay_chain_selection;
 
@@ -28,9 +29,6 @@ pub mod overseer;
 
 #[cfg(feature = "full-node")]
 pub use self::overseer::{OverseerGen, OverseerGenArgs, RealOverseerGen};
-
-#[cfg(all(test, feature = "disputes"))]
-mod tests;
 
 #[cfg(feature = "full-node")]
 use {
@@ -64,7 +62,8 @@ pub use {
 #[cfg(feature = "full-node")]
 use selendra_subsystem::jaeger;
 
-use std::{sync::Arc, time::Duration};
+use futures::StreamExt;
+use std::{ collections::BTreeMap, sync::{Arc, Mutex}, time::Duration };
 
 use prometheus_endpoint::Registry;
 #[cfg(feature = "full-node")]
@@ -76,9 +75,15 @@ use telemetry::{Telemetry, TelemetryWorkerHandle};
 
 pub use selendra_client::SelendraExecutorDispatch;
 
+use fc_consensus::FrontierBlockImport;
+use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
+use fc_rpc::EthTask;
+use fc_rpc_core::types::FilterPool;
+use open_fb::open_frontier_backend;
+
 pub use chain_spec::SelendraChainSpec;
 pub use consensus_common::{block_validation::Chain, Proposal, SelectChain};
-pub use sc_client_api::{Backend, CallExecutor, ExecutionStrategy};
+pub use sc_client_api::{Backend, BlockchainEvents, CallExecutor, ExecutionStrategy};
 pub use sc_consensus::{BlockImport, LongestChain};
 use sc_executor::NativeElseWasmExecutor;
 pub use sc_executor::NativeExecutionDispatch;
@@ -259,13 +264,13 @@ fn jaeger_launch_collector_with_agent(
 #[cfg(feature = "full-node")]
 type FullSelectChain = relay_chain_selection::SelectRelayChain<FullBackend>;
 #[cfg(feature = "full-node")]
-type FullGrandpaBlockImport<RuntimeApi, ExecutorDispatch, ChainSelection = FullSelectChain> =
+type FullGrandpaBlockImport<RuntimeApi, ExecutorDispatch, ChainSelection = FullSelectChain> = 
 	grandpa::GrandpaBlockImport<
-		FullBackend,
-		Block,
-		FullClient<RuntimeApi, ExecutorDispatch>,
-		ChainSelection,
-	>;
+	FullBackend,
+	Block,
+	FullClient<RuntimeApi, ExecutorDispatch>,
+	ChainSelection,
+>;
 
 #[cfg(feature = "light-node")]
 type LightBackend = service::TLightBackendWithHash<Block, sp_runtime::traits::BlakeTwo256>;
@@ -274,7 +279,7 @@ type LightBackend = service::TLightBackendWithHash<Block, sp_runtime::traits::Bl
 type LightClient<RuntimeApi, ExecutorDispatch> =
 	service::TLightClientWithBackend<Block, RuntimeApi, ExecutorDispatch, LightBackend>;
 
-#[cfg(feature = "full-node")]
+	#[cfg(feature = "full-node")]
 struct Basics<RuntimeApi, ExecutorDispatch>
 where
 	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
@@ -368,12 +373,20 @@ fn new_partial<RuntimeApi, ExecutorDispatch, ChainSelection>(
 		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
 		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
 		(
-			impl service::RpcExtensionBuilder,
+			impl Fn(
+				selendra_rpc::DenyUnsafe,
+				selendra_rpc::SubscriptionTaskExecutor,
+				Arc<sc_network::NetworkService<Block, Hash>>,
+			) -> Result<selendra_rpc::RpcExtension, service::Error>,
 			(
 				babe::BabeBlockImport<
 					Block,
 					FullClient<RuntimeApi, ExecutorDispatch>,
-					FullGrandpaBlockImport<RuntimeApi, ExecutorDispatch, ChainSelection>,
+					FrontierBlockImport<
+						Block,
+						FullGrandpaBlockImport<RuntimeApi, ExecutorDispatch, ChainSelection>,
+						FullClient<RuntimeApi, ExecutorDispatch>,
+					>,
 				>,
 				grandpa::LinkHalf<Block, FullClient<RuntimeApi, ExecutorDispatch>, ChainSelection>,
 				babe::BabeLink<Block>,
@@ -381,20 +394,22 @@ fn new_partial<RuntimeApi, ExecutorDispatch, ChainSelection>(
 			),
 			grandpa::SharedVoterState,
 			std::time::Duration, // slot-duration
+			Arc<fc_db::Backend<Block>>,
+			Option<FilterPool>,
 			Option<Telemetry>,
 		),
 	>,
 	Error,
 >
 where
-	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>> 
 		+ Send
 		+ Sync
 		+ 'static,
 	RuntimeApi::RuntimeApi:
 		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
-	ExecutorDispatch: NativeExecutionDispatch + 'static,
-	ChainSelection: 'static + SelectChain<Block>,
+		ExecutorDispatch: NativeExecutionDispatch + 'static,
+		ChainSelection: 'static + SelectChain<Block>,
 {
 	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
 		config.transaction_pool.clone(),
@@ -416,9 +431,18 @@ where
 
 	let justification_import = grandpa_block_import.clone();
 
+	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
+
+	let frontier_backend = open_frontier_backend(config).unwrap();
+	let frontier_block_import = FrontierBlockImport::new(
+		grandpa_block_import.clone(),
+		client.clone(),
+		frontier_backend.clone(),
+	);
+
 	let babe_config = babe::Config::get_or_compute(&*client)?;
 	let (block_import, babe_link) =
-		babe::block_import(babe_config.clone(), grandpa_block_import, client.clone())?;
+		babe::block_import(babe_config.clone(), frontier_block_import, client.clone())?;
 
 	let slot_duration = babe_link.config().slot_duration();
 	let import_queue = babe::import_queue(
@@ -457,9 +481,10 @@ where
 
 	let import_setup = (block_import.clone(), grandpa_link, babe_link.clone(), beefy_link);
 	let rpc_setup = shared_voter_state.clone();
-
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
 	let slot_duration = babe_config.slot_duration();
+	let filter_pool_clone = filter_pool.clone();
+	let frontier_backend_clone = frontier_backend.clone();
 
 	let rpc_extensions_builder = {
 		let client = client.clone();
@@ -467,13 +492,16 @@ where
 		let transaction_pool = transaction_pool.clone();
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
+		let is_authority = config.role.is_authority();
+		let pool = transaction_pool.clone();
 
 		move |deny_unsafe,
-		      subscription_executor: selendra_rpc::SubscriptionTaskExecutor|
+		      subscription_executor: selendra_rpc::SubscriptionTaskExecutor,
+		      network: Arc<sc_network::NetworkService<Block, <Block as BlockT>::Hash>>|
 		      -> Result<selendra_rpc::RpcExtension, service::Error> {
 			let deps = selendra_rpc::FullDeps {
 				client: client.clone(),
-				pool: transaction_pool.clone(),
+				pool: pool.clone(),
 				select_chain: select_chain.clone(),
 				chain_spec: chain_spec.cloned_box(),
 				deny_unsafe,
@@ -491,11 +519,16 @@ where
 				},
 				beefy: selendra_rpc::BeefyDeps {
 					beefy_commitment_stream: beefy_commitment_stream.clone(),
-					subscription_executor,
+					subscription_executor: subscription_executor.clone(),
 				},
+				graph: pool.pool().clone(),
+				is_authority,
+				network,
+				filter_pool: filter_pool_clone.clone(),
+				frontier_backend: frontier_backend.clone(),
 			};
 
-			selendra_rpc::create_full(deps).map_err(Into::into)
+			selendra_rpc::create_full(deps, subscription_executor).map_err(Into::into)
 		}
 	};
 
@@ -507,7 +540,15 @@ where
 		select_chain,
 		import_queue,
 		transaction_pool,
-		other: (rpc_extensions_builder, import_setup, rpc_setup, slot_duration, telemetry),
+		other: (
+			rpc_extensions_builder,
+			import_setup,
+			rpc_setup,
+			slot_duration,
+			frontier_backend_clone,
+			filter_pool,
+			telemetry,
+		),
 	})
 }
 
@@ -578,7 +619,7 @@ where
 		+ 'static,
 	RuntimeApi::RuntimeApi:
 		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
-	ExecutorDispatch: NativeExecutionDispatch + 'static,
+		ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
 	let best_block = select_chain.best_chain().await?;
 
@@ -632,9 +673,9 @@ pub fn new_full<RuntimeApi, ExecutorDispatch, OverseerGenerator>(
 ) -> Result<NewFull<Arc<FullClient<RuntimeApi, ExecutorDispatch>>>, Error>
 where
 	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
-		+ Send
-		+ Sync
-		+ 'static,
+	+ Send
+	+ Sync
+	+ 'static,
 	RuntimeApi::RuntimeApi:
 		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
@@ -682,8 +723,17 @@ where
 		select_chain,
 		import_queue,
 		transaction_pool,
-		other: (rpc_extensions_builder, import_setup, rpc_setup, slot_duration, mut telemetry),
-	} = new_partial::<RuntimeApi, ExecutorDispatch, SelectRelayChain<_>>(
+		other:
+			(
+				_rpc_extensions_builder,
+				import_setup,
+				rpc_setup,
+				slot_duration,
+				frontier_backend,
+				filter_pool,
+				mut telemetry,
+			),
+		} = new_partial::<RuntimeApi, ExecutorDispatch, SelectRelayChain<_>>(
 		&mut config,
 		basics,
 		select_chain,
@@ -769,6 +819,24 @@ where
 		},
 	};
 
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-mapping-sync-worker",
+		MappingSyncWorker::new(
+			client.import_notification_stream(),
+			Duration::new(6, 0),
+			client.clone(),
+			backend.clone(),
+			frontier_backend.clone(),
+			SyncStrategy::Normal,
+		)
+		.for_each(|()| futures::future::ready(())),
+	);
+
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-schema-cache-task",
+		EthTask::ethereum_schema_cache_task(Arc::clone(&client), Arc::clone(&frontier_backend)),
+	);
+
 	let chain_selection_config = ChainSelectionConfig {
 		col_data: crate::parachains_db::REAL_COLUMNS.col_chain_selection_data,
 		stagnant_check_interval: chain_selection_subsystem::StagnantCheckInterval::never(),
@@ -776,6 +844,11 @@ where
 
 	let dispute_coordinator_config = DisputeCoordinatorConfig {
 		col_data: crate::parachains_db::REAL_COLUMNS.col_dispute_coordinator_data,
+	};
+
+	let network_clone = network.clone();
+	let rpc_extensions_builder = move |deny_unsafe, subscription_executor| {
+		_rpc_extensions_builder(deny_unsafe, subscription_executor, network_clone.clone())
 	};
 
 	let rpc_handlers = service::spawn_tasks(service::SpawnTasksParams {
@@ -803,7 +876,6 @@ where
 		futures::executor::block_on(active_leaves(select_chain.as_longest_chain(), &*client))?;
 
 	let authority_discovery_service = if role.is_authority() || is_collator.is_collator() {
-		use futures::StreamExt;
 		use sc_network::Event;
 
 		let authority_discovery_role = if role.is_authority() {
@@ -904,6 +976,16 @@ where
 		);
 		None
 	};
+
+	// Spawn Frontier EthFilterApi maintenance task.
+	if let Some(filter_pool) = filter_pool {
+		// Each filter is allowed to stay in the pool for 100 blocks.
+		const FILTER_RETAIN_THRESHOLD: u64 = 100;
+		task_manager.spawn_essential_handle().spawn(
+			"frontier-filter-pool",
+			EthTask::filter_pool_task(Arc::clone(&client), filter_pool, FILTER_RETAIN_THRESHOLD),
+		);
+	}
 
 	if role.is_authority() {
 		let can_author_with =
