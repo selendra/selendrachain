@@ -95,6 +95,18 @@ xcm-builder = { path = "../../modules/xcm/xcm-builder", default-features = false
 pallet-bridge = { default-features = false, path = "../../modules/bridge" }
 pallet-bridge-transfer = { default-features = false, path = "../../modules/bridge_transfer" }
 
+# Evm
+evm = { version = "0.30.0", default-features = false, features = ["with-codec"] }
+pallet-ethereum  = { path = "../../vendors/frontier/frame/ethereum", default-features = false }
+pallet-evm = { path = "../../vendors/frontier/frame/evm", default-features = false }
+pallet-evm-precompile-bn128 = { path = "../../vendors/frontier/frame/evm/precompile/bn128", default-features = false }
+pallet-evm-precompile-dispatch = { path = "../../vendors/frontier/frame/evm/precompile/dispatch", default-features = false }
+pallet-evm-precompile-modexp = { path = "../../vendors/frontier/frame/evm/precompile/modexp", default-features = false }
+pallet-evm-precompile-simple = { path = "../../vendors/frontier/frame/evm/precompile/simple", default-features = false }
+pallet-evm-precompile-sha3fips = { path = "../../vendors/frontier/frame/evm/precompile/sha3fips", default-features = false }
+pallet-evm-accounts = { path = "../../vendors/frontier/frame/evm/accounts", default-features = false }
+fp-rpc = { path = "../../vendors/frontier/primitives/rpc", default-features = false }
+
 [dev-dependencies]
 tiny-keccak = "2.0.2"
 separator = "0.4.1"
@@ -182,7 +194,17 @@ std = [
 	"pallet-bags-list/std",
 	"pallet-sudo/std",
 	"pallet-bridge/std",
-	"pallet-bridge-transfer/std"
+	"pallet-bridge-transfer/std",
+	"evm/std",
+	"pallet-ethereum/std",
+	"pallet-evm/std",
+	"pallet-evm-precompile-bn128/std",
+	"pallet-evm-precompile-dispatch/std",
+	"pallet-evm-precompile-modexp/std",
+	"pallet-evm-precompile-simple/std",
+	"pallet-evm-precompile-sha3fips/std",
+	"pallet-evm-accounts/std",
+	"fp-rpc/std",
 ]
 runtime-benchmarks = [
 	"runtime-common/runtime-benchmarks",

@@ -14,17 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
+
 /// Money matters.
 pub mod currency {
 	use primitives::v0::Balance;
 
-	pub const UNITS: Balance = 1_000_000_000_000;
-	pub const CENTS: Balance = UNITS / 30_000;
-	pub const GRAND: Balance = CENTS * 100_000;
+	pub const UNITS: Balance = 1_000_000_000_000_000_000;
+	pub const CENTS: Balance = UNITS / 10_000;
 	pub const MILLICENTS: Balance = CENTS / 1_000;
+	pub const NANO: Balance = MILLICENTS / 1000;
 
 	pub const fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 2_000 * CENTS + (bytes as Balance) * 100 * MILLICENTS
+		items as Balance * 5_000 * CENTS + (bytes as Balance) * 50 * MILLICENTS
 	}
 }
 
@@ -72,8 +73,7 @@ pub mod fee {
 	impl WeightToFeePolynomial for WeightToFee {
 		type Balance = Balance;
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-			// in Selendra, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 CENT:
-			let p = super::currency::CENTS;
+			let p = 100 * super::currency::MILLICENTS;
 			let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 			smallvec![WeightToFeeCoefficient {
 				degree: 1,
@@ -81,6 +81,36 @@ pub mod fee {
 				coeff_frac: Perbill::from_rational(p % q, q),
 				coeff_integer: p / q,
 			}]
+		}
+	}
+}
+
+pub mod merge_account {
+	use crate::Balances;
+	use pallet_evm_accounts::account::MergeAccount;
+	use frame_support::{traits::ReservableCurrency, transactional};
+	use primitives::v1::AccountId;
+	use sp_runtime::DispatchResult;
+
+	pub struct MergeAccountEvm;
+	impl MergeAccount<AccountId> for MergeAccountEvm {
+		#[transactional]
+		fn merge_account(source: &AccountId, dest: &AccountId) -> DispatchResult {
+			// unreserve all reserved currency
+			<Balances as ReservableCurrency<_>>::unreserve(
+				source,
+				Balances::reserved_balance(source),
+			);
+
+			// transfer all free to dest
+			match Balances::transfer(
+				Some(source.clone()).into(),
+				dest.clone().into(),
+				Balances::free_balance(source),
+			) {
+				Ok(_) => Ok(()),
+				Err(e) => Err(e.error),
+			}
 		}
 	}
 }
