@@ -23,6 +23,7 @@
 //! Subsystems' APIs are defined separately from their implementation, leading to easier mocking.
 
 use futures::channel::oneshot;
+use sc_network::Multiaddr;
 use thiserror::Error;
 
 pub use sc_network::IfDisconnected;
@@ -189,7 +190,7 @@ impl BoundToRelayParent for CollatorProtocolMessage {
 /// Messages received by the dispute coordinator subsystem.
 #[derive(Debug)]
 pub enum DisputeCoordinatorMessage {
-	/// Import a statement by a validator about a candidate.
+	/// Import statements by validators about a candidate.
 	///
 	/// The subsystem will silently discard ancient statements or sets of only dispute-specific statements for
 	/// candidates that are previously unknown to the subsystem. The former is simply because ancient
@@ -251,12 +252,12 @@ pub enum DisputeCoordinatorMessage {
 	/// is typically the number of the last finalized block but may be slightly higher. This block
 	/// is inevitably going to be finalized so it is not accounted for by this function.
 	DetermineUndisputedChain {
-		/// The number of the lowest possible block to vote on.
-		base_number: BlockNumber,
+		/// The lowest possible block to vote on.
+		base: (BlockNumber, Hash),
 		/// Descriptions of all the blocks counting upwards from the block after the base number
 		block_descriptions: Vec<BlockDescription>,
-		/// A response channel - `None` to vote on base, `Some` to vote higher.
-		tx: oneshot::Sender<Option<(BlockNumber, Hash)>>,
+		/// The block to vote on, might be base in case there is no better.
+		tx: oneshot::Sender<(BlockNumber, Hash)>,
 	},
 }
 
@@ -345,6 +346,14 @@ pub enum NetworkBridgeMessage {
 		/// authority discovery has failed to resolve.
 		failed: oneshot::Sender<usize>,
 	},
+	/// Alternative to `ConnectToValidators` in case you already know the `Multiaddrs` you want to be
+	/// connected to.
+	ConnectToResolvedValidators {
+		/// Each entry corresponds to the addresses of an already resolved validator.
+		validator_addrs: Vec<Vec<Multiaddr>>,
+		/// The peer set we want the connection on.
+		peer_set: PeerSet,
+	},
 	/// Inform the distribution subsystems about the new
 	/// gossip network topology formed.
 	NewGossipTopology {
@@ -365,6 +374,7 @@ impl NetworkBridgeMessage {
 			Self::SendValidationMessages(_) => None,
 			Self::SendCollationMessages(_) => None,
 			Self::ConnectToValidators { .. } => None,
+			Self::ConnectToResolvedValidators { .. } => None,
 			Self::SendRequests { .. } => None,
 			Self::NewGossipTopology { .. } => None,
 		}
@@ -513,7 +523,7 @@ pub enum ChainApiMessage {
 	/// Get the cumulative weight of the given block, by hash.
 	/// If the block or weight is unknown, this returns `None`.
 	///
-	/// Note: this the weight within the low-level fork-choice rule,
+	/// Note: this is the weight within the low-level fork-choice rule,
 	/// not the high-level one implemented in the chain-selection subsystem.
 	///
 	/// Weight is used for comparing blocks in a fork-choice rule.
@@ -850,5 +860,9 @@ pub enum ApprovalDistributionMessage {
 }
 
 /// Message to the Gossip Support subsystem.
-#[derive(Debug)]
-pub enum GossipSupportMessage {}
+#[derive(Debug, derive_more::From)]
+pub enum GossipSupportMessage {
+	/// Dummy constructor, so we can receive networking events.
+	#[from]
+	NetworkBridgeUpdateV1(NetworkBridgeEvent<protocol_v1::GossipSuppportNetworkMessage>),
+}

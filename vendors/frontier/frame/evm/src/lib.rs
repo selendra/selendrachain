@@ -302,7 +302,6 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	#[pallet::metadata(T::AccountId = "AccountId")]
 	pub enum Event<T: Config> {
 		/// Ethereum events from contracts.
 		Log(Log),
@@ -487,7 +486,6 @@ where
 		})
 	}
 }
-
 pub trait AddressMapping<A> {
 	fn into_account_id(address: H160) -> A;
 	fn to_evm_address(account: &A) -> Option<H160>;
@@ -650,7 +648,7 @@ pub trait OnChargeEVMTransaction<T: Config> {
 		who: &H160,
 		corrected_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
-	) -> Result<(), Error<T>>;
+	);
 }
 
 /// Implements the transaction payment for a pallet implementing the `Currency`
@@ -692,7 +690,7 @@ where
 		who: &H160,
 		corrected_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
-	) -> Result<(), Error<T>> {
+	) {
 		if let Some(paid) = already_withdrawn {
 			let account_id = T::AddressMapping::into_account_id(*who);
 
@@ -705,11 +703,12 @@ where
 			let refund_imbalance = C::deposit_into_existing(&account_id, refund_amount)
 				.unwrap_or_else(|_| C::PositiveImbalance::zero());
 			// merge the imbalance caused by paying the fees and refunding parts of it again.
-			let adjusted_paid =
-				paid.offset(refund_imbalance).same().map_err(|_| Error::<T>::BalanceLow)?;
+			let adjusted_paid = paid
+				.offset(refund_imbalance)
+				.same()
+				.unwrap_or_else(|_| C::NegativeImbalance::zero());
 			OU::on_unbalanced(adjusted_paid);
 		}
-		Ok(())
 	}
 }
 
@@ -735,8 +734,8 @@ impl<T> OnChargeEVMTransaction<T> for ()
 		who: &H160,
 		corrected_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
-	) -> Result<(), Error<T>> {
-		EVMCurrencyAdapter::<<T as Config>::Currency, ()>::correct_and_deposit_fee(who, corrected_fee, already_withdrawn)
+	) {
+		<EVMCurrencyAdapter::<<T as Config>::Currency, ()> as OnChargeEVMTransaction<T>>::correct_and_deposit_fee(who, corrected_fee, already_withdrawn)
 	}
 }
 

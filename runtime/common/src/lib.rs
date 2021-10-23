@@ -100,7 +100,7 @@ parameter_types! {
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
 	/// Maximum length of block. Up to 5MB.
 	pub BlockLength: limits::BlockLength =
-		limits::BlockLength::max_with_normal_ratio(10 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+		limits::BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	/// Block weights base values and limits.
 	pub BlockWeights: limits::BlockWeights = limits::BlockWeights::builder()
 		.base_block(BlockExecutionWeight::get())
@@ -123,12 +123,13 @@ parameter_types! {
 }
 
 /// Parameterized slow adjusting fee updated based on
+/// https://w3f-research.readthedocs.io/en/latest/selendra/Token%20Economics.html#-2.-slow-adjusting-mechanism
 pub type SlowAdjustingFeeUpdate<R> =
 	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 
 /// The type used for currency conversion.
 ///
-/// This must only be used as long as the balance type is u128.
+/// This must only be used as long as the balance type is `u128`.
 pub type CurrencyToVote = frame_support::traits::U128CurrencyToVote;
 static_assertions::assert_eq_size!(primitives::v1::Balance, u128);
 
@@ -158,7 +159,7 @@ impl<T: pallet_session::Config> OneSessionHandler<T::AccountId>
 	{
 	}
 
-	fn on_disabled(_: usize) {}
+	fn on_disabled(_: u32) {}
 }
 
 /// A placeholder since there is currently no provided session key handler for parachain validator
@@ -187,7 +188,7 @@ impl<T: pallet_session::Config> OneSessionHandler<T::AccountId>
 	{
 	}
 
-	fn on_disabled(_: usize) {}
+	fn on_disabled(_: u32) {}
 }
 
 #[cfg(test)]

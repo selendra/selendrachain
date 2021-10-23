@@ -34,8 +34,9 @@ use primitives::v1::Id as ParaId;
 use sp_runtime::traits::{CheckedSub, One, Saturating, Zero};
 use sp_std::{mem::swap, prelude::*};
 
-type CurrencyOf<T> = <<T as Config>::Leaser as Leaser>::Currency;
-type BalanceOf<T> = <<<T as Config>::Leaser as Leaser>::Currency as Currency<
+type CurrencyOf<T> =
+	<<T as Config>::Leaser as Leaser<<T as frame_system::Config>::BlockNumber>>::Currency;
+type BalanceOf<T> = <<<T as Config>::Leaser as Leaser<<T as frame_system::Config>::BlockNumber>>::Currency as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::Balance;
 
@@ -65,7 +66,9 @@ impl WeightInfo for TestWeightInfo {
 /// An auction index. We count auctions in this type.
 pub type AuctionIndex = u32;
 
-type LeasePeriodOf<T> = <<T as Config>::Leaser as Leaser>::LeasePeriod;
+type LeasePeriodOf<T> =
+	<<T as Config>::Leaser as Leaser<<T as frame_system::Config>::BlockNumber>>::LeasePeriod;
+
 // Winning data type. This encodes the top bidders of each range together with their bid.
 type WinningData<T> = [Option<(<T as frame_system::Config>::AccountId, ParaId, BalanceOf<T>)>;
 	SlotRange::SLOT_RANGE_COUNT];
@@ -91,7 +94,11 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The type representing the leasing system.
-		type Leaser: Leaser<AccountId = Self::AccountId, LeasePeriod = Self::BlockNumber>;
+		type Leaser: Leaser<
+			Self::BlockNumber,
+			AccountId = Self::AccountId,
+			LeasePeriod = Self::BlockNumber,
+		>;
 
 		/// The parachain registrar type.
 		type Registrar: Registrar<AccountId = Self::AccountId>;
@@ -102,7 +109,7 @@ pub mod pallet {
 
 		/// The length of each sample to take during the ending period.
 		///
-		/// EndingPeriod / SampleLength = Total # of Samples
+		/// `EndingPeriod` / `SampleLength` = Total # of Samples
 		#[pallet::constant]
 		type SampleLength: Get<Self::BlockNumber>;
 
@@ -118,33 +125,27 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	#[pallet::metadata(
-		T::AccountId = "AccountId",
-		T::BlockNumber = "BlockNumber",
-		LeasePeriodOf<T> = "LeasePeriod",
-		BalanceOf<T> = "Balance",
-	)]
 	pub enum Event<T: Config> {
 		/// An auction started. Provides its index and the block number where it will begin to
 		/// close and the first lease period of the quadruplet that is auctioned.
-		/// [auction_index, lease_period, ending]
+		/// `[auction_index, lease_period, ending]`
 		AuctionStarted(AuctionIndex, LeasePeriodOf<T>, T::BlockNumber),
-		/// An auction ended. All funds become unreserved. [auction_index]
+		/// An auction ended. All funds become unreserved. `[auction_index]`
 		AuctionClosed(AuctionIndex),
 		/// Funds were reserved for a winning bid. First balance is the extra amount reserved.
-		/// Second is the total. [bidder, extra_reserved, total_amount]
+		/// Second is the total. `[bidder, extra_reserved, total_amount]`
 		Reserved(T::AccountId, BalanceOf<T>, BalanceOf<T>),
-		/// Funds were unreserved since bidder is no longer active. [bidder, amount]
+		/// Funds were unreserved since bidder is no longer active. `[bidder, amount]`
 		Unreserved(T::AccountId, BalanceOf<T>),
 		/// Someone attempted to lease the same slot twice for a parachain. The amount is held in reserve
 		/// but no parachain slot has been leased.
-		/// \[parachain_id, leaser, amount\]
+		/// `[parachain_id, leaser, amount]`
 		ReserveConfiscated(ParaId, T::AccountId, BalanceOf<T>),
 		/// A new bid has been accepted as the current winner.
-		/// \[who, para_id, amount, first_slot, last_slot\]
+		/// `[who, para_id, amount, first_slot, last_slot]`
 		BidAccepted(T::AccountId, ParaId, BalanceOf<T>, LeasePeriodOf<T>, LeasePeriodOf<T>),
 		/// The winning offset was chosen for an auction. This will map into the `Winning` storage map.
-		/// \[auction_index, block_number\]
+		/// `[auction_index, block_number]`
 		WinningOffset(AuctionIndex, T::BlockNumber),
 	}
 
@@ -196,13 +197,13 @@ pub mod pallet {
 
 	#[pallet::extra_constants]
 	impl<T: Config> Pallet<T> {
-		//TODO: rename to snake case after https://github.com/paritytech/substrate/issues/8826 fixed.
+		//TODO: rename to snake case after fixed.
 		#[allow(non_snake_case)]
 		fn SlotRangeCount() -> u32 {
 			SlotRange::SLOT_RANGE_COUNT as u32
 		}
 
-		//TODO: rename to snake case after https://github.com/paritytech/substrate/issues/8826 fixed.
+		//TODO: rename to snake case after fixed.
 		#[allow(non_snake_case)]
 		fn LeasePeriodsPerSlot() -> u32 {
 			SlotRange::LEASE_PERIODS_PER_SLOT as u32
@@ -305,9 +306,8 @@ pub mod pallet {
 	}
 }
 
-impl<T: Config> Auctioneer for Pallet<T> {
+impl<T: Config> Auctioneer<T::BlockNumber> for Pallet<T> {
 	type AccountId = T::AccountId;
-	type BlockNumber = T::BlockNumber;
 	type LeasePeriod = T::BlockNumber;
 	type Currency = CurrencyOf<T>;
 
@@ -319,7 +319,7 @@ impl<T: Config> Auctioneer for Pallet<T> {
 	}
 
 	// Returns the status of the auction given the current block number.
-	fn auction_status(now: Self::BlockNumber) -> AuctionStatus<Self::BlockNumber> {
+	fn auction_status(now: T::BlockNumber) -> AuctionStatus<T::BlockNumber> {
 		let early_end = match AuctionInfo::<T>::get() {
 			Some((_, early_end)) => early_end,
 			None => return AuctionStatus::NotStarted,
@@ -352,12 +352,13 @@ impl<T: Config> Auctioneer for Pallet<T> {
 		Self::handle_bid(bidder, para, AuctionCounter::<T>::get(), first_slot, last_slot, amount)
 	}
 
-	fn lease_period_index() -> Self::LeasePeriod {
-		T::Leaser::lease_period_index()
+	fn lease_period_index(b: T::BlockNumber) -> Option<(Self::LeasePeriod, bool)> {
+		T::Leaser::lease_period_index(b)
 	}
 
-	fn lease_period() -> Self::LeasePeriod {
-		T::Leaser::lease_period()
+	#[cfg(any(feature = "runtime-benchmarks", test))]
+	fn lease_period_length() -> (T::BlockNumber, T::BlockNumber) {
+		T::Leaser::lease_period_length()
 	}
 
 	fn has_won_an_auction(para: ParaId, bidder: &T::AccountId) -> bool {
@@ -380,10 +381,11 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let maybe_auction = AuctionInfo::<T>::get();
 		ensure!(maybe_auction.is_none(), Error::<T>::AuctionInProgress);
-		ensure!(
-			lease_period_index >= T::Leaser::lease_period_index(),
-			Error::<T>::LeasePeriodInPast
-		);
+		let now = frame_system::Pallet::<T>::block_number();
+		if let Some((current_lease_period, _)) = T::Leaser::lease_period_index(now) {
+			// If there is no active lease period, then we don't need to make this check.
+			ensure!(lease_period_index >= current_lease_period, Error::<T>::LeasePeriodInPast);
+		}
 
 		// Bump the counter.
 		let n = AuctionCounter::<T>::mutate(|n| {
@@ -573,7 +575,9 @@ impl<T: Config> Pallet<T> {
 			let period_count = LeasePeriodOf::<T>::from(range.len() as u32);
 
 			match T::Leaser::lease_out(para, &leaser, amount, period_begin, period_count) {
-				Err(LeaseError::ReserveFailed) | Err(LeaseError::AlreadyEnded) => {
+				Err(LeaseError::ReserveFailed) |
+				Err(LeaseError::AlreadyEnded) |
+				Err(LeaseError::NoLeasePeriod) => {
 					// Should never happen since we just unreserved this amount (and our offset is from the
 					// present period). But if it does, there's not much we can do.
 				},
@@ -594,7 +598,7 @@ impl<T: Config> Pallet<T> {
 	/// Calculate the final winners from the winning slots.
 	///
 	/// This is a simple dynamic programming algorithm designed by Al, the original code is at:
-	/// https://github.com/w3f/consensus/blob/master/NPoS/auctiondynamicthing.py
+	/// `https://github.com/w3f/consensus/blob/master/NPoS/auctiondynamicthing.py`
 	fn calculate_winners(mut winning: WinningData<T>) -> WinnersData<T> {
 		let winning_ranges = {
 			let mut best_winners_ending_at: [(Vec<SlotRange>, BalanceOf<T>);
@@ -605,7 +609,7 @@ impl<T: Config> Pallet<T> {
 					.map(|(_, _, amount)| *amount * (range.len() as u32).into())
 			};
 			for i in 0..SlotRange::LEASE_PERIODS_PER_SLOT {
-				let r = SlotRange::new_bounded(0, 0, i as u32).expect("`i < 4`; qed");
+				let r = SlotRange::new_bounded(0, 0, i as u32).expect("`i < LPPS`; qed");
 				if let Some(bid) = best_bid(r) {
 					best_winners_ending_at[i] = (vec![r], bid);
 				}
@@ -741,7 +745,7 @@ mod tests {
 	}
 
 	pub struct TestLeaser;
-	impl Leaser for TestLeaser {
+	impl Leaser<BlockNumber> for TestLeaser {
 		type AccountId = u64;
 		type LeasePeriod = BlockNumber;
 		type Currency = Balances;
@@ -755,7 +759,10 @@ mod tests {
 		) -> Result<(), LeaseError> {
 			LEASES.with(|l| {
 				let mut leases = l.borrow_mut();
-				if period_begin < Self::lease_period_index() {
+				let now = System::block_number();
+				let (current_lease_period, _) =
+					Self::lease_period_index(now).ok_or(LeaseError::NoLeasePeriod)?;
+				if period_begin < current_lease_period {
 					return Err(LeaseError::AlreadyEnded)
 				}
 				for period in period_begin..(period_begin + period_count) {
@@ -785,12 +792,18 @@ mod tests {
 				.unwrap_or_default()
 		}
 
-		fn lease_period() -> Self::LeasePeriod {
-			10
+		fn lease_period_length() -> (BlockNumber, BlockNumber) {
+			(10, 0)
 		}
 
-		fn lease_period_index() -> Self::LeasePeriod {
-			(System::block_number() / Self::lease_period()).into()
+		fn lease_period_index(b: BlockNumber) -> Option<(Self::LeasePeriod, bool)> {
+			let (lease_period_length, offset) = Self::lease_period_length();
+			let b = b.checked_sub(offset)?;
+
+			let lease_period = b / lease_period_length;
+			let first_block = (b % lease_period_length).is_zero();
+
+			Some((lease_period, first_block))
 		}
 
 		fn already_leased(

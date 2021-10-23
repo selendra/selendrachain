@@ -42,16 +42,9 @@ impl std::convert::From<String> for Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-fn get_exec_name() -> Option<String> {
-	std::env::current_exe()
-		.ok()
-		.and_then(|pb| pb.file_name().map(|s| s.to_os_string()))
-		.and_then(|s| s.into_string().ok())
-}
-
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Selendra-Chain".into()
+		"Selendra Selendra-Chain".into()
 	}
 
 	fn impl_version() -> String {
@@ -71,7 +64,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn copyright_start_year() -> i32 {
-		2017
+		2020
 	}
 
 	fn executable_name() -> String {
@@ -79,23 +72,14 @@ impl SubstrateCli for Cli {
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-		let id = if id == "" {
-			let n = get_exec_name().unwrap_or_default();
-			["selendra"]
-				.iter()
-				.cloned()
-				.find(|&chain| n.starts_with(chain))
-				.unwrap_or("selendra")
-		} else {
-			id
-		};
 		Ok(match id {
 			"selendra" => Box::new(service::chain_spec::selendra_config()?),
 			"dev" => Box::new(service::chain_spec::selendra_development_config()?),
-			"local" => Box::new(service::chain_spec::selendra_local_testnet_config()?),
+			"" | "local" => Box::new(service::chain_spec::selendra_local_testnet_config()?),
 			"staging" => Box::new(service::chain_spec::selendra_staging_testnet_config()?),
 			path => {
 				let path = std::path::PathBuf::from(path);
+
 				let chain_spec = Box::new(service::SelendraChainSpec::from_json_file(path.clone())?)
 					as Box<dyn service::ChainSpec>;
 				chain_spec
@@ -104,18 +88,17 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(_spec: &Box<dyn service::ChainSpec>) -> &'static RuntimeVersion {
-		&service::selendra_runtime::VERSION
+		return &service::selendra_runtime::VERSION
 	}
 }
 
 fn set_default_ss58_version(_spec: &Box<dyn service::ChainSpec>) {
 	use sp_core::crypto::Ss58AddressFormat;
-	let ss58_version = Ss58AddressFormat::Custom(972);
+	let ss58_version = Ss58AddressFormat::custom(972);
 	sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 
-const DEV_ONLY_ERROR_PATTERN: &'static str =
-	"can only use subcommand with --chain [selendra-dev], got ";
+const DEV_ONLY_ERROR_PATTERN: &'static str = "can only use subcommand with --chain selendra-dev ";
 
 fn ensure_dev(spec: &Box<dyn service::ChainSpec>) -> std::result::Result<(), String> {
 	if spec.is_dev() {
@@ -143,11 +126,6 @@ fn run_node_inner(cli: Cli, overseer_gen: impl service::OverseerGen) -> Result<(
 		let role = config.role.clone();
 
 		match role {
-			#[cfg(feature = "browser")]
-			Role::Light => service::build_light(config)
-				.map(|(task_manager, _)| task_manager)
-				.map_err(Into::into),
-			#[cfg(not(feature = "browser"))]
 			Role::Light => Err(Error::Other("Light client not enabled".into())),
 			_ => service::build_full(
 				config,
@@ -241,7 +219,7 @@ pub fn run() -> Result<()> {
 			builder.with_colors(false);
 			let _ = builder.init();
 
-			#[cfg(any(target_os = "android", feature = "browser"))]
+			#[cfg(target_os = "android")]
 			{
 				return Err(sc_cli::Error::Input(
 					"PVF preparation workers are not supported under this platform".into(),
@@ -249,7 +227,7 @@ pub fn run() -> Result<()> {
 				.into())
 			}
 
-			#[cfg(not(any(target_os = "android", feature = "browser")))]
+			#[cfg(not(target_os = "android"))]
 			{
 				selendra_node_core_pvf::prepare_worker_entrypoint(&cmd.socket_path);
 				Ok(())
@@ -260,7 +238,7 @@ pub fn run() -> Result<()> {
 			builder.with_colors(false);
 			let _ = builder.init();
 
-			#[cfg(any(target_os = "android", feature = "browser"))]
+			#[cfg(target_os = "android")]
 			{
 				return Err(sc_cli::Error::Input(
 					"PVF execution workers are not supported under this platform".into(),
@@ -268,7 +246,7 @@ pub fn run() -> Result<()> {
 				.into())
 			}
 
-			#[cfg(not(any(target_os = "android", feature = "browser")))]
+			#[cfg(not(target_os = "android"))]
 			{
 				selendra_node_core_pvf::execute_worker_entrypoint(&cmd.socket_path);
 				Ok(())
@@ -281,10 +259,11 @@ pub fn run() -> Result<()> {
 
 			ensure_dev(chain_spec).map_err(Error::Other)?;
 
-			// else we assume it is selendra.
-			Ok(runner.sync_run(|config| {
-				cmd.run::<service::selendra_runtime::Block, service::SelendraExecutor>(config)
-					.map_err(|e| Error::SubstrateCli(e))
+			return Ok(runner.sync_run(|config| {
+				cmd.run::<service::selendra_runtime::Block, service::SelendraExecutorDispatch>(
+					config,
+				)
+				.map_err(|e| Error::SubstrateCli(e))
 			})?)
 		},
 		Some(Subcommand::Key(cmd)) => Ok(cmd.run(&cli)?),
@@ -296,20 +275,22 @@ pub fn run() -> Result<()> {
 
 			use sc_service::TaskManager;
 			let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
-			let task_manager =
-				TaskManager::new(runner.config().task_executor.clone(), *registry)
-					.map_err(|e| Error::SubstrateService(sc_service::Error::Prometheus(e)))?;
+			let task_manager = TaskManager::new(runner.config().tokio_handle.clone(), *registry)
+				.map_err(|e| Error::SubstrateService(sc_service::Error::Prometheus(e)))?;
 
 			ensure_dev(chain_spec).map_err(Error::Other)?;
-			// else we assume it is selendra.
-			runner.async_run(|config| {
+
+			return runner.async_run(|config| {
 				Ok((
-					cmd.run::<service::selendra_runtime::Block, service::SelendraExecutor>(config)
-						.map_err(Error::SubstrateCli),
+					cmd.run::<service::selendra_runtime::Block, service::SelendraExecutorDispatch>(
+						config,
+					)
+					.map_err(Error::SubstrateCli),
 					task_manager,
 				))
 			})
 		},
+
 		#[cfg(not(feature = "try-runtime"))]
 		Some(Subcommand::TryRuntime) => Err(Error::Other(
 			"TryRuntime wasn't enabled when building the node. \

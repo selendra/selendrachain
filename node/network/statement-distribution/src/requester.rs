@@ -1,6 +1,4 @@
 // Copyright 2021 Parity Technologies (UK) Ltd.
-// This file is part of Polkadot.
-
 // Polkadot is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -49,7 +47,7 @@ pub enum RequesterMessage {
 		candidate_hash: CandidateHash,
 		tx: oneshot::Sender<Vec<PeerId>>,
 	},
-	/// Fetching finished, ask for verification. If verification failes, task will continue asking
+	/// Fetching finished, ask for verification. If verification fails, task will continue asking
 	/// peers for data.
 	Finished {
 		/// Relay parent this candidate is in the context of.

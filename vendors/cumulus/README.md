@@ -24,4 +24,3 @@ Polkadot node internally, and dictate to the client and synchronization algorith
 follow,
 [finalize](https://wiki.polkadot.network/docs/en/learn-consensus#probabilistic-vs-provable-finality),
 and treat as best.
-

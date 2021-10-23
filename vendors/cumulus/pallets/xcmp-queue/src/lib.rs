@@ -31,7 +31,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-use codec::{Decode, Encode};
+use codec::{Decode, DecodeAll, DecodeLimit, Encode};
 use cumulus_primitives_core::{
 	relay_chain::BlockNumber as RelayBlockNumber, ChannelStatus, GetChannelInfo, MessageSendError,
 	ParaId, XcmpMessageFormat, XcmpMessageHandler, XcmpMessageSource,
@@ -41,9 +41,10 @@ use rand_chacha::{
 	rand_core::{RngCore, SeedableRng},
 	ChaChaRng,
 };
+use scale_info::TypeInfo;
 use sp_runtime::{traits::Hash, RuntimeDebug};
 use sp_std::{convert::TryFrom, prelude::*};
-use xcm::{latest::prelude::*, VersionedXcm, WrapVersion};
+use xcm::{latest::prelude::*, VersionedXcm, WrapVersion, MAX_XCM_DECODE_DEPTH};
 
 pub use pallet::*;
 
@@ -96,7 +97,6 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	#[pallet::metadata(Option<T::Hash> = "Option<Hash>")]
 	pub enum Event<T: Config> {
 		/// Some XCM was executed ok.
 		Success(Option<T::Hash>),
@@ -168,19 +168,19 @@ pub mod pallet {
 	pub(super) type QueueConfig<T: Config> = StorageValue<_, QueueConfigData, ValueQuery>;
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum InboundStatus {
 	Ok,
 	Suspended,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
+#[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum OutboundStatus {
 	Ok,
 	Suspended,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
+#[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct QueueConfigData {
 	/// The number of pages of messages which must be in the queue for the other side to be told to
 	/// suspend their sending.
@@ -191,14 +191,14 @@ pub struct QueueConfigData {
 	/// The number of pages of messages which the queue must be reduced to before it signals that
 	/// message sending may recommence after it has been suspended.
 	resume_threshold: u32,
-	// The amount of remaining weight under which we stop processing messages.
+	/// The amount of remaining weight under which we stop processing messages.
 	threshold_weight: Weight,
 	/// The speed to which the available weight approaches the maximum weight. A lower number
 	/// results in a faster progression. A value of 1 makes the entire weight available initially.
 	weight_restrict_decay: Weight,
 }
 
-#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode)]
+#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
 pub enum ChannelSignal {
 	Suspend,
 	Resume,
@@ -249,7 +249,11 @@ impl<T: Config> Pallet<T> {
 		let have_active = s[index].4 > s[index].3;
 		let appended = have_active &&
 			<OutboundXcmpMessages<T>>::mutate(recipient, s[index].4 - 1, |s| {
-				if XcmpMessageFormat::decode(&mut &s[..]) != Ok(format) {
+				if XcmpMessageFormat::decode_and_advance_with_depth_limit(
+					MAX_XCM_DECODE_DEPTH,
+					&mut &s[..],
+				) != Ok(format)
+				{
 					return false
 				}
 				if s.len() + data.len() > max_message_size {
@@ -344,7 +348,7 @@ impl<T: Config> Pallet<T> {
 		let (result, event) = match Xcm::<T::Call>::try_from(xcm) {
 			Ok(xcm) => {
 				let location = (1, Parachain(sender.into()));
-				match T::XcmExecutor::execute_xcm(location.into(), xcm, max_weight) {
+				match T::XcmExecutor::execute_xcm(location, xcm, max_weight) {
 					Outcome::Error(e) => (Err(e.clone()), Event::Fail(Some(hash), e)),
 					Outcome::Complete(w) => (Ok(w), Event::Success(Some(hash))),
 					// As far as the caller is concerned, this was dispatched without error, so
@@ -371,7 +375,10 @@ impl<T: Config> Pallet<T> {
 			XcmpMessageFormat::ConcatenatedVersionedXcm => {
 				while !remaining_fragments.is_empty() {
 					last_remaining_fragments = remaining_fragments;
-					if let Ok(xcm) = VersionedXcm::<T::Call>::decode(&mut remaining_fragments) {
+					if let Ok(xcm) = VersionedXcm::<T::Call>::decode_and_advance_with_depth_limit(
+						MAX_XCM_DECODE_DEPTH,
+						&mut remaining_fragments,
+					) {
 						let weight = max_weight - weight_used;
 						match Self::handle_xcm_message(sender, sent_at, xcm, weight) {
 							Ok(used) => weight_used = weight_used.saturating_add(used),
@@ -394,7 +401,7 @@ impl<T: Config> Pallet<T> {
 			XcmpMessageFormat::ConcatenatedEncodedBlob => {
 				while !remaining_fragments.is_empty() {
 					last_remaining_fragments = remaining_fragments;
-					if let Ok(blob) = <Vec<u8>>::decode(&mut remaining_fragments) {
+					if let Ok(blob) = <Vec<u8>>::decode_all(&mut remaining_fragments) {
 						let weight = max_weight - weight_used;
 						match Self::handle_blob_message(sender, sent_at, blob, weight) {
 							Ok(used) => weight_used = weight_used.saturating_add(used),
@@ -588,7 +595,10 @@ impl<T: Config> XcmpMessageHandler for Pallet<T> {
 		for (sender, sent_at, data) in iter {
 			// Figure out the message format.
 			let mut data_ref = data;
-			let format = match XcmpMessageFormat::decode(&mut data_ref) {
+			let format = match XcmpMessageFormat::decode_and_advance_with_depth_limit(
+				MAX_XCM_DECODE_DEPTH,
+				&mut data_ref,
+			) {
 				Ok(f) => f,
 				Err(_) => {
 					debug_assert!(false, "Unknown XCMP message format. Silently dropping message");
@@ -744,24 +754,26 @@ impl<T: Config> XcmpMessageSource for Pallet<T> {
 
 /// Xcm sender for sending to a sibling parachain.
 impl<T: Config> SendXcm for Pallet<T> {
-	fn send_xcm(dest: MultiLocation, msg: Xcm<()>) -> Result<(), XcmError> {
+	fn send_xcm(dest: impl Into<MultiLocation>, msg: Xcm<()>) -> Result<(), SendError> {
+		let dest = dest.into();
+
 		match &dest {
 			// An HRMP message for a sibling parachain.
 			MultiLocation { parents: 1, interior: X1(Parachain(id)) } => {
 				let versioned_xcm = T::VersionWrapper::wrap_version(&dest, msg)
-					.map_err(|()| XcmError::DestinationUnsupported)?;
+					.map_err(|()| SendError::DestinationUnsupported)?;
 				let hash = T::Hashing::hash_of(&versioned_xcm);
 				Self::send_fragment(
 					(*id).into(),
 					XcmpMessageFormat::ConcatenatedVersionedXcm,
 					versioned_xcm,
 				)
-				.map_err(|e| XcmError::SendFailed(<&'static str>::from(e)))?;
+				.map_err(|e| SendError::Transport(<&'static str>::from(e)))?;
 				Self::deposit_event(Event::XcmpMessageSent(Some(hash)));
 				Ok(())
 			},
 			// Anything else is unhandled. This includes a message this is meant for us.
-			_ => Err(XcmError::CannotReachDestination(dest, msg)),
+			_ => Err(SendError::CannotReachDestination(dest, msg)),
 		}
 	}
 }

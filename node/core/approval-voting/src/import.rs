@@ -324,7 +324,7 @@ pub(crate) async fn handle_new_head(
 		}
 	};
 
-	match state.session_window.cache_session_info_for_head(ctx, head, &header).await {
+	match state.session_window.cache_session_info_for_head(ctx, head).await {
 		Err(e) => {
 			tracing::debug!(
 				target: LOG_TARGET,
@@ -501,7 +501,7 @@ pub(crate) async fn handle_new_head(
 		};
 
 		if let Some(up_to) = force_approve {
-			tracing::debug!(target: LOG_TARGET, ?block_hash, up_to, "Enacting force-approve",);
+			tracing::debug!(target: LOG_TARGET, ?block_hash, up_to, "Enacting force-approve");
 
 			let approved_hashes = crate::ops::force_approve(db, block_hash, up_to)
 				.map_err(|e| SubsystemError::with_origin("approval-voting", e))?;
@@ -1235,7 +1235,7 @@ pub(crate) mod tests {
 					h,
 					RuntimeApiRequest::SessionIndexForChild(c_tx),
 				)) => {
-					assert_eq!(h, parent_hash.clone());
+					assert_eq!(h, hash);
 					let _ = c_tx.send(Ok(session));
 				}
 			);

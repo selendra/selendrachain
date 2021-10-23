@@ -1,4 +1,4 @@
-// Copyright 2017-2020 Parity Technologies (UK) Ltd.
+// Copyright 2017-2021 Parity Technologies (UK) Ltd.
 // This file is part of Polkadot.
 
 // Polkadot is free software: you can redistribute it and/or modify
@@ -24,16 +24,11 @@ mod open_fb;
 mod parachains_db;
 mod relay_chain_selection;
 
-#[cfg(test)]
-mod tests;
+#[cfg(feature = "full-node")]
+pub mod overseer;
 
 #[cfg(feature = "full-node")]
-mod overseer;
-
-#[cfg(feature = "full-node")]
-pub use self::overseer::{
-	create_default_subsystems, OverseerGen, OverseerGenArgs, RealOverseerGen,
-};
+pub use self::overseer::{OverseerGen, OverseerGenArgs, RealOverseerGen};
 
 #[cfg(feature = "full-node")]
 use {
@@ -55,8 +50,9 @@ use {
 pub use sp_core::traits::SpawnNamed;
 #[cfg(feature = "full-node")]
 pub use {
+	relay_chain_selection::SelectRelayChain,
 	sc_client_api::AuxStore,
-	selendra_overseer::{Handle, Overseer, OverseerHandle},
+	selendra_overseer::{Handle, Overseer, OverseerConnector, OverseerHandle},
 	selendra_primitives::v1::ParachainHost,
 	sp_authority_discovery::AuthorityDiscoveryApi,
 	sp_blockchain::HeaderBackend,
@@ -67,35 +63,43 @@ pub use {
 use selendra_subsystem::jaeger;
 
 use futures::StreamExt;
+use std::{
+	collections::BTreeMap,
+	sync::{Arc, Mutex},
+	time::Duration,
+};
+
 use prometheus_endpoint::Registry;
+#[cfg(feature = "full-node")]
+use service::KeystoreContainer;
 use service::RpcHandlers;
 use telemetry::TelemetryWorker;
 #[cfg(feature = "full-node")]
 use telemetry::{Telemetry, TelemetryWorkerHandle};
 
+pub use selendra_client::SelendraExecutorDispatch;
+
 use fc_consensus::FrontierBlockImport;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use fc_rpc::EthTask;
-use fc_rpc_core::types::{FilterPool, PendingTransactions};
+use fc_rpc_core::types::FilterPool;
 use open_fb::open_frontier_backend;
-use std::{
-	collections::{BTreeMap, HashMap},
-	sync::{Arc, Mutex},
-	time::Duration,
-};
 
 pub use chain_spec::SelendraChainSpec;
 pub use consensus_common::{block_validation::Chain, Proposal, SelectChain};
 pub use sc_client_api::{Backend, BlockchainEvents, CallExecutor, ExecutionStrategy};
 pub use sc_consensus::{BlockImport, LongestChain};
+use sc_executor::NativeElseWasmExecutor;
 pub use sc_executor::NativeExecutionDispatch;
+#[cfg(feature = "full-node")]
 pub use selendra_client::{
 	AbstractClient, Client, ClientHandle, ExecuteWithClient, FullBackend, FullClient,
-	RuntimeApiCollection, SelendraExecutor,
+	RuntimeApiCollection,
 };
 pub use selendra_primitives::v1::{Block, BlockId, CollatorPair, Hash, Id as ParaId};
+pub use selendra_runtime;
 pub use service::{
-	config::{DatabaseConfig, PrometheusConfig},
+	config::{DatabaseSource, PrometheusConfig},
 	ChainSpec, Configuration, Error as SubstrateServiceError, PruningMode, Role, RuntimeGenesis,
 	TFullBackend, TFullCallExecutor, TFullClient, TLightBackend, TLightCallExecutor, TLightClient,
 	TaskManager, TransactionPoolOptions,
@@ -108,8 +112,6 @@ pub use sp_runtime::{
 		Header as HeaderT, NumberFor,
 	},
 };
-
-pub use selendra_runtime;
 
 /// The maximum number of active leaves we forward to the [`Overseer`] on startup.
 #[cfg(any(test, feature = "full-node"))]
@@ -264,70 +266,55 @@ fn jaeger_launch_collector_with_agent(
 }
 
 #[cfg(feature = "full-node")]
-type FullSelectChain = relay_chain_selection::SelectRelayChainWithFallback<FullBackend>;
+type FullSelectChain = relay_chain_selection::SelectRelayChain<FullBackend>;
 #[cfg(feature = "full-node")]
-type FullGrandpaBlockImport<RuntimeApi, Executor> = grandpa::GrandpaBlockImport<
-	FullBackend,
-	Block,
-	FullClient<RuntimeApi, Executor>,
-	FullSelectChain,
->;
+type FullGrandpaBlockImport<RuntimeApi, ExecutorDispatch, ChainSelection = FullSelectChain> =
+	grandpa::GrandpaBlockImport<
+		FullBackend,
+		Block,
+		FullClient<RuntimeApi, ExecutorDispatch>,
+		ChainSelection,
+	>;
 
 #[cfg(feature = "light-node")]
 type LightBackend = service::TLightBackendWithHash<Block, sp_runtime::traits::BlakeTwo256>;
 
 #[cfg(feature = "light-node")]
-type LightClient<RuntimeApi, Executor> =
-	service::TLightClientWithBackend<Block, RuntimeApi, Executor, LightBackend>;
+type LightClient<RuntimeApi, ExecutorDispatch> =
+	service::TLightClientWithBackend<Block, RuntimeApi, ExecutorDispatch, LightBackend>;
 
 #[cfg(feature = "full-node")]
-fn new_partial<RuntimeApi, Executor>(
+struct Basics<RuntimeApi, ExecutorDispatch>
+where
+	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+		+ Send
+		+ Sync
+		+ 'static,
+	RuntimeApi::RuntimeApi:
+		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
+	ExecutorDispatch: NativeExecutionDispatch + 'static,
+{
+	task_manager: TaskManager,
+	client: Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
+	backend: Arc<FullBackend>,
+	keystore_container: KeystoreContainer,
+	telemetry: Option<Telemetry>,
+}
+
+#[cfg(feature = "full-node")]
+fn new_partial_basics<RuntimeApi, ExecutorDispatch>(
 	config: &mut Configuration,
 	jaeger_agent: Option<std::net::SocketAddr>,
 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
-) -> Result<
-	service::PartialComponents<
-		FullClient<RuntimeApi, Executor>,
-		FullBackend,
-		FullSelectChain,
-		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
-		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
-		(
-			impl Fn(
-				selendra_rpc::DenyUnsafe,
-				selendra_rpc::SubscriptionTaskExecutor,
-				Arc<sc_network::NetworkService<Block, Hash>>,
-			) -> Result<selendra_rpc::RpcExtension, service::Error>,
-			(
-				babe::BabeBlockImport<
-					Block,
-					FullClient<RuntimeApi, Executor>,
-					FrontierBlockImport<
-						Block,
-						FullGrandpaBlockImport<RuntimeApi, Executor>,
-						FullClient<RuntimeApi, Executor>,
-					>,
-				>,
-				grandpa::LinkHalf<Block, FullClient<RuntimeApi, Executor>, FullSelectChain>,
-				babe::BabeLink<Block>,
-				beefy_gadget::notification::BeefySignedCommitmentSender<Block>,
-			),
-			grandpa::SharedVoterState,
-			std::time::Duration, // slot-duration
-			PendingTransactions,
-			Arc<fc_db::Backend<Block>>,
-			Option<FilterPool>,
-			Option<Telemetry>,
-		),
-	>,
-	Error,
->
+) -> Result<Basics<RuntimeApi, ExecutorDispatch>, Error>
 where
-	RuntimeApi:
-		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+		+ Send
+		+ Sync
+		+ 'static,
 	RuntimeApi::RuntimeApi:
 		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
-	Executor: NativeExecutionDispatch + 'static,
+	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
 	set_prometheus_registry(config)?;
 
@@ -348,10 +335,17 @@ where
 		})
 		.transpose()?;
 
+	let executor = NativeElseWasmExecutor::<ExecutorDispatch>::new(
+		config.wasm_method,
+		config.default_heap_pages,
+		config.max_runtime_instances,
+	);
+
 	let (client, backend, keystore_container, task_manager) =
-		service::new_full_parts::<Block, RuntimeApi, Executor>(
+		service::new_full_parts::<Block, RuntimeApi, _>(
 			&config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
+			executor,
 		)?;
 	let client = Arc::new(client);
 
@@ -364,12 +358,63 @@ where
 
 	jaeger_launch_collector_with_agent(task_manager.spawn_handle(), &*config, jaeger_agent)?;
 
-	let select_chain = relay_chain_selection::SelectRelayChainWithFallback::new(
-		backend.clone(),
-		Handle::new_disconnected(),
-		selendra_node_subsystem_util::metrics::Metrics::register(config.prometheus_registry())?,
-	);
+	Ok(Basics { task_manager, client, backend, keystore_container, telemetry })
+}
 
+#[cfg(feature = "full-node")]
+fn new_partial<RuntimeApi, ExecutorDispatch, ChainSelection>(
+	config: &mut Configuration,
+	Basics { task_manager, backend, client, keystore_container, telemetry }: Basics<
+		RuntimeApi,
+		ExecutorDispatch,
+	>,
+	select_chain: ChainSelection,
+) -> Result<
+	service::PartialComponents<
+		FullClient<RuntimeApi, ExecutorDispatch>,
+		FullBackend,
+		ChainSelection,
+		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
+		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
+		(
+			impl Fn(
+				selendra_rpc::DenyUnsafe,
+				selendra_rpc::SubscriptionTaskExecutor,
+				Arc<sc_network::NetworkService<Block, Hash>>,
+			) -> Result<selendra_rpc::RpcExtension, service::Error>,
+			(
+				babe::BabeBlockImport<
+					Block,
+					FullClient<RuntimeApi, ExecutorDispatch>,
+					FrontierBlockImport<
+						Block,
+						FullGrandpaBlockImport<RuntimeApi, ExecutorDispatch, ChainSelection>,
+						FullClient<RuntimeApi, ExecutorDispatch>,
+					>,
+				>,
+				grandpa::LinkHalf<Block, FullClient<RuntimeApi, ExecutorDispatch>, ChainSelection>,
+				babe::BabeLink<Block>,
+				beefy_gadget::notification::BeefySignedCommitmentSender<Block>,
+			),
+			grandpa::SharedVoterState,
+			std::time::Duration, // slot-duration
+			Arc<fc_db::Backend<Block>>,
+			Option<FilterPool>,
+			Option<Telemetry>,
+		),
+	>,
+	Error,
+>
+where
+	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+		+ Send
+		+ Sync
+		+ 'static,
+	RuntimeApi::RuntimeApi:
+		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
+	ExecutorDispatch: NativeExecutionDispatch + 'static,
+	ChainSelection: 'static + SelectChain<Block>,
+{
 	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
 		config.transaction_pool.clone(),
 		config.role.is_authority().into(),
@@ -390,7 +435,6 @@ where
 
 	let justification_import = grandpa_block_import.clone();
 
-	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 
 	let frontier_backend = open_frontier_backend(config).unwrap();
@@ -443,7 +487,6 @@ where
 	let rpc_setup = shared_voter_state.clone();
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
 	let slot_duration = babe_config.slot_duration();
-	let pending = pending_transactions.clone();
 	let filter_pool_clone = filter_pool.clone();
 	let frontier_backend_clone = frontier_backend.clone();
 
@@ -454,6 +497,7 @@ where
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
 		let is_authority = config.role.is_authority();
+		let pool = transaction_pool.clone();
 
 		move |deny_unsafe,
 		      subscription_executor: selendra_rpc::SubscriptionTaskExecutor,
@@ -461,16 +505,10 @@ where
 		      -> Result<selendra_rpc::RpcExtension, service::Error> {
 			let deps = selendra_rpc::FullDeps {
 				client: client.clone(),
-				pool: transaction_pool.clone(),
+				pool: pool.clone(),
 				select_chain: select_chain.clone(),
 				chain_spec: chain_spec.cloned_box(),
 				deny_unsafe,
-				is_authority,
-				network,
-				pending_transactions: pending.clone(),
-				filter_pool: filter_pool_clone.clone(),
-				frontier_backend: frontier_backend.clone(),
-				max_past_logs: 10000,
 				babe: selendra_rpc::BabeDeps {
 					babe_config: babe_config.clone(),
 					shared_epoch_changes: shared_epoch_changes.clone(),
@@ -487,6 +525,11 @@ where
 					beefy_commitment_stream: beefy_commitment_stream.clone(),
 					subscription_executor: subscription_executor.clone(),
 				},
+				graph: pool.pool().clone(),
+				is_authority,
+				network,
+				filter_pool: filter_pool_clone.clone(),
+				frontier_backend: frontier_backend.clone(),
 			};
 
 			selendra_rpc::create_full(deps, subscription_executor).map_err(Into::into)
@@ -506,7 +549,6 @@ where
 			import_setup,
 			rpc_setup,
 			slot_duration,
-			pending_transactions,
 			frontier_backend_clone,
 			filter_pool,
 			telemetry,
@@ -570,16 +612,18 @@ impl IsCollator {
 
 /// Returns the active leaves the overseer should start with.
 #[cfg(feature = "full-node")]
-async fn active_leaves<RuntimeApi, Executor>(
+async fn active_leaves<RuntimeApi, ExecutorDispatch>(
 	select_chain: &impl SelectChain<Block>,
-	client: &FullClient<RuntimeApi, Executor>,
+	client: &FullClient<RuntimeApi, ExecutorDispatch>,
 ) -> Result<Vec<BlockInfo>, Error>
 where
-	RuntimeApi:
-		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+		+ Send
+		+ Sync
+		+ 'static,
 	RuntimeApi::RuntimeApi:
 		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
-	Executor: NativeExecutionDispatch + 'static,
+	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
 	let best_block = select_chain.best_chain().await?;
 
@@ -621,7 +665,7 @@ where
 /// This is an advanced feature and not recommended for general use. Generally, `build_full` is
 /// a better choice.
 #[cfg(feature = "full-node")]
-pub fn new_full<RuntimeApi, Executor, OverseerGenerator>(
+pub fn new_full<RuntimeApi, ExecutorDispatch, OverseerGenerator>(
 	mut config: Configuration,
 	is_collator: IsCollator,
 	grandpa_pause: Option<(u32, u32)>,
@@ -630,13 +674,15 @@ pub fn new_full<RuntimeApi, Executor, OverseerGenerator>(
 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 	program_path: Option<std::path::PathBuf>,
 	overseer_gen: OverseerGenerator,
-) -> Result<NewFull<Arc<FullClient<RuntimeApi, Executor>>>, Error>
+) -> Result<NewFull<Arc<FullClient<RuntimeApi, ExecutorDispatch>>>, Error>
 where
-	RuntimeApi:
-		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+		+ Send
+		+ Sync
+		+ 'static,
 	RuntimeApi::RuntimeApi:
 		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
-	Executor: NativeExecutionDispatch + 'static,
+	ExecutorDispatch: NativeExecutionDispatch + 'static,
 	OverseerGenerator: OverseerGen,
 {
 	use selendra_node_network_protocol::request_response::IncomingRequest;
@@ -651,12 +697,34 @@ where
 	let disable_grandpa = config.disable_grandpa;
 	let name = config.network.node_name.clone();
 
-	let service::PartialComponents {
+	let basics = new_partial_basics::<RuntimeApi, ExecutorDispatch>(
+		&mut config,
+		jaeger_agent,
+		telemetry_worker_handle,
+	)?;
+
+	let prometheus_registry = config.prometheus_registry().cloned();
+
+	let overseer_connector = OverseerConnector::default();
+	let overseer_handle = Handle::new(overseer_connector.handle());
+
+	let local_keystore = basics.keystore_container.local_keystore();
+	let requires_overseer_for_chain_sel =
+		local_keystore.is_some() && (role.is_authority() || is_collator.is_collator());
+
+	let select_chain = SelectRelayChain::new(
+		basics.backend.clone(),
+		overseer_handle.clone(),
+		requires_overseer_for_chain_sel,
+		selendra_node_subsystem_util::metrics::Metrics::register(prometheus_registry.as_ref())?,
+	);
+
+	let service::PartialComponents::<_, _, SelectRelayChain<_>, _, _, _> {
 		client,
 		backend,
 		mut task_manager,
 		keystore_container,
-		mut select_chain,
+		select_chain,
 		import_queue,
 		transaction_pool,
 		other:
@@ -665,14 +733,15 @@ where
 				import_setup,
 				rpc_setup,
 				slot_duration,
-				pending_transactions,
 				frontier_backend,
 				filter_pool,
 				mut telemetry,
 			),
-	} = new_partial::<RuntimeApi, Executor>(&mut config, jaeger_agent, telemetry_worker_handle)?;
-
-	let prometheus_registry = config.prometheus_registry().cloned();
+	} = new_partial::<RuntimeApi, ExecutorDispatch, SelectRelayChain<_>>(
+		&mut config,
+		basics,
+		select_chain,
+	)?;
 
 	let shared_voter_state = rpc_setup;
 	let auth_disc_publish_non_global_ips = config.network.allow_non_globals_in_dht;
@@ -701,9 +770,12 @@ where
 	let (dispute_req_receiver, cfg) = IncomingRequest::get_config_receiver();
 	config.network.request_response_protocols.push(cfg);
 
+	let grandpa_hard_forks = Vec::new();
+
 	let warp_sync = Arc::new(grandpa::warp_proof::NetworkProvider::new(
 		backend.clone(),
 		import_setup.1.shared_authority_set().clone(),
+		grandpa_hard_forks,
 	));
 
 	let (network, system_rpc_tx, network_starter) =
@@ -754,24 +826,6 @@ where
 		},
 	};
 
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-mapping-sync-worker",
-		MappingSyncWorker::new(
-			client.import_notification_stream(),
-			Duration::new(6, 0),
-			client.clone(),
-			backend.clone(),
-			frontier_backend.clone(),
-			SyncStrategy::Normal,
-		)
-		.for_each(|()| futures::future::ready(())),
-	);
-
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-schema-cache-task",
-		EthTask::ethereum_schema_cache_task(Arc::clone(&client), Arc::clone(&frontier_backend)),
-	);
-
 	let chain_selection_config = ChainSelectionConfig {
 		col_data: crate::parachains_db::REAL_COLUMNS.col_chain_selection_data,
 		stagnant_check_interval: chain_selection_subsystem::StagnantCheckInterval::never(),
@@ -805,7 +859,10 @@ where
 
 	let overseer_client = client.clone();
 	let spawner = task_manager.spawn_handle();
-	let active_leaves = futures::executor::block_on(active_leaves(&select_chain, &*client))?;
+	// Cannot use the `RelayChainSelection`, since that'd require a setup _and running_ overseer
+	// which we are about to setup.
+	let active_leaves =
+		futures::executor::block_on(active_leaves(select_chain.as_longest_chain(), &*client))?;
 
 	let authority_discovery_service = if role.is_authority() || is_collator.is_collator() {
 		use sc_network::Event;
@@ -841,7 +898,6 @@ where
 		None
 	};
 
-	let local_keystore = keystore_container.local_keystore();
 	if local_keystore.is_none() {
 		tracing::info!("Cannot run as validator without local keystore.");
 	}
@@ -851,7 +907,8 @@ where
 
 	let overseer_handle = if let Some((authority_discovery_service, keystore)) = maybe_params {
 		let (overseer, overseer_handle) = overseer_gen
-			.generate::<service::SpawnTaskHandle, FullClient<RuntimeApi, Executor>>(
+			.generate::<service::SpawnTaskHandle, FullClient<RuntimeApi, ExecutorDispatch>>(
+				overseer_connector,
 				OverseerGenArgs {
 					leaves: active_leaves,
 					keystore,
@@ -875,35 +932,52 @@ where
 					dispute_coordinator_config,
 				},
 			)?;
-		let handle = Handle::Connected(overseer_handle.clone());
-		let handle_clone = handle.clone();
+		let handle = Handle::new(overseer_handle.clone());
 
-		task_manager.spawn_essential_handle().spawn_blocking(
-			"overseer",
-			Box::pin(async move {
-				use futures::{pin_mut, select, FutureExt};
+		{
+			let handle = handle.clone();
+			task_manager.spawn_essential_handle().spawn_blocking(
+				"overseer",
+				Box::pin(async move {
+					use futures::{pin_mut, select, FutureExt};
 
-				let forward = selendra_overseer::forward_events(overseer_client, handle_clone);
+					let forward = selendra_overseer::forward_events(overseer_client, handle);
 
-				let forward = forward.fuse();
-				let overseer_fut = overseer.run().fuse();
+					let forward = forward.fuse();
+					let overseer_fut = overseer.run().fuse();
 
-				pin_mut!(overseer_fut);
-				pin_mut!(forward);
+					pin_mut!(overseer_fut);
+					pin_mut!(forward);
 
-				select! {
-					_ = forward => (),
-					_ = overseer_fut => (),
-					complete => (),
-				}
-			}),
-		);
-
-		select_chain.connect_to_overseer(overseer_handle.clone());
+					select! {
+						_ = forward => (),
+						_ = overseer_fut => (),
+						complete => (),
+					}
+				}),
+			);
+		}
 		Some(handle)
 	} else {
+		assert!(
+			!requires_overseer_for_chain_sel,
+			"Precondition congruence (false) is guaranteed by manual checking. qed"
+		);
 		None
 	};
+
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-mapping-sync-worker",
+		MappingSyncWorker::new(
+			client.import_notification_stream(),
+			Duration::new(8, 0),
+			client.clone(),
+			backend.clone(),
+			frontier_backend.clone(),
+			SyncStrategy::Normal,
+		)
+		.for_each(|()| futures::future::ready(())),
+	);
 
 	// Spawn Frontier EthFilterApi maintenance task.
 	if let Some(filter_pool) = filter_pool {
@@ -915,18 +989,10 @@ where
 		);
 	}
 
-	// Spawn Frontier pending transactions maintenance task (as essential, otherwise we leak).
-	if let Some(pending_transactions) = pending_transactions {
-		const TRANSACTION_RETAIN_THRESHOLD: u64 = 5;
-		task_manager.spawn_essential_handle().spawn(
-			"frontier-pending-transactions",
-			EthTask::pending_transaction_task(
-				Arc::clone(&client),
-				pending_transactions,
-				TRANSACTION_RETAIN_THRESHOLD,
-			),
-		);
-	}
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-schema-cache-task",
+		EthTask::ethereum_schema_cache_task(Arc::clone(&client), Arc::clone(&frontier_backend)),
+	);
 
 	if role.is_authority() {
 		let can_author_with =
@@ -1218,6 +1284,32 @@ where
 	Ok((task_manager, rpc_handlers))
 }
 
+#[cfg(feature = "full-node")]
+macro_rules! chain_ops {
+	($config:expr, $jaeger_agent:expr, $telemetry_worker_handle:expr; $scope:ident, $executor:ident, $variant:ident) => {{
+		let telemetry_worker_handle = $telemetry_worker_handle;
+		let jaeger_agent = $jaeger_agent;
+		let mut config = $config;
+		let basics = new_partial_basics::<$scope::RuntimeApi, $executor>(
+			config,
+			jaeger_agent,
+			telemetry_worker_handle,
+		)?;
+
+		use ::sc_consensus::LongestChain;
+		// use the longest chain selection, since there is no overseer available
+		let chain_selection = LongestChain::new(basics.backend.clone());
+
+		let service::PartialComponents { client, backend, import_queue, task_manager, .. } =
+			new_partial::<$scope::RuntimeApi, $executor, LongestChain<_, Block>>(
+				&mut config,
+				basics,
+				chain_selection,
+			)?;
+		Ok((Arc::new(Client::$variant(client)), backend, import_queue, task_manager))
+	}};
+}
+
 /// Builds a new object suitable for chain operations.
 #[cfg(feature = "full-node")]
 pub fn new_chain_ops(
@@ -1233,15 +1325,14 @@ pub fn new_chain_ops(
 	Error,
 > {
 	config.keystore = service::config::KeystoreConfig::InMemory;
-	let service::PartialComponents { client, backend, import_queue, task_manager, .. } =
-		new_partial::<selendra_runtime::RuntimeApi, SelendraExecutor>(config, jaeger_agent, None)?;
-	Ok((Arc::new(Client::Selendra(client)), backend, import_queue, task_manager))
+	let telemetry_worker_handle = None;
+	return chain_ops!(config, jaeger_agent, telemetry_worker_handle; selendra_runtime, SelendraExecutorDispatch, Selendra)
 }
 
 /// Build a new light node.
 #[cfg(feature = "light-node")]
 pub fn build_light(config: Configuration) -> Result<(TaskManager, RpcHandlers), Error> {
-	new_light::<selendra_runtime::RuntimeApi, SelendraExecutor>(config)
+	return new_light::<selendra_runtime::RuntimeApi, SelendraExecutorDispatch>(config)
 }
 
 #[cfg(feature = "full-node")]
@@ -1254,7 +1345,7 @@ pub fn build_full(
 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 	overseer_gen: impl OverseerGen,
 ) -> Result<NewFull<Client>, Error> {
-	new_full::<selendra_runtime::RuntimeApi, SelendraExecutor, _>(
+	return new_full::<selendra_runtime::RuntimeApi, SelendraExecutorDispatch, _>(
 		config,
 		is_collator,
 		grandpa_pause,

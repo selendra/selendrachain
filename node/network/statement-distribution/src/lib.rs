@@ -21,6 +21,7 @@
 
 #![deny(unused_crate_dependencies)]
 #![warn(missing_docs)]
+#![allow(dead_code)]
 
 use error::{log_error, FatalResult, NonFatalResult};
 use parity_scale_codec::Encode;
@@ -105,7 +106,7 @@ const MAX_LARGE_STATEMENTS_PER_SENDER: usize = 20;
 
 /// The statement distribution subsystem.
 pub struct StatementDistribution {
-	/// Pointer to a keystore, which is required for determining this nodes validator index.
+	/// Pointer to a keystore, which is required for determining this node's validator index.
 	keystore: SyncCryptoStorePtr,
 	/// Receiver for incoming large statement requests.
 	req_receiver: Option<IncomingRequestReceiver<request_v1::StatementFetchingRequest>>,
@@ -565,7 +566,6 @@ struct FetchingInfo {
 	/// Task taking care of the request.
 	///
 	/// Will be killed once dropped.
-	#[allow(dead_code)]
 	fetching_task: RemoteHandle<()>,
 }
 

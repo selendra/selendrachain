@@ -143,7 +143,7 @@ pub(crate) struct Config {
 	n_cores: u32,
 	/// The zeroth delay tranche width.
 	zeroth_delay_tranche_width: u32,
-	/// The number of samples we do of relay_vrf_modulo.
+	/// The number of samples we do of `relay_vrf_modulo`.
 	relay_vrf_modulo_samples: u32,
 	/// The number of delay tranches in total.
 	n_delay_tranches: u32,
@@ -236,6 +236,14 @@ pub(crate) fn compute_assignments(
 		config.assignment_keys.is_empty() ||
 		config.validator_groups.is_empty()
 	{
+		tracing::trace!(
+			target: LOG_TARGET,
+			n_cores = config.n_cores,
+			has_assignment_keys = !config.assignment_keys.is_empty(),
+			has_validator_groups = !config.validator_groups.is_empty(),
+			"Not producing assignments because config is degenerate",
+		);
+
 		return HashMap::new()
 	}
 
@@ -254,7 +262,10 @@ pub(crate) fn compute_assignments(
 		});
 
 		match key {
-			None => return Default::default(),
+			None => {
+				tracing::trace!(target: LOG_TARGET, "No assignment key");
+				return Default::default()
+			},
 			Some(k) => k,
 		}
 	};
@@ -265,6 +276,12 @@ pub(crate) fn compute_assignments(
 		.filter(|&(_, _, ref g)| !is_in_backing_group(&config.validator_groups, index, *g))
 		.map(|(c_hash, core, _)| (c_hash, core))
 		.collect::<Vec<_>>();
+
+	tracing::trace!(
+		target: LOG_TARGET,
+		assignable_cores = leaving_cores.len(),
+		"Assigning to candidates from different backing groups"
+	);
 
 	let assignments_key: &sp_application_crypto::sr25519::Pair = assignments_key.as_ref();
 	let assignments_key: &schnorrkel::Keypair = assignments_key.as_ref();

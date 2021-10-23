@@ -1,29 +1,33 @@
 [package]
 name = "selendra-gossip-support"
-version = "0.1.3"
-authors = ["Selendra <info@selendra.org>"]
+version = "0.1.4"
+authors = ["Selendra info@selendra.org"]
 edition = "2018"
 
 [dependencies]
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+futures = "0.3.17"
+futures-timer = "3.0.2"
+rand = { version = "0.8.3", default-features = false }
+rand_chacha = { version = "0.3.1", default-features = false }
+tracing = "0.1.28"
+
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
 selendra-node-network-protocol = { path = "../protocol" }
 selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 selendra-primitives = { path = "../../../primitives" }
 
-futures = "0.3.15"
-rand = { version = "0.8.3", default-features = false }
-rand_chacha = { version = "0.3.1", default-features = false }
-tracing = "0.1.26"
-
 [dev-dependencies]
-sp-core = { git = "https://github.com/paritytech/substrate", features = ["std"], branch = "polkadot-v0.9.10" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+assert_matches = "1.4.0"
+async-trait = "0.1.51"
+lazy_static = "1.4.0"
+
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
-
-assert_matches = "1.4.0"

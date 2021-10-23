@@ -14,7 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::{construct_runtime, parameter_types, traits::Everything, weights::Weight};
+use frame_support::{
+	construct_runtime, parameter_types,
+	traits::{Everything, Nothing},
+	weights::Weight,
+};
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, AccountId32};
 use sp_std::cell::RefCell;
@@ -43,13 +47,13 @@ pub fn sent_xcm() -> Vec<(MultiLocation, opaque::Xcm)> {
 }
 pub struct TestSendXcm;
 impl SendXcm for TestSendXcm {
-	fn send_xcm(dest: MultiLocation, msg: opaque::Xcm) -> XcmResult {
-		SENT_XCM.with(|q| q.borrow_mut().push((dest, msg)));
+	fn send_xcm(dest: impl Into<MultiLocation>, msg: opaque::Xcm) -> SendResult {
+		SENT_XCM.with(|q| q.borrow_mut().push((dest.into(), msg)));
 		Ok(())
 	}
 }
 
-// copied from kusama constants
+// copied from selendra constants
 pub const UNITS: Balance = 1_000_000_000_000;
 pub const CENTS: Balance = UNITS / 30_000;
 
@@ -103,22 +107,24 @@ impl pallet_balances::Config for Runtime {
 
 impl shared::Config for Runtime {}
 
-impl configuration::Config for Runtime {}
+impl configuration::Config for Runtime {
+	type WeightInfo = configuration::weights::WeightInfo<Runtime>;
+}
 
-// aims to closely emulate the Kusama XcmConfig
+// aims to closely emulate the Selendra XcmConfig
 parameter_types! {
-	pub const KsmLocation: MultiLocation = MultiLocation::here();
-	pub const KusamaNetwork: NetworkId = NetworkId::Kusama;
+	pub const SelLocation: MultiLocation = MultiLocation::here();
+	pub const SelendraNetwork: NetworkId = NetworkId::Selendra;
 	pub Ancestry: MultiLocation = Here.into();
 	pub CheckAccount: AccountId = XcmPallet::check_account();
 }
 
 pub type SovereignAccountOf =
-	(ChildParachainConvertsVia<ParaId, AccountId>, AccountId32Aliases<KusamaNetwork, AccountId>);
+	(ChildParachainConvertsVia<ParaId, AccountId>, AccountId32Aliases<SelendraNetwork, AccountId>);
 
 pub type LocalAssetTransactor = XcmCurrencyAdapter<
 	Balances,
-	IsConcrete<KsmLocation>,
+	IsConcrete<SelLocation>,
 	SovereignAccountOf,
 	AccountId,
 	CheckAccount,
@@ -127,13 +133,13 @@ pub type LocalAssetTransactor = XcmCurrencyAdapter<
 type LocalOriginConverter = (
 	SovereignSignedViaLocation<SovereignAccountOf, Origin>,
 	ChildParachainAsNative<origin::Origin, Origin>,
-	SignedAccountId32AsNative<KusamaNetwork, Origin>,
+	SignedAccountId32AsNative<SelendraNetwork, Origin>,
 	ChildSystemParachainAsSuperuser<ParaId, Origin>,
 );
 
 parameter_types! {
 	pub const BaseXcmWeight: Weight = 1_000_000_000;
-	pub KsmPerSecond: (AssetId, u128) = (KsmLocation::get().into(), 1);
+	pub SelPerSecond: (AssetId, u128) = (SelLocation::get().into(), 1);
 }
 
 pub type Barrier = (
@@ -144,10 +150,11 @@ pub type Barrier = (
 );
 
 parameter_types! {
-	pub const KusamaForStatemint: (MultiAssetFilter, MultiLocation) =
+	pub const SelendraForStatemint: (MultiAssetFilter, MultiLocation) =
 		(MultiAssetFilter::Wild(WildMultiAsset::AllOf { id: Concrete(MultiLocation::here()), fun: WildFungible }), X1(Parachain(1000)).into());
+	pub const MaxInstructions: u32 = 100;
 }
-pub type TrustedTeleporters = (xcm_builder::Case<KusamaForStatemint>,);
+pub type TrustedTeleporters = (xcm_builder::Case<SelendraForStatemint>,);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -159,13 +166,15 @@ impl xcm_executor::Config for XcmConfig {
 	type IsTeleporter = TrustedTeleporters;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
-	type Weigher = FixedWeightBounds<BaseXcmWeight, Call>;
-	type Trader = FixedRateOfFungible<KsmPerSecond, ()>;
-	type ResponseHandler = ();
+	type Weigher = FixedWeightBounds<BaseXcmWeight, Call, MaxInstructions>;
+	type Trader = FixedRateOfFungible<SelPerSecond, ()>;
+	type ResponseHandler = XcmPallet;
+	type AssetTrap = XcmPallet;
+	type AssetClaims = XcmPallet;
 	type SubscriptionService = XcmPallet;
 }
 
-pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, KusamaNetwork>;
+pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, SelendraNetwork>;
 
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
@@ -174,11 +183,15 @@ impl pallet_xcm::Config for Runtime {
 	type XcmRouter = TestSendXcm;
 	// Anyone can execute XCM messages locally...
 	type ExecuteXcmOrigin = xcm_builder::EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	type XcmExecuteFilter = ();
+	type XcmExecuteFilter = Nothing;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Everything;
 	type XcmReserveTransferFilter = Everything;
-	type Weigher = FixedWeightBounds<BaseXcmWeight, Call>;
+	type Weigher = FixedWeightBounds<BaseXcmWeight, Call, MaxInstructions>;
+	type Call = Call;
+	type Origin = Origin;
+	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
+	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 }
 
 impl origin::Config for Runtime {}
@@ -195,11 +208,13 @@ construct_runtime!(
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		ParasOrigin: origin::{Pallet, Origin},
-		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>},
+		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin},
 	}
 );
 
-pub fn kusama_like_with_balances(balances: Vec<(AccountId, Balance)>) -> sp_io::TestExternalities {
+pub fn selendra_like_with_balances(
+	balances: Vec<(AccountId, Balance)>,
+) -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
 	pallet_balances::GenesisConfig::<Runtime> { balances }

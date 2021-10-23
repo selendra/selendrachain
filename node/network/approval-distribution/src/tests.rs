@@ -77,7 +77,7 @@ async fn overseer_send(overseer: &mut VirtualOverseer, msg: ApprovalDistribution
 }
 
 async fn overseer_signal_block_finalized(overseer: &mut VirtualOverseer, number: BlockNumber) {
-	tracing::trace!(?number, "Sending a finalized signal",);
+	tracing::trace!(?number, "Sending a finalized signal");
 	// we don't care about the block hash
 	overseer
 		.send(FromOverseer::Signal(OverseerSignal::BlockFinalized(Hash::zero(), number)))
@@ -249,14 +249,14 @@ fn try_import_the_same_assignment() {
 		expect_reputation_change(overseer, &peer_d, COST_UNEXPECTED_MESSAGE).await;
 		expect_reputation_change(overseer, &peer_d, BENEFIT_VALID_MESSAGE).await;
 
-		assert!(overseer.recv().timeout(TIMEOUT).await.is_none(), "no message should be sent",);
+		assert!(overseer.recv().timeout(TIMEOUT).await.is_none(), "no message should be sent");
 		virtual_overseer
 	});
 }
 
 /// 1. Send a view update that removes block B from their view.
-/// 2. Send a message from B that they incur COST_UNEXPECTED_MESSAGE for,
-///    but then they receive BENEFIT_VALID_MESSAGE.
+/// 2. Send a message from B that they incur `COST_UNEXPECTED_MESSAGE` for,
+///    but then they receive `BENEFIT_VALID_MESSAGE`.
 /// 3. Send all other messages related to B.
 #[test]
 fn spam_attack_results_in_negative_reputation_change() {
@@ -401,7 +401,7 @@ fn peer_sending_us_the_same_we_just_sent_them_is_ok() {
 		let msg = protocol_v1::ApprovalDistributionMessage::Assignments(assignments);
 		send_message_from_peer(overseer, peer, msg.clone()).await;
 
-		assert!(overseer.recv().timeout(TIMEOUT).await.is_none(), "we should not punish the peer",);
+		assert!(overseer.recv().timeout(TIMEOUT).await.is_none(), "we should not punish the peer");
 
 		// send the assignments again
 		send_message_from_peer(overseer, peer, msg).await;
@@ -856,7 +856,7 @@ fn import_remotely_then_locally() {
 		)
 		.await;
 
-		assert!(overseer.recv().timeout(TIMEOUT).await.is_none(), "no message should be sent",);
+		assert!(overseer.recv().timeout(TIMEOUT).await.is_none(), "no message should be sent");
 
 		// send the approval remotely
 		let approval = IndirectSignedApprovalVote {
@@ -883,7 +883,7 @@ fn import_remotely_then_locally() {
 		// import the same approval locally
 		overseer_send(overseer, ApprovalDistributionMessage::DistributeApproval(approval)).await;
 
-		assert!(overseer.recv().timeout(TIMEOUT).await.is_none(), "no message should be sent",);
+		assert!(overseer.recv().timeout(TIMEOUT).await.is_none(), "no message should be sent");
 		virtual_overseer
 	});
 }
@@ -962,7 +962,7 @@ fn sends_assignments_even_when_state_is_approved() {
 			}
 		);
 
-		assert!(overseer.recv().timeout(TIMEOUT).await.is_none(), "no message should be sent",);
+		assert!(overseer.recv().timeout(TIMEOUT).await.is_none(), "no message should be sent");
 		virtual_overseer
 	});
 }
