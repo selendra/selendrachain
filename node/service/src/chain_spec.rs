@@ -24,12 +24,12 @@ use selendra_runtime as selendra;
 use selendra_runtime::constants::currency::UNITS as SEL;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
+use std::collections::BTreeMap;
 
 use sc_chain_spec::{ChainSpecExtension, ChainType};
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::{traits::IdentifyAccount, Perbill};
-use std::collections::BTreeMap;
 use telemetry::TelemetryEndpoints;
 
 const SELENDRA_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -46,7 +46,7 @@ pub struct Extensions {
 	pub fork_blocks: sc_client_api::ForkBlocks<selendra_primitives::v1::Block>,
 	/// Known bad block hashes.
 	pub bad_blocks: sc_client_api::BadBlocks<selendra_primitives::v1::Block>,
-	// The light sync state.
+	/// The light sync state.
 	///
 	/// This value will be set by the `sync-state rpc` implementation.
 	pub light_sync_state: sc_sync_state_rpc::LightSyncStateExtension,
@@ -59,7 +59,6 @@ pub fn selendra_config() -> Result<SelendraChainSpec, String> {
 	SelendraChainSpec::from_json_bytes(&include_bytes!("../res/selendra.json")[..])
 }
 
-/// The default parachains host configuration.
 fn default_parachains_host_configuration(
 ) -> selendra_runtime_parachains::configuration::HostConfiguration<
 	selendra_primitives::v1::BlockNumber,
@@ -231,8 +230,8 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 				.collect::<Vec<_>>(),
 		},
 		staking: selendra::StakingConfig {
-			validator_count: 2,
-			minimum_validator_count: 2,
+			validator_count: 50,
+			minimum_validator_count: 4,
 			stakers: initial_authorities
 				.iter()
 				.map(|x| (x.0.clone(), x.1.clone(), STASH, selendra::StakerStatus::Validator))
@@ -375,7 +374,7 @@ fn testnet_accounts() -> Vec<AccountId> {
 	]
 }
 
-/// Helper function to create selendra GenesisConfig for testing
+/// Helper function to create selendra `GenesisConfig` for testing
 pub fn selendra_testnet_genesis(
 	wasm_binary: &[u8],
 	initial_authorities: Vec<(

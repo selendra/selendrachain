@@ -94,6 +94,11 @@ impl Assets {
 		self.fungible.len() + self.non_fungible.len()
 	}
 
+	/// Returns `true` if `self` contains no assets.
+	pub fn is_empty(&self) -> bool {
+		self.fungible.is_empty() && self.non_fungible.is_empty()
+	}
+
 	/// A borrowing iterator over the fungible assets.
 	pub fn fungible_assets_iter<'a>(&'a self) -> impl Iterator<Item = MultiAsset> + 'a {
 		self.fungible
@@ -206,7 +211,7 @@ impl Assets {
 
 	/// Returns an error unless all `assets` are contained in `self`. In the case of an error, the first asset in
 	/// `assets` which is not wholly in `self` is returned.
-	fn ensure_contains(&self, assets: &MultiAssets) -> Result<(), TakeError> {
+	pub fn ensure_contains(&self, assets: &MultiAssets) -> Result<(), TakeError> {
 		for asset in assets.inner().iter() {
 			match asset {
 				MultiAsset { fun: Fungible(ref amount), ref id } => {
@@ -244,7 +249,7 @@ impl Assets {
 	) -> Result<Assets, TakeError> {
 		let mut taken = Assets::new();
 		match mask {
-			MultiAssetFilter::Wild(All) => {
+			MultiAssetFilter::Wild(All) =>
 				if self.fungible.len() + self.non_fungible.len() <= limit {
 					return Ok(self.swapped(Assets::new()))
 				} else {
@@ -264,8 +269,7 @@ impl Assets {
 							self.non_fungible.insert((c, instance));
 						}
 					});
-				}
-			},
+				},
 			MultiAssetFilter::Wild(AllOf { fun: WildFungible, id }) => {
 				if let Some((id, amount)) = self.fungible.remove_entry(&id) {
 					taken.fungible.insert(id, amount);

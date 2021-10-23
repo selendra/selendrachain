@@ -20,14 +20,17 @@
 
 use std::sync::Arc;
 
+use fc_rpc_core::types::FilterPool;
 use sc_client_api::{
 	light::{Fetcher, RemoteBlockchain},
 	AuxStore,
 };
 use sc_consensus_babe::Epoch;
 use sc_finality_grandpa::FinalityProofProvider;
+use sc_network::NetworkService;
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 use sc_sync_state_rpc::{SyncStateRpcApi, SyncStateRpcHandler};
+use sc_transaction_pool::{ChainApi, Pool};
 use selendra_primitives::v0::{AccountId, Balance, Block, BlockNumber, Hash, Nonce};
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
@@ -38,11 +41,8 @@ use sp_keystore::SyncCryptoStorePtr;
 use txpool_api::TransactionPool;
 
 use fc_rpc::{
-	EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi, EthPubSubApiServer,
-	HexEncodedIdProvider, NetApi, NetApiServer, OverrideHandle, RuntimeApiStorageOverride,
-	SchemaV1Override, StorageOverride, Web3Api, Web3ApiServer,
+	EthBlockDataCache, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride,
 };
-use fc_rpc_core::types::{FilterPool, PendingTransactions};
 use jsonrpc_pubsub::manager::SubscriptionManager;
 use pallet_ethereum::EthereumStorageSchema;
 use std::collections::BTreeMap;
@@ -95,40 +95,38 @@ pub struct BeefyDeps {
 }
 
 /// Full client dependencies
-pub struct FullDeps<C, P, SC, B> {
+pub struct FullDeps<C, P, SC, B, A: ChainApi> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
-	/// The SelectChain Strategy
+	/// The [`SelectChain`] Strategy
 	pub select_chain: SC,
 	/// A copy of the chain spec.
 	pub chain_spec: Box<dyn sc_chain_spec::ChainSpec>,
 	/// Whether to deny unsafe calls
 	pub deny_unsafe: DenyUnsafe,
-	/// The Node authority flag
-	pub is_authority: bool,
-	/// Network service
-	pub network: Arc<sc_network::NetworkService<Block, Hash>>,
-	/// Ethereum pending transactions.
-	pub pending_transactions: PendingTransactions,
-	/// EthFilterApi pool.
-	pub filter_pool: Option<FilterPool>,
-	/// Frontier Backend.
-	pub frontier_backend: Arc<fc_db::Backend<Block>>,
-	/// Maximum number of logs in a query.
-	pub max_past_logs: u32,
 	/// BABE specific dependencies.
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
 	pub grandpa: GrandpaDeps<B>,
 	/// BEEFY specific dependencies.
 	pub beefy: BeefyDeps,
+	/// Graph pool instance.
+	pub graph: Arc<Pool<A>>,
+	/// The Node authority flag
+	pub is_authority: bool,
+	/// Network service
+	pub network: Arc<NetworkService<Block, Hash>>,
+	/// EthFilterApi pool.
+	pub filter_pool: Option<FilterPool>,
+	/// Backend.
+	pub frontier_backend: Arc<fc_db::Backend<Block>>,
 }
 
 /// Instantiate all RPC extensions.
-pub fn create_full<C, P, SC, B>(
-	deps: FullDeps<C, P, SC, B>,
+pub fn create_full<C, P, SC, B, A>(
+	deps: FullDeps<C, P, SC, B, A>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 ) -> Result<RpcExtension, Box<dyn std::error::Error + Send + Sync>>
 where
@@ -151,7 +149,12 @@ where
 	SC: SelectChain<Block> + 'static,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	B::State: sc_client_api::StateBackend<sp_runtime::traits::HashFor<Block>>,
+	A: ChainApi<Block = Block> + 'static,
 {
+	use fc_rpc::{
+		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi, EthPubSubApiServer,
+		HexEncodedIdProvider, NetApi, NetApiServer, Web3Api, Web3ApiServer,
+	};
 	use frame_rpc_system::{FullSystem, SystemApi};
 	use pallet_mmr_rpc::{Mmr, MmrApi};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
@@ -165,15 +168,14 @@ where
 		select_chain,
 		chain_spec,
 		deny_unsafe,
-		is_authority,
-		network,
-		pending_transactions,
-		filter_pool,
-		frontier_backend,
-		max_past_logs,
 		babe,
 		grandpa,
 		beefy,
+		graph,
+		is_authority,
+		network,
+		filter_pool,
+		frontier_backend,
 	} = deps;
 	let BabeDeps { keystore, babe_config, shared_epoch_changes } = babe;
 	let GrandpaDeps {
@@ -204,17 +206,21 @@ where
 		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
 	});
 
+	let block_data_cache = Arc::new(EthBlockDataCache::new(50, 50));
+	let max_past_logs = 1000;
+
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
+		graph,
 		selendra_runtime::TransactionConverter,
 		network.clone(),
-		pending_transactions.clone(),
 		signers,
 		overrides.clone(),
 		frontier_backend.clone(),
 		is_authority,
 		max_past_logs,
+		block_data_cache.clone(),
 	)));
 
 	if let Some(filter_pool) = filter_pool {
@@ -225,6 +231,7 @@ where
 			500 as usize, // max stored filters
 			overrides.clone(),
 			max_past_logs,
+			block_data_cache.clone(),
 		)));
 	}
 

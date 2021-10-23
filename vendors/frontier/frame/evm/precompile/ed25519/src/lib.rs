@@ -22,8 +22,7 @@ extern crate alloc;
 use alloc::vec::Vec;
 use core::convert::TryFrom;
 use ed25519_dalek::{PublicKey, Signature, Verifier};
-use evm::{ExitError, ExitSucceed};
-use fp_evm::LinearCostPrecompile;
+use fp_evm::{ExitError, ExitSucceed, LinearCostPrecompile};
 
 pub struct Ed25519Verify;
 
@@ -33,7 +32,7 @@ impl LinearCostPrecompile for Ed25519Verify {
 
 	fn execute(input: &[u8], _: u64) -> core::result::Result<(ExitSucceed, Vec<u8>), ExitError> {
 		if input.len() < 128 {
-			return Err(ExitError::Other("input must contain 128 bytes".into()));
+			return Err(ExitError::Other("input must contain 128 bytes".into()))
 		};
 
 		let mut i = [0u8; 128];
@@ -71,11 +70,11 @@ mod tests {
 		match Ed25519Verify::execute(&input, cost) {
 			Ok((_, _)) => {
 				panic!("Test not expected to pass");
-			}
+			},
 			Err(e) => {
 				assert_eq!(e, ExitError::Other("input must contain 128 bytes".into()));
 				Ok(())
-			}
+			},
 		}
 	}
 
@@ -90,10 +89,7 @@ mod tests {
 			SecretKey::from_bytes(&secret_key_bytes).expect("Failed to generate secretkey");
 		let public_key = (&secret_key).into();
 
-		let keypair = Keypair {
-			secret: secret_key,
-			public: public_key,
-		};
+		let keypair = Keypair { secret: secret_key, public: public_key };
 
 		let msg: &[u8] = b"abcdefghijklmnopqrstuvwxyz123456";
 		assert_eq!(msg.len(), 32);
@@ -118,10 +114,8 @@ mod tests {
 				assert_eq!(output[1], 0u8);
 				assert_eq!(output[2], 0u8);
 				assert_eq!(output[3], 0u8);
-			}
-			Err(e) => {
-				return Err(e);
-			}
+			},
+			Err(e) => return Err(e),
 		};
 
 		// try again with a different message
@@ -140,10 +134,8 @@ mod tests {
 				assert_eq!(output[1], 0u8);
 				assert_eq!(output[2], 0u8);
 				assert_eq!(output[3], 1u8); // non-zero indicates error (in our case, 1)
-			}
-			Err(e) => {
-				return Err(e);
-			}
+			},
+			Err(e) => return Err(e),
 		};
 
 		Ok(())

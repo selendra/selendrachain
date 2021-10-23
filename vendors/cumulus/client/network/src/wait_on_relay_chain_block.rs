@@ -22,7 +22,7 @@ use sc_client_api::{
 	Backend, BlockchainEvents,
 };
 use selendra_primitives::v1::{Block as PBlock, Hash as PHash};
-use sp_runtime::{generic::BlockId, traits::HashFor};
+use sp_runtime::generic::BlockId;
 use std::{sync::Arc, time::Duration};
 
 /// The timeout in seconds after that the waiting for a block should be aborted.
@@ -85,8 +85,6 @@ impl<B, BCE> WaitOnRelayChainBlock<B, BCE>
 where
 	B: Backend<PBlock>,
 	BCE: BlockchainEvents<PBlock>,
-	// Rust bug: https://github.com/rust-lang/rust/issues/24159
-	sc_client_api::StateBackendFor<B, PBlock>: sc_client_api::StateBackend<HashFor<PBlock>>,
 {
 	pub fn wait_on_relay_chain_block(
 		&self,
@@ -127,7 +125,7 @@ where
 mod tests {
 	use super::*;
 
-	use selendra_test_client::{
+	use polkadot_test_client::{
 		construct_transfer_extrinsic, BlockBuilderExt, Client, ClientBlockImportExt,
 		DefaultTestClientBuilderExt, ExecutionStrategy, FullBackend, InitSelendraBlockBuilder,
 		TestClientBuilder, TestClientBuilderExt,

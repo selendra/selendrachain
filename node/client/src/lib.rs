@@ -20,7 +20,7 @@
 //! There is also the [`Client`] enum that combines all the different clients into one common structure.
 
 use sc_client_api::{AuxStore, Backend as BackendT, BlockchainEvents, KeyIterator, UsageProvider};
-use sc_executor::native_executor_instance;
+use sc_executor::NativeElseWasmExecutor;
 use selendra_primitives::v1::{
 	AccountId, Balance, Block, BlockNumber, Hash, Header, Nonce, ParachainHost,
 };
@@ -37,14 +37,23 @@ use std::sync::Arc;
 
 pub type FullBackend = sc_service::TFullBackend<Block>;
 
-pub type FullClient<RuntimeApi, Executor> = sc_service::TFullClient<Block, RuntimeApi, Executor>;
+pub type FullClient<RuntimeApi, ExecutorDispatch> =
+	sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ExecutorDispatch>>;
 
-native_executor_instance!(
-	pub SelendraExecutor,
-	selendra_runtime::api::dispatch,
-	selendra_runtime::native_version,
-	frame_benchmarking::benchmarking::HostFunctions,
-);
+/// The native executor instance for Selendra.
+pub struct SelendraExecutorDispatch;
+
+impl sc_executor::NativeExecutionDispatch for SelendraExecutorDispatch {
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+
+	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+		selendra_runtime::api::dispatch(method, data)
+	}
+
+	fn native_version() -> sc_executor::NativeVersion {
+		selendra_runtime::native_version()
+	}
+}
 
 /// A set of APIs that selendra-like runtimes must implement.
 pub trait RuntimeApiCollection:
@@ -130,8 +139,7 @@ where
 
 /// Execute something with the client instance.
 ///
-/// As there exist multiple chains inside Selendra, like Selendra itself,
-/// there can exist different kinds of client types. As these client types differ in the generics
+/// As these client types differ in the generics
 /// that are being used, we can not easily return them from a function. For returning them from a
 /// function there exists [`Client`]. However, the problem on how to use this client instance still
 /// exists. This trait "solves" it in a dirty way. It requires a type to implement this trait and
@@ -155,7 +163,7 @@ pub trait ExecuteWithClient {
 
 /// A handle to a Selendra client instance.
 ///
-/// The Selendra service supports multiple different runtimes (Selendra itself, etc). As each runtime has a
+/// The Selendra service supports multiple different runtimes (Westend, Selendra itself, etc). As each runtime has a
 /// specialized client, we need to hide them behind a trait. This is this trait.
 ///
 /// When wanting to work with the inner client, you need to use `execute_with`.
@@ -185,7 +193,7 @@ macro_rules! with_client {
 /// See [`ExecuteWithClient`] for more information.
 #[derive(Clone)]
 pub enum Client {
-	Selendra(Arc<FullClient<selendra_runtime::RuntimeApi, SelendraExecutor>>),
+	Selendra(Arc<FullClient<selendra_runtime::RuntimeApi, SelendraExecutorDispatch>>),
 }
 
 impl ClientHandle for Client {

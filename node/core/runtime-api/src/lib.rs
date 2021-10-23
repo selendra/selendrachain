@@ -47,10 +47,10 @@ mod tests;
 
 const LOG_TARGET: &str = "parachain::runtime-api";
 
-/// The number of maximum runtime api requests can be executed in parallel. Further requests will be buffered.
+/// The number of maximum runtime API requests can be executed in parallel. Further requests will be buffered.
 const MAX_PARALLEL_REQUESTS: usize = 4;
 
-/// The name of the blocking task that executes a runtime api request.
+/// The name of the blocking task that executes a runtime API request.
 const API_REQUEST_TASK_NAME: &str = "selendra-runtime-api-request";
 
 /// The `RuntimeApiSubsystem`. See module docs for more details.
@@ -63,7 +63,7 @@ pub struct RuntimeApiSubsystem<Client> {
 		Pin<Box<dyn Future<Output = ()> + Send>>,
 		oneshot::Receiver<Option<RequestResult>>,
 	)>,
-	/// All the active runtime api requests that are currently being executed.
+	/// All the active runtime API requests that are currently being executed.
 	active_requests: FuturesUnordered<oneshot::Receiver<Option<RequestResult>>>,
 	/// Requests results cache
 	requests_cache: RequestResultCache,
@@ -212,7 +212,7 @@ where
 		}
 	}
 
-	/// Spawn a runtime api request.
+	/// Spawn a runtime API request.
 	///
 	/// If there are already [`MAX_PARALLEL_REQUESTS`] requests being executed, the request will be buffered.
 	fn spawn_request(&mut self, relay_parent: Hash, request: Request) {
@@ -237,7 +237,7 @@ where
 			if self.waiting_requests.len() > MAX_PARALLEL_REQUESTS * 10 {
 				tracing::warn!(
 					target: LOG_TARGET,
-					"{} runtime api requests waiting to be executed.",
+					"{} runtime API requests waiting to be executed.",
 					self.waiting_requests.len(),
 				)
 			}
@@ -247,7 +247,7 @@ where
 		}
 	}
 
-	/// Poll the active runtime api requests.
+	/// Poll the active runtime API requests.
 	async fn poll_requests(&mut self) {
 		// If there are no active requests, this future should be pending forever.
 		if self.active_requests.len() == 0 {
@@ -322,33 +322,25 @@ where
 		Request::Authorities(sender) => query!(Authorities, authorities(), sender),
 		Request::Validators(sender) => query!(Validators, validators(), sender),
 		Request::ValidatorGroups(sender) => query!(ValidatorGroups, validator_groups(), sender),
-		Request::AvailabilityCores(sender) => {
-			query!(AvailabilityCores, availability_cores(), sender)
-		},
-		Request::PersistedValidationData(para, assumption, sender) => {
-			query!(PersistedValidationData, persisted_validation_data(para, assumption), sender)
-		},
-		Request::CheckValidationOutputs(para, commitments, sender) => {
-			query!(CheckValidationOutputs, check_validation_outputs(para, commitments), sender)
-		},
-		Request::SessionIndexForChild(sender) => {
-			query!(SessionIndexForChild, session_index_for_child(), sender)
-		},
-		Request::ValidationCode(para, assumption, sender) => {
-			query!(ValidationCode, validation_code(para, assumption), sender)
-		},
-		Request::ValidationCodeByHash(validation_code_hash, sender) => {
-			query!(ValidationCodeByHash, validation_code_by_hash(validation_code_hash), sender)
-		},
-		Request::CandidatePendingAvailability(para, sender) => {
-			query!(CandidatePendingAvailability, candidate_pending_availability(para), sender)
-		},
+		Request::AvailabilityCores(sender) =>
+			query!(AvailabilityCores, availability_cores(), sender),
+		Request::PersistedValidationData(para, assumption, sender) =>
+			query!(PersistedValidationData, persisted_validation_data(para, assumption), sender),
+		Request::CheckValidationOutputs(para, commitments, sender) =>
+			query!(CheckValidationOutputs, check_validation_outputs(para, commitments), sender),
+		Request::SessionIndexForChild(sender) =>
+			query!(SessionIndexForChild, session_index_for_child(), sender),
+		Request::ValidationCode(para, assumption, sender) =>
+			query!(ValidationCode, validation_code(para, assumption), sender),
+		Request::ValidationCodeByHash(validation_code_hash, sender) =>
+			query!(ValidationCodeByHash, validation_code_by_hash(validation_code_hash), sender),
+		Request::CandidatePendingAvailability(para, sender) =>
+			query!(CandidatePendingAvailability, candidate_pending_availability(para), sender),
 		Request::CandidateEvents(sender) => query!(CandidateEvents, candidate_events(), sender),
 		Request::SessionInfo(index, sender) => query!(SessionInfo, session_info(index), sender),
 		Request::DmqContents(id, sender) => query!(DmqContents, dmq_contents(id), sender),
-		Request::InboundHrmpChannelsContents(id, sender) => {
-			query!(InboundHrmpChannelsContents, inbound_hrmp_channels_contents(id), sender)
-		},
+		Request::InboundHrmpChannelsContents(id, sender) =>
+			query!(InboundHrmpChannelsContents, inbound_hrmp_channels_contents(id), sender),
 		Request::CurrentBabeEpoch(sender) => query!(CurrentBabeEpoch, current_epoch(), sender),
 	}
 }

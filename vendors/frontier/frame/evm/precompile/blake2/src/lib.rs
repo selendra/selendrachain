@@ -21,10 +21,8 @@ extern crate alloc;
 
 mod eip_152;
 
-use alloc::vec::Vec;
 use core::mem::size_of;
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
-use fp_evm::Precompile;
+use fp_evm::{Context, ExitError, ExitSucceed, Precompile, PrecompileOutput};
 
 pub struct Blake2F;
 
@@ -45,7 +43,7 @@ impl Precompile for Blake2F {
 		if input.len() != BLAKE2_F_ARG_LEN {
 			return Err(ExitError::Other(
 				"input length for Blake2 F precompile should be exactly 213 bytes".into(),
-			));
+			))
 		}
 
 		let mut rounds_buf: [u8; 4] = [0; 4];
@@ -55,7 +53,7 @@ impl Precompile for Blake2F {
 		let gas_cost: u64 = (rounds as u64) * Blake2F::GAS_COST_PER_ROUND;
 		if let Some(gas_left) = target_gas {
 			if gas_left < gas_cost {
-				return Err(ExitError::OutOfGas);
+				return Err(ExitError::OutOfGas)
 			}
 		}
 
@@ -96,9 +94,7 @@ impl Precompile for Blake2F {
 		} else if input[212] == 0 {
 			false
 		} else {
-			return Err(ExitError::Other(
-				"incorrect final block indicator flag".into(),
-			));
+			return Err(ExitError::Other("incorrect final block indicator flag".into()))
 		};
 
 		crate::eip_152::compress(&mut h, m, [t_0.into(), t_1.into()], f, rounds as usize);

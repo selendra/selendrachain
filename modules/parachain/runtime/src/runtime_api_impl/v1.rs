@@ -86,7 +86,7 @@ pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::Hash, T:
 			Some(g) => g,
 			None => {
 				log::warn!(
-					target: "runtime::polkadot-api::v1",
+					target: "runtime::selendra-api::v1",
 					"Could not determine the group responsible for core extracted \
 					from list of cores for some prior block in same session",
 				);
@@ -246,8 +246,8 @@ pub fn relevant_authority_ids<T: initializer::Config + pallet_authority_discover
 	// Due to `max_validators`, the `SessionInfo` stores only the validators who are actively
 	// selected to participate in parachain consensus. We'd like all authorities for the current
 	// and next sessions to be used in authority-discovery. The two sets likely have large overlap.
-	let mut authority_ids = <pallet_authority_discovery::Pallet<T>>::current_authorities();
-	authority_ids.extend(<pallet_authority_discovery::Pallet<T>>::next_authorities());
+	let mut authority_ids = <pallet_authority_discovery::Pallet<T>>::current_authorities().to_vec();
+	authority_ids.extend(<pallet_authority_discovery::Pallet<T>>::next_authorities().to_vec());
 
 	// Due to disputes, we'd like to remain connected to authorities of the previous few sessions.
 	// For this, we don't need anyone other than the validators actively participating in consensus.
@@ -289,7 +289,7 @@ where
 {
 	use inclusion::Event as RawEvent;
 
-	<frame_system::Pallet<T>>::events()
+	<frame_system::Pallet<T>>::read_events_no_consensus()
 		.into_iter()
 		.filter_map(|record| extract_event(record.event))
 		.map(|event| match event {

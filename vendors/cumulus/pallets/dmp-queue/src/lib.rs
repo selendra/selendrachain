@@ -21,20 +21,18 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode};
+use codec::{Decode, DecodeLimit, Encode};
 use cumulus_primitives_core::{relay_chain::BlockNumber as RelayBlockNumber, DmpMessageHandler};
 use frame_support::{
 	dispatch::Weight, traits::EnsureOrigin, weights::constants::WEIGHT_PER_MILLIS,
 };
 pub use pallet::*;
+use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
 use sp_std::{convert::TryFrom, prelude::*};
-use xcm::{
-	latest::{Error as XcmError, ExecuteXcm, Outcome, Parent, Xcm},
-	VersionedXcm,
-};
+use xcm::{latest::prelude::*, VersionedXcm, MAX_XCM_DECODE_DEPTH};
 
-#[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
+#[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ConfigData {
 	/// The maximum amount of weight any individual message may consume. Messages above this weight
 	/// go into the overweight queue and may only be serviced explicitly by the
@@ -51,7 +49,7 @@ impl Default for ConfigData {
 }
 
 /// Information concerning our message pages.
-#[derive(Copy, Clone, Eq, PartialEq, Default, Encode, Decode, RuntimeDebug)]
+#[derive(Copy, Clone, Eq, PartialEq, Default, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct PageIndexData {
 	/// The lowest used page index.
 	begin_used: PageCounter,
@@ -160,7 +158,6 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	#[pallet::metadata(T::BlockNumber = "BlockNumber")]
 	pub enum Event<T: Config> {
 		/// Downward message is invalid XCM.
 		/// \[ id \]
@@ -228,8 +225,11 @@ pub mod pallet {
 			data: &[u8],
 		) -> Result<Weight, (MessageId, Weight)> {
 			let id = sp_io::hashing::blake2_256(&data[..]);
-			let maybe_msg =
-				VersionedXcm::<T::Call>::decode(&mut &data[..]).map(Xcm::<T::Call>::try_from);
+			let maybe_msg = VersionedXcm::<T::Call>::decode_all_with_depth_limit(
+				MAX_XCM_DECODE_DEPTH,
+				&mut &data[..],
+			)
+			.map(Xcm::<T::Call>::try_from);
 			match maybe_msg {
 				Err(_) => {
 					Self::deposit_event(Event::InvalidFormat(id));
@@ -240,7 +240,7 @@ pub mod pallet {
 					Ok(0)
 				},
 				Ok(Ok(x)) => {
-					let outcome = T::XcmExecutor::execute_xcm(Parent.into(), x, limit);
+					let outcome = T::XcmExecutor::execute_xcm(Parent, x, limit);
 					match outcome {
 						Outcome::Error(XcmError::WeightLimitReached(required)) =>
 							Err((id, required)),
@@ -287,6 +287,7 @@ pub mod pallet {
 						Ok(consumed) => used += consumed,
 						Err((id, required)) =>
 						// Too much weight required right now.
+						{
 							if required > config.max_individual {
 								// overweight - add to overweight queue and continue with
 								// message execution.
@@ -305,7 +306,8 @@ pub mod pallet {
 								Self::deposit_event(Event::WeightExhausted(
 									id, remaining, required,
 								));
-							},
+							}
+						}
 					}
 				}
 				// Cannot be an `else` here since the `maybe_enqueue_page` may have changed.
@@ -418,13 +420,13 @@ mod tests {
 	pub struct MockExec;
 	impl ExecuteXcm<Call> for MockExec {
 		fn execute_xcm_in_credit(
-			_origin: MultiLocation,
+			_origin: impl Into<MultiLocation>,
 			message: Xcm,
 			weight_limit: Weight,
 			_credit: Weight,
 		) -> Outcome {
-			let o = match &message {
-				Xcm::Transact { require_weight_at_most, .. } => {
+			let o = match (message.0.len(), &message.0.first()) {
+				(1, Some(Transact { require_weight_at_most, .. })) => {
 					if *require_weight_at_most <= weight_limit {
 						Outcome::Complete(*require_weight_at_most)
 					} else {
@@ -470,11 +472,11 @@ mod tests {
 	}
 
 	fn msg(weight: Weight) -> Xcm {
-		Xcm::Transact {
+		Xcm(vec![Transact {
 			origin_type: OriginKind::Native,
 			require_weight_at_most: weight,
 			call: vec![].into(),
-		}
+		}])
 	}
 
 	fn msg_complete(weight: Weight) -> (Xcm, Outcome) {
@@ -742,8 +744,9 @@ mod tests {
 			);
 			assert_eq!(take_trace(), vec![msg_limit_reached(10000)]);
 
-			let base_weight =
-				super::Call::<Test>::service_overweight(0, 0).get_dispatch_info().weight;
+			let base_weight = super::Call::<Test>::service_overweight { index: 0, weight_limit: 0 }
+				.get_dispatch_info()
+				.weight;
 			use frame_support::weights::GetDispatchInfo;
 			let info = DmpQueue::service_overweight(Origin::root(), 0, 20000).unwrap();
 			let actual_weight = info.actual_weight.unwrap();

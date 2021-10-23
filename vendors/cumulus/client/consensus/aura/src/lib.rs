@@ -124,7 +124,7 @@ where
 		Client::Api: AuraApi<B, P::Public>,
 		BI: BlockImport<B, Transaction = sp_api::TransactionFor<Client, B>> + Send + Sync + 'static,
 		SO: SyncOracle + Send + Sync + Clone + 'static,
-		BS: BackoffAuthoringBlocksStrategy<NumberFor<B>> + Send + 'static,
+		BS: BackoffAuthoringBlocksStrategy<NumberFor<B>> + Send + Sync + 'static,
 		PF: Environment<B, Error = Error> + Send + Sync + 'static,
 		PF::Proposer: Proposer<
 			B,
@@ -278,8 +278,6 @@ pub fn build_aura_consensus<P, Block, PF, BI, RBackend, CIDP, Client, SO, BS, Er
 ) -> Box<dyn ParachainConsensus<Block>>
 where
 	Block: BlockT,
-	// Rust bug: https://github.com/rust-lang/rust/issues/24159
-	sc_client_api::StateBackendFor<RBackend, PBlock>: sc_client_api::StateBackend<HashFor<PBlock>>,
 	RBackend: Backend<PBlock> + 'static,
 	CIDP: CreateInherentDataProviders<Block, (PHash, PersistedValidationData)>
 		+ Send
@@ -300,7 +298,7 @@ where
 		+ Sync
 		+ 'static,
 	SO: SyncOracle + Send + Sync + Clone + 'static,
-	BS: BackoffAuthoringBlocksStrategy<NumberFor<Block>> + Send + 'static,
+	BS: BackoffAuthoringBlocksStrategy<NumberFor<Block>> + Send + Sync + 'static,
 	PF: Environment<Block, Error = Error> + Send + Sync + 'static,
 	PF::Proposer: Proposer<
 		Block,
@@ -361,8 +359,6 @@ impl<Block, PF, BI, RBackend, CIDP, Client, SO, BS, P, Error>
 	AuraConsensusBuilder<P, Block, PF, BI, RBackend, CIDP, Client, SO, BS, Error>
 where
 	Block: BlockT,
-	// Rust bug: https://github.com/rust-lang/rust/issues/24159
-	sc_client_api::StateBackendFor<RBackend, PBlock>: sc_client_api::StateBackend<HashFor<PBlock>>,
 	RBackend: Backend<PBlock> + 'static,
 	CIDP: CreateInherentDataProviders<Block, (PHash, PersistedValidationData)>
 		+ Send
@@ -383,7 +379,7 @@ where
 		+ Sync
 		+ 'static,
 	SO: SyncOracle + Send + Sync + Clone + 'static,
-	BS: BackoffAuthoringBlocksStrategy<NumberFor<Block>> + Send + 'static,
+	BS: BackoffAuthoringBlocksStrategy<NumberFor<Block>> + Send + Sync + 'static,
 	PF: Environment<Block, Error = Error> + Send + Sync + 'static,
 	PF::Proposer: Proposer<
 		Block,
@@ -443,8 +439,6 @@ impl<Block, PF, BI, RBackend, CIDP, Client, SO, BS, P, Error> selendra_client::E
 	for AuraConsensusBuilder<P, Block, PF, BI, RBackend, CIDP, Client, SO, BS, Error>
 where
 	Block: BlockT,
-	// Rust bug: https://github.com/rust-lang/rust/issues/24159
-	sc_client_api::StateBackendFor<RBackend, PBlock>: sc_client_api::StateBackend<HashFor<PBlock>>,
 	RBackend: Backend<PBlock> + 'static,
 	CIDP: CreateInherentDataProviders<Block, (PHash, PersistedValidationData)>
 		+ Send
@@ -465,7 +459,7 @@ where
 		+ Sync
 		+ 'static,
 	SO: SyncOracle + Send + Sync + Clone + 'static,
-	BS: BackoffAuthoringBlocksStrategy<NumberFor<Block>> + Send + 'static,
+	BS: BackoffAuthoringBlocksStrategy<NumberFor<Block>> + Send + Sync + 'static,
 	PF: Environment<Block, Error = Error> + Send + Sync + 'static,
 	PF::Proposer: Proposer<
 		Block,

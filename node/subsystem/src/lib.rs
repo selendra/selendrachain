@@ -24,7 +24,9 @@
 pub use jaeger::*;
 pub use selendra_node_jaeger as jaeger;
 
-pub use selendra_overseer::{self as overseer, ActiveLeavesUpdate, OverseerSignal};
+pub use selendra_overseer::{
+	self as overseer, ActiveLeavesUpdate, OverseerConnector, OverseerSignal,
+};
 
 pub use selendra_node_subsystem_types::{
 	errors::{self, *},
