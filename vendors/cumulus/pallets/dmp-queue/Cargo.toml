@@ -1,0 +1,45 @@
+[package]
+name = "cumulus-pallet-dmp-queue"
+version = "0.1.0"
+authors = ["Parity Technologies <admin@parity.io>"]
+edition = "2018"
+
+[dependencies]
+# Other dependencies
+codec = { package = "parity-scale-codec", version = "2.3.0", features = [ "derive" ], default-features = false }
+scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
+log = { version = "0.4.14", default-features = false }
+
+# Substrate Dependencies
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
+sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
+
+# Selendra Dependencies
+xcm = { path = "../../../../modules/xcm" }
+xcm-executor = { path = "../../../../modules/xcm/xcm-executor" }
+
+# Cumulus Dependencies
+cumulus-primitives-core = { path = "../../primitives/core", default-features = false }
+
+[dev-dependencies]
+sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
+sp-version = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
+
+[features]
+default = [ "std" ]
+std = [
+	"codec/std",
+	"log/std",
+	"scale-info/std",
+	"sp-std/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"frame-support/std",
+	"frame-system/std",
+	"cumulus-primitives-core/std",
+	"xcm/std",
+	"xcm-executor/std",
+]

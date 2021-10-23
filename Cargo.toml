@@ -76,12 +76,32 @@ members = [
 	"vendors/frontier/primitives/evm",
 	"vendors/frontier/primitives/rpc",
 	"vendors/frontier/primitives/self-contained",
+
+	"vendors/cumulus/client/cli",
+	"vendors/cumulus/client/consensus/aura",
+	"vendors/cumulus/client/consensus/common",
+	"vendors/cumulus/client/consensus/relay-chain",
+	"vendors/cumulus/client/network",
+	"vendors/cumulus/client/pov-recovery",
+	"vendors/cumulus/client/service",
+	"vendors/cumulus/pallets/asset-tx-payment",
+	"vendors/cumulus/pallets/aura-ext",
+	"vendors/cumulus/pallets/collator-selection",
+	"vendors/cumulus/pallets/dmp-queue",
+	"vendors/cumulus/pallets/parachain-system",
+	"vendors/cumulus/pallets/parachain-system/proc-macro",
+	"vendors/cumulus/pallets/session-benchmarking",
+	"vendors/cumulus/pallets/xcm",
+	"vendors/cumulus/pallets/xcmp-queue",
+	"vendors/cumulus/primitives/core",
+	"vendors/cumulus/primitives/parachain-inherent",
+	"vendors/cumulus/primitives/timestamp",
 ]
 
 [patch.crates-io]
-evm = { git = "https://github.com/purestake/evm", branch = "moonbeam-polkadot-v0.9.11"}
-evm-runtime = { git = "https://github.com/purestake/evm", branch = "moonbeam-polkadot-v0.9.11" }
-evm-gasometer = { git = "https://github.com/purestake/evm", branch = "moonbeam-polkadot-v0.9.11" }
+evm = { git = "https://github.com/purestake/evm", branch = "moonbeam-polkadot-v0.9.12"}
+evm-runtime = { git = "https://github.com/purestake/evm", branch = "moonbeam-polkadot-v0.9.12" }
+evm-gasometer = { git = "https://github.com/purestake/evm", branch = "moonbeam-polkadot-v0.9.12" }
 ethereum = { git = "https://github.com/purestake/ethereum", branch = "joshy-scale-info" }
 
 # make sure dev builds with backtrace do
