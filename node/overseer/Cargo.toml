@@ -11,8 +11,8 @@ parking_lot = "0.11.1"
 tracing = "0.1.28"
 lru = "0.6"
 parity-util-mem = { version = ">= 0.10.1", default-features = false }
-client = { package = "sc-client-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+client = { package = "sc-client-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
 selendra-node-network-protocol = { path = "../network/protocol" }
 selendra-node-primitives = { path = "../primitives" }
@@ -22,7 +22,7 @@ selendra-primitives = { path = "../../primitives" }
 selendra-overseer-gen = { path = "./overseer-gen" }
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 futures = { version = "0.3.17", features = ["thread-pool"] }
 femme = "2.1.1"
 assert_matches = "1.4.0"

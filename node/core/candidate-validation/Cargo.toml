@@ -9,7 +9,7 @@ async-trait = "0.1.51"
 futures = "0.3.17"
 tracing = "0.1.28"
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["bit-vec", "derive"] }
-sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
 selendra-primitives = { path = "../../../primitives" }
 selendra-parachain = { path = "../../../modules/parachain" }
@@ -21,8 +21,8 @@ selendra-node-subsystem-util = { path = "../../subsystem-util" }
 selendra-node-core-pvf = { path = "../pvf" }
 
 [dev-dependencies]
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 futures = { version = "0.3.17", features = ["thread-pool"] }
 assert_matches = "1.4.0"
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }

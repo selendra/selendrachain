@@ -12,9 +12,9 @@ futures-timer = "3"
 thiserror = "1.0.26"
 tracing = "0.1.28"
 
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
 selendra-primitives = { path = "../../../primitives" }
 selendra-node-network-protocol = { path = "../../network/protocol" }
@@ -28,7 +28,7 @@ env_logger = "0.9.0"
 assert_matches = "1.4.0"
 selendra-subsystem-testhelpers = { package = "selendra-node-subsystem-test-helpers", path = "../../subsystem-test-helpers" }
 
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", features = ["std"] }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", features = ["std"] }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 parity-scale-codec = { version = "2.3.1", features = ["std"]  }

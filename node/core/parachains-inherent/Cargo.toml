@@ -10,8 +10,8 @@ futures-timer = "3.0.2"
 tracing = "0.1.28"
 thiserror = "1.0.26"
 async-trait = "0.1.51"
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 selendra-node-subsystem = { path = "../../subsystem" }
 selendra-primitives = { path = "../../../primitives" }

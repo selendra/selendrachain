@@ -12,8 +12,8 @@ derive_more = "0.99.11"
 futures = "0.3.17"
 thiserror = "1.0.26"
 async-trait = "0.1.51"
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
 
 selendra-primitives = { path = "../../../primitives" }
