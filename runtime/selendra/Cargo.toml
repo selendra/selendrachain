@@ -106,6 +106,7 @@ pallet-evm-precompile-simple = { path = "../../vendors/frontier/frame/evm/precom
 pallet-evm-precompile-sha3fips = { path = "../../vendors/frontier/frame/evm/precompile/sha3fips", default-features = false }
 pallet-evm-accounts = { path = "../../vendors/frontier/frame/evm/accounts", default-features = false }
 fp-rpc = { path = "../../vendors/frontier/primitives/rpc", default-features = false }
+fp-self-contained = { path = "../../vendors/frontier/primitives/self-contained", default-features = false }
 
 [dev-dependencies]
 tiny-keccak = "2.0.2"
@@ -205,6 +206,7 @@ std = [
 	"pallet-evm-precompile-sha3fips/std",
 	"pallet-evm-accounts/std",
 	"fp-rpc/std",
+	"fp-self-contained/std",
 ]
 runtime-benchmarks = [
 	"runtime-common/runtime-benchmarks",
