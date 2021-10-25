@@ -41,7 +41,7 @@ use selendra_node_subsystem_util::metrics::{self, prometheus};
 use selendra_parachain::primitives::{ValidationParams, ValidationResult as WasmValidationResult};
 use selendra_primitives::v1::{
 	CandidateCommitments, CandidateDescriptor, Hash, OccupiedCoreAssumption,
-	PersistedValidationData, ValidationCode,
+	PersistedValidationData, ValidationCode, ValidationCodeHash,
 };
 
 use parity_scale_codec::Encode;
@@ -69,7 +69,10 @@ pub struct Config {
 
 /// The candidate validation subsystem.
 pub struct CandidateValidationSubsystem {
-	metrics: Metrics,
+	#[allow(missing_docs)]
+	pub metrics: Metrics,
+	#[allow(missing_docs)]
+	pub pvf_metrics: selendra_node_core_pvf::Metrics,
 	config: Config,
 }
 
@@ -78,8 +81,12 @@ impl CandidateValidationSubsystem {
 	/// strategy.
 	///
 	/// Check out [`IsolationStrategy`] to get more details.
-	pub fn with_config(config: Config, metrics: Metrics) -> Self {
-		CandidateValidationSubsystem { config, metrics }
+	pub fn with_config(
+		config: Config,
+		metrics: Metrics,
+		pvf_metrics: selendra_node_core_pvf::Metrics,
+	) -> Self {
+		CandidateValidationSubsystem { config, metrics, pvf_metrics }
 	}
 }
 
@@ -89,10 +96,15 @@ where
 	Context: overseer::SubsystemContext<Message = CandidateValidationMessage>,
 {
 	fn start(self, ctx: Context) -> SpawnedSubsystem {
-		let future =
-			run(ctx, self.metrics, self.config.artifacts_cache_path, self.config.program_path)
-				.map_err(|e| SubsystemError::with_origin("candidate-validation", e))
-				.boxed();
+		let future = run(
+			ctx,
+			self.metrics,
+			self.pvf_metrics,
+			self.config.artifacts_cache_path,
+			self.config.program_path,
+		)
+		.map_err(|e| SubsystemError::with_origin("candidate-validation", e))
+		.boxed();
 		SpawnedSubsystem { name: "candidate-validation-subsystem", future }
 	}
 }
@@ -100,6 +112,7 @@ where
 async fn run<Context>(
 	mut ctx: Context,
 	metrics: Metrics,
+	pvf_metrics: selendra_node_core_pvf::Metrics,
 	cache_path: PathBuf,
 	program_path: PathBuf,
 ) -> SubsystemResult<()>
@@ -109,6 +122,7 @@ where
 {
 	let (mut validation_host, task) = selendra_node_core_pvf::start(
 		selendra_node_core_pvf::Config::new(cache_path, program_path),
+		pvf_metrics,
 	);
 	ctx.spawn_blocking("pvf-validation-host", task.boxed())?;
 
@@ -164,6 +178,7 @@ where
 					match res {
 						Ok(x) => {
 							metrics.on_validation_event(&x);
+
 							if let Err(_e) = response_sender.send(x) {
 								tracing::warn!(
 									target: LOG_TARGET,
@@ -349,11 +364,19 @@ async fn validate_candidate_exhaustive(
 ) -> SubsystemResult<Result<ValidationResult, ValidationFailed>> {
 	let _timer = metrics.time_validate_candidate_exhaustive();
 
+	let validation_code_hash = validation_code.hash();
+	tracing::debug!(
+		target: LOG_TARGET,
+		?validation_code_hash,
+		para_id = ?descriptor.para_id,
+		"About to validate a candidate.",
+	);
+
 	if let Err(e) = perform_basic_checks(
 		&descriptor,
 		persisted_validation_data.max_pov_size,
 		&*pov,
-		&validation_code,
+		&validation_code_hash,
 	) {
 		return Ok(Ok(ValidationResult::Invalid(e)))
 	}
@@ -478,10 +501,9 @@ fn perform_basic_checks(
 	candidate: &CandidateDescriptor,
 	max_pov_size: u32,
 	pov: &PoV,
-	validation_code: &ValidationCode,
+	validation_code_hash: &ValidationCodeHash,
 ) -> Result<(), InvalidCandidate> {
 	let pov_hash = pov.hash();
-	let validation_code_hash = validation_code.hash();
 
 	let encoded_pov_size = pov.encoded_size();
 	if encoded_pov_size > max_pov_size as usize {
@@ -492,7 +514,7 @@ fn perform_basic_checks(
 		return Err(InvalidCandidate::PoVHashMismatch)
 	}
 
-	if validation_code_hash != candidate.validation_code_hash {
+	if *validation_code_hash != candidate.validation_code_hash {
 		return Err(InvalidCandidate::CodeHashMismatch)
 	}
 

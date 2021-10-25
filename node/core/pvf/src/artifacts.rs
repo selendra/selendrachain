@@ -54,7 +54,7 @@ impl Artifact {
 /// multiple engine implementations the artifact ID should include the engine type as well.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ArtifactId {
-	code_hash: ValidationCodeHash,
+	pub(crate) code_hash: ValidationCodeHash,
 }
 
 impl ArtifactId {
@@ -81,6 +81,25 @@ impl ArtifactId {
 	pub fn path(&self, cache_path: &Path) -> PathBuf {
 		let file_name = format!("{}{:#x}", Self::PREFIX, self.code_hash);
 		cache_path.join(file_name)
+	}
+}
+
+/// A bundle of the artifact ID and the path.
+///
+/// Rationale for having this is two-fold:
+///
+/// - While we can derive the artifact path from the artifact id, it makes sense to carry it around
+/// sometimes to avoid extra work.
+/// - At the same time, carrying only path limiting the ability for logging.
+#[derive(Debug, Clone)]
+pub struct ArtifactPathId {
+	pub(crate) id: ArtifactId,
+	pub(crate) path: PathBuf,
+}
+
+impl ArtifactPathId {
+	pub(crate) fn new(artifact_id: ArtifactId, cache_path: &Path) -> Self {
+		Self { path: artifact_id.path(cache_path), id: artifact_id }
 	}
 }
 
@@ -131,7 +150,7 @@ impl Artifacts {
 
 	/// Inform the table about the artifact with the given ID. The state will be set to "preparing".
 	///
-	/// This function must be used only for brand new artifacts and should never be used for
+	/// This function must be used only for brand-new artifacts and should never be used for
 	/// replacing existing ones.
 	pub fn insert_preparing(&mut self, artifact_id: ArtifactId) {
 		// See the precondition.
@@ -140,7 +159,7 @@ impl Artifacts {
 
 	/// Insert an artifact with the given ID as "prepared".
 	///
-	/// This function must be used only for brand new artifacts and should never be used for
+	/// This function must be used only for brand-new artifacts and should never be used for
 	/// replacing existing ones.
 	#[cfg(test)]
 	pub fn insert_prepared(&mut self, artifact_id: ArtifactId, last_time_needed: SystemTime) {

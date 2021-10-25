@@ -25,6 +25,7 @@ use primitives::v1::{
 	Balance, Hash, HrmpChannelId, Id as ParaId, InboundHrmpMessage, OutboundHrmpMessage,
 	SessionIndex,
 };
+use scale_info::TypeInfo;
 use sp_runtime::traits::{AccountIdConversion, BlakeTwo256, Hash as HashT, UniqueSaturatedInto};
 use sp_std::{
 	collections::{btree_map::BTreeMap, btree_set::BTreeSet},
@@ -35,7 +36,7 @@ use sp_std::{
 pub use pallet::*;
 
 /// A description of a request to open an HRMP channel.
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, TypeInfo)]
 pub struct HrmpOpenChannelRequest {
 	/// Indicates if this request was confirmed by the recipient.
 	pub confirmed: bool,
@@ -53,7 +54,7 @@ pub struct HrmpOpenChannelRequest {
 }
 
 /// A metadata of an HRMP channel.
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, TypeInfo)]
 #[cfg_attr(test, derive(Debug))]
 pub struct HrmpChannel {
 	// NOTE: This structure is used by parachains via merkle proofs. Therefore, this struct requires
@@ -142,8 +143,9 @@ impl fmt::Debug for OutboundHrmpAcceptanceErr {
 				"more HRMP messages than permitted by config ({} > {})",
 				sent, permitted,
 			),
-			NotSorted { idx } =>
-				write!(fmt, "the HRMP messages are not sorted (first unsorted is at index {})", idx,),
+			NotSorted { idx } => {
+				write!(fmt, "the HRMP messages are not sorted (first unsorted is at index {})", idx,)
+			},
 			NoSuchChannel { idx, channel_id } => write!(
 				fmt,
 				"the HRMP message at index {} is sent to a non existent channel {:?}->{:?}",
@@ -385,7 +387,7 @@ pub mod pallet {
 		/// parameters.
 		///
 		/// - `proposed_max_capacity` - specifies how many messages can be in the channel at once.
-		/// - `proposed_max_message_size` - specifies the maximum size of any of the messages.
+		/// - `proposed_max_message_size` - specifies the maximum size of the messages.
 		///
 		/// These numbers are a subject to the relay-chain configuration limits.
 		///
@@ -1050,13 +1052,13 @@ impl<T: Config> Pallet<T> {
 
 		let notification_bytes = {
 			use parity_scale_codec::Encode as _;
-			use xcm::opaque::{v1::Xcm, VersionedXcm};
+			use xcm::opaque::{latest::prelude::*, VersionedXcm};
 
-			VersionedXcm::from(Xcm::HrmpNewChannelOpenRequest {
+			VersionedXcm::from(Xcm(vec![HrmpNewChannelOpenRequest {
 				sender: u32::from(origin),
 				max_capacity: proposed_max_capacity,
 				max_message_size: proposed_max_message_size,
-			})
+			}]))
 			.encode()
 		};
 		if let Err(dmp::QueueDownwardMessageError::ExceedsMaxMessageSize) =
@@ -1109,9 +1111,9 @@ impl<T: Config> Pallet<T> {
 
 		let notification_bytes = {
 			use parity_scale_codec::Encode as _;
-			use xcm::opaque::{v1::Xcm, VersionedXcm};
-
-			VersionedXcm::from(Xcm::HrmpChannelAccepted { recipient: u32::from(origin) }).encode()
+			use xcm::opaque::{latest::prelude::*, VersionedXcm};
+			let xcm = Xcm(vec![HrmpChannelAccepted { recipient: u32::from(origin) }]);
+			VersionedXcm::from(xcm).encode()
 		};
 		if let Err(dmp::QueueDownwardMessageError::ExceedsMaxMessageSize) =
 			<dmp::Pallet<T>>::queue_downward_message(&config, sender, notification_bytes)
@@ -1176,13 +1178,13 @@ impl<T: Config> Pallet<T> {
 		let config = <configuration::Pallet<T>>::config();
 		let notification_bytes = {
 			use parity_scale_codec::Encode as _;
-			use xcm::opaque::{v1::Xcm, VersionedXcm};
+			use xcm::opaque::{latest::prelude::*, VersionedXcm};
 
-			VersionedXcm::from(Xcm::HrmpChannelClosing {
+			VersionedXcm::from(Xcm(vec![HrmpChannelClosing {
 				initiator: u32::from(origin),
 				sender: u32::from(channel_id.sender),
 				recipient: u32::from(channel_id.recipient),
-			})
+			}]))
 			.encode()
 		};
 		let opposite_party =

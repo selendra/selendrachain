@@ -164,6 +164,13 @@ impl Backend for TestBackend {
 	where
 		I: IntoIterator<Item = BackendWriteOp>,
 	{
+		let ops: Vec<_> = ops.into_iter().collect();
+
+		// Early return if empty because empty writes shouldn't
+		// trigger wakeups (they happen on an interval)
+		if ops.is_empty() {
+			return Ok(())
+		}
 		let mut inner = self.inner.lock();
 
 		for op in ops {
@@ -521,13 +528,13 @@ async fn finalize_block(
 	block_number: BlockNumber,
 	block_hash: Hash,
 ) {
-	let (_, write_tx) = backend.await_next_write();
+	let (_, write_rx) = backend.await_next_write();
 
 	virtual_overseer
 		.send(OverseerSignal::BlockFinalized(block_hash, block_number).into())
 		.await;
 
-	write_tx.await.unwrap();
+	write_rx.await.unwrap();
 }
 
 fn extract_info_from_chain(
@@ -551,7 +558,7 @@ fn assert_backend_contains<'a>(
 			header.number,
 			hash,
 		);
-		assert!(backend.load_block_entry(&hash).unwrap().is_some(), "no entry found for {}", hash,);
+		assert!(backend.load_block_entry(&hash).unwrap().is_some(), "no entry found for {}", hash);
 	}
 }
 
@@ -1138,9 +1145,9 @@ fn finalize_viable_prunes_subtrees() {
 		assert_leaves(&backend, vec![a3_hash, x3_hash]);
 		assert_leaves_query(&mut virtual_overseer, vec![a3_hash, x3_hash]).await;
 
-		assert_eq!(backend.load_first_block_number().unwrap().unwrap(), 3,);
+		assert_eq!(backend.load_first_block_number().unwrap().unwrap(), 3);
 
-		assert_eq!(backend.load_blocks_by_number(3).unwrap(), vec![a3_hash, x3_hash],);
+		assert_eq!(backend.load_blocks_by_number(3).unwrap(), vec![a3_hash, x3_hash]);
 
 		virtual_overseer
 	});
@@ -1701,9 +1708,11 @@ fn approve_nonexistent_has_no_effect() {
 		.await;
 
 		let nonexistent = Hash::repeat_byte(1);
-		approve_block(&mut virtual_overseer, &backend, nonexistent).await;
+		virtual_overseer
+			.send(FromOverseer::Communication { msg: ChainSelectionMessage::Approved(nonexistent) })
+			.await;
 
-		// a3 is approved, but not a1 or a2.
+		// None are approved.
 		assert_matches!(
 			backend.load_block_entry(&a3_hash).unwrap().unwrap().viability.approval,
 			Approval::Unapproved

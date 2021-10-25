@@ -21,15 +21,14 @@ extern crate alloc;
 
 use codec::Decode;
 use core::marker::PhantomData;
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
-use fp_evm::Precompile;
+use fp_evm::{Context, ExitError, ExitSucceed, Precompile, PrecompileOutput};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	weights::{DispatchClass, Pays},
 };
 use pallet_evm::{AddressMapping, GasWeightMapping};
 
-pub struct Dispatch<T: pallet_evm::Config> {
+pub struct Dispatch<T> {
 	_marker: PhantomData<T>,
 }
 

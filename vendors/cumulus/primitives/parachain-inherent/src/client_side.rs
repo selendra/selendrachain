@@ -26,8 +26,8 @@ use cumulus_primitives_core::{
 	},
 	InboundDownwardMessage, InboundHrmpMessage, ParaId, PersistedValidationData,
 };
-use selendra_client::{Client, ClientHandle, ExecuteWithClient};
 use sc_client_api::Backend;
+use selendra_client::{Client, ClientHandle, ExecuteWithClient};
 use sp_api::ProvideRuntimeApi;
 use sp_runtime::generic::BlockId;
 use sp_state_machine::Backend as _;
@@ -172,17 +172,13 @@ fn collect_relay_storage_proof(
 	relevant_keys.push(relay_well_known_keys::relay_dispatch_queue_size(para_id));
 	relevant_keys.push(relay_well_known_keys::hrmp_ingress_channel_index(para_id));
 	relevant_keys.push(relay_well_known_keys::hrmp_egress_channel_index(para_id));
+	relevant_keys.push(relay_well_known_keys::upgrade_go_ahead_signal(para_id));
+	relevant_keys.push(relay_well_known_keys::upgrade_restriction_signal(para_id));
 	relevant_keys.extend(ingress_channels.into_iter().map(|sender| {
-		relay_well_known_keys::hrmp_channels(HrmpChannelId {
-			sender,
-			recipient: para_id,
-		})
+		relay_well_known_keys::hrmp_channels(HrmpChannelId { sender, recipient: para_id })
 	}));
 	relevant_keys.extend(egress_channels.into_iter().map(|recipient| {
-		relay_well_known_keys::hrmp_channels(HrmpChannelId {
-			sender: para_id,
-			recipient,
-		})
+		relay_well_known_keys::hrmp_channels(HrmpChannelId { sender: para_id, recipient })
 	}));
 
 	sp_state_machine::prove_read(relay_parent_state_backend, relevant_keys)

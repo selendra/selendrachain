@@ -112,15 +112,19 @@ impl pallet_balances::Config for Test {
 impl crate::initializer::Config for Test {
 	type Randomness = TestRandomness<Self>;
 	type ForceOrigin = frame_system::EnsureRoot<u64>;
+	type WeightInfo = ();
 }
 
-impl crate::configuration::Config for Test {}
+impl crate::configuration::Config for Test {
+	type WeightInfo = crate::configuration::weights::WeightInfo<Test>;
+}
 
 impl crate::shared::Config for Test {}
 
 impl crate::paras::Config for Test {
 	type Origin = Origin;
 	type Event = Event;
+	type WeightInfo = crate::paras::weights::WeightInfo<Test>;
 }
 
 impl crate::dmp::Config for Test {}
@@ -146,6 +150,7 @@ impl crate::disputes::Config for Test {
 	type Event = Event;
 	type RewardValidators = Self;
 	type PunishValidators = Self;
+	type WeightInfo = crate::disputes::TestWeightInfo;
 }
 
 thread_local! {

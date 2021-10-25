@@ -17,7 +17,7 @@ pub mod pallet {
 	pub use pallet_bridge as bridge;
 	use sp_arithmetic::traits::SaturatedConversion;
 	use sp_core::U256;
-	use sp_std::{prelude::*};
+	use sp_std::prelude::*;
 
 	type ResourceId = bridge::ResourceId;
 
@@ -53,7 +53,6 @@ pub mod pallet {
 	}
 
 	#[pallet::event]
-	#[pallet::metadata(BalanceOf<T> = "Balance")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// [chainId, min_fee, fee_scale]

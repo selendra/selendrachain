@@ -14,17 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
+use crate::MAX_XCM_DECODE_DEPTH;
 use alloc::vec::Vec;
 use parity_scale_codec::{Decode, DecodeLimit, Encode};
 
-/// Maximum nesting level for XCM decoding.
-pub const MAX_XCM_DECODE_DEPTH: u32 = 8;
-
 /// Wrapper around the encoded and decoded versions of a value.
 /// Caches the decoded value once computed.
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, scale_info::TypeInfo)]
 #[codec(encode_bound())]
 #[codec(decode_bound())]
+#[scale_info(bounds(), skip_type_params(T))]
 pub struct DoubleEncoded<T> {
 	encoded: Vec<u8>,
 	#[codec(skip)]

@@ -22,7 +22,7 @@ use frame_support::pallet_prelude::*;
 use primitives::v1::{DownwardMessage, Hash, Id as ParaId, InboundDownwardMessage};
 use sp_runtime::traits::{BlakeTwo256, Hash as HashT, SaturatedConversion};
 use sp_std::{fmt, prelude::*};
-use xcm::latest::Error as XcmError;
+use xcm::latest::SendError;
 
 pub use pallet::*;
 
@@ -33,10 +33,10 @@ pub enum QueueDownwardMessageError {
 	ExceedsMaxMessageSize,
 }
 
-impl From<QueueDownwardMessageError> for XcmError {
+impl From<QueueDownwardMessageError> for SendError {
 	fn from(err: QueueDownwardMessageError) -> Self {
 		match err {
-			QueueDownwardMessageError::ExceedsMaxMessageSize => XcmError::ExceedsMaxMessageSize,
+			QueueDownwardMessageError::ExceedsMaxMessageSize => SendError::ExceedsMaxMessageSize,
 		}
 	}
 }
@@ -54,9 +54,8 @@ impl fmt::Debug for ProcessedDownwardMessagesAcceptanceErr {
 	fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
 		use ProcessedDownwardMessagesAcceptanceErr::*;
 		match *self {
-			AdvancementRule => {
-				write!(fmt, "DMQ is not empty, but processed_downward_messages is 0",)
-			},
+			AdvancementRule =>
+				write!(fmt, "DMQ is not empty, but processed_downward_messages is 0",),
 			Underflow { processed_downward_messages, dmq_length } => write!(
 				fmt,
 				"processed_downward_messages = {}, but dmq_length is only {}",

@@ -34,7 +34,7 @@ use crate::{
 ///
 /// It should be ensured that a cached session stays live in the cache as long as we might need it.
 pub struct SessionCache {
-	/// Look up cached sessions by SessionIndex.
+	/// Look up cached sessions by `SessionIndex`.
 	///
 	/// Note: Performance of fetching is really secondary here, but we need to ensure we are going
 	/// to get any existing cache entry, before fetching new information, as we should not mess up
@@ -56,7 +56,7 @@ pub struct SessionInfo {
 	/// validators.
 	pub validator_groups: Vec<Vec<AuthorityDiscoveryId>>,
 
-	/// Information about ourself:
+	/// Information about ourselves:
 	pub our_index: ValidatorIndex,
 
 	/// Remember to which group we belong, so we won't start fetching chunks for candidates with

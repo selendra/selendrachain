@@ -1,0 +1,46 @@
+[package]
+name = "pallet-xcm-benchmarks"
+version = "0.1.4"
+authors = ["Selendra info@selendra.org"]
+edition = "2018"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+log = "0.4.0"
+codec = { package = "parity-scale-codec", version = "2.3.1", default-features = false }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
+
+xcm-executor = { path = "../xcm-executor", default-features = false, features = ["runtime-benchmarks"] }
+xcm = { path = "..", default-features = false, features = ["runtime-benchmarks"] }
+
+[dev-dependencies]
+pallet-balances = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+pallet-assets = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+
+xcm-builder = { path = "../xcm-builder" }
+xcm = { path = ".." }
+pallet-xcm = { path = "../pallet-xcm" }
+selendra-runtime-common = { path = "../../../runtime/common" }
+selendra-primitives = { path = "../../../primitives" }
+
+[features]
+default = ["std"]
+std = [
+	"codec/std",
+	"frame-benchmarking/std",
+	"frame-support/std",
+	"frame-system/std",
+	"sp-runtime/std",
+	"sp-std/std"
+]

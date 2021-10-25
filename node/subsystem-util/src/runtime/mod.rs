@@ -63,14 +63,14 @@ pub struct RuntimeInfo {
 	/// overseer seems sensible.
 	session_index_cache: LruCache<Hash, SessionIndex>,
 
-	/// Look up cached sessions by SessionIndex.
+	/// Look up cached sessions by `SessionIndex`.
 	session_info_cache: LruCache<SessionIndex, ExtendedSessionInfo>,
 
 	/// Key store for determining whether we are a validator and what `ValidatorIndex` we have.
 	keystore: Option<SyncCryptoStorePtr>,
 }
 
-/// SessionInfo with additional useful data for validator nodes.
+/// `SessionInfo` with additional useful data for validator nodes.
 pub struct ExtendedSessionInfo {
 	/// Actual session info as fetched from the runtime.
 	pub session_info: SessionInfo,
@@ -199,7 +199,7 @@ impl RuntimeInfo {
 	/// Build `ValidatorInfo` for the current session.
 	///
 	///
-	/// Returns: `None` if not a validator.
+	/// Returns: `None` if not a parachain validator.
 	async fn get_validator_info(&self, session_info: &SessionInfo) -> Result<ValidatorInfo> {
 		if let Some(our_index) = self.get_our_index(&session_info.validators).await {
 			// Get our group index:
@@ -286,7 +286,7 @@ where
 		.collect())
 }
 
-/// Get group rotation info based on the given relay_parent.
+/// Get group rotation info based on the given `relay_parent`.
 pub async fn get_group_rotation_info<Context>(
 	ctx: &mut Context,
 	relay_parent: Hash,

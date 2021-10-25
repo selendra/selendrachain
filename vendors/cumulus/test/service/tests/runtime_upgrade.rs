@@ -17,9 +17,9 @@
 use cumulus_primitives_core::ParaId;
 use cumulus_test_service::{initial_head_data, run_relay_chain_validator_node, Keyring::*};
 use futures::{join, StreamExt};
+use sc_client_api::BlockchainEvents;
 use sc_service::TaskExecutor;
 use sp_runtime::generic::BlockId;
-use sc_client_api::BlockchainEvents;
 
 #[substrate_test_utils::test]
 async fn test_runtime_upgrade(task_executor: TaskExecutor) {
@@ -94,7 +94,7 @@ async fn test_runtime_upgrade(task_executor: TaskExecutor) {
 				.expect("Runtime version exists");
 
 			if expected_runtime_version == runtime_version {
-				break;
+				break
 			}
 		}
 	}
