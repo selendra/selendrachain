@@ -128,7 +128,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 /// Runtime version (Selendra).
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("selendra"),
-	impl_name: create_runtime_str!("selendra-chain"),
+	impl_name: create_runtime_str!("parity-selendra"),
 	authoring_version: 1,
 	spec_version: 114,
 	impl_version: 0,
