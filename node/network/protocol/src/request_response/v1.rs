@@ -170,7 +170,7 @@ impl IsRequest for AvailableDataFetchingRequest {
 pub struct StatementFetchingRequest {
 	/// Data needed to locate and identify the needed statement.
 	pub relay_parent: Hash,
-	/// Hash of candidate that was used create the `CommitedCandidateRecept`.
+	/// Hash of candidate that was used create the `committedCandidateRecept`.
 	pub candidate_hash: CandidateHash,
 }
 

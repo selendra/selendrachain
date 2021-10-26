@@ -74,9 +74,7 @@ pub fn test_precompile_test_vectors<P: Precompile>(
 					);
 				}
 			},
-			Err(err) => {
-				return Err(format!("Test '{}' returned error: {:?}", test.Name, err))
-			},
+			Err(err) => return Err(format!("Test '{}' returned error: {:?}", test.Name, err)),
 		}
 	}
 

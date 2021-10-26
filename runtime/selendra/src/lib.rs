@@ -74,10 +74,12 @@ use sp_core::OpaqueMetadata;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Extrinsic as ExtrinsicT,
-		OpaqueKeys, SaturatedConversion, Verify, PostDispatchInfoOf, Dispatchable,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Dispatchable,
+		Extrinsic as ExtrinsicT, OpaqueKeys, PostDispatchInfoOf, SaturatedConversion, Verify,
 	},
-	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity, TransactionValidityError},
+	transaction_validity::{
+		TransactionPriority, TransactionSource, TransactionValidity, TransactionValidityError,
+	},
 	ApplyExtrinsicResult, KeyTypeId, Perbill, Percent, Permill,
 };
 use sp_staking::SessionIndex;
@@ -502,7 +504,7 @@ parameter_types! {
 	pub const SessionsPerEra: SessionIndex = 6;
 	// 28 eras for unbonding (7 days).
 	pub const BondingDuration: pallet_staking::EraIndex = 28;
-	// 27 eras in which slashes can be cancelled (slightly less than 7 days).
+	// 27 eras in which slashes can be canceled (slightly less than 7 days).
 	pub const SlashDeferDuration: pallet_staking::EraIndex = 27;
 	pub const MaxNominatorRewardedPerValidator: u32 = 256;
 	pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(17);
@@ -1714,9 +1716,9 @@ impl fp_self_contained::SelfContainedCall for Call {
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(call.dispatch(
-				Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info)),
-			)),
+			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(
+				call.dispatch(Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info))),
+			),
 			_ => None,
 		}
 	}
