@@ -37,4 +37,4 @@ selendra-primitives = { path = "../../../../primitives" }
 selendra-parachain = { path = "../../../../modules/parachain" }
 
 # Other deps
-codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = [ "derive" ] }
+codec = { package = "parity-scale-codec", version = "2.3.1", default-features = false, features = [ "derive" ] }
