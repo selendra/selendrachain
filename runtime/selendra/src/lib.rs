@@ -270,7 +270,7 @@ impl pallet_indices::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: Balance = 1000 * CENTS;
+	pub const ExistentialDeposit: Balance = 1 * CENTS;
 	pub const MaxLocks: u32 = 50;
 	pub const MaxReserves: u32 = 50;
 }
@@ -1414,7 +1414,7 @@ impl pallet_bridge::Config for Runtime {
 }
 
 parameter_types! {
-	pub const BridgeTokenId: [u8; 32] = hex_literal::hex!("000000000000000000000030bAb6B88dB781129c6a4e9B7926738e3314Cf1C38");
+	pub const BridgeTokenId: [u8; 32] = hex_literal::hex!("000000000000000000000056442766Dc1aEf4bd1FA0Be9D1675eecA05d727a61");
 }
 
 impl pallet_bridge_transfer::Config for Runtime {
