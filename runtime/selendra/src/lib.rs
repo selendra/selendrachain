@@ -1635,7 +1635,7 @@ construct_runtime! {
 		ParasSudoWrapper: paras_sudo_wrapper::{Pallet, Call} = 74,
 
 		// Pallet for sending XCM.
-		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin} = 99,
+		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin, Config} = 80,
 	}
 }
 
