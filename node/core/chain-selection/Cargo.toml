@@ -10,7 +10,7 @@ futures = "0.3.17"
 futures-timer = "3"
 tracing = "0.1.29"
 kvdb = "0.10.0"
-thiserror = "1.0.26"
+thiserror = "1.0.30"
 parity-scale-codec = "2.3.1"
 
 selendra-primitives = { path = "../../../primitives" }
