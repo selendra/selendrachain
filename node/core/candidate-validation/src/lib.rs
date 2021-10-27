@@ -514,7 +514,7 @@ impl ValidationBackend for ValidationHost {
 
 		let validation_result = rx
 			.await
-			.map_err(|_| ValidationError::InternalError("validation was cancelled".into()))?;
+			.map_err(|_| ValidationError::InternalError("validation was canceled".into()))?;
 
 		validation_result
 	}
