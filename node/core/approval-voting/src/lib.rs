@@ -27,7 +27,7 @@ use selendra_node_primitives::{
 	approval::{
 		BlockApprovalMeta, DelayTranche, IndirectAssignmentCert, IndirectSignedApprovalVote,
 	},
-	SignedDisputeStatement, ValidationResult,
+	SignedDisputeStatement, ValidationResult, APPROVAL_EXECUTION_TIMEOUT,
 };
 use selendra_node_subsystem::{
 	errors::RecoveryError,
@@ -2232,6 +2232,7 @@ async fn launch_approval(
 					validation_code,
 					candidate.descriptor.clone(),
 					available_data.pov,
+					APPROVAL_EXECUTION_TIMEOUT,
 					val_tx,
 				)
 				.into(),
