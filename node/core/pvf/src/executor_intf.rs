@@ -40,6 +40,8 @@ const CONFIG: Config = Config {
 	// Data section for runtimes are typically rather small and can fit in a single digit number of
 	// wasm pages.
 	//
+	// Thus let's assume that 32 pages or 2 MiB are used for these needs.
+	//
 	// Note that the memory limit is specified in bytes, so we multiply this value
 	// by wasm page size -- 64 KiB.
 	max_memory_size: Some((2048 + 32) * 65536),

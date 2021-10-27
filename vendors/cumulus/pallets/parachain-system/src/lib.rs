@@ -58,8 +58,6 @@ mod migration;
 mod relay_state_snapshot;
 #[macro_use]
 pub mod validate_block;
-#[cfg(test)]
-mod tests;
 
 /// Register the `validate_block` function that is used by parachains to validate blocks on a
 /// validator.

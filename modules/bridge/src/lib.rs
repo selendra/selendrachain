@@ -375,7 +375,7 @@ pub mod pallet {
 
 		/// Evaluate the state of a proposal given the current vote threshold.
 		///
-		/// A proposal with enough votes will be either executed or cancelled, and the status
+		/// A proposal with enough votes will be either executed or canceled, and the status
 		/// will be updated accordingly.
 		///
 		/// # <weight>

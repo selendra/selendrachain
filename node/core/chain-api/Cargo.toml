@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 futures = "0.3.17"
-tracing = "0.1.28"
+tracing = "0.1.29"
 sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sc-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
