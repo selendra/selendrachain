@@ -150,11 +150,11 @@ pub type Barrier = (
 );
 
 parameter_types! {
-	pub const SelendraForStatemint: (MultiAssetFilter, MultiLocation) =
+	pub const SelendraForParachanin: (MultiAssetFilter, MultiLocation) =
 		(MultiAssetFilter::Wild(WildMultiAsset::AllOf { id: Concrete(MultiLocation::here()), fun: WildFungible }), X1(Parachain(1000)).into());
 	pub const MaxInstructions: u32 = 100;
 }
-pub type TrustedTeleporters = (xcm_builder::Case<SelendraForStatemint>,);
+pub type TrustedTeleporters = (xcm_builder::Case<SelendraForParachanin>,);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {

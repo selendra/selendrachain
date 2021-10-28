@@ -53,7 +53,7 @@ use runtime_parachains::{
 use authority_discovery_primitives::AuthorityId as AuthorityDiscoveryId;
 use beefy_primitives::crypto::AuthorityId as BeefyId;
 use frame_support::{
-	construct_runtime, parameter_types,
+	construct_runtime, match_type, parameter_types,
 	traits::{
 		Contains, Everything, FindAuthor, InstanceFilter, KeyOwnerProofSystem, LockIdentifier,
 		Nothing,
@@ -89,11 +89,12 @@ use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 use xcm::latest::prelude::*;
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
-	BackingToPlurality, ChildParachainAsNative, ChildParachainConvertsVia,
-	ChildSystemParachainAsSuperuser, CurrencyAdapter as XcmCurrencyAdapter, FixedWeightBounds,
-	IsChildSystemParachain, IsConcrete, LocationInverter, SignedAccountId32AsNative,
-	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
+	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
+	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, BackingToPlurality,
+	ChildParachainAsNative, ChildParachainConvertsVia, ChildSystemParachainAsSuperuser,
+	CurrencyAdapter as XcmCurrencyAdapter, FixedWeightBounds, IsChildSystemParachain, IsConcrete,
+	LocationInverter, SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation,
+	TakeWeightCredit, UsingComponents,
 };
 use xcm_executor::XcmExecutor;
 
@@ -1298,9 +1299,15 @@ pub type XcmRouter = (
 
 parameter_types! {
 	pub const Selendra: MultiAssetFilter = Wild(AllOf { fun: WildFungible, id: Concrete(SelLocation::get()) });
-	pub const SelendraForStatemint: (MultiAssetFilter, MultiLocation) = (Selendra::get(), Parachain(1000).into());
+	pub const SelendraForParachanin: (MultiAssetFilter, MultiLocation) = (Selendra::get(), Parachain(1000).into());
 }
-pub type TrustedTeleporters = (xcm_builder::Case<SelendraForStatemint>,);
+pub type TrustedTeleporters = (xcm_builder::Case<SelendraForParachanin>,);
+
+match_type! {
+	pub type OnlyParachains: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 0, interior: X1(Parachain(_)) }
+	};
+}
 
 /// The barriers one of which must be passed for an XCM message to be executed.
 pub type Barrier = (
@@ -1310,6 +1317,10 @@ pub type Barrier = (
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	// Messages coming from system parachains need not pay for execution.
 	AllowUnpaidExecutionFrom<IsChildSystemParachain<ParaId>>,
+	// Expected responses are OK.
+	AllowKnownQueryResponses<XcmPallet>,
+	// Subscriptions for version tracking are OK.
+	AllowSubscriptionsFrom<OnlyParachains>,
 );
 
 pub struct XcmConfig;

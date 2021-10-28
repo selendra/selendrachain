@@ -76,26 +76,6 @@ members = [
 	"vendors/frontier/primitives/evm",
 	"vendors/frontier/primitives/rpc",
 	"vendors/frontier/primitives/self-contained",
-
-	"vendors/cumulus/client/cli",
-	"vendors/cumulus/client/consensus/aura",
-	"vendors/cumulus/client/consensus/common",
-	"vendors/cumulus/client/consensus/relay-chain",
-	"vendors/cumulus/client/network",
-	"vendors/cumulus/client/pov-recovery",
-	"vendors/cumulus/client/service",
-	"vendors/cumulus/pallets/asset-tx-payment",
-	"vendors/cumulus/pallets/aura-ext",
-	"vendors/cumulus/pallets/collator-selection",
-	"vendors/cumulus/pallets/dmp-queue",
-	"vendors/cumulus/pallets/parachain-system",
-	"vendors/cumulus/pallets/parachain-system/proc-macro",
-	"vendors/cumulus/pallets/session-benchmarking",
-	"vendors/cumulus/pallets/xcm",
-	"vendors/cumulus/pallets/xcmp-queue",
-	"vendors/cumulus/primitives/core",
-	"vendors/cumulus/primitives/parachain-inherent",
-	"vendors/cumulus/primitives/timestamp",
 ]
 
 # make sure dev builds with backtrace do
