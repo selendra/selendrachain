@@ -230,8 +230,8 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 				.collect::<Vec<_>>(),
 		},
 		staking: selendra::StakingConfig {
-			validator_count: 50,
-			minimum_validator_count: 4,
+			validator_count: 2,
+			minimum_validator_count: 2,
 			stakers: initial_authorities
 				.iter()
 				.map(|x| (x.0.clone(), x.1.clone(), STASH, selendra::StakerStatus::Validator))
