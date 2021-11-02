@@ -103,3 +103,22 @@ Go to **Staking > Account Actions**, and click "validate".
 ![image](assets/validator.png)
 
 Congratulations! If you have followed all of these steps, and been selected to be a part of the validator set.
+
+## How to Stop Validating
+
+If you wish to remain a validator or nominator (e.g. you're only stopping for planned downtime or server maintenance), submitting the chill extrinsic in the staking pallet should suffice. It is only if you wish to unbond funds or reap an account that you should continue with the following.
+
+- Chill your validator
+- Purge validator session keys
+- Unbond your tokens
+
+### Chill Validator​
+To chill your validator or nominator, call the **staking.chill()** extrinsic. You can also claim your rewards at this time.
+
+### Purge validator session keys
+Purging the validator's session keys removes the key reference to your stash. This can be done through the **session.purgeKeys()** extrinsic with the controller account.
+
+***NOTE***: If you skip this step, you will not be able to reap your stash account, and you will need to rebond, purge the session keys, unbond, and wait the unbonding period again before being able to transfer your tokens
+
+### Unbond your tokens​
+Unbonding your tokens can be done through the **Network > Staking > Account actions** by clicking the corresponding stash account dropdown and selecting **"Unbond funds"**. This can also be done through the **staking.unbond()** extrinsic with the controller account.
