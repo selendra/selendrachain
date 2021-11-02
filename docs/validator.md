@@ -48,7 +48,7 @@ Select the Controller. This is the account that will decide when to start or sto
 
 First, go to the Staking section. Click on "Account Actions", and then the "+ Stash" button.
 
-![image](assets/bond_sel.png)
+![image](assets/validator-1.png)
 
 - Stash account - Select your Stash account. In this example, we will bond 31,416 SEL, where the minimum bonding amount is 31,416. Make sure that your Stash account contains at least this much. You can, of course, stake more than this.
 - Controller account - Select the Controller account created earlier. This account will also need a small amount of SEL in order to start and stop validating.
@@ -57,11 +57,11 @@ First, go to the Staking section. Click on "Account Actions", and then the "+ St
 
 Once everything is filled in properly, click Bond and sign the transaction with your Stash account.
 
-![image](assets/authorize.png)
+![image](assets/validator-2.png)
 
 Your bonded account will available under Stashes. You should now see a new card with all your accounts. The bonded amount on the right corresponds to the funds bonded by the Stash account.
 
-![image](assets/aferSucess.png)
+![image](assets/validator-3.png)
 
 ## Set Session Keys
 Once your node is fully synced, stop the process by pressing Ctrl-C. At your terminal prompt, you will now start running the node.
@@ -80,7 +80,7 @@ Once your node is fully synced, stop the process by pressing Ctrl-C. At your ter
 
 Once ensuring that you have connected to your node, the easiest way to set session keys for your node is by calling the author_rotateKeys RPC request to create new keys in your validator's keystore. Navigate to Toolbox tab and select **RPC Calls** then select the **author > rotateKeys()** option and remember to save the output that you get back for a later step.
 
-![image](assets/rotateKeys.png)
+![image](assets/validator-4.png)
 
 ## Submitting the setKeys Transaction
 
@@ -88,7 +88,7 @@ You need to tell the chain your Session keys by signing and submitting an extrin
 
 Go to **Staking > Account Actions**, and click "Session Key" on the bonding account you generated earlier. Enter the output from author_rotateKeys in the field and click "Set Session Key".
 
-![image](assets/setSessionKey.png)
+![image](assets/validator-5.png)
 
 Submit this extrinsic and you are now ready to start validating.
 
@@ -100,7 +100,7 @@ Go to **Staking > Account Actions**, and click "validate".
 
 - You can also determine if you would like to receive nominations with the "allows new nominations" option.
 
-![image](assets/validator.png)
+![image](assets/validator-6.png)
 
 Congratulations! If you have followed all of these steps, and been selected to be a part of the validator set.
 
