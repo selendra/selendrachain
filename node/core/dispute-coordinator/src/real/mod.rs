@@ -419,7 +419,7 @@ where
 				tracing::warn!(
 					target: LOG_TARGET,
 					session,
-					"Missing info for session which has an active dispute",
+					"Recovering lacks info for session which has an active dispute",
 				);
 				continue
 			},
@@ -860,7 +860,7 @@ async fn handle_import_statements(
 			tracing::warn!(
 				target: LOG_TARGET,
 				session,
-				"Missing info for session which has an active dispute",
+				"Importing statement lacks info for session which has an active dispute",
 			);
 
 			return Ok(ImportStatementsResult::InvalidImport)
@@ -893,7 +893,7 @@ async fn handle_import_statements(
 				tracing::warn!(
 					target: LOG_TARGET,
 					session,
-					"Missing info for session which has an active dispute",
+					"Not seen backing vote for candidate which has an active dispute",
 				);
 				return Ok(ImportStatementsResult::InvalidImport)
 			},
