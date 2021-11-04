@@ -59,4 +59,4 @@ substrate-test-client = { git = "https://github.com/paritytech/substrate", branc
 pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.10" }
 serde_json = "1.0.61"
 substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
-tokio = { version = "0.2", features = ["macros"] }
+tokio = { version = "1.13.0", features = ["macros"] }
