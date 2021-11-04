@@ -15,4 +15,4 @@ proc-macro2 = "1.0.30"
 assert_matches = "1.5.0"
 
 [dev-dependencies]
-trybuild = "1.0.50"
+trybuild = "1.0.52"
