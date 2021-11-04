@@ -39,7 +39,10 @@ use sp_core::{
 	u32_trait::{_1, _2, _3, _5},
 	H160, H256, U256,
 };
-use sp_std::{collections::btree_map::BTreeMap, convert::TryFrom, marker::PhantomData, prelude::*};
+use sp_std::{
+	cmp::Ordering, collections::btree_map::BTreeMap, convert::TryFrom, marker::PhantomData,
+	prelude::*,
+};
 
 use runtime_parachains::{
 	configuration as parachains_configuration, dmp as parachains_dmp, hrmp as parachains_hrmp,
@@ -56,7 +59,7 @@ use frame_support::{
 	construct_runtime, match_type, parameter_types,
 	traits::{
 		Contains, Everything, FindAuthor, InstanceFilter, KeyOwnerProofSystem, LockIdentifier,
-		Nothing,
+		Nothing, PrivilegeCmp,
 	},
 	weights::Weight,
 	ConsensusEngineId, PalletId, RuntimeDebug,
@@ -213,6 +216,29 @@ type ScheduleOrigin = EnsureOneOf<
 	pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>,
 >;
 
+/// Used the compare the privilege of an origin inside the scheduler.
+pub struct OriginPrivilegeCmp;
+
+impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
+	fn cmp_privilege(left: &OriginCaller, right: &OriginCaller) -> Option<Ordering> {
+		if left == right {
+			return Some(Ordering::Equal)
+		}
+
+		match (left, right) {
+			// Root is greater than anything.
+			(OriginCaller::system(frame_system::RawOrigin::Root), _) => Some(Ordering::Greater),
+			// Check which one has more yes votes.
+			(
+				OriginCaller::Council(pallet_collective::RawOrigin::Members(l_yes_votes, l_count)),
+				OriginCaller::Council(pallet_collective::RawOrigin::Members(r_yes_votes, r_count)),
+			) => Some((l_yes_votes * r_count).cmp(&(r_yes_votes * l_count))),
+			// For every other origin we don't care, as they are not used for `ScheduleOrigin`.
+			_ => None,
+		}
+	}
+}
+
 impl pallet_scheduler::Config for Runtime {
 	type Event = Event;
 	type Origin = Origin;
@@ -222,6 +248,7 @@ impl pallet_scheduler::Config for Runtime {
 	type ScheduleOrigin = ScheduleOrigin;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
+	type OriginPrivilegeCmp = OriginPrivilegeCmp;
 }
 
 parameter_types! {

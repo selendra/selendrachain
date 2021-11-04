@@ -16,9 +16,9 @@ thiserror = "1.0.30"
 tracing = "0.1.29"
 derive_more = "0.99.11"
 lru = "0.7.0"
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 selendra-node-subsystem = { package = "selendra-node-subsystem", path = "../subsystem" }
 selendra-node-jaeger = { path = "../jaeger" }
