@@ -79,7 +79,7 @@ pub fn channel<T>(
 	let (tx, rx) = oneshot::channel();
 
 	(
-		MeteredSender { name, inner: tx },
+		MeteredSender { inner: tx },
 		MeteredReceiver {
 			name,
 			inner: rx,
@@ -114,14 +114,13 @@ impl Measurable for Error {
 /// Oneshot sender, created by [`channel`].
 #[derive(Debug)]
 pub struct MeteredSender<T> {
-	name: &'static str,
 	inner: oneshot::Sender<(Instant, T)>,
 }
 
 impl<T> MeteredSender<T> {
 	/// Send a value.
 	pub fn send(self, t: T) -> Result<(), T> {
-		let Self { inner, name: _ } = self;
+		let Self { inner } = self;
 		inner.send((Instant::now(), t)).map_err(|(_, t)| t)
 	}
 
