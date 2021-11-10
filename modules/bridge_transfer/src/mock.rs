@@ -1,4 +1,4 @@
-use super::*;
+#![cfg(test)]
 
 use frame_support::{ord_parameter_types, parameter_types, weights::Weight, PalletId};
 use frame_system::{self as system};
@@ -101,15 +101,20 @@ impl bridge::Config for Test {
 
 parameter_types! {
 	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"PHA"));
-	pub const BridgeTokenId: [u8; 32] = hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
+	pub const NativeTokenResourceId: [u8; 32] = hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
 }
 
 impl Config for Test {
 	type Event = Event;
 	type BridgeOrigin = bridge::EnsureBridge<Test>;
 	type Currency = Balances;
-	type BridgeTokenId = BridgeTokenId;
+	type NativeTokenResourceId = NativeTokenResourceId;
 	type OnFeePay = ();
+}
+
+parameter_types! {
+	pub const VerifyPRuntime: bool = false;
+	pub const VerifyRelaychainGenesisBlockHash: bool = false;
 }
 
 impl pallet_timestamp::Config for Test {
@@ -126,7 +131,9 @@ pub const ENDOWED_BALANCE: u64 = 100_000_000;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let bridge_id = PalletId(*b"selendra").into_account();
-	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut t = frame_system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap();
 	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![(bridge_id, ENDOWED_BALANCE), (RELAYER_A, ENDOWED_BALANCE)],
 	}
@@ -138,33 +145,23 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 fn last_event() -> Event {
-	system::Pallet::<Test>::events().pop().map(|e| e.event).expect("Event expected")
+	system::Pallet::<Test>::events()
+		.pop()
+		.map(|e| e.event)
+		.expect("Event expected")
 }
 
 pub fn expect_event<E: Into<Event>>(e: E) {
 	assert_eq!(last_event(), e.into());
 }
 
-// Asserts that the event was emitted at some point.
-pub fn event_exists<E: Into<Event>>(e: E) {
-	let actual: Vec<Event> =
-		system::Pallet::<Test>::events().iter().map(|e| e.event.clone()).collect();
-	let e: Event = e.into();
-	let mut exists = false;
-	for evt in actual {
-		if evt == e {
-			exists = true;
-			break
-		}
-	}
-	assert!(exists);
-}
-
 // Checks events against the latest. A contiguous set of events must be provided. They must
 // include the most recent event, but do not have to include every past event.
 pub fn assert_events(mut expected: Vec<Event>) {
-	let mut actual: Vec<Event> =
-		system::Pallet::<Test>::events().iter().map(|e| e.event.clone()).collect();
+	let mut actual: Vec<Event> = system::Pallet::<Test>::events()
+		.iter()
+		.map(|e| e.event.clone())
+		.collect();
 
 	expected.reverse();
 

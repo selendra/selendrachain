@@ -1456,14 +1456,14 @@ impl pallet_bridge::Config for Runtime {
 }
 
 parameter_types! {
-	pub const BridgeTokenId: [u8; 32] = hex_literal::hex!("000000000000000000000056442766Dc1aEf4bd1FA0Be9D1675eecA05d727a61");
+	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("000000000000000000000056442766Dc1aEf4bd1FA0Be9D1675eecA05d727a61");
 }
 
 impl pallet_bridge_transfer::Config for Runtime {
 	type Event = Event;
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
 	type Currency = Balances;
-	type BridgeTokenId = BridgeTokenId;
+	type NativeTokenResourceId = NativeTokenResourceId;
 	type OnFeePay = ();
 }
 
