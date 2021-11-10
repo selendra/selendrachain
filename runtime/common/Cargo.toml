@@ -52,7 +52,7 @@ xcm = { path = "../../modules/xcm", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.3"
-serde_json = "1.0.67"
+serde_json = "1.0.69"
 libsecp256k1 = "0.7.0"
 frame-support-test = { git = "https://github.com/paritytech/substrate", branch = "master" }
 pallet-babe = { git = "https://github.com/paritytech/substrate", branch = "master" }

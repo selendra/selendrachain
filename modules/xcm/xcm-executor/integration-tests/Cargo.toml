@@ -8,20 +8,20 @@ description = "Integration tests for the XCM Executor"
 
 
 [dependencies]
-frame-support = { git = "https://github.com/paritytech/substrate" , default-features = false , branch = "polkadot-v0.9.10" }
-frame-system = { git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.10" }
+frame-support = { git = "https://github.com/paritytech/substrate" , default-features = false , branch = "master" }
+frame-system = { git = "https://github.com/paritytech/substrate" , branch = "master" }
 futures = "0.3.15"
 pallet-xcm = { path = "../../pallet-xcm" }
 selendra-test-client = { path = "../../../node/test/client" }
 selendra-test-runtime = { path = "../../../runtime/test-runtime" }
 selendra-test-service = { path = "../../../node/test/service" }
-sp-consensus = { git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.10" }
-sp-keyring = { git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.10" }
-sp-runtime = { git = "https://github.com/paritytech/substrate" , default-features = false , branch = "polkadot-v0.9.10" }
-sp-state-machine = { git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.10" }
+sp-consensus = { git = "https://github.com/paritytech/substrate" , branch = "master" }
+sp-keyring = { git = "https://github.com/paritytech/substrate" , branch = "master" }
+sp-runtime = { git = "https://github.com/paritytech/substrate" , default-features = false , branch = "master" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate" , branch = "master" }
 xcm = { path = "../..", default-features = false }
 xcm-executor = { path = ".." }
-sp-tracing = { git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.10" }
+sp-tracing = { git = "https://github.com/paritytech/substrate" , branch = "master" }
 
 [features]
 default = ["std"]
