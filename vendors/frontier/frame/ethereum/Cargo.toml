@@ -35,7 +35,7 @@ fp-self-contained = { version = "1.0.0-dev", path = "../../primitives/self-conta
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
-libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
+libsecp256k1 = { version = "0.7.0", features = ["static-context", "hmac"] }
 
 [features]
 default = ["std"]

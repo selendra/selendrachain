@@ -962,7 +962,7 @@ where
 		"frontier-mapping-sync-worker",
 		MappingSyncWorker::new(
 			client.import_notification_stream(),
-			Duration::new(8, 0),
+			Duration::new(6, 0),
 			client.clone(),
 			backend.clone(),
 			frontier_backend.clone(),
