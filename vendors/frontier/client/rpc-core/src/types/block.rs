@@ -58,6 +58,9 @@ pub struct Block {
 	pub transactions: BlockTransactions,
 	/// Size in bytes
 	pub size: Option<U256>,
+	/// Base Fee for post-EIP1559 blocks.
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub base_fee_per_gas: Option<U256>,
 }
 
 /// Block header representation.
@@ -139,7 +142,9 @@ impl<T: Serialize> Serialize for Rich<T> {
 			// and serialize
 			value.serialize(serializer)
 		} else {
-			Err(S::Error::custom("Unserializable structures: expected objects"))
+			Err(S::Error::custom(
+				"Unserializable structures: expected objects",
+			))
 		}
 	}
 }

@@ -1690,10 +1690,30 @@ dependencies = [
  "criterion",
  "environmental",
  "ethereum",
- "evm-core",
- "evm-gasometer",
- "evm-runtime",
+ "evm-core 0.30.0",
+ "evm-gasometer 0.30.0",
+ "evm-runtime 0.30.0",
  "hex",
+ "log",
+ "parity-scale-codec",
+ "primitive-types",
+ "rlp",
+ "scale-info",
+ "serde",
+ "sha3 0.8.2",
+]
+
+[[package]]
+name = "evm"
+version = "0.33.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2068bbfe82315b76637b601c73810ec7e92d542bad02f0155182915e832c6357"
+dependencies = [
+ "environmental",
+ "ethereum",
+ "evm-core 0.33.0",
+ "evm-gasometer 0.33.0",
+ "evm-runtime 0.33.0",
  "log",
  "parity-scale-codec",
  "primitive-types",
@@ -1716,12 +1736,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "evm-core"
+version = "0.33.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4dfe4f2a56c4c05a8107b8596380e2332fc2019ffcf56b8f2d01971393a30c4d"
+dependencies = [
+ "funty",
+ "parity-scale-codec",
+ "primitive-types",
+ "scale-info",
+ "serde",
+]
+
+[[package]]
 name = "evm-gasometer"
 version = "0.30.0"
 dependencies = [
  "environmental",
- "evm-core",
- "evm-runtime",
+ "evm-core 0.30.0",
+ "evm-runtime 0.30.0",
+ "primitive-types",
+]
+
+[[package]]
+name = "evm-gasometer"
+version = "0.33.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c446679607eacac4e8c8738e20c97ea9b3c86eddd8b43666744b05f416037bd9"
+dependencies = [
+ "environmental",
+ "evm-core 0.33.0",
+ "evm-runtime 0.33.0",
  "primitive-types",
 ]
 
@@ -1730,7 +1775,19 @@ name = "evm-runtime"
 version = "0.30.0"
 dependencies = [
  "environmental",
- "evm-core",
+ "evm-core 0.30.0",
+ "primitive-types",
+ "sha3 0.8.2",
+]
+
+[[package]]
+name = "evm-runtime"
+version = "0.33.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "419e8434ac6e850a8a4bc09a19406264582d1940913b2920be2af948f4ffc49b"
+dependencies = [
+ "environmental",
+ "evm-core 0.33.0",
  "primitive-types",
  "sha3 0.8.2",
 ]
@@ -1838,7 +1895,7 @@ version = "2.0.0-dev"
 dependencies = [
  "ethereum",
  "ethereum-types",
- "evm",
+ "evm 0.33.0",
  "fc-consensus",
  "fc-db",
  "fc-rpc-core",
@@ -1880,14 +1937,17 @@ dependencies = [
 name = "fc-rpc-core"
 version = "1.1.0-dev"
 dependencies = [
+ "ethereum",
  "ethereum-types",
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
+ "rlp",
  "rustc-hex",
  "serde",
  "serde_json",
+ "sha3 0.8.2",
 ]
 
 [[package]]
@@ -2019,8 +2079,7 @@ dependencies = [
 name = "fp-evm"
 version = "3.0.0-dev"
 dependencies = [
- "evm",
- "impl-trait-for-tuples 0.1.3",
+ "evm 0.33.0",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -4956,7 +5015,7 @@ version = "4.0.0-dev"
 dependencies = [
  "ethereum",
  "ethereum-types",
- "evm",
+ "evm 0.33.0",
  "fp-consensus",
  "fp-evm",
  "fp-rpc",
@@ -4984,9 +5043,9 @@ dependencies = [
 name = "pallet-evm"
 version = "6.0.0-dev"
 dependencies = [
- "evm",
- "evm-gasometer",
- "evm-runtime",
+ "evm 0.33.0",
+ "evm-gasometer 0.33.0",
+ "evm-runtime 0.33.0",
  "fp-evm",
  "frame-benchmarking",
  "frame-support",
@@ -5118,7 +5177,7 @@ dependencies = [
 name = "pallet-evm-test-vector-support"
 version = "1.0.0-dev"
 dependencies = [
- "evm",
+ "evm 0.33.0",
  "fp-evm",
  "hex",
  "serde",
@@ -8744,7 +8803,7 @@ version = "0.1.4"
 dependencies = [
  "beefy-primitives",
  "bitvec 0.20.4",
- "evm",
+ "evm 0.30.1",
  "fp-rpc",
  "fp-self-contained",
  "frame-benchmarking",
@@ -8772,6 +8831,7 @@ dependencies = [
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-accounts",
+ "pallet-evm-precompile-blake2",
  "pallet-evm-precompile-bn128",
  "pallet-evm-precompile-dispatch",
  "pallet-evm-precompile-modexp",
@@ -8956,6 +9016,7 @@ dependencies = [
  "log",
  "lru 0.7.0",
  "pallet-babe",
+ "pallet-ethereum",
  "pallet-evm",
  "pallet-im-online",
  "pallet-mmr-primitives",

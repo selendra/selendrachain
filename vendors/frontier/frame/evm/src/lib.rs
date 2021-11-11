@@ -63,10 +63,10 @@ mod tests;
 pub mod benchmarks;
 
 pub use crate::runner::Runner;
-pub use evm::{ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed};
+pub use evm::{Context, ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed};
 pub use fp_evm::{
 	Account, CallInfo, CreateInfo, ExecutionInfo, LinearCostPrecompile, Log, Precompile,
-	PrecompileSet, Vicinity,
+	PrecompileFailure, PrecompileOutput, PrecompileResult, PrecompileSet, Vicinity,
 };
 
 #[cfg(feature = "std")]
@@ -126,7 +126,8 @@ pub mod pallet {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// Precompiles associated with this EVM engine.
-		type Precompiles: PrecompileSet;
+		type PrecompilesType: PrecompileSet;
+		type PrecompilesValue: Get<Self::PrecompilesType>;
 		/// Chain ID of EVM.
 		type ChainId: Get<u64>;
 		/// The block gas limit. Can be a simple constant, or an adjustment algorithm in another pallet.
@@ -179,8 +180,10 @@ pub mod pallet {
 			input: Vec<u8>,
 			value: U256,
 			gas_limit: u64,
-			gas_price: U256,
+			max_fee_per_gas: U256,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
+			access_list: Vec<(H160, Vec<H256>)>,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
@@ -190,18 +193,20 @@ pub mod pallet {
 				input,
 				value,
 				gas_limit,
-				Some(gas_price),
+				Some(max_fee_per_gas),
+				max_priority_fee_per_gas,
 				nonce,
+				access_list,
 				T::config(),
 			)?;
 
 			match info.exit_reason {
 				ExitReason::Succeed(_) => {
 					Pallet::<T>::deposit_event(Event::<T>::Executed(target));
-				},
+				}
 				_ => {
 					Pallet::<T>::deposit_event(Event::<T>::ExecutedFailed(target));
-				},
+				}
 			};
 
 			Ok(PostDispatchInfo {
@@ -221,8 +226,10 @@ pub mod pallet {
 			init: Vec<u8>,
 			value: U256,
 			gas_limit: u64,
-			gas_price: U256,
+			max_fee_per_gas: U256,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
+			access_list: Vec<(H160, Vec<H256>)>,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
@@ -231,20 +238,28 @@ pub mod pallet {
 				init,
 				value,
 				gas_limit,
-				Some(gas_price),
+				Some(max_fee_per_gas),
+				max_priority_fee_per_gas,
 				nonce,
+				access_list,
 				T::config(),
 			)?;
 
 			match info {
 				CreateInfo {
-					exit_reason: ExitReason::Succeed(_), value: create_address, ..
+					exit_reason: ExitReason::Succeed(_),
+					value: create_address,
+					..
 				} => {
 					Pallet::<T>::deposit_event(Event::<T>::Created(create_address));
-				},
-				CreateInfo { exit_reason: _, value: create_address, .. } => {
+				}
+				CreateInfo {
+					exit_reason: _,
+					value: create_address,
+					..
+				} => {
 					Pallet::<T>::deposit_event(Event::<T>::CreatedFailed(create_address));
-				},
+				}
 			}
 
 			Ok(PostDispatchInfo {
@@ -264,8 +279,10 @@ pub mod pallet {
 			salt: H256,
 			value: U256,
 			gas_limit: u64,
-			gas_price: U256,
+			max_fee_per_gas: U256,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
+			access_list: Vec<(H160, Vec<H256>)>,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
@@ -275,20 +292,28 @@ pub mod pallet {
 				salt,
 				value,
 				gas_limit,
-				Some(gas_price),
+				Some(max_fee_per_gas),
+				max_priority_fee_per_gas,
 				nonce,
+				access_list,
 				T::config(),
 			)?;
 
 			match info {
 				CreateInfo {
-					exit_reason: ExitReason::Succeed(_), value: create_address, ..
+					exit_reason: ExitReason::Succeed(_),
+					value: create_address,
+					..
 				} => {
 					Pallet::<T>::deposit_event(Event::<T>::Created(create_address));
-				},
-				CreateInfo { exit_reason: _, value: create_address, .. } => {
+				}
+				CreateInfo {
+					exit_reason: _,
+					value: create_address,
+					..
+				} => {
 					Pallet::<T>::deposit_event(Event::<T>::CreatedFailed(create_address));
-				},
+				}
 			}
 
 			Ok(PostDispatchInfo {
@@ -343,7 +368,9 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self { accounts: Default::default() }
+			Self {
+				accounts: Default::default(),
+			}
 		}
 	}
 
@@ -480,12 +507,14 @@ where
 
 	fn try_address_origin(address: &H160, origin: OuterOrigin) -> Result<AccountId32, OuterOrigin> {
 		origin.into().and_then(|o| match o {
-			RawOrigin::Signed(who) if AsRef::<[u8; 32]>::as_ref(&who)[0..20] == address[0..20] =>
-				Ok(who),
+			RawOrigin::Signed(who) if AsRef::<[u8; 32]>::as_ref(&who)[0..20] == address[0..20] => {
+				Ok(who)
+			}
 			r => Err(OuterOrigin::from(r)),
 		})
 	}
 }
+
 pub trait AddressMapping<A> {
 	fn into_account_id(address: H160) -> A;
 	fn to_evm_address(account: &A) -> Option<H160>;
@@ -598,7 +627,7 @@ impl<T: Config> Pallet<T> {
 	/// Create an account.
 	pub fn create_account(address: H160, code: Vec<u8>) {
 		if code.is_empty() {
-			return
+			return;
 		}
 
 		if !<AccountCodes<T>>::contains_key(&address) {
@@ -649,6 +678,9 @@ pub trait OnChargeEVMTransaction<T: Config> {
 		corrected_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
 	);
+
+	/// Introduced in EIP1559 to handle the priority tip payment to the block Author.
+	fn pay_priority_fee(tip: U256);
 }
 
 /// Implements the transaction payment for a pallet implementing the `Currency`
@@ -695,8 +727,9 @@ where
 			let account_id = T::AddressMapping::into_account_id(*who);
 
 			// Calculate how much refund we should return
-			let refund_amount =
-				paid.peek().saturating_sub(corrected_fee.low_u128().unique_saturated_into());
+			let refund_amount = paid
+				.peek()
+				.saturating_sub(corrected_fee.low_u128().unique_saturated_into());
 			// refund to the account that paid the fees. If this fails, the
 			// account might have dropped below the existential balance. In
 			// that case we don't refund anything.
@@ -707,9 +740,9 @@ where
 			// https://github.com/paritytech/substrate/issues/10117
 			// If we tried to refund something, the account still empty and the ED is set to 0,
 			// we call `make_free_balance_be` with the refunded amount.
-			let refund_imbalance = if C::minimum_balance().is_zero() &&
-				refund_amount > C::Balance::zero() &&
-				C::total_balance(&account_id).is_zero()
+			let refund_imbalance = if C::minimum_balance().is_zero()
+				&& refund_amount > C::Balance::zero()
+				&& C::total_balance(&account_id).is_zero()
 			{
 				// Known bug: Substrate tried to refund to a zeroed AccountData, but
 				// interpreted the account to not exist.
@@ -728,6 +761,11 @@ where
 				.unwrap_or_else(|_| C::NegativeImbalance::zero());
 			OU::on_unbalanced(adjusted_paid);
 		}
+	}
+
+	fn pay_priority_fee(tip: U256) {
+		let account_id = T::AddressMapping::into_account_id(<Pallet<T>>::find_author());
+		let _ = C::deposit_into_existing(&account_id, tip.low_u128().unique_saturated_into());
 	}
 }
 
@@ -755,6 +793,10 @@ impl<T> OnChargeEVMTransaction<T> for ()
 		already_withdrawn: Self::LiquidityInfo,
 	) {
 		<EVMCurrencyAdapter::<<T as Config>::Currency, ()> as OnChargeEVMTransaction<T>>::correct_and_deposit_fee(who, corrected_fee, already_withdrawn)
+	}
+
+	fn pay_priority_fee(tip: U256) {
+		<EVMCurrencyAdapter::<<T as Config>::Currency, ()> as OnChargeEVMTransaction<T>>::pay_priority_fee(tip);
 	}
 }
 

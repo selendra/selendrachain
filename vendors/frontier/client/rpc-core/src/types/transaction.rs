@@ -17,6 +17,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use crate::types::Bytes;
+use ethereum::{AccessListItem, TransactionV2};
 use ethereum_types::{H160, H256, H512, U256, U64};
 use serde::{ser::SerializeStruct, Serialize, Serializer};
 
@@ -41,7 +42,14 @@ pub struct Transaction {
 	/// Transfered value
 	pub value: U256,
 	/// Gas Price
-	pub gas_price: U256,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub gas_price: Option<U256>,
+	/// Max BaseFeePerGas the user is willing to pay.
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub max_fee_per_gas: Option<U256>,
+	/// The miner's tip.
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub max_priority_fee_per_gas: Option<U256>,
 	/// Gas
 	pub gas: U256,
 	/// Data
@@ -62,6 +70,91 @@ pub struct Transaction {
 	pub r: U256,
 	/// The S field of the signature.
 	pub s: U256,
+	/// Pre-pay to warm storage access.
+	#[cfg_attr(feature = "std", serde(skip_serializing_if = "Option::is_none"))]
+	pub access_list: Option<Vec<AccessListItem>>,
+}
+
+impl From<TransactionV2> for Transaction {
+	fn from(transaction: TransactionV2) -> Self {
+		let serialized = rlp::encode(&transaction);
+		let hash = transaction.hash();
+		let raw = Bytes(serialized.to_vec());
+		match transaction {
+			TransactionV2::Legacy(t) => Transaction {
+				hash,
+				nonce: t.nonce,
+				block_hash: None,
+				block_number: None,
+				transaction_index: None,
+				from: H160::default(),
+				to: None,
+				value: t.value,
+				gas_price: Some(t.gas_price),
+				max_fee_per_gas: Some(t.gas_price),
+				max_priority_fee_per_gas: Some(t.gas_price),
+				gas: t.gas_limit,
+				input: Bytes(t.clone().input),
+				creates: None,
+				raw,
+				public_key: None,
+				chain_id: t.signature.chain_id().map(U64::from),
+				standard_v: U256::from(t.signature.standard_v()),
+				v: U256::from(t.signature.v()),
+				r: U256::from(t.signature.r().as_bytes()),
+				s: U256::from(t.signature.s().as_bytes()),
+				access_list: None,
+			},
+			TransactionV2::EIP2930(t) => Transaction {
+				hash,
+				nonce: t.nonce,
+				block_hash: None,
+				block_number: None,
+				transaction_index: None,
+				from: H160::default(),
+				to: None,
+				value: t.value,
+				gas_price: Some(t.gas_price),
+				max_fee_per_gas: Some(t.gas_price),
+				max_priority_fee_per_gas: Some(t.gas_price),
+				gas: t.gas_limit,
+				input: Bytes(t.clone().input),
+				creates: None,
+				raw,
+				public_key: None,
+				chain_id: Some(U64::from(t.chain_id)),
+				standard_v: U256::from(t.odd_y_parity as u8),
+				v: U256::from(t.odd_y_parity as u8),
+				r: U256::from(t.r.as_bytes()),
+				s: U256::from(t.s.as_bytes()),
+				access_list: Some(t.access_list),
+			},
+			TransactionV2::EIP1559(t) => Transaction {
+				hash,
+				nonce: t.nonce,
+				block_hash: None,
+				block_number: None,
+				transaction_index: None,
+				from: H160::default(),
+				to: None,
+				value: t.value,
+				gas_price: None,
+				max_fee_per_gas: Some(t.max_fee_per_gas),
+				max_priority_fee_per_gas: Some(t.max_priority_fee_per_gas),
+				gas: t.gas_limit,
+				input: Bytes(t.clone().input),
+				creates: None,
+				raw,
+				public_key: None,
+				chain_id: Some(U64::from(t.chain_id)),
+				standard_v: U256::from(t.odd_y_parity as u8),
+				v: U256::from(t.odd_y_parity as u8),
+				r: U256::from(t.r.as_bytes()),
+				s: U256::from(t.s.as_bytes()),
+				access_list: Some(t.access_list),
+			},
+		}
+	}
 }
 
 /// Local Transaction Status
@@ -111,34 +204,34 @@ impl Serialize for LocalTransactionStatus {
 			Mined(ref tx) => {
 				struc.serialize_field(status, "mined")?;
 				struc.serialize_field(transaction, tx)?;
-			},
+			}
 			Culled(ref tx) => {
 				struc.serialize_field(status, "culled")?;
 				struc.serialize_field(transaction, tx)?;
-			},
+			}
 			Dropped(ref tx) => {
 				struc.serialize_field(status, "dropped")?;
 				struc.serialize_field(transaction, tx)?;
-			},
+			}
 			Canceled(ref tx) => {
 				struc.serialize_field(status, "canceled")?;
 				struc.serialize_field(transaction, tx)?;
-			},
+			}
 			Invalid(ref tx) => {
 				struc.serialize_field(status, "invalid")?;
 				struc.serialize_field(transaction, tx)?;
-			},
+			}
 			Rejected(ref tx, ref reason) => {
 				struc.serialize_field(status, "rejected")?;
 				struc.serialize_field(transaction, tx)?;
 				struc.serialize_field("error", reason)?;
-			},
+			}
 			Replaced(ref tx, ref gas_price, ref hash) => {
 				struc.serialize_field(status, "replaced")?;
 				struc.serialize_field(transaction, tx)?;
 				struc.serialize_field("hash", hash)?;
 				struc.serialize_field("gasPrice", gas_price)?;
-			},
+			}
 		}
 
 		struc.end()

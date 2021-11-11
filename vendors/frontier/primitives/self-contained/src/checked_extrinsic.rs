@@ -77,17 +77,19 @@ where
 		len: usize,
 	) -> TransactionValidity {
 		match &self.signed {
-			CheckedSignature::Signed(id, extra) =>
-				Extra::validate(extra, id, &self.function, info, len),
+			CheckedSignature::Signed(id, extra) => {
+				Extra::validate(extra, id, &self.function, info, len)
+			}
 			CheckedSignature::Unsigned => {
 				let valid = Extra::validate_unsigned(&self.function, info, len)?;
 				let unsigned_validation = U::validate_unsigned(source, &self.function)?;
 				Ok(valid.combine_with(unsigned_validation))
-			},
-			CheckedSignature::SelfContained(signed_info) => self
-				.function
-				.validate_self_contained(&signed_info)
-				.ok_or(TransactionValidityError::Invalid(InvalidTransaction::BadProof))?,
+			}
+			CheckedSignature::SelfContained(signed_info) => {
+				self.function.validate_self_contained(&signed_info).ok_or(
+					TransactionValidityError::Invalid(InvalidTransaction::BadProof),
+				)?
+			}
 		}
 	}
 
@@ -113,7 +115,7 @@ where
 					&res.map(|_| ()).map_err(|e| e.error),
 				)?;
 				Ok(res)
-			},
+			}
 			CheckedSignature::Unsigned => {
 				let pre = Extra::pre_dispatch_unsigned(&self.function, info, len)?;
 				U::pre_dispatch(&self.function)?;
@@ -131,17 +133,18 @@ where
 					&res.map(|_| ()).map_err(|e| e.error),
 				)?;
 				Ok(res)
-			},
+			}
 			CheckedSignature::SelfContained(signed_info) => {
 				// If pre-dispatch fail, the block must be considered invalid
 				self.function
 					.pre_dispatch_self_contained(&signed_info)
-					.ok_or(TransactionValidityError::Invalid(InvalidTransaction::BadProof))??;
-				Ok(self
-					.function
-					.apply_self_contained(signed_info)
-					.ok_or(TransactionValidityError::Invalid(InvalidTransaction::BadProof))?)
-			},
+					.ok_or(TransactionValidityError::Invalid(
+						InvalidTransaction::BadProof,
+					))??;
+				Ok(self.function.apply_self_contained(signed_info).ok_or(
+					TransactionValidityError::Invalid(InvalidTransaction::BadProof),
+				)?)
+			}
 		}
 	}
 }

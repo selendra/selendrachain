@@ -96,7 +96,7 @@ impl<'a> Deserialize<'a> for Params {
 		let v: Value = Deserialize::deserialize(deserializer)?;
 
 		if v.is_null() {
-			return Ok(Params::None)
+			return Ok(Params::None);
 		}
 
 		from_value(v.clone())

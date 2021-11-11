@@ -983,7 +983,11 @@ where
 
 	task_manager.spawn_essential_handle().spawn(
 		"frontier-schema-cache-task",
-		EthTask::ethereum_schema_cache_task(Arc::clone(&client), Arc::clone(&frontier_backend)),
+		EthTask::ethereum_schema_cache_task(
+			Arc::clone(&client),
+			Arc::clone(&frontier_backend),
+			pallet_ethereum::EthereumStorageSchema::V2,
+		),
 	);
 
 	if role.is_authority() {

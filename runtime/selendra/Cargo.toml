@@ -103,6 +103,7 @@ pallet-evm-precompile-dispatch = { path = "../../vendors/frontier/frame/evm/prec
 pallet-evm-precompile-modexp = { path = "../../vendors/frontier/frame/evm/precompile/modexp", default-features = false }
 pallet-evm-precompile-simple = { path = "../../vendors/frontier/frame/evm/precompile/simple", default-features = false }
 pallet-evm-precompile-sha3fips = { path = "../../vendors/frontier/frame/evm/precompile/sha3fips", default-features = false }
+pallet-evm-precompile-blake2 = { path = "../../vendors/frontier/frame/evm/precompile/blake2", default-features = false }
 pallet-evm-accounts = { path = "../../vendors/frontier/frame/evm/accounts", default-features = false }
 fp-rpc = { path = "../../vendors/frontier/primitives/rpc", default-features = false }
 fp-self-contained = { path = "../../vendors/frontier/primitives/self-contained", default-features = false }
@@ -202,6 +203,7 @@ std = [
 	"pallet-evm-precompile-modexp/std",
 	"pallet-evm-precompile-simple/std",
 	"pallet-evm-precompile-sha3fips/std",
+	"pallet-evm-precompile-blake2/std",
 	"pallet-evm-accounts/std",
 	"fp-rpc/std",
 	"fp-self-contained/std",

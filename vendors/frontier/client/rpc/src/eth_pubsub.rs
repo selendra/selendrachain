@@ -30,6 +30,7 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT, UniqueSaturatedInto};
 use std::{collections::BTreeMap, iter, marker::PhantomData, sync::Arc};
 
+use ethereum::BlockV2 as EthereumBlock;
 use ethereum_types::{H256, U256};
 use fc_rpc_core::{
 	types::{
@@ -70,8 +71,10 @@ impl IdProvider for HexEncodedIdProvider {
 	type Id = String;
 	fn next_id(&self) -> Self::Id {
 		let mut rng = thread_rng();
-		let id: String =
-			iter::repeat(()).map(|()| rng.sample(Alphanumeric)).take(self.len).collect();
+		let id: String = iter::repeat(())
+			.map(|()| rng.sample(Alphanumeric))
+			.take(self.len)
+			.collect();
 		let out: String = id.as_bytes().to_hex();
 		format!("0x{}", out)
 	}
@@ -116,7 +119,7 @@ impl SubscriptionResult {
 	pub fn new() -> Self {
 		SubscriptionResult {}
 	}
-	pub fn new_heads(&self, block: ethereum::BlockV0) -> PubSubResult {
+	pub fn new_heads(&self, block: EthereumBlock) -> PubSubResult {
 		PubSubResult::Header(Box::new(Rich {
 			inner: Header {
 				hash: Some(H256::from_slice(
@@ -147,12 +150,13 @@ impl SubscriptionResult {
 	}
 	pub fn logs(
 		&self,
-		block: ethereum::BlockV0,
+		block: EthereumBlock,
 		receipts: Vec<ethereum::Receipt>,
 		params: &FilteredParams,
 	) -> Vec<Log> {
-		let block_hash =
-			Some(H256::from_slice(Keccak256::digest(&rlp::encode(&block.header)).as_slice()));
+		let block_hash = Some(H256::from_slice(
+			Keccak256::digest(&rlp::encode(&block.header)).as_slice(),
+		));
 		let mut logs: Vec<Log> = vec![];
 		let mut log_index: u32 = 0;
 		for (receipt_index, receipt) in receipts.into_iter().enumerate() {
@@ -171,9 +175,9 @@ impl SubscriptionResult {
 						address: log.address,
 						topics: log.topics,
 						data: Bytes(log.data),
-						block_hash,
+						block_hash: block_hash,
 						block_number: Some(block.header.number),
-						transaction_hash,
+						transaction_hash: transaction_hash,
 						transaction_index: Some(U256::from(receipt_index)),
 						log_index: Some(U256::from(log_index)),
 						transaction_log_index: Some(U256::from(transaction_log_index)),
@@ -190,7 +194,7 @@ impl SubscriptionResult {
 		&self,
 		block_hash: H256,
 		ethereum_log: &ethereum::Log,
-		block: &ethereum::BlockV0,
+		block: &EthereumBlock,
 		params: &FilteredParams,
 	) -> bool {
 		let log = Log {
@@ -208,12 +212,12 @@ impl SubscriptionResult {
 		if let Some(_) = params.filter {
 			let block_number =
 				UniqueSaturatedInto::<u64>::unique_saturated_into(block.header.number);
-			if !params.filter_block_range(block_number) ||
-				!params.filter_block_hash(block_hash) ||
-				!params.filter_address(&log) ||
-				!params.filter_topics(&log)
+			if !params.filter_block_range(block_number)
+				|| !params.filter_block_hash(block_hash)
+				|| !params.filter_address(&log)
+				|| !params.filter_topics(&log)
 			{
-				return false
+				return false;
 			}
 		}
 		true
@@ -262,15 +266,18 @@ where
 									C,
 									BE,
 								>(client.as_ref(), id);
-								let handler =
-									overrides.schemas.get(&schema).unwrap_or(&overrides.fallback);
+								let handler = overrides
+									.schemas
+									.get(&schema)
+									.unwrap_or(&overrides.fallback);
 
 								let block = handler.current_block(&id);
 								let receipts = handler.current_receipts(&id);
 
 								match (receipts, block) {
-									(Some(receipts), Some(block)) =>
-										futures::future::ready(Some((block, receipts))),
+									(Some(receipts), Some(block)) => {
+										futures::future::ready(Some((block, receipts)))
+									}
 									_ => futures::future::ready(None),
 								}
 							} else {
@@ -287,7 +294,7 @@ where
 						.map(|x| {
 							return Ok::<Result<PubSubResult, jsonrpc_core::types::error::Error>, ()>(
 								Ok(PubSubResult::Log(Box::new(x))),
-							)
+							);
 						});
 					stream
 						.forward(
@@ -295,7 +302,7 @@ where
 						)
 						.map(|_| ())
 				});
-			},
+			}
 			Kind::NewHeads => {
 				self.subscriptions.add(subscriber, |sink| {
 					let stream = client
@@ -309,8 +316,10 @@ where
 									C,
 									BE,
 								>(client.as_ref(), id);
-								let handler =
-									overrides.schemas.get(&schema).unwrap_or(&overrides.fallback);
+								let handler = overrides
+									.schemas
+									.get(&schema)
+									.unwrap_or(&overrides.fallback);
 
 								let block = handler.current_block(&id);
 								futures::future::ready(block)
@@ -319,7 +328,7 @@ where
 							}
 						})
 						.map(|block| {
-							return Ok::<_, ()>(Ok(SubscriptionResult::new().new_heads(block)))
+							return Ok::<_, ()>(Ok(SubscriptionResult::new().new_heads(block)));
 						});
 					stream
 						.forward(
@@ -327,7 +336,7 @@ where
 						)
 						.map(|_| ())
 				});
-			},
+			}
 			Kind::NewPendingTransactions => {
 				use sc_transaction_pool_api::InPoolTransaction;
 
@@ -341,12 +350,13 @@ where
 									.runtime_api()
 									.extrinsic_filter(&best_block, vec![xt.data().clone()])
 								{
-									Ok(txs) =>
+									Ok(txs) => {
 										if txs.len() == 1 {
 											Some(txs[0].clone())
 										} else {
 											None
-										},
+										}
+									}
 									_ => None,
 								};
 								futures::future::ready(res)
@@ -359,7 +369,7 @@ where
 								Ok(PubSubResult::TransactionHash(H256::from_slice(
 									Keccak256::digest(&rlp::encode(&transaction)).as_slice(),
 								))),
-							)
+							);
 						});
 					stream
 						.forward(
@@ -367,7 +377,7 @@ where
 						)
 						.map(|_| ())
 				});
-			},
+			}
 			Kind::Syncing => {
 				self.subscriptions.add(subscriber, |sink| {
 					let mut previous_syncing = network.is_major_syncing();
@@ -384,8 +394,10 @@ where
 						})
 						.map(|syncing| {
 							return Ok::<Result<PubSubResult, jsonrpc_core::types::error::Error>, ()>(
-								Ok(PubSubResult::SyncState(PubSubSyncStatus { syncing })),
-							)
+								Ok(PubSubResult::SyncState(PubSubSyncStatus {
+									syncing: syncing,
+								})),
+							);
 						});
 					stream
 						.forward(
@@ -393,7 +405,7 @@ where
 						)
 						.map(|_| ())
 				});
-			},
+			}
 		}
 	}
 

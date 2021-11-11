@@ -15,19 +15,21 @@
 // along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
 use std::collections::BTreeMap;
 
-use ethereum::BlockV0 as EthereumBlock;
+use ethereum::BlockV2 as EthereumBlock;
 use ethereum_types::{H160, H256, U256};
 use fp_rpc::{EthereumRuntimeRPCApi, TransactionStatus};
-use sp_api::{BlockId, ProvideRuntimeApi};
+use sp_api::{ApiExt, BlockId, ProvideRuntimeApi};
 use sp_io::hashing::{blake2_128, twox_128};
 use sp_runtime::traits::Block as BlockT;
 use std::{marker::PhantomData, sync::Arc};
 
 mod schema_v1_override;
+mod schema_v2_override;
 
 pub use fc_rpc_core::{EthApiServer, NetApiServer};
 use pallet_ethereum::EthereumStorageSchema;
 pub use schema_v1_override::SchemaV1Override;
+pub use schema_v2_override::SchemaV2Override;
 
 pub struct OverrideHandle<Block: BlockT> {
 	pub schemas: BTreeMap<EthereumStorageSchema, Box<dyn StorageOverride<Block> + Send + Sync>>,
@@ -53,6 +55,10 @@ pub trait StorageOverride<Block: BlockT> {
 		&self,
 		block: &BlockId<Block>,
 	) -> Option<Vec<TransactionStatus>>;
+	/// Return the base fee at the given height.
+	fn base_fee(&self, block: &BlockId<Block>) -> Option<U256>;
+	/// Return `true` if the request BlockId is post-eip1559.
+	fn is_eip1559(&self, block: &BlockId<Block>) -> bool;
 }
 
 fn storage_prefix_build(module: &[u8], storage: &[u8]) -> Vec<u8> {
@@ -80,7 +86,10 @@ where
 	C: Send + Sync + 'static,
 {
 	pub fn new(client: Arc<C>) -> Self {
-		Self { client, _marker: PhantomData }
+		Self {
+			client,
+			_marker: PhantomData,
+		}
 	}
 }
 
@@ -93,17 +102,42 @@ where
 {
 	/// For a given account address, returns pallet_evm::AccountCodes.
 	fn account_code_at(&self, block: &BlockId<Block>, address: H160) -> Option<Vec<u8>> {
-		self.client.runtime_api().account_code_at(&block, address).ok()
+		self.client
+			.runtime_api()
+			.account_code_at(&block, address)
+			.ok()
 	}
 
 	/// For a given account address and index, returns pallet_evm::AccountStorages.
 	fn storage_at(&self, block: &BlockId<Block>, address: H160, index: U256) -> Option<H256> {
-		self.client.runtime_api().storage_at(&block, address, index).ok()
+		self.client
+			.runtime_api()
+			.storage_at(&block, address, index)
+			.ok()
 	}
 
 	/// Return the current block.
-	fn current_block(&self, block: &BlockId<Block>) -> Option<EthereumBlock> {
-		self.client.runtime_api().current_block(&block).ok()?
+	fn current_block(&self, block: &BlockId<Block>) -> Option<ethereum::BlockV2> {
+		let api = self.client.runtime_api();
+
+		let api_version = if let Ok(Some(api_version)) =
+			api.api_version::<dyn EthereumRuntimeRPCApi<Block>>(&block)
+		{
+			api_version
+		} else {
+			return None;
+		};
+		if api_version == 1 {
+			#[allow(deprecated)]
+			let old_block = api.current_block_before_version_2(&block).ok()?;
+			if let Some(block) = old_block {
+				Some(block.into())
+			} else {
+				None
+			}
+		} else {
+			api.current_block(&block).ok()?
+		}
 	}
 
 	/// Return the current receipt.
@@ -116,6 +150,29 @@ where
 		&self,
 		block: &BlockId<Block>,
 	) -> Option<Vec<TransactionStatus>> {
-		self.client.runtime_api().current_transaction_statuses(&block).ok()?
+		self.client
+			.runtime_api()
+			.current_transaction_statuses(&block)
+			.ok()?
+	}
+
+	/// Return the base fee at the given post-eip1559 height.
+	fn base_fee(&self, block: &BlockId<Block>) -> Option<U256> {
+		if self.is_eip1559(block) {
+			self.client.runtime_api().gas_price(&block).ok()
+		} else {
+			None
+		}
+	}
+
+	fn is_eip1559(&self, block: &BlockId<Block>) -> bool {
+		if let Ok(Some(api_version)) = self
+			.client
+			.runtime_api()
+			.api_version::<dyn EthereumRuntimeRPCApi<Block>>(&block)
+		{
+			return api_version >= 2;
+		}
+		return false;
 	}
 }

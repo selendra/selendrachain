@@ -116,7 +116,7 @@ pub use sp_runtime::BuildStorage;
 
 /// Constant values used within the runtime.
 pub mod constants;
-use constants::{currency::*, fee::*, merge_account::MergeAccountEvm, time::*};
+use constants::{currency::*, fee::*, merge_account::MergeAccountEvm, time::*, precompiles::FrontierPrecompiles};
 
 // Weights used in the runtime.
 mod weights;
@@ -1497,6 +1497,7 @@ impl FeeCalculator for FixedGasPrice {
 parameter_types! {
 	pub const ChainId: u64 = 222;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
+	pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
 }
 
 impl pallet_evm::Config for Runtime {
@@ -1509,21 +1510,8 @@ impl pallet_evm::Config for Runtime {
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type Precompiles = (
-		pallet_evm_precompile_simple::ECRecover,
-		pallet_evm_precompile_simple::Sha256,
-		pallet_evm_precompile_simple::Ripemd160,
-		pallet_evm_precompile_simple::Identity,
-		pallet_evm_precompile_simple::ECRecoverPublicKey,
-		pallet_evm_precompile_modexp::Modexp,
-		pallet_evm_precompile_bn128::Bn128Add,
-		pallet_evm_precompile_bn128::Bn128Mul,
-		pallet_evm_precompile_bn128::Bn128Pairing,
-		pallet_evm_precompile_simple::ECRecoverPublicKey,
-		pallet_evm_precompile_sha3fips::Sha3FIPS256,
-		pallet_evm_precompile_sha3fips::Sha3FIPS512,
-		pallet_evm_precompile_dispatch::Dispatch<Self>,
-	);
+	type PrecompilesType = FrontierPrecompiles<Self>;
+	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
 	type OnChargeTransaction = ();
 	type BlockGasLimit = BlockGasLimit;
@@ -2089,14 +2077,15 @@ sp_api::impl_runtime_apis! {
 			index.to_big_endian(&mut tmp);
 			Evm::account_storages(address, H256::from_slice(&tmp[..]))
 		}
-
+		
 		fn call(
 			from: H160,
 			to: H160,
 			data: Vec<u8>,
 			value: U256,
 			gas_limit: U256,
-			gas_price: Option<U256>,
+			max_fee_per_gas: Option<U256>,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
 		) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
@@ -2114,8 +2103,10 @@ sp_api::impl_runtime_apis! {
 				data,
 				value,
 				gas_limit.low_u64(),
-				gas_price,
+				max_fee_per_gas,
+				max_priority_fee_per_gas,
 				nonce,
+				Vec::new(),
 				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -2125,7 +2116,8 @@ sp_api::impl_runtime_apis! {
 			data: Vec<u8>,
 			value: U256,
 			gas_limit: U256,
-			gas_price: Option<U256>,
+			max_fee_per_gas: Option<U256>,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
 		) -> Result<pallet_evm::CreateInfo, sp_runtime::DispatchError> {
@@ -2142,8 +2134,10 @@ sp_api::impl_runtime_apis! {
 				data,
 				value,
 				gas_limit.low_u64(),
-				gas_price,
+				max_fee_per_gas,
+				max_priority_fee_per_gas,
 				nonce,
+				Vec::new(),
 				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -2176,7 +2170,7 @@ sp_api::impl_runtime_apis! {
 			xts: Vec<<Block as BlockT>::Extrinsic>,
 		) -> Vec<EthereumTransaction> {
 			xts.into_iter().filter_map(|xt| match xt.0.function {
-				Call::Ethereum(transact {transaction}) => Some(transaction),
+				Call::Ethereum(transact { transaction }) => Some(transaction),
 				_ => None
 			}).collect::<Vec<EthereumTransaction>>()
 		}

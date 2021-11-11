@@ -113,6 +113,7 @@ selendra-statement-distribution = { path = "../network/statement-distribution", 
 
 # Evm
 pallet-evm = { path = "../../vendors/frontier/frame/evm"}
+pallet-ethereum = { path = "../../vendors/frontier/frame/ethereum"}
 fc-db = { path = "../../vendors/frontier/client/db"}
 fc-rpc = { path = "../../vendors/frontier/client/rpc"}
 fc-consensus = { path = "../../vendors/frontier/client/consensus"}
