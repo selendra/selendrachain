@@ -7,8 +7,8 @@ description = "Mapping sync logic for Frontier."
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
 
 [dependencies]
-futures = { version = "0.3.1", features = ["compat"] }
-futures-timer = "3.0.1"
+futures = { version = "0.3.17", features = ["compat"] }
+futures-timer = "3.0.2"
 log = "0.4.8"
 
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "master" }
