@@ -1,11 +1,14 @@
 #![cfg(test)]
 
-use super::mock::{
-	assert_events, balances, expect_event, new_test_ext, Balances, Bridge, BridgeTransfer, Call,
-	Event, NativeTokenResourceId, Origin, ProposalLifetime, Test, ENDOWED_BALANCE, RELAYER_A,
-	RELAYER_B, RELAYER_C,
+use super::{
+	bridge,
+	mock::{
+		assert_events, balances, expect_event, new_test_ext, Balances, Bridge, BridgeTransfer,
+		Call, Event, NativeTokenResourceId, Origin, ProposalLifetime, Test, ENDOWED_BALANCE,
+		RELAYER_A, RELAYER_B, RELAYER_C,
+	},
+	*,
 };
-use super::{bridge, *};
 use frame_support::{assert_noop, assert_ok};
 
 use hex_literal::hex;
@@ -14,11 +17,7 @@ const TEST_THRESHOLD: u32 = 2;
 
 fn make_transfer_proposal(to: u64, amount: u64) -> Call {
 	let resource_id = NativeTokenResourceId::get();
-	Call::BridgeTransfer(crate::Call::transfer {
-		to,
-		amount: amount.into(),
-		rid: resource_id,
-	})
+	Call::BridgeTransfer(crate::Call::transfer { to, amount: amount.into(), rid: resource_id })
 }
 
 #[test]
@@ -41,10 +40,7 @@ fn do_asset_deposit() {
 		BridgeTransfer::do_asset_deposit(&asset, &RELAYER_A, amount);
 
 		assert_eq!(BridgeTransfer::asset_balance(&asset, &RELAYER_A), amount);
-		assert_eq!(
-			BridgeTransfer::asset_balance(&asset, &Bridge::account_id()),
-			amount
-		);
+		assert_eq!(BridgeTransfer::asset_balance(&asset, &Bridge::account_id()), amount);
 	})
 }
 
@@ -60,10 +56,7 @@ fn do_asset_withdraw() {
 		BridgeTransfer::do_asset_withdraw(&asset, &RELAYER_A, amount);
 
 		assert_eq!(BridgeTransfer::asset_balance(&asset, &RELAYER_A), amount);
-		assert_eq!(
-			BridgeTransfer::asset_balance(&asset, &Bridge::account_id()),
-			amount
-		);
+		assert_eq!(BridgeTransfer::asset_balance(&asset, &Bridge::account_id()), amount);
 	})
 }
 
@@ -72,11 +65,7 @@ fn register_asset() {
 	new_test_ext().execute_with(|| {
 		let r_id = bridge::derive_resource_id(2, &bridge::hashing::blake2_128(b"an asset"));
 
-		assert_ok!(BridgeTransfer::register_asset(
-			Origin::root(),
-			b"an asset".to_vec(),
-			2
-		));
+		assert_ok!(BridgeTransfer::register_asset(Origin::root(), b"an asset".to_vec(), 2));
 
 		assert_eq!(BridgeAssets::<Test>::contains_key(r_id), true);
 
@@ -97,11 +86,7 @@ fn mint_asset() {
 			BridgeTransfer::mint_asset(Origin::root(), asset, 100),
 			Error::<Test>::AssetNotRegistered
 		);
-		assert_ok!(BridgeTransfer::register_asset(
-			Origin::root(),
-			b"an asset".to_vec(),
-			2
-		));
+		assert_ok!(BridgeTransfer::register_asset(Origin::root(), b"an asset".to_vec(), 2));
 		assert_ok!(BridgeTransfer::mint_asset(Origin::root(), asset, 100));
 		assert_eq!(BridgeTransfer::asset_balance(&asset, &bridge_id), 100);
 	})
@@ -116,25 +101,15 @@ fn burn_asset() {
 			BridgeTransfer::burn_asset(Origin::root(), asset, 100),
 			Error::<Test>::AssetNotRegistered
 		);
-		assert_ok!(BridgeTransfer::register_asset(
-			Origin::root(),
-			b"an asset".to_vec(),
-			2
-		));
+		assert_ok!(BridgeTransfer::register_asset(Origin::root(), b"an asset".to_vec(), 2));
 		assert_noop!(
 			BridgeTransfer::burn_asset(Origin::root(), asset, 100),
 			Error::<Test>::InsufficientBalance
 		);
 		assert_ok!(BridgeTransfer::mint_asset(Origin::root(), asset, 100));
-		assert_eq!(
-			BridgeTransfer::asset_balance(&asset, &Bridge::account_id()),
-			100
-		);
+		assert_eq!(BridgeTransfer::asset_balance(&asset, &Bridge::account_id()), 100);
 		assert_ok!(BridgeTransfer::burn_asset(Origin::root(), asset, 100));
-		assert_eq!(
-			BridgeTransfer::asset_balance(&asset, &Bridge::account_id()),
-			0
-		);
+		assert_eq!(BridgeTransfer::asset_balance(&asset, &Bridge::account_id()), 0);
 	})
 }
 
@@ -148,12 +123,7 @@ fn transfer_assets_not_registered() {
 		let recipient = vec![99];
 
 		assert_ok!(Bridge::whitelist_chain(Origin::root(), dest_chain.clone()));
-		assert_ok!(BridgeTransfer::change_fee(
-			Origin::root(),
-			2,
-			2,
-			dest_chain.clone()
-		));
+		assert_ok!(BridgeTransfer::change_fee(Origin::root(), 2, 2, dest_chain.clone()));
 
 		assert_noop!(
 			BridgeTransfer::transfer_assets(
@@ -178,18 +148,9 @@ fn transfer_assets_account_not_exist() {
 		let recipient = vec![99];
 
 		assert_ok!(Bridge::whitelist_chain(Origin::root(), dest_chain.clone()));
-		assert_ok!(BridgeTransfer::change_fee(
-			Origin::root(),
-			2,
-			2,
-			dest_chain.clone()
-		));
+		assert_ok!(BridgeTransfer::change_fee(Origin::root(), 2, 2, dest_chain.clone()));
 
-		assert_ok!(BridgeTransfer::register_asset(
-			Origin::root(),
-			b"an asset".to_vec(),
-			2
-		));
+		assert_ok!(BridgeTransfer::register_asset(Origin::root(), b"an asset".to_vec(), 2));
 
 		assert_noop!(
 			BridgeTransfer::transfer_assets(
@@ -214,18 +175,9 @@ fn transfer_assets_insufficient_balance() {
 		let recipient = vec![99];
 
 		assert_ok!(Bridge::whitelist_chain(Origin::root(), dest_chain.clone()));
-		assert_ok!(BridgeTransfer::change_fee(
-			Origin::root(),
-			2,
-			2,
-			dest_chain.clone()
-		));
+		assert_ok!(BridgeTransfer::change_fee(Origin::root(), 2, 2, dest_chain.clone()));
 
-		assert_ok!(BridgeTransfer::register_asset(
-			Origin::root(),
-			b"an asset".to_vec(),
-			2
-		));
+		assert_ok!(BridgeTransfer::register_asset(Origin::root(), b"an asset".to_vec(), 2));
 
 		// set some balance for account and less than amount here
 		BridgeBalances::<Test>::insert(asset, RELAYER_A, amount / 2);
@@ -253,18 +205,9 @@ fn transfer_assets() {
 		let recipient = vec![99];
 
 		assert_ok!(Bridge::whitelist_chain(Origin::root(), dest_chain.clone()));
-		assert_ok!(BridgeTransfer::change_fee(
-			Origin::root(),
-			2,
-			2,
-			dest_chain.clone()
-		));
+		assert_ok!(BridgeTransfer::change_fee(Origin::root(), 2, 2, dest_chain.clone()));
 
-		assert_ok!(BridgeTransfer::register_asset(
-			Origin::root(),
-			b"an asset".to_vec(),
-			2
-		));
+		assert_ok!(BridgeTransfer::register_asset(Origin::root(), b"an asset".to_vec(), 2));
 
 		// set some balance for account and more than amount here
 		BridgeBalances::<Test>::insert(asset, RELAYER_A, amount * 2);
@@ -278,10 +221,7 @@ fn transfer_assets() {
 		));
 
 		assert_eq!(BridgeTransfer::asset_balance(&asset, &RELAYER_A), amount);
-		assert_eq!(
-			BridgeTransfer::asset_balance(&asset, &Bridge::account_id()),
-			amount
-		);
+		assert_eq!(BridgeTransfer::asset_balance(&asset, &Bridge::account_id()), amount);
 	})
 }
 
@@ -294,12 +234,7 @@ fn transfer_native() {
 		let recipient = vec![99];
 
 		assert_ok!(Bridge::whitelist_chain(Origin::root(), dest_chain.clone()));
-		assert_ok!(BridgeTransfer::change_fee(
-			Origin::root(),
-			2,
-			2,
-			dest_chain.clone()
-		));
+		assert_ok!(BridgeTransfer::change_fee(Origin::root(), 2, 2, dest_chain.clone()));
 
 		assert_noop!(
 			BridgeTransfer::transfer_native(
@@ -401,11 +336,7 @@ fn transfer_to_regular_account() {
 		);
 
 		// mint some asset to holding account first
-		assert_ok!(BridgeTransfer::mint_asset(
-			Origin::root(),
-			asset,
-			amount * 2
-		));
+		assert_ok!(BridgeTransfer::mint_asset(Origin::root(), asset, amount * 2));
 
 		// transfer to regular account, would withdraw from holding account then deposit to
 		// the regular account
@@ -489,21 +420,14 @@ fn create_successful_transfer_proposal() {
 		assert_eq!(prop, expected);
 
 		assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
-		assert_eq!(
-			Balances::free_balance(Bridge::account_id()),
-			ENDOWED_BALANCE - 10
-		);
+		assert_eq!(Balances::free_balance(Bridge::account_id()), ENDOWED_BALANCE - 10);
 
 		assert_events(vec![
 			Event::Bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_A)),
 			Event::Bridge(bridge::Event::VoteAgainst(src_id, prop_id, RELAYER_B)),
 			Event::Bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_C)),
 			Event::Bridge(bridge::Event::ProposalApproved(src_id, prop_id)),
-			Event::Balances(balances::Event::Transfer(
-				Bridge::account_id(),
-				RELAYER_A,
-				10,
-			)),
+			Event::Balances(balances::Event::Transfer(Bridge::account_id(), RELAYER_A, 10)),
 			Event::Bridge(bridge::Event::ProposalSucceeded(src_id, prop_id)),
 		]);
 	})

@@ -92,9 +92,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self {
-				min_gas_price: Default::default(),
-			}
+			Self { min_gas_price: Default::default() }
 		}
 	}
 

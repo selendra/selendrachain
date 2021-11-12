@@ -78,10 +78,10 @@ mod tests {
 			Ok((_, out)) => {
 				assert_eq!(out, expected);
 				Ok(())
-			}
+			},
 			Err(e) => {
 				panic!("Test not expected to fail: {:?}", e);
-			}
+			},
 		}
 	}
 
@@ -99,10 +99,10 @@ mod tests {
 			Ok((_, out)) => {
 				assert_eq!(out, expected);
 				Ok(())
-			}
+			},
 			Err(e) => {
 				panic!("Test not expected to fail: {:?}", e);
-			}
+			},
 		}
 	}
 
@@ -120,10 +120,10 @@ mod tests {
 			Ok((_, out)) => {
 				assert_eq!(out, expected);
 				Ok(())
-			}
+			},
 			Err(e) => {
 				panic!("Test not expected to fail: {:?}", e);
-			}
+			},
 		}
 	}
 
@@ -143,10 +143,10 @@ mod tests {
 			Ok((_, out)) => {
 				assert_eq!(out, expected);
 				Ok(())
-			}
+			},
 			Err(e) => {
 				panic!("Test not expected to fail: {:?}", e);
-			}
+			},
 		}
 	}
 }

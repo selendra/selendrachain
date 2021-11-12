@@ -34,10 +34,7 @@ pub struct SchemaV1Override<B: BlockT, C, BE> {
 
 impl<B: BlockT, C, BE> SchemaV1Override<B, C, BE> {
 	pub fn new(client: Arc<C>) -> Self {
-		Self {
-			client,
-			_marker: PhantomData,
-		}
+		Self { client, _marker: PhantomData }
 	}
 }
 
@@ -61,7 +58,7 @@ where
 	fn query_storage<T: Decode>(&self, id: &BlockId<B>, key: &StorageKey) -> Option<T> {
 		if let Ok(Some(data)) = self.client.storage(id, key) {
 			if let Ok(result) = Decode::decode(&mut &data.0[..]) {
-				return Some(result);
+				return Some(result)
 			}
 		}
 		None
@@ -122,10 +119,7 @@ where
 	) -> Option<Vec<TransactionStatus>> {
 		self.query_storage::<Vec<TransactionStatus>>(
 			block,
-			&StorageKey(storage_prefix_build(
-				b"Ethereum",
-				b"CurrentTransactionStatuses",
-			)),
+			&StorageKey(storage_prefix_build(b"Ethereum", b"CurrentTransactionStatuses")),
 		)
 	}
 

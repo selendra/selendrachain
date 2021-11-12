@@ -131,9 +131,7 @@ pub const ENDOWED_BALANCE: u64 = 100_000_000;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let bridge_id = PalletId(*b"selendra").into_account();
-	let mut t = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![(bridge_id, ENDOWED_BALANCE), (RELAYER_A, ENDOWED_BALANCE)],
 	}
@@ -145,10 +143,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 fn last_event() -> Event {
-	system::Pallet::<Test>::events()
-		.pop()
-		.map(|e| e.event)
-		.expect("Event expected")
+	system::Pallet::<Test>::events().pop().map(|e| e.event).expect("Event expected")
 }
 
 pub fn expect_event<E: Into<Event>>(e: E) {
@@ -158,10 +153,8 @@ pub fn expect_event<E: Into<Event>>(e: E) {
 // Checks events against the latest. A contiguous set of events must be provided. They must
 // include the most recent event, but do not have to include every past event.
 pub fn assert_events(mut expected: Vec<Event>) {
-	let mut actual: Vec<Event> = system::Pallet::<Test>::events()
-		.iter()
-		.map(|e| e.event.clone())
-		.collect();
+	let mut actual: Vec<Event> =
+		system::Pallet::<Test>::events().iter().map(|e| e.event.clone()).collect();
 
 	expected.reverse();
 

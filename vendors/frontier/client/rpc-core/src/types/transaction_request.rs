@@ -64,11 +64,7 @@ pub struct TransactionRequest {
 
 impl Into<Option<TransactionMessage>> for TransactionRequest {
 	fn into(self) -> Option<TransactionMessage> {
-		match (
-			self.gas_price,
-			self.max_fee_per_gas,
-			self.access_list.clone(),
-		) {
+		match (self.gas_price, self.max_fee_per_gas, self.access_list.clone()) {
 			// Legacy
 			(Some(_), None, None) => Some(TransactionMessage::Legacy(LegacyTransactionMessage {
 				nonce: U256::zero(),
@@ -125,7 +121,7 @@ impl Into<Option<TransactionMessage>> for TransactionRequest {
 						.map(|(address, slots)| AccessListItem { address, slots })
 						.collect(),
 				}))
-			}
+			},
 			_ => None,
 		}
 	}

@@ -139,16 +139,10 @@ pub mod pallet {
 				dest_id,
 				&bridge::hashing::blake2_128(&asset_identity.to_vec()),
 			);
-			ensure!(
-				!BridgeAssets::<T>::contains_key(resource_id),
-				Error::<T>::ResourceIdInUse
-			);
+			ensure!(!BridgeAssets::<T>::contains_key(resource_id), Error::<T>::ResourceIdInUse);
 			BridgeAssets::<T>::insert(
 				resource_id,
-				AssetInfo {
-					dest_id,
-					asset_identity: asset_identity.clone(),
-				},
+				AssetInfo { dest_id, asset_identity: asset_identity.clone() },
 			);
 			Self::deposit_event(Event::AssetRegistered(dest_id, asset_identity, resource_id));
 			Ok(())
@@ -163,18 +157,13 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 
-			ensure!(
-				BridgeAssets::<T>::contains_key(&asset),
-				Error::<T>::AssetNotRegistered
-			);
+			ensure!(BridgeAssets::<T>::contains_key(&asset), Error::<T>::AssetNotRegistered);
 			let bridge_id = <bridge::Pallet<T>>::account_id();
 			let holding_balance = BridgeBalances::<T>::get(&asset, &bridge_id).unwrap_or_default();
 			BridgeBalances::<T>::insert(
 				asset,
 				&bridge_id,
-				holding_balance
-					.checked_add(&amount)
-					.ok_or(Error::<T>::BalanceOverflow)?,
+				holding_balance.checked_add(&amount).ok_or(Error::<T>::BalanceOverflow)?,
 			);
 			Self::deposit_event(Event::AssetMinted(asset, amount));
 
@@ -190,10 +179,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 
-			ensure!(
-				BridgeAssets::<T>::contains_key(&asset),
-				Error::<T>::AssetNotRegistered
-			);
+			ensure!(BridgeAssets::<T>::contains_key(&asset), Error::<T>::AssetNotRegistered);
 			let bridge_id = <bridge::Pallet<T>>::account_id();
 			let holding_balance = BridgeBalances::<T>::get(&asset, &bridge_id).unwrap_or_default();
 			// check holding account balance to cover burn amount
@@ -204,9 +190,7 @@ pub mod pallet {
 			BridgeBalances::<T>::insert(
 				asset,
 				&bridge_id,
-				holding_balance
-					.checked_sub(&amount)
-					.ok_or(Error::<T>::BalanceOverflow)?,
+				holding_balance.checked_sub(&amount).ok_or(Error::<T>::BalanceOverflow)?,
 			);
 			Self::deposit_event(Event::AssetBurned(asset, amount));
 
@@ -224,18 +208,9 @@ pub mod pallet {
 			dest_id: bridge::BridgeChainId,
 		) -> DispatchResult {
 			let source = ensure_signed(origin)?;
-			ensure!(
-				<bridge::Pallet<T>>::chain_whitelisted(dest_id),
-				Error::<T>::InvalidTransfer
-			);
-			ensure!(
-				BridgeFee::<T>::contains_key(&dest_id),
-				Error::<T>::FeeOptionsMissing
-			);
-			ensure!(
-				BridgeAssets::<T>::contains_key(&asset),
-				Error::<T>::AssetNotRegistered
-			);
+			ensure!(<bridge::Pallet<T>>::chain_whitelisted(dest_id), Error::<T>::InvalidTransfer);
+			ensure!(BridgeFee::<T>::contains_key(&dest_id), Error::<T>::FeeOptionsMissing);
+			ensure!(BridgeAssets::<T>::contains_key(&asset), Error::<T>::AssetNotRegistered);
 			// check account existence
 			ensure!(
 				BridgeBalances::<T>::contains_key(&asset, &source),
@@ -283,21 +258,12 @@ pub mod pallet {
 			dest_id: bridge::BridgeChainId,
 		) -> DispatchResult {
 			let source = ensure_signed(origin)?;
-			ensure!(
-				<bridge::Pallet<T>>::chain_whitelisted(dest_id),
-				Error::<T>::InvalidTransfer
-			);
+			ensure!(<bridge::Pallet<T>>::chain_whitelisted(dest_id), Error::<T>::InvalidTransfer);
 			let bridge_id = <bridge::Pallet<T>>::account_id();
-			ensure!(
-				BridgeFee::<T>::contains_key(&dest_id),
-				Error::<T>::FeeOptionsMissing
-			);
+			ensure!(BridgeFee::<T>::contains_key(&dest_id), Error::<T>::FeeOptionsMissing);
 			let fee = Self::calculate_fee(dest_id, amount);
 			let free_balance = T::Currency::free_balance(&source);
-			ensure!(
-				free_balance >= (amount + fee),
-				Error::<T>::InsufficientBalance
-			);
+			ensure!(free_balance >= (amount + fee), Error::<T>::InsufficientBalance);
 
 			let imbalance = T::Currency::withdraw(
 				&source,

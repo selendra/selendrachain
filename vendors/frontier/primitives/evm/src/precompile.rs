@@ -51,12 +51,7 @@ impl<T: LinearCostPrecompile> Precompile for T {
 		let cost = ensure_linear_cost(target_gas, input.len() as u64, T::BASE, T::WORD)?;
 
 		let (exit_status, output) = T::execute(input, cost)?;
-		Ok(PrecompileOutput {
-			exit_status,
-			cost,
-			output,
-			logs: Default::default(),
-		})
+		Ok(PrecompileOutput { exit_status, cost, output, logs: Default::default() })
 	}
 }
 
@@ -68,20 +63,15 @@ fn ensure_linear_cost(
 	word: u64,
 ) -> Result<u64, PrecompileFailure> {
 	let cost = base
-		.checked_add(word.checked_mul(len.saturating_add(31) / 32).ok_or(
-			PrecompileFailure::Error {
-				exit_status: ExitError::OutOfGas,
-			},
-		)?)
-		.ok_or(PrecompileFailure::Error {
-			exit_status: ExitError::OutOfGas,
-		})?;
+		.checked_add(
+			word.checked_mul(len.saturating_add(31) / 32)
+				.ok_or(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })?,
+		)
+		.ok_or(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })?;
 
 	if let Some(target_gas) = target_gas {
 		if cost > target_gas {
-			return Err(PrecompileFailure::Error {
-				exit_status: ExitError::OutOfGas,
-			});
+			return Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
 		}
 	}
 

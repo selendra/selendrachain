@@ -92,7 +92,7 @@ where
 				Poll::Pending => break,
 				Poll::Ready(Some(_)) => {
 					fire = true;
-				}
+				},
 				Poll::Ready(None) => return Poll::Ready(None),
 			}
 		}
@@ -104,7 +104,7 @@ where
 			Poll::Pending => (),
 			Poll::Ready(()) => {
 				fire = true;
-			}
+			},
 		}
 
 		if self.have_next {
@@ -124,12 +124,12 @@ where
 				Ok(have_next) => {
 					self.have_next = have_next;
 					Poll::Ready(Some(()))
-				}
+				},
 				Err(e) => {
 					self.have_next = false;
 					debug!(target: "mapping-sync", "Syncing failed with error {:?}, retrying.", e);
 					Poll::Ready(Some(()))
-				}
+				},
 			}
 		} else {
 			Poll::Pending

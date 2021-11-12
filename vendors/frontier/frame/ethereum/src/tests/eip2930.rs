@@ -55,16 +55,13 @@ fn transaction_without_enough_gas_should_not_work() {
 		let mut transaction = eip2930_erc20_creation_transaction(alice);
 		match &mut transaction {
 			Transaction::EIP2930(t) => t.gas_price = U256::from(11_000_000),
-			_ => {}
+			_ => {},
 		}
 
 		let call = crate::Call::<Test>::transact { transaction };
 		let source = call.check_self_contained().unwrap().unwrap();
 
-		assert_err!(
-			call.validate_self_contained(&source).unwrap(),
-			InvalidTransaction::Payment
-		);
+		assert_err!(call.validate_self_contained(&source).unwrap(), InvalidTransaction::Payment);
 	});
 }
 
@@ -79,9 +76,7 @@ fn transaction_with_to_low_nonce_should_not_work() {
 		transaction.nonce = U256::from(1);
 
 		let signed = transaction.sign(&alice.private_key, None);
-		let call = crate::Call::<Test>::transact {
-			transaction: signed,
-		};
+		let call = crate::Call::<Test>::transact { transaction: signed };
 		let source = call.check_self_contained().unwrap().unwrap();
 
 		assert_eq!(
@@ -101,15 +96,10 @@ fn transaction_with_to_low_nonce_should_not_work() {
 		transaction.nonce = U256::from(0);
 
 		let signed2 = transaction.sign(&alice.private_key, None);
-		let call2 = crate::Call::<Test>::transact {
-			transaction: signed2,
-		};
+		let call2 = crate::Call::<Test>::transact { transaction: signed2 };
 		let source2 = call2.check_self_contained().unwrap().unwrap();
 
-		assert_err!(
-			call2.validate_self_contained(&source2).unwrap(),
-			InvalidTransaction::Stale
-		);
+		assert_err!(call2.validate_self_contained(&source2).unwrap(), InvalidTransaction::Stale);
 	});
 }
 
@@ -123,9 +113,7 @@ fn transaction_with_to_hight_nonce_should_fail_in_block() {
 		transaction.nonce = U256::one();
 
 		let signed = transaction.sign(&alice.private_key, None);
-		let call = crate::Call::<Test>::transact {
-			transaction: signed,
-		};
+		let call = crate::Call::<Test>::transact { transaction: signed };
 		let source = call.check_self_contained().unwrap().unwrap();
 		let extrinsic = fp_self_contained::CheckedExtrinsic::<_, _, SignedExtra, _> {
 			signed: fp_self_contained::CheckedSignature::SelfContained(source),
@@ -237,7 +225,7 @@ fn transaction_should_generate_correct_gas_used() {
 		match info {
 			CallOrCreateInfo::Create(info) => {
 				assert_eq!(info.used_gas, expected_gas);
-			}
+			},
 			CallOrCreateInfo::Call(_) => panic!("expected create info"),
 		}
 	});
@@ -295,7 +283,7 @@ fn call_should_handle_errors() {
 					info.value.to_hex::<String>(),
 					"0000000000000000000000000000000000000000000000000000000000000001".to_owned()
 				);
-			}
+			},
 			CallOrCreateInfo::Create(_) => panic!("expected call info"),
 		}
 

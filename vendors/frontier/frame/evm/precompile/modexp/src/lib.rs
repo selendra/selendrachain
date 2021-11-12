@@ -72,10 +72,7 @@ fn calculate_gas_cost(
 
 	let multiplication_complexity = calculate_multiplication_complexity(base_length, mod_length);
 	let iteration_count = calculate_iteration_count(exp_length, exponent);
-	let gas = max(
-		MIN_GAS_COST,
-		multiplication_complexity * iteration_count / 3,
-	);
+	let gas = max(MIN_GAS_COST, multiplication_complexity * iteration_count / 3);
 
 	gas
 }
@@ -106,7 +103,7 @@ impl Precompile for Modexp {
 		if input.len() < 96 {
 			return Err(PrecompileFailure::Error {
 				exit_status: ExitError::Other("input must contain at least 96 bytes".into()),
-			});
+			})
 		};
 
 		// reasonable assumption: this must fit within the Ethereum EVM's max stack size
@@ -118,7 +115,7 @@ impl Precompile for Modexp {
 		if base_len_big > max_size_big {
 			return Err(PrecompileFailure::Error {
 				exit_status: ExitError::Other("unreasonably large base length".into()),
-			});
+			})
 		}
 
 		buf.copy_from_slice(&input[32..64]);
@@ -126,7 +123,7 @@ impl Precompile for Modexp {
 		if exp_len_big > max_size_big {
 			return Err(PrecompileFailure::Error {
 				exit_status: ExitError::Other("unreasonably large exponent length".into()),
-			});
+			})
 		}
 
 		buf.copy_from_slice(&input[64..96]);
@@ -134,7 +131,7 @@ impl Precompile for Modexp {
 		if mod_len_big > max_size_big {
 			return Err(PrecompileFailure::Error {
 				exit_status: ExitError::Other("unreasonably large exponent length".into()),
-			});
+			})
 		}
 
 		// bounds check handled above
@@ -147,7 +144,7 @@ impl Precompile for Modexp {
 		if input.len() < total_len {
 			return Err(PrecompileFailure::Error {
 				exit_status: ExitError::Other("insufficient input size".into()),
-			});
+			})
 		}
 
 		// Gas formula allows arbitrary large exp_len when base and modulus are empty, so we need to handle empty base first.
@@ -167,9 +164,7 @@ impl Precompile for Modexp {
 				calculate_gas_cost(base_len as u64, exp_len as u64, mod_len as u64, &exponent);
 			if let Some(gas_left) = target_gas {
 				if gas_left < gas_cost {
-					return Err(PrecompileFailure::Error {
-						exit_status: ExitError::OutOfGas,
-					});
+					return Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
 				}
 			};
 
@@ -206,9 +201,7 @@ impl Precompile for Modexp {
 				logs: Default::default(),
 			})
 		} else {
-			Err(PrecompileFailure::Error {
-				exit_status: ExitError::Other("failed".into()),
-			})
+			Err(PrecompileFailure::Error { exit_status: ExitError::Other("failed".into()) })
 		}
 	}
 }
@@ -240,7 +233,7 @@ mod tests {
 		match Modexp::execute(&input, Some(cost), &context, false) {
 			Ok(_) => {
 				panic!("Test not expected to pass");
-			}
+			},
 			Err(e) => {
 				assert_eq!(
 					e,
@@ -251,7 +244,7 @@ mod tests {
 					}
 				);
 				Ok(())
-			}
+			},
 		}
 	}
 
@@ -275,7 +268,7 @@ mod tests {
 		match Modexp::execute(&input, Some(cost), &context, false) {
 			Ok(_) => {
 				panic!("Test not expected to pass");
-			}
+			},
 			Err(e) => {
 				assert_eq!(
 					e,
@@ -284,7 +277,7 @@ mod tests {
 					}
 				);
 				Ok(())
-			}
+			},
 		}
 	}
 
@@ -308,7 +301,7 @@ mod tests {
 		match Modexp::execute(&input, Some(cost), &context, false) {
 			Ok(_) => {
 				panic!("Test not expected to pass");
-			}
+			},
 			Err(e) => {
 				assert_eq!(
 					e,
@@ -317,7 +310,7 @@ mod tests {
 					}
 				);
 				Ok(())
-			}
+			},
 		}
 	}
 
@@ -349,10 +342,10 @@ mod tests {
 				let result = BigUint::from_bytes_be(&precompile_result.output[..]);
 				let expected = BigUint::parse_bytes(b"5", 10).unwrap();
 				assert_eq!(result, expected);
-			}
+			},
 			Err(_) => {
 				panic!("Modexp::execute() returned error"); // TODO: how to pass error on?
-			}
+			},
 		}
 	}
 
@@ -384,10 +377,10 @@ mod tests {
 				let result = BigUint::from_bytes_be(&precompile_result.output[..]);
 				let expected = BigUint::parse_bytes(b"10055", 10).unwrap();
 				assert_eq!(result, expected);
-			}
+			},
 			Err(_) => {
 				panic!("Modexp::execute() returned error"); // TODO: how to pass error on?
-			}
+			},
 		}
 	}
 
@@ -417,10 +410,10 @@ mod tests {
 				let result = BigUint::from_bytes_be(&precompile_result.output[..]);
 				let expected = BigUint::parse_bytes(b"1", 10).unwrap();
 				assert_eq!(result, expected);
-			}
+			},
 			Err(_) => {
 				panic!("Modexp::execute() returned error"); // TODO: how to pass error on?
-			}
+			},
 		}
 	}
 }

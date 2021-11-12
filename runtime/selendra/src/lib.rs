@@ -116,7 +116,9 @@ pub use sp_runtime::BuildStorage;
 
 /// Constant values used within the runtime.
 pub mod constants;
-use constants::{currency::*, fee::*, merge_account::MergeAccountEvm, time::*, precompiles::FrontierPrecompiles};
+use constants::{
+	currency::*, fee::*, merge_account::MergeAccountEvm, precompiles::FrontierPrecompiles, time::*,
+};
 
 // Weights used in the runtime.
 mod weights;
@@ -2077,7 +2079,7 @@ sp_api::impl_runtime_apis! {
 			index.to_big_endian(&mut tmp);
 			Evm::account_storages(address, H256::from_slice(&tmp[..]))
 		}
-		
+
 		fn call(
 			from: H160,
 			to: H160,

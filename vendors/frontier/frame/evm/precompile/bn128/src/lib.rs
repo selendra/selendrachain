@@ -30,7 +30,7 @@ fn read_fr(input: &[u8], start_inx: usize) -> Result<bn::Fr, PrecompileFailure> 
 	if input.len() < start_inx + 32 {
 		return Err(PrecompileFailure::Error {
 			exit_status: ExitError::Other("Input not long enough".into()),
-		});
+		})
 	}
 
 	bn::Fr::from_slice(&input[start_inx..(start_inx + 32)]).map_err(|_| PrecompileFailure::Error {
@@ -44,7 +44,7 @@ fn read_point(input: &[u8], start_inx: usize) -> Result<bn::G1, PrecompileFailur
 	if input.len() < start_inx + 64 {
 		return Err(PrecompileFailure::Error {
 			exit_status: ExitError::Other("Input not long enough".into()),
-		});
+		})
 	}
 
 	let px = Fq::from_slice(&input[start_inx..(start_inx + 32)]).map_err(|_| {
@@ -90,20 +90,12 @@ impl Precompile for Bn128Add {
 		let mut buf = [0u8; 64];
 		if let Some(sum) = AffineG1::from_jacobian(p1 + p2) {
 			// point not at infinity
-			sum.x()
-				.to_big_endian(&mut buf[0..32])
-				.map_err(|_| PrecompileFailure::Error {
-					exit_status: ExitError::Other(
-						"Cannot fail since 0..32 is 32-byte length".into(),
-					),
-				})?;
-			sum.y()
-				.to_big_endian(&mut buf[32..64])
-				.map_err(|_| PrecompileFailure::Error {
-					exit_status: ExitError::Other(
-						"Cannot fail since 32..64 is 32-byte length".into(),
-					),
-				})?;
+			sum.x().to_big_endian(&mut buf[0..32]).map_err(|_| PrecompileFailure::Error {
+				exit_status: ExitError::Other("Cannot fail since 0..32 is 32-byte length".into()),
+			})?;
+			sum.y().to_big_endian(&mut buf[32..64]).map_err(|_| PrecompileFailure::Error {
+				exit_status: ExitError::Other("Cannot fail since 32..64 is 32-byte length".into()),
+			})?;
 		}
 
 		Ok(PrecompileOutput {
@@ -137,20 +129,12 @@ impl Precompile for Bn128Mul {
 		let mut buf = [0u8; 64];
 		if let Some(sum) = AffineG1::from_jacobian(p * fr) {
 			// point not at infinity
-			sum.x()
-				.to_big_endian(&mut buf[0..32])
-				.map_err(|_| PrecompileFailure::Error {
-					exit_status: ExitError::Other(
-						"Cannot fail since 0..32 is 32-byte length".into(),
-					),
-				})?;
-			sum.y()
-				.to_big_endian(&mut buf[32..64])
-				.map_err(|_| PrecompileFailure::Error {
-					exit_status: ExitError::Other(
-						"Cannot fail since 32..64 is 32-byte length".into(),
-					),
-				})?;
+			sum.x().to_big_endian(&mut buf[0..32]).map_err(|_| PrecompileFailure::Error {
+				exit_status: ExitError::Other("Cannot fail since 0..32 is 32-byte length".into()),
+			})?;
+			sum.y().to_big_endian(&mut buf[32..64]).map_err(|_| PrecompileFailure::Error {
+				exit_status: ExitError::Other("Cannot fail since 32..64 is 32-byte length".into()),
+			})?;
 		}
 
 		Ok(PrecompileOutput {
@@ -186,13 +170,11 @@ impl Precompile for Bn128Pairing {
 			// (a, b_a, b_b - each 64-byte affine coordinates)
 			let elements = input.len() / 192;
 
-			let gas_cost: u64 = Bn128Pairing::BASE_GAS_COST
-				+ (elements as u64 * Bn128Pairing::GAS_COST_PER_PAIRING);
+			let gas_cost: u64 = Bn128Pairing::BASE_GAS_COST +
+				(elements as u64 * Bn128Pairing::GAS_COST_PER_PAIRING);
 			if let Some(gas_left) = target_gas {
 				if gas_left < gas_cost {
-					return Err(PrecompileFailure::Error {
-						exit_status: ExitError::OutOfGas,
-					});
+					return Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
 				}
 			}
 
@@ -251,24 +233,16 @@ impl Precompile for Bn128Pairing {
 				let b = if b_a.is_zero() && b_b.is_zero() {
 					G2::zero()
 				} else {
-					G2::from(
-						AffineG2::new(b_a, b_b).map_err(|_| PrecompileFailure::Error {
-							exit_status: ExitError::Other(
-								"Invalid b argument - not on curve".into(),
-							),
-						})?,
-					)
+					G2::from(AffineG2::new(b_a, b_b).map_err(|_| PrecompileFailure::Error {
+						exit_status: ExitError::Other("Invalid b argument - not on curve".into()),
+					})?)
 				};
 				let a = if a_x.is_zero() && a_y.is_zero() {
 					G1::zero()
 				} else {
-					G1::from(
-						AffineG1::new(a_x, a_y).map_err(|_| PrecompileFailure::Error {
-							exit_status: ExitError::Other(
-								"Invalid a argument - not on curve".into(),
-							),
-						})?,
-					)
+					G1::from(AffineG1::new(a_x, a_y).map_err(|_| PrecompileFailure::Error {
+						exit_status: ExitError::Other("Invalid a argument - not on curve".into()),
+					})?)
 				};
 				vals.push((a, b));
 			}

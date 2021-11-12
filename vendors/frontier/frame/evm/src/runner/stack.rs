@@ -70,14 +70,11 @@ impl<T: Config> Runner<T> {
 			Some(max_fee_per_gas) => {
 				ensure!(max_fee_per_gas >= base_fee, Error::<T>::GasPriceTooLow);
 				max_fee_per_gas
-			}
+			},
 			None => Default::default(),
 		};
 
-		let vicinity = Vicinity {
-			gas_price: max_fee_per_gas,
-			origin: source,
-		};
+		let vicinity = Vicinity { gas_price: max_fee_per_gas, origin: source };
 
 		let metadata = StackSubstateMetadata::new(gas_limit, &config);
 		let state = SubstrateStackState::new(&vicinity, metadata);
@@ -95,18 +92,12 @@ impl<T: Config> Runner<T> {
 			U256::zero()
 		};
 
-		let total_fee = max_base_fee
-			.checked_add(max_priority_fee)
-			.ok_or(Error::<T>::FeeOverflow)?;
+		let total_fee =
+			max_base_fee.checked_add(max_priority_fee).ok_or(Error::<T>::FeeOverflow)?;
 
-		let total_payment = value
-			.checked_add(total_fee)
-			.ok_or(Error::<T>::PaymentOverflow)?;
+		let total_payment = value.checked_add(total_fee).ok_or(Error::<T>::PaymentOverflow)?;
 		let source_account = Pallet::<T>::account_basic(&source);
-		ensure!(
-			source_account.balance >= total_payment,
-			Error::<T>::BalanceLow
-		);
+		ensure!(source_account.balance >= total_payment, Error::<T>::BalanceLow);
 
 		if let Some(nonce) = nonce {
 			ensure!(source_account.nonce == nonce, Error::<T>::InvalidNonce);
@@ -194,12 +185,7 @@ impl<T: Config> Runner<T> {
 			}));
 		}
 
-		Ok(ExecutionInfo {
-			value: retv,
-			exit_reason: reason,
-			used_gas,
-			logs: state.substate.logs,
-		})
+		Ok(ExecutionInfo { value: retv, exit_reason: reason, used_gas, logs: state.substate.logs })
 	}
 }
 
@@ -255,10 +241,7 @@ impl<T: Config> RunnerT<T> for Runner<T> {
 			&precompiles,
 			|executor| {
 				let address = executor.create_address(evm::CreateScheme::Legacy { caller: source });
-				(
-					executor.transact_create(source, value, init, gas_limit, access_list),
-					address,
-				)
+				(executor.transact_create(source, value, init, gas_limit, access_list), address)
 			},
 		)
 	}
@@ -363,11 +346,11 @@ impl<'config> SubstrateStackSubstate<'config> {
 
 	pub fn deleted(&self, address: H160) -> bool {
 		if self.deletes.contains(&address) {
-			return true;
+			return true
 		}
 
 		if let Some(parent) = self.parent.as_ref() {
-			return parent.deleted(address);
+			return parent.deleted(address)
 		}
 
 		false
@@ -378,11 +361,7 @@ impl<'config> SubstrateStackSubstate<'config> {
 	}
 
 	pub fn log(&mut self, address: H160, topics: Vec<H256>, data: Vec<u8>) {
-		self.logs.push(Log {
-			address,
-			topics,
-			data,
-		});
+		self.logs.push(Log { address, topics, data });
 	}
 
 	fn recursive_is_cold<F: Fn(&Accessed) -> bool>(&self, f: &F) -> bool {
@@ -390,10 +369,7 @@ impl<'config> SubstrateStackSubstate<'config> {
 		if local_is_accessed {
 			false
 		} else {
-			self.parent
-				.as_ref()
-				.map(|p| p.recursive_is_cold(f))
-				.unwrap_or(true)
+			self.parent.as_ref().map(|p| p.recursive_is_cold(f)).unwrap_or(true)
 		}
 	}
 }
@@ -470,10 +446,7 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	fn basic(&self, address: H160) -> evm::backend::Basic {
 		let account = Pallet::<T>::account_basic(&address);
 
-		evm::backend::Basic {
-			balance: account.balance,
-			nonce: account.nonce,
-		}
+		evm::backend::Basic { balance: account.balance, nonce: account.nonce }
 	}
 
 	fn code(&self, address: H160) -> Vec<u8> {
@@ -606,8 +579,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	}
 
 	fn is_cold(&self, address: H160) -> bool {
-		self.substate
-			.recursive_is_cold(&|a| a.accessed_addresses.contains(&address))
+		self.substate.recursive_is_cold(&|a| a.accessed_addresses.contains(&address))
 	}
 
 	fn is_storage_cold(&self, address: H160, key: H256) -> bool {
