@@ -343,7 +343,11 @@ where
 
 	let telemetry = telemetry.map(|(worker, telemetry)| {
 		if let Some(worker) = worker {
-			task_manager.spawn_handle().spawn("telemetry", worker.run());
+			task_manager.spawn_handle().spawn(
+				"telemetry",
+				Some("telemetry"),
+				Box::pin(worker.run()),
+			);
 		}
 		telemetry
 	});
@@ -783,11 +787,22 @@ where
 		})?;
 
 	if config.offchain_worker.enabled {
-		let _ = service::build_offchain_workers(
-			&config,
-			task_manager.spawn_handle(),
+		let offchain_workers = Arc::new(sc_offchain::OffchainWorkers::new_with_options(
 			client.clone(),
-			network.clone(),
+			sc_offchain::OffchainWorkerOptions { enable_http_requests: false },
+		));
+
+		// Start the offchain workers to have
+		task_manager.spawn_handle().spawn(
+			"offchain-notifications",
+			None,
+			sc_offchain::notification_future(
+				config.role.is_authority(),
+				client.clone(),
+				offchain_workers,
+				task_manager.spawn_handle().clone(),
+				network.clone(),
+			),
 		);
 	}
 
@@ -884,7 +899,11 @@ where
 			prometheus_registry.clone(),
 		);
 
-		task_manager.spawn_handle().spawn("authority-discovery-worker", worker.run());
+		task_manager.spawn_handle().spawn(
+			"authority-discovery-worker",
+			Some("authority-discovery"),
+			Box::pin(worker.run()),
+		);
 		Some(service)
 	} else {
 		None
@@ -930,6 +949,7 @@ where
 			let handle = handle.clone();
 			task_manager.spawn_essential_handle().spawn_blocking(
 				"overseer",
+				None,
 				Box::pin(async move {
 					use futures::{pin_mut, select, FutureExt};
 
@@ -960,6 +980,7 @@ where
 
 	task_manager.spawn_essential_handle().spawn(
 		"frontier-mapping-sync-worker",
+		None,
 		MappingSyncWorker::new(
 			client.import_notification_stream(),
 			Duration::new(6, 0),
@@ -977,12 +998,14 @@ where
 		const FILTER_RETAIN_THRESHOLD: u64 = 100;
 		task_manager.spawn_essential_handle().spawn(
 			"frontier-filter-pool",
+			None,
 			EthTask::filter_pool_task(Arc::clone(&client), filter_pool, FILTER_RETAIN_THRESHOLD),
 		);
 	}
 
 	task_manager.spawn_essential_handle().spawn(
 		"frontier-schema-cache-task",
+		None,
 		EthTask::ethereum_schema_cache_task(
 			Arc::clone(&client),
 			Arc::clone(&frontier_backend),
@@ -1050,7 +1073,7 @@ where
 		};
 
 		let babe = babe::start_babe(babe_config)?;
-		task_manager.spawn_essential_handle().spawn_blocking("babe", babe);
+		task_manager.spawn_essential_handle().spawn_blocking("babe", None, babe);
 	}
 
 	// if the node isn't actively participating in consensus then it doesn't
@@ -1108,9 +1131,11 @@ where
 			telemetry: telemetry.as_ref().map(|x| x.handle()),
 		};
 
-		task_manager
-			.spawn_essential_handle()
-			.spawn_blocking("grandpa-voter", grandpa::run_grandpa_voter(grandpa_config)?);
+		task_manager.spawn_essential_handle().spawn_blocking(
+			"grandpa-voter",
+			None,
+			grandpa::run_grandpa_voter(grandpa_config)?,
+		);
 	}
 
 	network_starter.start_network();
