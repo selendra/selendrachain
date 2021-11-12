@@ -145,6 +145,11 @@ impl AddressMapping<AccountId32> for HashedAddressMapping {
 		data[0..20].copy_from_slice(&address[..]);
 		AccountId32::from(Into::<[u8; 32]>::into(data))
 	}
+	
+	fn to_evm_address(_account: &AccountId32) -> Option<H160> {
+		// we're not able to recover the evm address from a hashed address
+		None
+	}
 }
 
 impl pallet_evm::Config for Test {
