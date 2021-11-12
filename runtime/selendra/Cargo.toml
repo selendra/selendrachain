@@ -95,7 +95,7 @@ pallet-bridge = { default-features = false, path = "../../modules/bridge" }
 pallet-bridge-transfer = { default-features = false, path = "../../modules/bridge_transfer" }
 
 # Evm
-evm = { path = "../../vendors/evm", default-features = false, features = ["with-codec"] }
+evm = { version = "0.33.0", default-features = false, features = ["with-codec"] }
 pallet-ethereum  = { path = "../../vendors/frontier/frame/ethereum", default-features = false }
 pallet-evm = { path = "../../vendors/frontier/frame/evm", default-features = false }
 pallet-evm-precompile-bn128 = { path = "../../vendors/frontier/frame/evm/precompile/bn128", default-features = false }
