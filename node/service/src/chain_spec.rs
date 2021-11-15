@@ -193,10 +193,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 	const STASH: u128 = 31416 * SEL;
 
 	selendra::GenesisConfig {
-		system: selendra::SystemConfig {
-			code: wasm_binary.to_vec(),
-			changes_trie_config: Default::default(),
-		},
+		system: selendra::SystemConfig { code: wasm_binary.to_vec() },
 		balances: selendra::BalancesConfig {
 			balances: endowed_accounts
 				.iter()
@@ -392,10 +389,7 @@ pub fn selendra_testnet_genesis(
 	const STASH: u128 = 31416 * SEL;
 
 	selendra::GenesisConfig {
-		system: selendra::SystemConfig {
-			code: wasm_binary.to_vec(),
-			changes_trie_config: Default::default(),
-		},
+		system: selendra::SystemConfig { code: wasm_binary.to_vec() },
 		indices: selendra::IndicesConfig { indices: vec![] },
 		balances: selendra::BalancesConfig {
 			balances: endowed_accounts.iter().map(|k| (k.clone(), ENDOWMENT)).collect(),

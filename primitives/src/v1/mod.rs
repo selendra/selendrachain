@@ -1187,8 +1187,8 @@ pub enum ConsensusLog {
 
 impl ConsensusLog {
 	/// Attempt to convert a reference to a generic digest item into a consensus log.
-	pub fn from_digest_item<H>(
-		digest_item: &runtime_primitives::DigestItem<H>,
+	pub fn from_digest_item(
+		digest_item: &runtime_primitives::DigestItem,
 	) -> Result<Option<Self>, parity_scale_codec::Error> {
 		match digest_item {
 			runtime_primitives::DigestItem::Consensus(id, encoded) if id == &SELENDRA_ENGINE_ID =>
@@ -1198,8 +1198,8 @@ impl ConsensusLog {
 	}
 }
 
-impl<H> From<ConsensusLog> for runtime_primitives::DigestItem<H> {
-	fn from(c: ConsensusLog) -> runtime_primitives::DigestItem<H> {
+impl From<ConsensusLog> for runtime_primitives::DigestItem {
+	fn from(c: ConsensusLog) -> runtime_primitives::DigestItem {
 		Self::Consensus(SELENDRA_ENGINE_ID, c.encode())
 	}
 }

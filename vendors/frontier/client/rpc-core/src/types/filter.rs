@@ -373,9 +373,7 @@ impl FilteredParams {
 					if !x.contains(&log.address) {
 						return false
 					},
-				_ => {
-					return true
-				},
+				_ => return true,
 			}
 		}
 		true
