@@ -37,5 +37,5 @@ selendra-core-primitives = { path = "../../../primitives/core-primitives" }
 selendra-node-subsystem-util = { path = "../../subsystem-util"}
 
 [dev-dependencies]
-hex-literal = "0.3.3"
+hex-literal = "0.3.4"
 tempfile = "3.2.0"
