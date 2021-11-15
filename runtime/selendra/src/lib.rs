@@ -575,7 +575,7 @@ impl pallet_staking::Config for Runtime {
 	type OffendingValidatorsThreshold = OffendingValidatorsThreshold;
 	// Use the nominators map to iter voters, but also perform the bags-list migration and keep
 	// it up-to-date.
-	type SortedListProvider = runtime_common::elections::UseNominatorsAndUpdateBagsList<Runtime>;
+	type SortedListProvider = BagsList;
 	type WeightInfo = weights::pallet_staking::WeightInfo<Runtime>;
 }
 
