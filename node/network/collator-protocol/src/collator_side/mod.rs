@@ -67,7 +67,7 @@ const COST_APPARENT_FLOOD: Rep =
 ///
 /// This is to protect from a single slow validator preventing collations from happening.
 ///
-/// With a collation size of 5MB and bandwidth of 500Mbit/s (requirement for Selendra validators),
+/// With a collation size of 5MB and bandwidth of 500Mbit/s (requirement for Kusama validators),
 /// the transfer should be possible within 0.1 seconds. 400 milliseconds should therefore be
 /// plenty and should be low enough for later validators to still be able to finish on time.
 ///
@@ -166,11 +166,11 @@ impl ValidatorGroup {
 	/// Returns `true` if we should advertise our collation to the given peer.
 	fn should_advertise_to(
 		&self,
-		peer_ids: &HashMap<PeerId, AuthorityDiscoveryId>,
+		peer_ids: &HashMap<PeerId, HashSet<AuthorityDiscoveryId>>,
 		peer: &PeerId,
 	) -> bool {
 		match peer_ids.get(peer) {
-			Some(discovery_id) => !self.advertised_to.contains(discovery_id),
+			Some(discovery_ids) => !discovery_ids.iter().any(|d| self.advertised_to.contains(d)),
 			None => false,
 		}
 	}
@@ -178,11 +178,13 @@ impl ValidatorGroup {
 	/// Should be called after we advertised our collation to the given `peer` to keep track of it.
 	fn advertised_to_peer(
 		&mut self,
-		peer_ids: &HashMap<PeerId, AuthorityDiscoveryId>,
+		peer_ids: &HashMap<PeerId, HashSet<AuthorityDiscoveryId>>,
 		peer: &PeerId,
 	) {
-		if let Some(validator_id) = peer_ids.get(peer) {
-			self.advertised_to.insert(validator_id.clone());
+		if let Some(authority_ids) = peer_ids.get(peer) {
+			authority_ids.iter().for_each(|a| {
+				self.advertised_to.insert(a.clone());
+			});
 		}
 	}
 }
@@ -275,9 +277,9 @@ struct State {
 	/// Our validator groups per active leaf.
 	our_validators_groups: HashMap<Hash, ValidatorGroup>,
 
-	/// The mapping from [`PeerId`] to [`ValidatorId`]. This is filled over time as we learn the [`PeerId`]'s
+	/// The mapping from [`PeerId`] to [`HashSet<AuthorityDiscoveryId>`]. This is filled over time as we learn the [`PeerId`]'s
 	/// by `PeerConnected` events.
-	peer_ids: HashMap<PeerId, AuthorityDiscoveryId>,
+	peer_ids: HashMap<PeerId, HashSet<AuthorityDiscoveryId>>,
 
 	/// Metrics.
 	metrics: Metrics,
@@ -908,14 +910,14 @@ where
 			// If it is possible that a disconnected validator would attempt a reconnect
 			// it should be handled here.
 			tracing::trace!(target: LOG_TARGET, ?peer_id, ?observed_role, "Peer connected");
-			if let Some(authority) = maybe_authority {
+			if let Some(authority_ids) = maybe_authority {
 				tracing::trace!(
 					target: LOG_TARGET,
-					?authority,
+					?authority_ids,
 					?peer_id,
 					"Connected to requested validator"
 				);
-				state.peer_ids.insert(peer_id, authority);
+				state.peer_ids.insert(peer_id, authority_ids);
 
 				declare(ctx, state, peer_id).await;
 			}

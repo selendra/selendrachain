@@ -25,7 +25,7 @@
 //! the `NetworkBridgeMessage::NewGossipTopology` message.
 
 use std::{
-	collections::HashMap,
+	collections::{HashMap, HashSet},
 	fmt,
 	time::{Duration, Instant},
 };
@@ -65,8 +65,10 @@ const BACKOFF_DURATION: Duration = Duration::from_secs(5);
 /// Duration after which we consider low connectivity a problem.
 ///
 /// Especially at startup low connectivity is expected (authority discovery cache needs to be
-/// populated). Authority discovery on Selendra takes around 8 minutes, so warning after 10 minutes
+/// populated). Authority discovery on Kusama takes around 8 minutes, so warning after 10 minutes
 /// should be fine:
+///
+/// https://github.com/paritytech/substrate/blob/fc49802f263529160635471c8a17888846035f5d/client/authority-discovery/src/lib.rs#L88
 const LOW_CONNECTIVITY_WARN_DELAY: Duration = Duration::from_secs(600);
 
 /// If connectivity is lower than this in percent, issue warning in logs.
@@ -92,14 +94,14 @@ pub struct GossipSupport<AD> {
 	/// Successfully resolved connections
 	///
 	/// waiting for actual connection.
-	resolved_authorities: HashMap<AuthorityDiscoveryId, Vec<Multiaddr>>,
+	resolved_authorities: HashMap<AuthorityDiscoveryId, HashSet<Multiaddr>>,
 
 	/// Actually connected authorities.
 	connected_authorities: HashMap<AuthorityDiscoveryId, PeerId>,
 	/// By `PeerId`.
 	///
 	/// Needed for efficient handling of disconnect events.
-	connected_authorities_by_peer_id: HashMap<PeerId, AuthorityDiscoveryId>,
+	connected_authorities_by_peer_id: HashMap<PeerId, HashSet<AuthorityDiscoveryId>>,
 	/// Authority discovery service.
 	authority_discovery: AD,
 }
@@ -297,14 +299,19 @@ where
 	fn handle_connect_disconnect(&mut self, ev: NetworkBridgeEvent<GossipSuppportNetworkMessage>) {
 		match ev {
 			NetworkBridgeEvent::PeerConnected(peer_id, _, o_authority) => {
-				if let Some(authority) = o_authority {
-					self.connected_authorities.insert(authority.clone(), peer_id);
-					self.connected_authorities_by_peer_id.insert(peer_id, authority);
+				if let Some(authority_ids) = o_authority {
+					authority_ids.iter().for_each(|a| {
+						self.connected_authorities.insert(a.clone(), peer_id);
+					});
+					self.connected_authorities_by_peer_id.insert(peer_id, authority_ids);
 				}
 			},
 			NetworkBridgeEvent::PeerDisconnected(peer_id) => {
-				if let Some(authority) = self.connected_authorities_by_peer_id.remove(&peer_id) {
-					self.connected_authorities.remove(&authority);
+				if let Some(authority_ids) = self.connected_authorities_by_peer_id.remove(&peer_id)
+				{
+					authority_ids.into_iter().for_each(|a| {
+						self.connected_authorities.remove(&a);
+					});
 				}
 			},
 			NetworkBridgeEvent::OurViewChange(_) => {},
@@ -383,7 +390,6 @@ async fn ensure_i_am_an_authority(
 /// groups (because not all validators are parachain validators and the group size is small),
 /// but formed randomly via BABE randomness from two epochs ago.
 /// This limits the amount of gossip peers to 2 * `sqrt(len)` and ensures the diameter of 2.
-
 async fn update_gossip_topology<Context>(
 	ctx: &mut Context,
 	our_index: usize,
@@ -470,7 +476,7 @@ struct PrettyAuthorities<I>(I);
 
 impl<'a, I> fmt::Display for PrettyAuthorities<I>
 where
-	I: Iterator<Item = (&'a AuthorityDiscoveryId, &'a Vec<Multiaddr>)> + Clone,
+	I: Iterator<Item = (&'a AuthorityDiscoveryId, &'a HashSet<Multiaddr>)> + Clone,
 {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		let mut authorities = self.0.clone().peekable();
