@@ -24,6 +24,8 @@
 mod mock;
 #[cfg(test)]
 mod tests;
+#[cfg(feature = "std")]
+pub mod test_utils;
 
 mod location_conversion;
 pub use location_conversion::{
