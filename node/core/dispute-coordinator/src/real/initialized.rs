@@ -648,6 +648,9 @@ impl Initialized {
 				},
 		};
 		let candidate_receipt = votes.candidate_receipt.clone();
+		let was_concluded_valid = votes.valid.len() >= supermajority_threshold;
+		let was_concluded_invalid = votes.invalid.len() >= supermajority_threshold;
+
 		let mut recent_disputes = overlay_db.load_recent_disputes()?.unwrap_or_default();
 		let controlled_indices = find_controlled_validator_indices(&self.keystore, &validators);
 
@@ -794,11 +797,11 @@ impl Initialized {
 			// Note: concluded-invalid overwrites concluded-valid,
 			// so we do this check first. Dispute state machine is
 			// non-commutative.
-			if concluded_valid {
+			if !was_concluded_valid && concluded_valid {
 				*status = status.concluded_for(now);
 			}
 
-			if concluded_invalid {
+			if !was_concluded_invalid && concluded_invalid {
 				*status = status.concluded_against(now);
 			}
 
