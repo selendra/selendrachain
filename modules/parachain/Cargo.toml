@@ -33,3 +33,4 @@ std = [
 	"selendra-core-primitives/std",
 	"frame-support/std",
 ]
+runtime-benchmarks = []

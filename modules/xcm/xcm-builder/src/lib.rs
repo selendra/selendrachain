@@ -22,10 +22,10 @@
 
 #[cfg(test)]
 mod mock;
-#[cfg(test)]
-mod tests;
 #[cfg(feature = "std")]
 pub mod test_utils;
+#[cfg(test)]
+mod tests;
 
 mod location_conversion;
 pub use location_conversion::{
