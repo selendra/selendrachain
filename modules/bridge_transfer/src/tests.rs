@@ -3,7 +3,7 @@
 use super::{
 	bridge,
 	mock::{
-		assert_events, balances, expect_event, new_test_ext, Balances, Bridge, BridgeTransfer,
+		assert_events, expect_event, new_test_ext, Balances, Bridge, BridgeTransfer,
 		Call, Event, NativeTokenResourceId, Origin, ProposalLifetime, Test, ENDOWED_BALANCE,
 		RELAYER_A, RELAYER_B, RELAYER_C,
 	},
@@ -264,31 +264,6 @@ fn transfer_native() {
 }
 
 #[test]
-fn transfer() {
-	new_test_ext().execute_with(|| {
-		// Check inital state
-		let bridge_id: u64 = Bridge::account_id();
-		let resource_id = NativeTokenResourceId::get();
-		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE);
-		// Transfer and check result
-		assert_ok!(BridgeTransfer::transfer(
-			Origin::signed(Bridge::account_id()),
-			RELAYER_A,
-			10,
-			resource_id,
-		));
-		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE - 10);
-		assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
-
-		assert_events(vec![Event::Balances(balances::Event::Transfer(
-			Bridge::account_id(),
-			RELAYER_A,
-			10,
-		))]);
-	})
-}
-
-#[test]
 fn transfer_to_holdingaccount() {
 	new_test_ext().execute_with(|| {
 		let dest_chain = 0;
@@ -427,7 +402,6 @@ fn create_successful_transfer_proposal() {
 			Event::Bridge(bridge::Event::VoteAgainst(src_id, prop_id, RELAYER_B)),
 			Event::Bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_C)),
 			Event::Bridge(bridge::Event::ProposalApproved(src_id, prop_id)),
-			Event::Balances(balances::Event::Transfer(Bridge::account_id(), RELAYER_A, 10)),
 			Event::Bridge(bridge::Event::ProposalSucceeded(src_id, prop_id)),
 		]);
 	})
