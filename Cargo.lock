@@ -5431,13 +5431,14 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=master#3cf5449fd2143d07ff2ee24eb3b3c40ecf1e57ba"
 dependencies = [
  "frame-support",
  "frame-system",
+ "pallet-balances",
  "parity-scale-codec",
  "scale-info",
  "serde",
+ "serde_json",
  "smallvec",
  "sp-core",
  "sp-io",
@@ -5448,7 +5449,6 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=master#3cf5449fd2143d07ff2ee24eb3b3c40ecf1e57ba"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -5465,7 +5465,6 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc-runtime-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=master#3cf5449fd2143d07ff2ee24eb3b3c40ecf1e57ba"
 dependencies = [
  "pallet-transaction-payment",
  "parity-scale-codec",
