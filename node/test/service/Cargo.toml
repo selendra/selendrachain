@@ -37,7 +37,7 @@ grandpa_primitives = { package = "sp-finality-grandpa", git = "https://github.co
 inherents = { package = "sp-inherents", git = "https://github.com/paritytech/substrate", branch = "master" }
 pallet-staking = { path = "../../../modules/staking" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "master" }
-pallet-transaction-payment = { path = "../../../modules/transaction-payment" }
+pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-cli = { git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "master" }

@@ -5475,24 +5475,6 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment"
 version = "4.0.0-dev"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "serde_json",
- "smallvec",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-transaction-payment"
-version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=master#3fdb445b3b14880017680a3af85e89fb591666a0"
 dependencies = [
  "frame-support",
@@ -5510,11 +5492,12 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc"
 version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=master#3fdb445b3b14880017680a3af85e89fb591666a0"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev",
+ "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "sp-api",
  "sp-blockchain",
@@ -5526,19 +5509,9 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc-runtime-api"
 version = "4.0.0-dev"
-dependencies = [
- "pallet-transaction-payment 4.0.0-dev",
- "parity-scale-codec",
- "sp-api",
- "sp-runtime",
-]
-
-[[package]]
-name = "pallet-transaction-payment-rpc-runtime-api"
-version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=master#3fdb445b3b14880017680a3af85e89fb591666a0"
 dependencies = [
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=master)",
+ "pallet-transaction-payment",
  "parity-scale-codec",
  "sp-api",
  "sp-runtime",
@@ -7857,7 +7830,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-system-rpc-runtime-api",
  "pallet-mmr-primitives",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev",
+ "pallet-transaction-payment-rpc-runtime-api",
  "sc-client-api",
  "sc-consensus",
  "sc-executor",
@@ -8635,8 +8608,8 @@ dependencies = [
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-tips",
- "pallet-transaction-payment 4.0.0-dev",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-utility",
  "pallet-vesting",
@@ -8702,7 +8675,7 @@ dependencies = [
  "pallet-session",
  "pallet-staking 4.0.0-dev",
  "pallet-timestamp",
- "pallet-transaction-payment 4.0.0-dev",
+ "pallet-transaction-payment",
  "pallet-treasury",
  "pallet-vesting",
  "parity-scale-codec",
@@ -8799,7 +8772,7 @@ dependencies = [
  "pallet-im-online",
  "pallet-mmr-primitives",
  "pallet-staking 4.0.0-dev",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=master)",
+ "pallet-transaction-payment-rpc-runtime-api",
  "sc-authority-discovery",
  "sc-basic-authorship",
  "sc-block-builder",
@@ -11310,7 +11283,7 @@ dependencies = [
  "frame-system",
  "log",
  "pallet-balances",
- "pallet-transaction-payment 4.0.0-dev",
+ "pallet-transaction-payment",
  "pallet-xcm",
  "parity-scale-codec",
  "scale-info",
