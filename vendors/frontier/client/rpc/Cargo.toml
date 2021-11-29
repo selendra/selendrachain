@@ -17,7 +17,7 @@ evm = "0.33.0"
 ethereum = { version = "0.10.0", features = ["with-codec"] }
 codec = { package = "parity-scale-codec", version = "2.3.1" }
 rlp = "0.5"
-futures = { version = "0.3.17", features = ["compat"] }
+futures = { version = "0.3.18", features = ["compat"] }
 sha3 = "0.8"
 rustc-hex = { version = "2.1.0", default-features = false }
 libsecp256k1 = "0.7.0"

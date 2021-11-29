@@ -28,7 +28,6 @@ use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
 use fp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use fp_evm::CallOrCreateInfo;
-#[allow(unused_imports)]
 use fp_storage::PALLET_ETHEREUM_SCHEMA;
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
@@ -53,6 +52,8 @@ pub use ethereum::{
 	TransactionV2 as Transaction,
 };
 pub use fp_rpc::TransactionStatus;
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 #[cfg(all(feature = "std", test))]
 mod mock;
@@ -285,8 +286,16 @@ pub mod pallet {
 	pub(super) type BlockHash<T: Config> = StorageMap<_, Twox64Concat, U256, H256, ValueQuery>;
 
 	#[pallet::genesis_config]
-	#[derive(Default)]
-	pub struct GenesisConfig {}
+	pub struct GenesisConfig {
+		pub storage_schema: EthereumStorageSchema,
+	}
+
+	#[cfg(feature = "std")]
+	impl Default for GenesisConfig {
+		fn default() -> Self {
+			Self { storage_schema: Default::default() }
+		}
+	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
@@ -294,7 +303,7 @@ pub mod pallet {
 			<Pallet<T>>::store_block(false, U256::zero());
 			frame_support::storage::unhashed::put::<EthereumStorageSchema>(
 				&PALLET_ETHEREUM_SCHEMA,
-				&EthereumStorageSchema::V2,
+				&self.storage_schema,
 			);
 		}
 	}
@@ -458,10 +467,9 @@ impl<T: Config> Pallet<T> {
 			),
 		};
 		if gasometer.record_transaction(transaction_cost).is_err() {
-			return Err(InvalidTransaction::Custom(
-				TransactionValidationError::InvalidGasLimit as u8,
+			return Err(
+				InvalidTransaction::Custom(TransactionValidationError::GasLimitTooLow as u8).into()
 			)
-			.into())
 		}
 
 		if let Some(chain_id) = transaction_data.chain_id {
@@ -475,7 +483,7 @@ impl<T: Config> Pallet<T> {
 
 		if gas_limit >= T::BlockGasLimit::get() {
 			return Err(InvalidTransaction::Custom(
-				TransactionValidationError::InvalidGasLimit as u8,
+				TransactionValidationError::GasLimitTooHigh as u8,
 			)
 			.into())
 		}
@@ -510,6 +518,13 @@ impl<T: Config> Pallet<T> {
 		}
 
 		let account_data = pallet_evm::Pallet::<T>::account_basic(&origin);
+
+		if account_data.balance < transaction_data.value {
+			return Err(InvalidTransaction::Custom(
+				TransactionValidationError::InsufficientFundsForTransfer as u8,
+			)
+			.into())
+		}
 		let total_payment = transaction_data.value.saturating_add(fee);
 		if account_data.balance < total_payment {
 			return Err(InvalidTransaction::Payment.into())
@@ -794,6 +809,7 @@ pub enum ReturnValue {
 
 /// The schema version for Pallet Ethereum's storage
 #[derive(Clone, Copy, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum EthereumStorageSchema {
 	Undefined,
 	V1,
@@ -823,10 +839,14 @@ impl<T: Config> BlockHashMapping for EthereumBlockHashMapping<T> {
 }
 
 #[repr(u8)]
-enum TransactionValidationError {
+#[derive(num_enum::FromPrimitive, num_enum::IntoPrimitive)]
+pub enum TransactionValidationError {
 	#[allow(dead_code)]
+	#[num_enum(default)]
 	UnknownError,
 	InvalidChainId,
 	InvalidSignature,
-	InvalidGasLimit,
+	GasLimitTooLow,
+	GasLimitTooHigh,
+	InsufficientFundsForTransfer,
 }

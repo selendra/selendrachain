@@ -19,6 +19,7 @@
 
 use super::*;
 use crate::IntermediateStateRoot;
+use codec::{WrapperTypeDecode, WrapperTypeEncode};
 use ethereum::{TransactionAction, TransactionSignature};
 use frame_support::{parameter_types, traits::FindAuthor, ConsensusEngineId, PalletId};
 use pallet_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
@@ -27,7 +28,7 @@ use sha3::Digest;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, IdentityLookup, SignedExtension},
 	AccountId32,
 };
 
@@ -143,11 +144,6 @@ impl AddressMapping<AccountId32> for HashedAddressMapping {
 		let mut data = [0u8; 32];
 		data[0..20].copy_from_slice(&address[..]);
 		AccountId32::from(Into::<[u8; 32]>::into(data))
-	}
-
-	fn to_evm_address(_account: &AccountId32) -> Option<H160> {
-		// we're not able to recover the evm address from a hashed address
-		None
 	}
 }
 

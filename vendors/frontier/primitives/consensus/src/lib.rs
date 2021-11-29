@@ -102,7 +102,7 @@ pub fn find_pre_log(digest: &Digest) -> Result<PreLog, FindLogError> {
 	found.ok_or(FindLogError::NotFound)
 }
 
-pub fn find_post_log<Hash>(digest: &Digest) -> Result<PostLog, FindLogError> {
+pub fn find_post_log(digest: &Digest) -> Result<PostLog, FindLogError> {
 	let mut found = None;
 
 	for log in digest.logs() {

@@ -16,8 +16,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 use crate::{
-	error_on_execution_failure, frontier_backend_client, internal_err, public_key, EthSigner,
-	StorageOverride,
+	error_on_execution_failure, format::Formatter, frontier_backend_client, internal_err,
+	public_key, EthSigner, StorageOverride,
 };
 use ethereum::{BlockV2 as EthereumBlock, TransactionV2 as EthereumTransaction};
 use ethereum_types::{H160, H256, H512, H64, U256, U64};
@@ -61,7 +61,7 @@ use codec::{self, Decode, Encode};
 pub use fc_rpc_core::{EthApiServer, EthFilterApiServer, NetApiServer, Web3ApiServer};
 use pallet_ethereum::EthereumStorageSchema;
 
-pub struct EthApi<B: BlockT, C, P, CT, BE, H: ExHashT, A: ChainApi> {
+pub struct EthApi<B: BlockT, C, P, CT, BE, H: ExHashT, A: ChainApi, F: Formatter> {
 	pool: Arc<P>,
 	graph: Arc<Pool<A>>,
 	client: Arc<C>,
@@ -73,16 +73,17 @@ pub struct EthApi<B: BlockT, C, P, CT, BE, H: ExHashT, A: ChainApi> {
 	backend: Arc<fc_db::Backend<B>>,
 	max_past_logs: u32,
 	block_data_cache: Arc<EthBlockDataCache<B>>,
-	_marker: PhantomData<(B, BE)>,
+	_marker: PhantomData<(B, BE, F)>,
 }
 
-impl<B: BlockT, C, P, CT, BE, H: ExHashT, A: ChainApi> EthApi<B, C, P, CT, BE, H, A>
+impl<B: BlockT, C, P, CT, BE, H: ExHashT, A: ChainApi, F> EthApi<B, C, P, CT, BE, H, A, F>
 where
 	C: ProvideRuntimeApi<B>,
 	C::Api: EthereumRuntimeRPCApi<B>,
 	B: BlockT<Hash = H256> + Send + Sync + 'static,
 	A: ChainApi<Block = B> + 'static,
 	C: Send + Sync + 'static,
+	F: Formatter,
 {
 	pub fn new(
 		client: Arc<C>,
@@ -96,6 +97,7 @@ where
 		is_authority: bool,
 		max_past_logs: u32,
 		block_data_cache: Arc<EthBlockDataCache<B>>,
+		_formatter: F,
 	) -> Self {
 		Self {
 			client,
@@ -471,7 +473,7 @@ fn fee_details(
 	}
 }
 
-impl<B, C, P, CT, BE, H: ExHashT, A> EthApiT for EthApi<B, C, P, CT, BE, H, A>
+impl<B, C, P, CT, BE, H: ExHashT, A, F> EthApiT for EthApi<B, C, P, CT, BE, H, A, F>
 where
 	C: ProvideRuntimeApi<B> + StorageProvider<B, BE>,
 	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
@@ -483,6 +485,7 @@ where
 	P: TransactionPool<Block = B> + Send + Sync + 'static,
 	A: ChainApi<Block = B> + 'static,
 	CT: ConvertTransaction<<B as BlockT>::Extrinsic> + Send + Sync + 'static,
+	F: Formatter,
 {
 	fn protocol_version(&self) -> Result<u64> {
 		Ok(1)
@@ -885,7 +888,9 @@ where
 				}
 				TransactionMessage::EIP1559(m)
 			},
-			_ => return Box::pin(future::err(internal_err("invalid transaction parameters"))),
+			_ => {
+				return Box::pin(future::err(internal_err("invalid transaction parameters")))
+			},
 		};
 
 		let mut transaction = None;
@@ -913,9 +918,7 @@ where
 					self.convert_transaction.convert_transaction(transaction.clone()),
 				)
 				.map_ok(move |_| transaction_hash)
-				.map_err(|err| {
-					internal_err(format!("submit transaction to pool failed: {:?}", err))
-				}),
+				.map_err(|err| internal_err(F::pool_error(err))),
 		)
 	}
 
@@ -954,9 +957,7 @@ where
 					self.convert_transaction.convert_transaction(transaction.clone()),
 				)
 				.map_ok(move |_| transaction_hash)
-				.map_err(|err| {
-					internal_err(format!("submit transaction to pool failed: {:?}", err))
-				}),
+				.map_err(|err| internal_err(F::pool_error(err))),
 		)
 	}
 
@@ -1309,7 +1310,7 @@ where
 			let mut previous_highest = highest;
 			while (highest - lowest) > U256::one() {
 				let ExecutableResult { data, exit_reason, used_gas: _ } =
-					executable(request.clone(), highest, api_version)?;
+					executable(request.clone(), mid, api_version)?;
 				match exit_reason {
 					ExitReason::Succeed(_) => {
 						highest = mid;
@@ -1531,10 +1532,8 @@ where
 		let statuses = self.block_data_cache.current_transaction_statuses(handler, substrate_hash);
 		let receipts = handler.current_receipts(&id);
 
-		let base_fee = handler.base_fee(&id);
-
-		match (block, statuses, receipts, base_fee) {
-			(Some(block), Some(statuses), Some(receipts), Some(base_fee)) => {
+		match (block, statuses, receipts) {
+			(Some(block), Some(statuses), Some(receipts)) => {
 				let block_hash =
 					H256::from_slice(Keccak256::digest(&rlp::encode(&block.header)).as_slice());
 				let receipt = receipts[index].clone();
@@ -1546,7 +1545,9 @@ where
 				let effective_gas_price = match transaction {
 					EthereumTransaction::Legacy(t) => t.gas_price,
 					EthereumTransaction::EIP2930(t) => t.gas_price,
-					EthereumTransaction::EIP1559(t) => base_fee
+					EthereumTransaction::EIP1559(t) => handler
+						.base_fee(&id)
+						.unwrap_or_default()
 						.checked_add(t.max_priority_fee_per_gas)
 						.unwrap_or(U256::max_value()),
 				};
@@ -2082,26 +2083,31 @@ where
 	}
 }
 
-pub struct EthTask<B, C>(PhantomData<(B, C)>);
+pub struct EthTask<B, C, BE>(PhantomData<(B, C, BE)>);
 
-impl<B, C> EthTask<B, C>
+impl<B, C, BE> EthTask<B, C, BE>
 where
-	C: ProvideRuntimeApi<B> + BlockchainEvents<B> + HeaderBackend<B>,
+	C: ProvideRuntimeApi<B> + BlockchainEvents<B> + HeaderBackend<B> + StorageProvider<B, BE>,
 	B: BlockT<Hash = H256>,
+	C: Send + Sync + 'static,
+	BE: Backend<B> + 'static,
+	BE::State: StateBackend<BlakeTwo256>,
 {
 	/// Task that caches at which best hash a new EthereumStorageSchema was inserted in the Runtime Storage.
-	pub async fn ethereum_schema_cache_task(
-		client: Arc<C>,
-		backend: Arc<fc_db::Backend<B>>,
-		genesis_schema_version: EthereumStorageSchema,
-	) {
+	pub async fn ethereum_schema_cache_task(client: Arc<C>, backend: Arc<fc_db::Backend<B>>) {
 		use fp_storage::PALLET_ETHEREUM_SCHEMA;
 		use log::warn;
 		use sp_storage::{StorageData, StorageKey};
 
 		if let Ok(None) = frontier_backend_client::load_cached_schema::<B>(backend.as_ref()) {
 			let mut cache: Vec<(EthereumStorageSchema, H256)> = Vec::new();
-			if let Ok(Some(header)) = client.header(BlockId::Number(Zero::zero())) {
+			let id = BlockId::Number(Zero::zero());
+			if let Ok(Some(header)) = client.header(id) {
+				let genesis_schema_version = frontier_backend_client::onchain_storage_schema::<
+					B,
+					C,
+					BE,
+				>(client.as_ref(), id);
 				cache.push((genesis_schema_version, header.hash()));
 				let _ = frontier_backend_client::write_cached_schema::<B>(backend.as_ref(), cache)
 					.map_err(|err| {

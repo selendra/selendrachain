@@ -1008,8 +1008,7 @@ where
 		None,
 		EthTask::ethereum_schema_cache_task(
 			Arc::clone(&client),
-			Arc::clone(&frontier_backend),
-			pallet_ethereum::EthereumStorageSchema::V2,
+			Arc::clone(&frontier_backend)
 		),
 	);
 
