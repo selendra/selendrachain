@@ -3,9 +3,9 @@
 use super::{
 	bridge,
 	mock::{
-		assert_events, expect_event, new_test_ext, Balances, Bridge, BridgeTransfer, Call, Event,
-		NativeTokenResourceId, Origin, ProposalLifetime, Test, ENDOWED_BALANCE, RELAYER_A,
-		RELAYER_B, RELAYER_C,
+		assert_events, expect_event, new_test_ext, Balances, Bridge, BridgeTransfer,
+		Call, Event, NativeTokenResourceId, Origin, ProposalLifetime, Test, ENDOWED_BALANCE,
+		RELAYER_A, RELAYER_B, RELAYER_C,
 	},
 	*,
 };
