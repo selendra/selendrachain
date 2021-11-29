@@ -576,6 +576,7 @@ impl pallet_staking::Config for Runtime {
 	// Use the nominators map to iter voters, but also perform the bags-list migration and keep
 	// it up-to-date.
 	type SortedListProvider = BagsList;
+	type BenchmarkingConfig = runtime_common::StakingBenchmarkingConfig;
 	type WeightInfo = weights::pallet_staking::WeightInfo<Runtime>;
 }
 
