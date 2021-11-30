@@ -10,7 +10,7 @@ repository = "https://github.com/paritytech/frontier/"
 [dependencies]
 log = "0.4.8"
 futures = { version = "0.3.17", features = ["compat"] }
-derive_more = "0.99.2"
+derive_more = "0.99.17"
 async-trait = "0.1"
 codec = { package = "parity-scale-codec", version = "2.0.0", features = ["derive"] }
 
