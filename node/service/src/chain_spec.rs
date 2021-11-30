@@ -255,7 +255,6 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		configuration: selendra::ConfigurationConfig {
 			config: default_parachains_host_configuration(),
 		},
-		gilt: Default::default(),
 		paras: Default::default(),
 		xcm_pallet: Default::default(),
 		sudo: selendra::SudoConfig { key: endowed_accounts[0].clone() },
@@ -450,7 +449,6 @@ pub fn selendra_testnet_genesis(
 		configuration: selendra::ConfigurationConfig {
 			config: default_parachains_host_configuration(),
 		},
-		gilt: Default::default(),
 		paras: Default::default(),
 		xcm_pallet: Default::default(),
 		sudo: selendra::SudoConfig { key: endowed_accounts[0].clone() },

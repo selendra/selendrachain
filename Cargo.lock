@@ -5041,21 +5041,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-gilt"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=master#3fdb445b3b14880017680a3af85e89fb591666a0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-arithmetic",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-grandpa"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=master#3fdb445b3b14880017680a3af85e89fb591666a0"
@@ -5363,7 +5348,7 @@ dependencies = [
  "pallet-bags-list",
  "pallet-balances",
  "pallet-session",
- "pallet-staking-reward-curve",
+ "pallet-staking-reward-curve 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=master)",
  "pallet-timestamp",
  "parity-scale-codec",
  "rand_chacha 0.2.2",
@@ -5405,20 +5390,23 @@ dependencies = [
 [[package]]
 name = "pallet-staking-reward-curve"
 version = "4.0.0-dev"
+dependencies = [
+ "proc-macro-crate 1.1.0",
+ "proc-macro2",
+ "quote",
+ "sp-runtime",
+ "syn",
+]
+
+[[package]]
+name = "pallet-staking-reward-curve"
+version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=master#3fdb445b3b14880017680a3af85e89fb591666a0"
 dependencies = [
  "proc-macro-crate 1.1.0",
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "pallet-staking-reward-fn"
-version = "4.0.0-dev"
-dependencies = [
- "log",
- "sp-arithmetic",
 ]
 
 [[package]]
@@ -8587,7 +8575,6 @@ dependencies = [
  "pallet-evm-precompile-modexp",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
- "pallet-gilt",
  "pallet-grandpa",
  "pallet-identity",
  "pallet-im-online",
@@ -8604,7 +8591,7 @@ dependencies = [
  "pallet-session",
  "pallet-session-benchmarking",
  "pallet-staking 4.0.0-dev",
- "pallet-staking-reward-fn",
+ "pallet-staking-reward-curve 4.0.0-dev",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-tips",

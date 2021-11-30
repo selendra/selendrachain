@@ -29,7 +29,7 @@ use primitives::v1::{
 	SessionInfo, Signature, ValidationCode, ValidationCodeHash, ValidatorId, ValidatorIndex,
 };
 use runtime_common::{
-	auctions, crowdloan, impls::DealWithFees, paras_registrar, paras_sudo_wrapper, slots,
+	impls::DealWithFees, paras_registrar, paras_sudo_wrapper, slots,
 	xcm_sender, BlockHashCount, BlockLength, BlockWeights, CurrencyToVote,
 	OffchainSolutionLengthLimit, OffchainSolutionWeightLimit, RocksDbWeight,
 	SlowAdjustingFeeUpdate, ToAuthor, WEIGHT_PER_GAS,
@@ -72,10 +72,10 @@ use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_mmr_primitives as mmr;
 use pallet_session::historical as session_historical;
 use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
-use sp_arithmetic::Perquintill;
 use sp_core::OpaqueMetadata;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
+	curve::PiecewiseLinear,
 	traits::{
 		AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Dispatchable,
 		Extrinsic as ExtrinsicT, OpaqueKeys, PostDispatchInfoOf, SaturatedConversion, Verify,
@@ -467,66 +467,15 @@ impl pallet_bags_list::Config for Runtime {
 	type BagThresholds = BagThresholds;
 }
 
-fn era_payout(
-	total_staked: Balance,
-	non_gilt_issuance: Balance,
-	max_annual_inflation: Perquintill,
-	period_fraction: Perquintill,
-	auctioned_slots: u64,
-) -> (Balance, Balance) {
-	use pallet_staking_reward_fn::compute_inflation;
-	use sp_arithmetic::traits::Saturating;
-
-	let min_annual_inflation = Perquintill::from_rational(25u64, 1000u64);
-	let delta_annual_inflation = max_annual_inflation.saturating_sub(min_annual_inflation);
-
-	// 30% reserved for up to 60 slots.
-	let auction_proportion = Perquintill::from_rational(auctioned_slots.min(60), 200u64);
-
-	// Therefore the ideal amount at stake (as a percentage of total issuance) is 75% less the amount that we expect
-	// to be taken up with auctions.
-	let ideal_stake = Perquintill::from_percent(75).saturating_sub(auction_proportion);
-
-	let stake = Perquintill::from_rational(total_staked, non_gilt_issuance);
-	let falloff = Perquintill::from_percent(5);
-	let adjustment = compute_inflation(stake, ideal_stake, falloff);
-	let staking_inflation =
-		min_annual_inflation.saturating_add(delta_annual_inflation * adjustment);
-
-	let max_payout = period_fraction * max_annual_inflation * non_gilt_issuance;
-	let staking_payout = (period_fraction * staking_inflation) * non_gilt_issuance;
-	let rest = max_payout.saturating_sub(staking_payout);
-
-	let other_issuance = non_gilt_issuance.saturating_sub(total_staked);
-	if total_staked > other_issuance {
-		let _cap_rest = Perquintill::from_rational(other_issuance, total_staked) * staking_payout;
-		// We don't do anything with this, but if we wanted to, we could introduce a cap on the treasury amount
-		// with: `rest = rest.min(cap_rest);`
-	}
-	(staking_payout, rest)
-}
-
-pub struct EraPayout;
-impl pallet_staking::EraPayout<Balance> for EraPayout {
-	fn era_payout(
-		total_staked: Balance,
-		_total_issuance: Balance,
-		era_duration_millis: u64,
-	) -> (Balance, Balance) {
-		// TODO: #3011 Update with proper auctioned slots tracking.
-		// This should be fine for the first year of parachains.
-		let auctioned_slots: u64 = auctions::Pallet::<Runtime>::auction_counter().into();
-		const MAX_ANNUAL_INFLATION: Perquintill = Perquintill::from_percent(10);
-		const MILLISECONDS_PER_YEAR: u64 = 1000 * 3600 * 24 * 36525 / 100;
-
-		era_payout(
-			total_staked,
-			Gilt::issuance().non_gilt,
-			MAX_ANNUAL_INFLATION,
-			Perquintill::from_rational(era_duration_millis, MILLISECONDS_PER_YEAR),
-			auctioned_slots,
-		)
-	}
+pallet_staking_reward_curve::build! {
+	const REWARD_CURVE: PiecewiseLinear<'static> = curve!(
+		min_inflation: 0_025_000,
+		max_inflation: 0_100_000,
+		ideal_stake: 0_500_000,
+		falloff: 0_050_000,
+		max_piece_count: 40,
+		test_precision: 0_005_000,
+	);
 }
 
 parameter_types! {
@@ -536,6 +485,7 @@ parameter_types! {
 	pub const BondingDuration: pallet_staking::EraIndex = 28;
 	// 27 eras in which slashes can be canceled (slightly less than 7 days).
 	pub const SlashDeferDuration: pallet_staking::EraIndex = 27;
+	pub const RewardCurve: &'static PiecewiseLinear<'static> = &REWARD_CURVE;
 	pub const MaxNominatorRewardedPerValidator: u32 = 256;
 	pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(17);
 }
@@ -569,7 +519,7 @@ impl pallet_staking::Config for Runtime {
 	// A majority of the council or root can cancel the slash.
 	type SlashCancelOrigin = SlashCancelOrigin;
 	type SessionInterface = Self;
-	type EraPayout = EraPayout;
+	type EraPayout = pallet_staking::ConvertCurve<RewardCurve>;
 	type NextNewSession = Session;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type OffendingValidatorsThreshold = OffendingValidatorsThreshold;
@@ -1027,7 +977,7 @@ pub enum ProxyType {
 	Staking,
 	IdentityJudgement,
 	CancelProxy,
-	Auction,
+	ParachainSlot,
 }
 impl Default for ProxyType {
 	fn default() -> Self {
@@ -1076,14 +1026,11 @@ impl InstanceFilter<Call> for ProxyType {
 				Call::Scheduler(..) |
 				Call::Proxy(..) |
 				Call::Multisig(..) |
-				Call::Gilt(..) |
 				Call::Registrar(paras_registrar::Call::register {..}) |
 				Call::Registrar(paras_registrar::Call::deregister {..}) |
 				// Specifically omitting Registrar `swap`
 				Call::Registrar(paras_registrar::Call::reserve {..}) |
-				Call::Crowdloan(..) |
 				Call::Slots(..) |
-				Call::Auctions(..) | // Specifically omitting the entire XCM Pallet
 				Call::BagsList(..)
 			),
 			ProxyType::Governance => matches!(
@@ -1104,9 +1051,9 @@ impl InstanceFilter<Call> for ProxyType {
 			ProxyType::CancelProxy => {
 				matches!(c, Call::Proxy(pallet_proxy::Call::reject_announcement { .. }))
 			},
-			ProxyType::Auction => matches!(
+			ProxyType::ParachainSlot => matches!(
 				c,
-				Call::Auctions(..) | Call::Crowdloan(..) | Call::Registrar(..) | Call::Slots(..)
+				Call::Registrar(..) | Call::Slots(..)
 			),
 		}
 	}
@@ -1203,7 +1150,7 @@ impl paras_registrar::Config for Runtime {
 	type Event = Event;
 	type Origin = Origin;
 	type Currency = Balances;
-	type OnSwap = (Crowdloan, Slots);
+	type OnSwap = Slots;
 	type ParaDeposit = ParaDeposit;
 	type DataDepositPerByte = DataDepositPerByte;
 	type WeightInfo = weights::runtime_common_paras_registrar::WeightInfo<Runtime>;
@@ -1221,52 +1168,6 @@ impl slots::Config for Runtime {
 	type LeasePeriod = LeasePeriod;
 	type LeaseOffset = ();
 	type WeightInfo = weights::runtime_common_slots::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-	pub const CrowdloanId: PalletId = PalletId(*b"py/cfund");
-	pub const SubmissionDeposit: Balance = 2 * UNITS;
-	pub const MinContribution: Balance = 1 * UNITS;
-	pub const RemoveKeysLimit: u32 = 1000;
-	// Allow 32 bytes for an additional memo to a crowdloan.
-	pub const MaxMemoLength: u8 = 32;
-}
-
-impl crowdloan::Config for Runtime {
-	type Event = Event;
-	type PalletId = CrowdloanId;
-	type SubmissionDeposit = SubmissionDeposit;
-	type MinContribution = MinContribution;
-	type RemoveKeysLimit = RemoveKeysLimit;
-	type Registrar = Registrar;
-	type Auctioneer = Auctions;
-	type MaxMemoLength = MaxMemoLength;
-	type WeightInfo = weights::runtime_common_crowdloan::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-	// The average auction is 7 days long, so this will be 70% for ending period.
-	// 5 Days = 72000 Blocks @ 6 sec per block
-	pub const EndingPeriod: BlockNumber = 5 * DAYS;
-	// ~ 1000 samples per day -> ~ 20 blocks per sample -> 2 minute samples
-	pub const SampleLength: BlockNumber = 2 * MINUTES;
-}
-
-type AuctionInitiate = EnsureOneOf<
-	AccountId,
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, CouncilCollective>,
->;
-
-impl auctions::Config for Runtime {
-	type Event = Event;
-	type Leaser = Slots;
-	type Registrar = Registrar;
-	type EndingPeriod = EndingPeriod;
-	type SampleLength = SampleLength;
-	type Randomness = pallet_babe::RandomnessFromOneEpochAgo<Runtime>;
-	type InitiateOrigin = AuctionInitiate;
-	type WeightInfo = weights::runtime_common_auctions::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -1415,35 +1316,6 @@ impl pallet_xcm::Config for Runtime {
 	type Call = Call;
 	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
-}
-
-parameter_types! {
-	pub IgnoredIssuance: Balance = Treasury::pot();
-	pub const QueueCount: u32 = 300;
-	pub const MaxQueueLen: u32 = 1000;
-	pub const FifoQueueLen: u32 = 250;
-	pub const GiltPeriod: BlockNumber = 30 * DAYS;
-	pub const MinFreeze: Balance = 500 * CENTS;
-	pub const IntakePeriod: BlockNumber = 5 * MINUTES;
-	pub const MaxIntakeBids: u32 = 100;
-}
-
-impl pallet_gilt::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type CurrencyBalance = Balance;
-	type AdminOrigin = MoreThanHalfCouncil;
-	type Deficit = (); // Mint
-	type Surplus = (); // Burn
-	type IgnoredIssuance = IgnoredIssuance;
-	type QueueCount = QueueCount;
-	type MaxQueueLen = MaxQueueLen;
-	type FifoQueueLen = FifoQueueLen;
-	type Period = GiltPeriod;
-	type MinFreeze = MinFreeze;
-	type IntakePeriod = IntakePeriod;
-	type MaxIntakeBids = MaxIntakeBids;
-	type WeightInfo = weights::pallet_gilt::WeightInfo<Runtime>;
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -1646,9 +1518,6 @@ construct_runtime! {
 		// Election pallet. Only works with staking, but placed here to maintain indices.
 		ElectionProviderMultiPhase: pallet_election_provider_multi_phase::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 37,
 
-		// Gilts pallet.
-		Gilt: pallet_gilt::{Pallet, Call, Storage, Event<T>, Config} = 38,
-
 		// Provides a semi-sorted list of nominators for staking.
 		BagsList: pallet_bags_list::{Pallet, Call, Storage, Event<T>} = 39,
 
@@ -1670,8 +1539,6 @@ construct_runtime! {
 		// Parachain Onboarding Pallets. Start indices at 70 to leave room.
 		Registrar: paras_registrar::{Pallet, Call, Storage, Event<T>} = 70,
 		Slots: slots::{Pallet, Call, Storage, Event<T>} = 71,
-		Auctions: auctions::{Pallet, Call, Storage, Event<T>} = 72,
-		Crowdloan: crowdloan::{Pallet, Call, Storage, Event<T>} = 73,
 		ParasSudoWrapper: paras_sudo_wrapper::{Pallet, Call} = 74,
 
 		// Pallet for sending XCM.
@@ -2218,8 +2085,6 @@ sp_api::impl_runtime_apis! {
 			// Selendra
 			// NOTE: Make sure to prefix these `runtime_common::` so that path resolves correctly
 			// in the generated file.
-			list_benchmark!(list, extra, runtime_common::auctions, Auctions);
-			list_benchmark!(list, extra, runtime_common::crowdloan, Crowdloan);
 			list_benchmark!(list, extra, runtime_common::slots, Slots);
 			list_benchmark!(list, extra, runtime_common::paras_registrar, Registrar);
 			list_benchmark!(list, extra, runtime_parachains::configuration, Configuration);
@@ -2236,7 +2101,6 @@ sp_api::impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_democracy, Democracy);
 			list_benchmark!(list, extra, pallet_elections_phragmen, PhragmenElection);
 			list_benchmark!(list, extra, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
-			list_benchmark!(list, extra, pallet_gilt, Gilt);
 			list_benchmark!(list, extra, pallet_identity, Identity);
 			list_benchmark!(list, extra, pallet_im_online, ImOnline);
 			list_benchmark!(list, extra, pallet_indices, Indices);
@@ -2296,8 +2160,6 @@ sp_api::impl_runtime_apis! {
 			// Selendra
 			// NOTE: Make sure to prefix these `runtime_common::` so that path resolves correctly
 			// in the generated file.
-			add_benchmark!(params, batches, runtime_common::auctions, Auctions);
-			add_benchmark!(params, batches, runtime_common::crowdloan, Crowdloan);
 			add_benchmark!(params, batches, runtime_common::slots, Slots);
 			add_benchmark!(params, batches, runtime_common::paras_registrar, Registrar);
 			add_benchmark!(params, batches, runtime_parachains::configuration, Configuration);
@@ -2314,7 +2176,6 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_democracy, Democracy);
 			add_benchmark!(params, batches, pallet_elections_phragmen, PhragmenElection);
 			add_benchmark!(params, batches, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
-			add_benchmark!(params, batches, pallet_gilt, Gilt);
 			add_benchmark!(params, batches, pallet_identity, Identity);
 			add_benchmark!(params, batches, pallet_im_online, ImOnline);
 			add_benchmark!(params, batches, pallet_indices, Indices);
