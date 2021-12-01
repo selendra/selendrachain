@@ -8152,6 +8152,8 @@ dependencies = [
  "selendra-node-subsystem-test-helpers",
  "selendra-node-subsystem-util",
  "selendra-primitives",
+ "sp-application-crypto",
+ "sp-keystore",
  "thiserror",
  "tracing",
 ]

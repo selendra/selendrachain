@@ -5,6 +5,7 @@ authors = ["Selendra info@selendra.org"]
 edition = "2018"
 
 [dependencies]
+bitvec = { version = "0.20.1", default-features = false, features = ["alloc"] }
 futures = "0.3.17"
 tracing = "0.1.29"
 thiserror = "1.0.30"
@@ -14,5 +15,6 @@ selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 
 [dev-dependencies]
-bitvec = { version = "0.20.1", default-features = false, features = [] }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }

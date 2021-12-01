@@ -54,7 +54,7 @@ pub use selendra_node_core_candidate_validation::CandidateValidationSubsystem;
 pub use selendra_node_core_chain_api::ChainApiSubsystem;
 pub use selendra_node_core_chain_selection::ChainSelectionSubsystem;
 pub use selendra_node_core_dispute_coordinator::DisputeCoordinatorSubsystem;
-pub use selendra_node_core_provisioner::ProvisionerSubsystem;
+pub use selendra_node_core_provisioner::ProvisioningSubsystem as ProvisionerSubsystem;
 pub use selendra_node_core_runtime_api::RuntimeApiSubsystem;
 pub use selendra_statement_distribution::StatementDistribution as StatementDistributionSubsystem;
 
