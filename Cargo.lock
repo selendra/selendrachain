@@ -5245,7 +5245,7 @@ dependencies = [
  "pallet-im-online",
  "pallet-offences",
  "pallet-session",
- "pallet-staking 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=master)",
+ "pallet-staking",
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
@@ -5328,41 +5328,11 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-session",
- "pallet-staking 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=master)",
+ "pallet-staking",
  "rand 0.7.3",
  "sp-runtime",
  "sp-session",
  "sp-std",
-]
-
-[[package]]
-name = "pallet-staking"
-version = "4.0.0-dev"
-dependencies = [
- "frame-benchmarking",
- "frame-election-provider-support",
- "frame-support",
- "frame-system",
- "log",
- "pallet-authorship",
- "pallet-bags-list",
- "pallet-balances",
- "pallet-session",
- "pallet-staking-reward-curve 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=master)",
- "pallet-timestamp",
- "parity-scale-codec",
- "rand_chacha 0.2.2",
- "scale-info",
- "serde",
- "sp-application-crypto",
- "sp-core",
- "sp-io",
- "sp-npos-elections",
- "sp-runtime",
- "sp-staking",
- "sp-std",
- "sp-tracing",
- "substrate-test-utils",
 ]
 
 [[package]]
@@ -5380,22 +5350,12 @@ dependencies = [
  "parity-scale-codec",
  "rand_chacha 0.2.2",
  "scale-info",
+ "serde",
  "sp-application-crypto",
  "sp-io",
  "sp-runtime",
  "sp-staking",
  "sp-std",
-]
-
-[[package]]
-name = "pallet-staking-reward-curve"
-version = "4.0.0-dev"
-dependencies = [
- "proc-macro-crate 1.1.0",
- "proc-macro2",
- "quote",
- "sp-runtime",
- "syn",
 ]
 
 [[package]]
@@ -8590,8 +8550,8 @@ dependencies = [
  "pallet-scheduler",
  "pallet-session",
  "pallet-session-benchmarking",
- "pallet-staking 4.0.0-dev",
- "pallet-staking-reward-curve 4.0.0-dev",
+ "pallet-staking",
+ "pallet-staking-reward-curve",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-tips",
@@ -8660,7 +8620,7 @@ dependencies = [
  "pallet-beefy-mmr",
  "pallet-election-provider-multi-phase",
  "pallet-session",
- "pallet-staking 4.0.0-dev",
+ "pallet-staking",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-treasury",
@@ -8707,7 +8667,7 @@ dependencies = [
  "pallet-babe",
  "pallet-balances",
  "pallet-session",
- "pallet-staking 4.0.0-dev",
+ "pallet-staking",
  "pallet-timestamp",
  "pallet-vesting",
  "parity-scale-codec",
@@ -8758,7 +8718,7 @@ dependencies = [
  "pallet-evm",
  "pallet-im-online",
  "pallet-mmr-primitives",
- "pallet-staking 4.0.0-dev",
+ "pallet-staking",
  "pallet-transaction-payment-rpc-runtime-api",
  "sc-authority-discovery",
  "sc-basic-authorship",
@@ -10059,27 +10019,6 @@ dependencies = [
  "log",
  "prometheus",
  "tokio",
-]
-
-[[package]]
-name = "substrate-test-utils"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=master#b6c1c1bcfa5d831bfd1f278064d7af757f9b38f5"
-dependencies = [
- "futures 0.3.18",
- "substrate-test-utils-derive",
- "tokio",
-]
-
-[[package]]
-name = "substrate-test-utils-derive"
-version = "0.10.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=master#b6c1c1bcfa5d831bfd1f278064d7af757f9b38f5"
-dependencies = [
- "proc-macro-crate 1.1.0",
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]

@@ -64,7 +64,7 @@ sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "
 # Substrate Pallets
 pallet-babe = { git = "https://github.com/paritytech/substrate", branch = "master" }
 pallet-im-online = { git = "https://github.com/paritytech/substrate", branch = "master" }
-pallet-staking = { path = "../../modules/staking" }
+pallet-staking = { git = "https://github.com/paritytech/substrate", branch = "master" }
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
 pallet-mmr-primitives = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
