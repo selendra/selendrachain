@@ -23,7 +23,7 @@ xcm = { path = "..", default-features = false }
 [features]
 default = ["std"]
 runtime-benchmarks = [
-	"frame-benchmarking",
+	"frame-benchmarking/runtime-benchmarks",
 ]
 std = [
 	"parity-scale-codec/std",
