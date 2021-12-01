@@ -63,5 +63,5 @@ std = [
 	"scale-info/std",
 ]
 runtime-benchmarks = [
-	"frame-benchmarking",
+	"frame-benchmarking/runtime-benchmarks",
 ]

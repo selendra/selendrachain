@@ -16,7 +16,6 @@
 
 use super::{mock::*, test_utils::*, *};
 use frame_support::{assert_err, weights::constants::WEIGHT_PER_SECOND};
-use xcm::latest::prelude::*;
 use xcm_executor::{traits::*, Config, XcmExecutor};
 
 #[test]
