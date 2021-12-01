@@ -29,10 +29,9 @@ use primitives::v1::{
 	SessionInfo, Signature, ValidationCode, ValidationCodeHash, ValidatorId, ValidatorIndex,
 };
 use runtime_common::{
-	impls::DealWithFees, paras_registrar, paras_sudo_wrapper, slots,
-	xcm_sender, BlockHashCount, BlockLength, BlockWeights, CurrencyToVote,
-	OffchainSolutionLengthLimit, OffchainSolutionWeightLimit, RocksDbWeight,
-	SlowAdjustingFeeUpdate, ToAuthor, WEIGHT_PER_GAS,
+	impls::DealWithFees, paras_registrar, paras_sudo_wrapper, slots, xcm_sender, BlockHashCount,
+	BlockLength, BlockWeights, CurrencyToVote, OffchainSolutionLengthLimit,
+	OffchainSolutionWeightLimit, RocksDbWeight, SlowAdjustingFeeUpdate, ToAuthor, WEIGHT_PER_GAS,
 };
 use sp_core::{
 	crypto::Public,
@@ -74,8 +73,9 @@ use pallet_session::historical as session_historical;
 use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
 use sp_core::OpaqueMetadata;
 use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
+	create_runtime_str,
 	curve::PiecewiseLinear,
+	generic, impl_opaque_keys,
 	traits::{
 		AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Dispatchable,
 		Extrinsic as ExtrinsicT, OpaqueKeys, PostDispatchInfoOf, SaturatedConversion, Verify,
@@ -1051,10 +1051,7 @@ impl InstanceFilter<Call> for ProxyType {
 			ProxyType::CancelProxy => {
 				matches!(c, Call::Proxy(pallet_proxy::Call::reject_announcement { .. }))
 			},
-			ProxyType::ParachainSlot => matches!(
-				c,
-				Call::Registrar(..) | Call::Slots(..)
-			),
+			ProxyType::ParachainSlot => matches!(c, Call::Registrar(..) | Call::Slots(..)),
 		}
 	}
 	fn is_superset(&self, o: &Self) -> bool {

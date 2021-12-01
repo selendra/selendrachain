@@ -704,15 +704,21 @@ where
 	let overseer_handle = Handle::new(overseer_connector.handle());
 
 	let local_keystore = basics.keystore_container.local_keystore();
-	let requires_overseer_for_chain_sel =
-		local_keystore.is_some() && (role.is_authority() || is_collator.is_collator());
+	let auth_or_collator = role.is_authority() || is_collator.is_collator();
+	let requires_overseer_for_chain_sel = local_keystore.is_some() && auth_or_collator;
 
-	let select_chain = SelectRelayChain::new(
-		basics.backend.clone(),
-		overseer_handle.clone(),
-		requires_overseer_for_chain_sel,
-		selendra_node_subsystem_util::metrics::Metrics::register(prometheus_registry.as_ref())?,
-	);
+	let select_chain = if requires_overseer_for_chain_sel {
+		let metrics =
+			selendra_node_subsystem_util::metrics::Metrics::register(prometheus_registry.as_ref())?;
+
+		SelectRelayChain::new_disputes_aware(
+			basics.backend.clone(),
+			overseer_handle.clone(),
+			metrics,
+		)
+	} else {
+		SelectRelayChain::new_longest_chain(basics.backend.clone())
+	};
 
 	let service::PartialComponents::<_, _, SelectRelayChain<_>, _, _, _> {
 		client,
@@ -1006,10 +1012,7 @@ where
 	task_manager.spawn_essential_handle().spawn(
 		"frontier-schema-cache-task",
 		None,
-		EthTask::ethereum_schema_cache_task(
-			Arc::clone(&client),
-			Arc::clone(&frontier_backend)
-		),
+		EthTask::ethereum_schema_cache_task(Arc::clone(&client), Arc::clone(&frontier_backend)),
 	);
 
 	if role.is_authority() {

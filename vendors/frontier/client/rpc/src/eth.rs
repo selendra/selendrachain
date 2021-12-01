@@ -888,9 +888,7 @@ where
 				}
 				TransactionMessage::EIP1559(m)
 			},
-			_ => {
-				return Box::pin(future::err(internal_err("invalid transaction parameters")))
-			},
+			_ => return Box::pin(future::err(internal_err("invalid transaction parameters"))),
 		};
 
 		let mut transaction = None;

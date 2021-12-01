@@ -23,7 +23,6 @@ use parity_scale_codec::Encode;
 use separator::Separatable;
 use sp_runtime::FixedPointNumber;
 
-
 #[test]
 fn payout_weight_portion() {
 	use pallet_staking::WeightInfo;
