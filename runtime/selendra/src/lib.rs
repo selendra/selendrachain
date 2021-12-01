@@ -1083,6 +1083,22 @@ impl pallet_proxy::Config for Runtime {
 	type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 
+parameter_types! {
+	pub const ReservationFee: Balance = 500 * CENTS ;
+	pub const MinLength: u32 = 3;
+	pub const MaxLength: u32 = 16;
+}
+
+impl pallet_nicks::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type ReservationFee = ReservationFee;
+	type Slashed = Treasury;
+	type ForceOrigin = MoreThanHalfCouncil;
+	type MinLength = MinLength;
+	type MaxLength = MaxLength;
+}
+
 impl parachains_origin::Config for Runtime {}
 
 impl parachains_configuration::Config for Runtime {
@@ -1494,20 +1510,23 @@ construct_runtime! {
 		// Less simple identity module.
 		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 26,
 
+		// Account names on-chain
+		Nicks: pallet_nicks::{Pallet, Call, Storage, Event<T>} = 27,
+
 		// Social recovery module.
-		Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>} = 27,
+		Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>} = 28,
 
 		// Vesting. Usable initially, but removed once all vesting is finished.
-		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 28,
+		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 29,
 
 		// System scheduler.
-		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 29,
+		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 30,
 
 		// Proxy module. Late addition.
-		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 30,
+		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 31,
 
 		// Multisig module. Late addition.
-		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 31,
+		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 32,
 
 		// Bounties module.
 		Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>} = 35,
