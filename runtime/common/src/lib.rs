@@ -18,8 +18,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod auctions;
-pub mod crowdloan;
 pub mod elections;
 pub mod impls;
 pub mod paras_registrar;
@@ -30,8 +28,6 @@ pub mod slots;
 pub mod traits;
 pub mod xcm_sender;
 
-#[cfg(test)]
-mod integration_tests;
 #[cfg(test)]
 mod mock;
 
