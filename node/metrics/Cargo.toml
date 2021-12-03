@@ -8,7 +8,7 @@ description = "Subsystem traits and message definitions"
 [dependencies]
 futures = "0.3.17"
 futures-timer = "3.0.2"
-substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 metered-channel = { path = "../metered-channel" }
 

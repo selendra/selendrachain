@@ -8,12 +8,12 @@ edition = "2018"
 futures = "0.3.17"
 tracing = "0.1.29"
 thiserror = "1.0.30"
-rand = "0.8.3"
-derive_more = "0.99.11"
+rand = "0.8.4"
+derive_more = "0.99.17"
 lru = "0.7.0"
 parity-scale-codec = { version = "2.3.1", features = ["std"] }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", features = ["std"] }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "master", features = ["std"] }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 selendra-primitives = { path = "../../../primitives" }
 selendra-erasure-coding = { path = "../../../modules/erasure-coding" }
@@ -25,9 +25,9 @@ selendra-node-primitives = { path = "../../primitives" }
 [dev-dependencies]
 futures-timer = "3.0.2"
 assert_matches = "1.4.0"
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", features = ["std"]  }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "master", features = ["std"]  }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 selendra-subsystem-testhelpers = { package = "selendra-node-subsystem-test-helpers", path = "../../subsystem-test-helpers" }

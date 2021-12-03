@@ -16,7 +16,7 @@
 
 use super::*;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
-use frame_system::{DigestItemOf, RawOrigin};
+use frame_system::RawOrigin;
 use primitives::v1::ConsensusLog;
 
 // Random large number for the digest
@@ -32,7 +32,7 @@ benchmarks! {
 	verify {
 		assert_eq!(
 			<frame_system::Pallet<T>>::digest().logs.last().unwrap(),
-			&<DigestItemOf<T>>::from(ConsensusLog::ForceApprove(d + 1)),
+			&DigestItem::from(ConsensusLog::ForceApprove(d + 1)),
 		);
 	}
 }

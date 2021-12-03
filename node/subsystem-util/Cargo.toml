@@ -11,20 +11,21 @@ futures = "0.3.17"
 itertools = "0.10"
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive"] }
 pin-project = "1.0.8"
-rand = "0.8.3"
+rand = "0.8.4"
 thiserror = "1.0.30"
 tracing = "0.1.29"
-derive_more = "0.99.11"
+derive_more = "0.99.17"
 lru = "0.7.0"
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 selendra-node-subsystem = { package = "selendra-node-subsystem", path = "../subsystem" }
 selendra-node-jaeger = { path = "../jaeger" }
 selendra-node-metrics = { path = "../metrics" }
 selendra-node-network-protocol = { path = "../network/protocol" }
 selendra-primitives = { path = "../../primitives" }
+selendra-node-primitives = { path = "../primitives" }
 selendra-overseer = { path = "../overseer" }
 metered-channel = { path = "../metered-channel" }
 
@@ -33,4 +34,5 @@ assert_matches = "1.4.0"
 env_logger = "0.9.0"
 futures = { version = "0.3.17", features = ["thread-pool"] }
 log = "0.4.13"
+lazy_static = "1.4.0"
 selendra-node-subsystem-test-helpers = { path = "../subsystem-test-helpers" }

@@ -193,10 +193,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 	const STASH: u128 = 31416 * SEL;
 
 	selendra::GenesisConfig {
-		system: selendra::SystemConfig {
-			code: wasm_binary.to_vec(),
-			changes_trie_config: Default::default(),
-		},
+		system: selendra::SystemConfig { code: wasm_binary.to_vec() },
 		balances: selendra::BalancesConfig {
 			balances: endowed_accounts
 				.iter()
@@ -254,15 +251,17 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		authority_discovery: selendra::AuthorityDiscoveryConfig { keys: vec![] },
 		vesting: selendra::VestingConfig { vesting: vec![] },
 		treasury: Default::default(),
+		hrmp: Default::default(),
 		configuration: selendra::ConfigurationConfig {
 			config: default_parachains_host_configuration(),
 		},
-		gilt: Default::default(),
 		paras: Default::default(),
-		xcm_pallet: selendra::XcmPalletConfig { safe_xcm_version: Some(2) },
+		xcm_pallet: Default::default(),
 		sudo: selendra::SudoConfig { key: endowed_accounts[0].clone() },
 		evm: selendra::EvmConfig { accounts: BTreeMap::new() },
-		ethereum: selendra::EthereumConfig {},
+		ethereum: selendra::EthereumConfig {
+			storage_schema: pallet_ethereum::EthereumStorageSchema::V2,
+		},
 	}
 }
 
@@ -392,10 +391,7 @@ pub fn selendra_testnet_genesis(
 	const STASH: u128 = 31416 * SEL;
 
 	selendra::GenesisConfig {
-		system: selendra::SystemConfig {
-			code: wasm_binary.to_vec(),
-			changes_trie_config: Default::default(),
-		},
+		system: selendra::SystemConfig { code: wasm_binary.to_vec() },
 		indices: selendra::IndicesConfig { indices: vec![] },
 		balances: selendra::BalancesConfig {
 			balances: endowed_accounts.iter().map(|k| (k.clone(), ENDOWMENT)).collect(),
@@ -449,15 +445,17 @@ pub fn selendra_testnet_genesis(
 		authority_discovery: selendra::AuthorityDiscoveryConfig { keys: vec![] },
 		vesting: selendra::VestingConfig { vesting: vec![] },
 		treasury: Default::default(),
+		hrmp: Default::default(),
 		configuration: selendra::ConfigurationConfig {
 			config: default_parachains_host_configuration(),
 		},
-		gilt: Default::default(),
 		paras: Default::default(),
-		xcm_pallet: selendra::XcmPalletConfig { safe_xcm_version: Some(2) },
+		xcm_pallet: Default::default(),
 		sudo: selendra::SudoConfig { key: endowed_accounts[0].clone() },
 		evm: selendra::EvmConfig { accounts: BTreeMap::new() },
-		ethereum: selendra::EthereumConfig {},
+		ethereum: selendra::EthereumConfig {
+			storage_schema: pallet_ethereum::EthereumStorageSchema::V2,
+		},
 	}
 }
 

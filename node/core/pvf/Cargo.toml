@@ -10,32 +10,32 @@ path = "bin/puppet_worker.rs"
 
 [dependencies]
 always-assert = "0.1"
-async-process = "1.1.0"
+async-process = "1.3.0"
 assert_matches = "1.4.0"
 futures = "0.3.17"
 futures-timer = "3.0.2"
-libc = "0.2.106"
+libc = "0.2.108"
 slotmap = "1.0"
 tracing = "0.1.29"
 pin-project = "1.0.8"
-rand = "0.8.3"
+rand = "0.8.4"
 async-std = { version = "1.10.0", features = ["attributes"] }
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive"] }
 
-sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-sc-executor-wasmtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-executor-wasmtime = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 selendra-parachain = { path = "../../../modules/parachain" }
 selendra-core-primitives = { path = "../../../primitives/core-primitives" }
 selendra-node-subsystem-util = { path = "../../subsystem-util"}
 
 [dev-dependencies]
-hex-literal = "0.3.3"
+hex-literal = "0.3.4"
 tempfile = "3.2.0"

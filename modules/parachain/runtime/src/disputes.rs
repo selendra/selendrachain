@@ -41,8 +41,6 @@ use sp_std::{collections::btree_set::BTreeSet, prelude::*};
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-pub use crate::Origin as ParachainOrigin;
-
 /// Whether the dispute is local or remote.
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub enum DisputeLocation {
@@ -129,6 +127,10 @@ pub trait DisputesHandler<BlockNumber> {
 		included_in: BlockNumber,
 	);
 
+	/// Retrieve the included state of a given candidate in a particular session. If it
+	/// returns `Some`, then we have a local dispute for the given `candidate_hash`.
+	fn included_state(session: SessionIndex, candidate_hash: CandidateHash) -> Option<BlockNumber>;
+
 	/// Whether the given candidate concluded invalid in a dispute with supermajority.
 	fn concluded_invalid(session: SessionIndex, candidate_hash: CandidateHash) -> bool;
 
@@ -162,6 +164,13 @@ impl<BlockNumber> DisputesHandler<BlockNumber> for () {
 		_candidate_hash: CandidateHash,
 		_included_in: BlockNumber,
 	) {
+	}
+
+	fn included_state(
+		_session: SessionIndex,
+		_candidate_hash: CandidateHash,
+	) -> Option<BlockNumber> {
+		None
 	}
 
 	fn concluded_invalid(_session: SessionIndex, _candidate_hash: CandidateHash) -> bool {
@@ -198,6 +207,13 @@ impl<T: Config> DisputesHandler<T::BlockNumber> for pallet::Pallet<T> {
 		included_in: T::BlockNumber,
 	) {
 		pallet::Pallet::<T>::note_included(session, candidate_hash, included_in)
+	}
+
+	fn included_state(
+		session: SessionIndex,
+		candidate_hash: CandidateHash,
+	) -> Option<T::BlockNumber> {
+		pallet::Pallet::<T>::included_state(session, candidate_hash)
 	}
 
 	fn concluded_invalid(session: SessionIndex, candidate_hash: CandidateHash) -> bool {
@@ -326,9 +342,6 @@ pub mod pallet {
 		/// A dispute where there are only votes on one side.
 		SingleSidedDispute,
 	}
-
-	#[pallet::origin]
-	pub type Origin = ParachainOrigin;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -737,6 +750,7 @@ impl<T: Config> Pallet<T> {
 		Ok(fresh)
 	}
 
+	/// Removes all duplicate disputes.
 	fn filter_multi_dispute_data(statement_sets: &mut MultiDisputeStatementSet) {
 		frame_support::storage::with_transaction(|| {
 			let config = <configuration::Pallet<T>>::config();
@@ -1115,6 +1129,13 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	pub(crate) fn included_state(
+		session: SessionIndex,
+		candidate_hash: CandidateHash,
+	) -> Option<T::BlockNumber> {
+		<Included<T>>::get(session, candidate_hash)
+	}
+
 	pub(crate) fn concluded_invalid(session: SessionIndex, candidate_hash: CandidateHash) -> bool {
 		<Disputes<T>>::get(&session, &candidate_hash).map_or(false, |dispute| {
 			// A dispute that has concluded with supermajority-against.
@@ -1207,8 +1228,8 @@ fn check_signature(
 mod tests {
 	use super::*;
 	use crate::mock::{
-		new_test_ext, AccountId, AllPallets, Initializer, MockGenesisConfig, System, Test,
-		PUNISH_VALIDATORS_AGAINST, PUNISH_VALIDATORS_FOR, PUNISH_VALIDATORS_INCONCLUSIVE,
+		new_test_ext, AccountId, AllPalletsWithSystem, Initializer, MockGenesisConfig, System,
+		Test, PUNISH_VALIDATORS_AGAINST, PUNISH_VALIDATORS_FOR, PUNISH_VALIDATORS_INCONCLUSIVE,
 		REWARD_VALIDATORS,
 	};
 	use frame_support::{
@@ -1239,12 +1260,12 @@ mod tests {
 				// circumvent requirement to have bitfields and headers in block for testing purposes
 				crate::paras_inherent::Included::<Test>::set(Some(()));
 
-				AllPallets::on_finalize(b);
+				AllPalletsWithSystem::on_finalize(b);
 				System::finalize();
 			}
 
 			System::initialize(&(b + 1), &Default::default(), &Default::default(), InitKind::Full);
-			AllPallets::on_initialize(b + 1);
+			AllPalletsWithSystem::on_initialize(b + 1);
 
 			if let Some(new_session) = new_session(b + 1) {
 				Initializer::test_trigger_on_new_session(

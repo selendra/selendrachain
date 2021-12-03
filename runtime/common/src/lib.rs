@@ -14,12 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Common runtime code for Selendra and Selendra.
+//! Common runtime code for Selendra
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod auctions;
-pub mod crowdloan;
 pub mod elections;
 pub mod impls;
 pub mod paras_registrar;
@@ -31,8 +29,6 @@ pub mod traits;
 pub mod xcm_sender;
 
 #[cfg(test)]
-mod integration_tests;
-#[cfg(test)]
 mod mock;
 
 pub use frame_support::weights::constants::{
@@ -40,7 +36,7 @@ pub use frame_support::weights::constants::{
 };
 use frame_support::{
 	parameter_types,
-	traits::{Currency, OneSessionHandler},
+	traits::{ConstU32, Currency, OneSessionHandler},
 	weights::{constants::WEIGHT_PER_SECOND, DispatchClass, Weight},
 };
 use frame_system::limits;
@@ -123,7 +119,6 @@ parameter_types! {
 }
 
 /// Parameterized slow adjusting fee updated based on
-/// https://w3f-research.readthedocs.io/en/latest/selendra/Token%20Economics.html#-2.-slow-adjusting-mechanism
 pub type SlowAdjustingFeeUpdate<R> =
 	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 
@@ -189,6 +184,13 @@ impl<T: pallet_session::Config> OneSessionHandler<T::AccountId>
 	}
 
 	fn on_disabled(_: u32) {}
+}
+
+/// A reasonable benchmarking config for staking pallet.
+pub struct StakingBenchmarkingConfig;
+impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
+	type MaxValidators = ConstU32<1000>;
+	type MaxNominators = ConstU32<1000>;
 }
 
 #[cfg(test)]

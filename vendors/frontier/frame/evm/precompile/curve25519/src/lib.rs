@@ -24,7 +24,7 @@ use curve25519_dalek::{
 	scalar::Scalar,
 	traits::Identity,
 };
-use fp_evm::{ExitError, ExitSucceed, LinearCostPrecompile};
+use fp_evm::{ExitError, ExitSucceed, LinearCostPrecompile, PrecompileFailure};
 
 // Adds at most 10 curve25519 points and returns the CompressedRistretto bytes representation
 pub struct Curve25519Add;
@@ -33,15 +33,22 @@ impl LinearCostPrecompile for Curve25519Add {
 	const BASE: u64 = 60;
 	const WORD: u64 = 12;
 
-	fn execute(input: &[u8], _: u64) -> core::result::Result<(ExitSucceed, Vec<u8>), ExitError> {
+	fn execute(
+		input: &[u8],
+		_: u64,
+	) -> core::result::Result<(ExitSucceed, Vec<u8>), PrecompileFailure> {
 		if input.len() % 32 != 0 {
-			return Err(ExitError::Other("input must contain multiple of 32 bytes".into()))
+			return Err(PrecompileFailure::Error {
+				exit_status: ExitError::Other("input must contain multiple of 32 bytes".into()),
+			})
 		};
 
 		if input.len() > 320 {
-			return Err(ExitError::Other(
-				"input cannot be greater than 320 bytes (10 compressed points)".into(),
-			))
+			return Err(PrecompileFailure::Error {
+				exit_status: ExitError::Other(
+					"input cannot be greater than 320 bytes (10 compressed points)".into(),
+				),
+			})
 		};
 
 		let mut points = Vec::new();
@@ -70,11 +77,16 @@ impl LinearCostPrecompile for Curve25519ScalarMul {
 	const BASE: u64 = 60;
 	const WORD: u64 = 12;
 
-	fn execute(input: &[u8], _: u64) -> core::result::Result<(ExitSucceed, Vec<u8>), ExitError> {
+	fn execute(
+		input: &[u8],
+		_: u64,
+	) -> core::result::Result<(ExitSucceed, Vec<u8>), PrecompileFailure> {
 		if input.len() != 64 {
-			return Err(ExitError::Other(
-				"input must contain 64 bytes (scalar - 32 bytes, point - 32 bytes)".into(),
-			))
+			return Err(PrecompileFailure::Error {
+				exit_status: ExitError::Other(
+					"input must contain 64 bytes (scalar - 32 bytes, point - 32 bytes)".into(),
+				),
+			})
 		};
 
 		// first 32 bytes is for the scalar value
@@ -100,7 +112,7 @@ mod tests {
 	use curve25519_dalek::constants;
 
 	#[test]
-	fn test_sum() -> std::result::Result<(), ExitError> {
+	fn test_sum() -> std::result::Result<(), PrecompileFailure> {
 		let s1 = Scalar::from(999u64);
 		let p1 = &constants::RISTRETTO_BASEPOINT_POINT * &s1;
 
@@ -127,7 +139,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_empty() -> std::result::Result<(), ExitError> {
+	fn test_empty() -> std::result::Result<(), PrecompileFailure> {
 		// Test that sum works for the empty iterator
 		let input = vec![];
 
@@ -145,7 +157,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_scalar_mul() -> std::result::Result<(), ExitError> {
+	fn test_scalar_mul() -> std::result::Result<(), PrecompileFailure> {
 		let s1 = Scalar::from(999u64);
 		let s2 = Scalar::from(333u64);
 		let p1 = &constants::RISTRETTO_BASEPOINT_POINT * &s1;
@@ -170,7 +182,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_scalar_mul_empty_error() -> std::result::Result<(), ExitError> {
+	fn test_scalar_mul_empty_error() -> std::result::Result<(), PrecompileFailure> {
 		let input = vec![];
 
 		let cost: u64 = 1;
@@ -182,9 +194,12 @@ mod tests {
 			Err(e) => {
 				assert_eq!(
 					e,
-					ExitError::Other(
-						"input must contain 64 bytes (scalar - 32 bytes, point - 32 bytes)".into()
-					)
+					PrecompileFailure::Error {
+						exit_status: ExitError::Other(
+							"input must contain 64 bytes (scalar - 32 bytes, point - 32 bytes)"
+								.into()
+						)
+					}
 				);
 				Ok(())
 			},
@@ -192,7 +207,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_point_addition_bad_length() -> std::result::Result<(), ExitError> {
+	fn test_point_addition_bad_length() -> std::result::Result<(), PrecompileFailure> {
 		let input: Vec<u8> = [0u8; 33].to_vec();
 
 		let cost: u64 = 1;
@@ -202,14 +217,21 @@ mod tests {
 				panic!("Test not expected to work");
 			},
 			Err(e) => {
-				assert_eq!(e, ExitError::Other("input must contain multiple of 32 bytes".into()));
+				assert_eq!(
+					e,
+					PrecompileFailure::Error {
+						exit_status: ExitError::Other(
+							"input must contain multiple of 32 bytes".into()
+						)
+					}
+				);
 				Ok(())
 			},
 		}
 	}
 
 	#[test]
-	fn test_point_addition_too_many_points() -> std::result::Result<(), ExitError> {
+	fn test_point_addition_too_many_points() -> std::result::Result<(), PrecompileFailure> {
 		let mut input = vec![];
 		input.extend_from_slice(&constants::RISTRETTO_BASEPOINT_POINT.compress().to_bytes()); // 1
 		input.extend_from_slice(&constants::RISTRETTO_BASEPOINT_POINT.compress().to_bytes()); // 2
@@ -232,9 +254,11 @@ mod tests {
 			Err(e) => {
 				assert_eq!(
 					e,
-					ExitError::Other(
-						"input cannot be greater than 320 bytes (10 compressed points)".into()
-					)
+					PrecompileFailure::Error {
+						exit_status: ExitError::Other(
+							"input cannot be greater than 320 bytes (10 compressed points)".into()
+						)
+					}
 				);
 				Ok(())
 			},

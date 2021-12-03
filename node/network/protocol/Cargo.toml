@@ -7,13 +7,13 @@ description = "Primitives types for the Node-side"
 
 [dependencies]
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive"] }
-strum = { version = "0.22.0", features = ["derive"] }
-derive_more = "0.99.11"
+strum = { version = "0.23.0", features = ["derive"] }
+derive_more = "0.99.17"
 futures = "0.3.17"
 thiserror = "1.0.30"
 async-trait = "0.1.51"
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 
 selendra-primitives = { path = "../../../primitives" }
