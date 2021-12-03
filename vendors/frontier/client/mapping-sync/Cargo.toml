@@ -11,10 +11,10 @@ futures = { version = "0.3.17", features = ["compat"] }
 futures-timer = "3.0.2"
 log = "0.4.8"
 
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 
 fp-consensus = { version = "2.0.0-dev", path = "../../primitives/consensus" }
 fc-consensus = { version = "2.0.0-dev", path = "../consensus" }

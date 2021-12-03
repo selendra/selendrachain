@@ -14,15 +14,15 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 serde = { version = "1.0.101", optional = true }
 codec = { package = "parity-scale-codec", version = "2.3.1", default-features = false }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "master" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "master" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 pallet-evm = { path = "../evm", default-features = false }
 scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 
 [features]
 default = ["std"]

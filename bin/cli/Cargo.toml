@@ -17,18 +17,18 @@ thiserror = "1.0.30"
 structopt = { version = "0.3.25", optional = true }
 futures = "0.3.17"
 
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
-frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
-try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
-sp-trie = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "master", optional = true }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", optional = true }
+try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", optional = true }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", optional = true }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", optional = true }
 
 service = { package = "selendra-service", path = "../../node/service", default-features = false, optional = true }
 selendra-node-core-pvf = { path = "../../node/core/pvf", optional = true }
 
 [build-dependencies]
-substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "master" }
+substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 
 [features]
 default = [ "wasmtime", "db", "cli", "full-node", "trie-memory-tracker" ]

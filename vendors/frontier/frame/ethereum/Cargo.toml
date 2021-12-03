@@ -18,14 +18,14 @@ num_enum = { version = "0.5.4", default-features = false }
 codec = { package = "parity-scale-codec", version = "2.3.1", default-features = false }
 scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
 
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
  
 pallet-evm = { default-features = false, path = "../evm" }
 fp-evm = { version = "3.0.0-dev", default-features = false, path = "../../primitives/evm" }
@@ -35,7 +35,7 @@ fp-storage = { version = "2.0.0", path = "../../primitives/storage", default-fea
 fp-self-contained = { version = "1.0.0-dev", path = "../../primitives/self-contained", default-features = false }
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 libsecp256k1 = { version = "0.7.0", features = ["static-context", "hmac"] }
 
 [features]

@@ -10,18 +10,18 @@ codec = { package = "parity-scale-codec", version = "2.3.1", default-features = 
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 libsecp256k1 = { version = "0.7.0", default-features = false, features = ["hmac","static-context"] }
 
-frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "master", default-features = false }
-frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "master", default-features = false }
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "master", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "master", default-features = false }
-sp-io = { git = "https://github.com/paritytech/substrate.git", branch = "master", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "master", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.13", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.13", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.13", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.13", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.13", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.13", default-features = false }
 
 pallet-evm = { path = "..", default-features = false }
 fp-evm = { path = "../../../primitives/evm", default-features = false }
 
 [dev-dependencies]
-pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "master" }
+pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.13" }
 
 [features]
 default = ["std"]
