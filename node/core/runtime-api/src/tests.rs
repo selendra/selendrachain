@@ -15,7 +15,6 @@
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 #[allow(unused_imports)]
-#[allow(must_not_suspend)]
 use super::*;
 
 use futures::channel::oneshot;
@@ -796,7 +795,6 @@ fn multiple_requests_in_parallel_are_working() {
 	let subsystem_task = run(ctx, subsystem).map(|x| x.unwrap());
 	let test_task = async move {
 		// Make all requests block until we release this mutex.
-		#[allow(must_not_suspend)]
 		let lock = mutex.lock().unwrap();
 
 		let mut receivers = Vec::new();
