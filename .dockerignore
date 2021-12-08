@@ -1,0 +1,11 @@
+doc
+**target*
+.idea/
+Dockerfile
+.dockerignore
+.local
+.git
+audit/
+.vscode/
+.github/
+launch/
