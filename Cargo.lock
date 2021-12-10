@@ -5979,9 +5979,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.32"
+version = "1.0.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba508cc11742c0dc5c1659771673afbab7a0efab23aa17e854cbab0837ed0b43"
+checksum = "fb37d2df5df740e582f28f8560cf425f52bb267d872fe58358eadb554909f07a"
 dependencies = [
  "unicode-xid",
 ]
@@ -6917,6 +6917,7 @@ dependencies = [
  "lazy_static",
  "libsecp256k1",
  "log",
+ "lru 0.6.6",
  "parity-scale-codec",
  "parking_lot",
  "sc-executor-common",
@@ -9263,7 +9264,7 @@ dependencies = [
 
 [[package]]
 name = "sp-core"
-version = "4.0.0-dev"
+version = "4.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=master#1aea26eb820199c422f05f0d26558d8d7c70542e"
 dependencies = [
  "base58",
@@ -9311,7 +9312,7 @@ dependencies = [
 
 [[package]]
 name = "sp-core-hashing"
-version = "4.0.0-dev"
+version = "4.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=master#1aea26eb820199c422f05f0d26558d8d7c70542e"
 dependencies = [
  "blake2-rfc",
@@ -9344,7 +9345,7 @@ dependencies = [
 
 [[package]]
 name = "sp-debug-derive"
-version = "4.0.0-dev"
+version = "4.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=master#1aea26eb820199c422f05f0d26558d8d7c70542e"
 dependencies = [
  "proc-macro2",
@@ -9354,7 +9355,7 @@ dependencies = [
 
 [[package]]
 name = "sp-externalities"
-version = "0.10.0-dev"
+version = "0.10.0"
 source = "git+https://github.com/paritytech/substrate?branch=master#1aea26eb820199c422f05f0d26558d8d7c70542e"
 dependencies = [
  "environmental",
@@ -9535,7 +9536,7 @@ dependencies = [
 
 [[package]]
 name = "sp-runtime-interface"
-version = "4.0.0-dev"
+version = "4.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=master#1aea26eb820199c422f05f0d26558d8d7c70542e"
 dependencies = [
  "impl-trait-for-tuples 0.2.1",
@@ -9552,7 +9553,7 @@ dependencies = [
 
 [[package]]
 name = "sp-runtime-interface-proc-macro"
-version = "4.0.0-dev"
+version = "4.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=master#1aea26eb820199c422f05f0d26558d8d7c70542e"
 dependencies = [
  "Inflector",
@@ -9621,12 +9622,12 @@ dependencies = [
 
 [[package]]
 name = "sp-std"
-version = "4.0.0-dev"
+version = "4.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=master#1aea26eb820199c422f05f0d26558d8d7c70542e"
 
 [[package]]
 name = "sp-storage"
-version = "4.0.0-dev"
+version = "4.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=master#1aea26eb820199c422f05f0d26558d8d7c70542e"
 dependencies = [
  "impl-serde",
@@ -9668,7 +9669,7 @@ dependencies = [
 
 [[package]]
 name = "sp-tracing"
-version = "4.0.0-dev"
+version = "4.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=master#1aea26eb820199c422f05f0d26558d8d7c70542e"
 dependencies = [
  "parity-scale-codec",
@@ -9747,7 +9748,7 @@ dependencies = [
 
 [[package]]
 name = "sp-wasm-interface"
-version = "4.0.0-dev"
+version = "4.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=master#1aea26eb820199c422f05f0d26558d8d7c70542e"
 dependencies = [
  "impl-trait-for-tuples 0.2.1",
