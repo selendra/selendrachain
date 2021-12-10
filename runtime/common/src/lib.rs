@@ -22,7 +22,6 @@ pub mod elections;
 pub mod impls;
 pub mod paras_registrar;
 pub mod paras_sudo_wrapper;
-pub mod purchase;
 pub mod slot_range;
 pub mod slots;
 pub mod traits;
@@ -250,6 +249,7 @@ mod multiplier_tests {
 		type SystemWeightInfo = ();
 		type SS58Prefix = ();
 		type OnSetCode = ();
+		type MaxConsumers = frame_support::traits::ConstU32<16>;
 	}
 
 	fn run_with_system_weight<F>(w: Weight, mut assertions: F)
