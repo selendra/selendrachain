@@ -259,9 +259,7 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		xcm_pallet: Default::default(),
 		sudo: selendra::SudoConfig { key: endowed_accounts[0].clone() },
 		evm: selendra::EvmConfig { accounts: BTreeMap::new() },
-		ethereum: selendra::EthereumConfig {
-			storage_schema: pallet_ethereum::EthereumStorageSchema::V2,
-		},
+		ethereum: selendra::EthereumConfig {},
 	}
 }
 
@@ -453,9 +451,7 @@ pub fn selendra_testnet_genesis(
 		xcm_pallet: Default::default(),
 		sudo: selendra::SudoConfig { key: endowed_accounts[0].clone() },
 		evm: selendra::EvmConfig { accounts: BTreeMap::new() },
-		ethereum: selendra::EthereumConfig {
-			storage_schema: pallet_ethereum::EthereumStorageSchema::V2,
-		},
+		ethereum: selendra::EthereumConfig {},
 	}
 }
 

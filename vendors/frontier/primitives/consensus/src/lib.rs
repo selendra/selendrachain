@@ -18,7 +18,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use sha3::{Digest as Sha3Digest, Keccak256};
 use sp_core::H256;
 use sp_runtime::{
 	generic::{Digest, OpaqueDigestItemId},
@@ -71,8 +70,7 @@ impl Hashes {
 		let mut transaction_hashes = Vec::new();
 
 		for t in &block.transactions {
-			let transaction_hash = H256::from_slice(Keccak256::digest(&rlp::encode(t)).as_slice());
-			transaction_hashes.push(transaction_hash);
+			transaction_hashes.push(t.hash());
 		}
 
 		let block_hash = block.header.hash();
