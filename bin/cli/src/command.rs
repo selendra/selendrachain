@@ -73,9 +73,9 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
-			"selendra" => Box::new(service::chain_spec::selendra_config()?),
+			"" | "selendra" => Box::new(service::chain_spec::selendra_config()?),
 			"dev" => Box::new(service::chain_spec::selendra_development_config()?),
-			"" | "local" => Box::new(service::chain_spec::selendra_local_testnet_config()?),
+			"local" => Box::new(service::chain_spec::selendra_local_testnet_config()?),
 			"staging" => Box::new(service::chain_spec::selendra_staging_testnet_config()?),
 			path => {
 				let path = std::path::PathBuf::from(path);

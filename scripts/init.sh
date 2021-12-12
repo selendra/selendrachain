@@ -1,11 +1,22 @@
 #!/usr/bin/env bash
+#!/usr/bin/env bash
 
 set -e
 echo "---> Initializing Rustup environment"
 echo "---> Detect OS environment"
 arch=$(uname -m)
 kernel=$(uname -r)
-if [ -n "$(command -v lsb_release)" ]; then
+
+if [ -f "/etc/debian_version" ]; then
+	distroname="Debian $(cat /etc/debian_version)"
+    SUDO_PREFIX=''
+    if [[ $EUID -ne 0 ]]; then
+        echo "Running apt as sudo"
+        SUDO_PREFIX='sudo'
+    fi
+    $SUDO_PREFIX apt update
+    $SUDO_PREFIX apt install -y build-essential cmake pkg-config libssl-dev openssl git clang libclang-dev
+elif [ -n "$(command -v lsb_release)" ]; then
 	distroname=$(lsb_release -s -d)
     echo "You are running ${distroname} OS environment"
     # check for root
@@ -21,15 +32,6 @@ if [ -n "$(command -v lsb_release)" ]; then
 elif [ -f "/etc/os-release" ]; then
 	distroname=$(grep PRETTY_NAME /etc/os-release | sed 's/PRETTY_NAME=//g' | tr -d '="')
     echo "this is ${distroname}"
-elif [ -f "/etc/debian_version" ]; then
-	distroname="Debian $(cat /etc/debian_version)"
-    SUDO_PREFIX=''
-    if [[ $EUID -ne 0 ]]; then
-        echo "Running apt as sudo"
-        SUDO_PREFIX='sudo'
-    fi
-    $SUDO_PREFIX apt update
-    $SUDO_PREFIX apt install -y build-essential cmake pkg-config libssl-dev openssl git clang libclang-dev
 elif [ -f "/etc/redhat-release" ]; then
 	distroname=$(cat /etc/redhat-release)
 else
@@ -53,12 +55,12 @@ echo "*** Initializing WASM build environment"
 
 if [ -z $CI_PROJECT_NAME ] ; then
    rustup update stable
-   rustup install nightly-2021-10-15
-   rustup default nightly-2021-10-15
+   rustup install nightly-2021-11-07
+   rustup default nightly-2021-11-07
 fi
 
-rustup target add wasm32-unknown-unknown --toolchain nightly-2021-10-15
+rustup target add wasm32-unknown-unknown --toolchain nightly-2021-11-07
 
 # Install wasm-gc. It's useful for stripping slimming down wasm binaries.
 command -v wasm-gc || \
-	cargo +nightly install --git https://github.com/alexcrichton/wasm-gc --force
+	cargo +nightly-2021-11-07   install --git https://github.com/alexcrichton/wasm-gc --force

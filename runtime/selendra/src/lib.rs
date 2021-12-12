@@ -57,15 +57,13 @@ use beefy_primitives::crypto::AuthorityId as BeefyId;
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
 	traits::{
-		Contains, Everything, FindAuthor, InstanceFilter, KeyOwnerProofSystem,
+		Contains, EnsureOneOf, Everything, FindAuthor, InstanceFilter, KeyOwnerProofSystem,
 		LockIdentifier, Nothing, PrivilegeCmp,
 	},
 	weights::Weight,
 	ConsensusEngineId, PalletId, RuntimeDebug,
 };
-use frame_system::{EnsureOneOf, EnsureRoot};
-pub use pallet_bridge;
-pub use pallet_bridge_transfer;
+use frame_system::EnsureRoot;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId};
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_mmr_primitives as mmr;
@@ -169,7 +167,6 @@ impl Contains<Call> for BaseFilter {
 }
 
 type MoreThanHalfCouncil = EnsureOneOf<
-	AccountId,
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
 >;
@@ -201,9 +198,10 @@ impl frame_system::Config for Runtime {
 	type OnNewAccount = ();
 	type OnKilledAccount =
 		(pallet_evm::CallKillAccount<Runtime>, pallet_evm_accounts::CallKillAccount<Runtime>);
-	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
+	type SystemWeightInfo = frame_system::weights::SubstrateWeight<Runtime>;
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {
@@ -213,7 +211,6 @@ parameter_types! {
 }
 
 type ScheduleOrigin = EnsureOneOf<
-	AccountId,
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>,
 >;
@@ -249,7 +246,7 @@ impl pallet_scheduler::Config for Runtime {
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = ScheduleOrigin;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
+	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
 	type OriginPrivilegeCmp = OriginPrivilegeCmp;
 }
 
@@ -298,7 +295,7 @@ impl pallet_indices::Config for Runtime {
 	type Currency = Balances;
 	type Deposit = IndexDeposit;
 	type Event = Event;
-	type WeightInfo = weights::pallet_indices::WeightInfo<Runtime>;
+	type WeightInfo = pallet_indices::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -316,7 +313,7 @@ impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
 	type MaxReserves = MaxReserves;
 	type ReserveIdentifier = [u8; 8];
-	type WeightInfo = weights::pallet_balances::WeightInfo<Runtime>;
+	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -341,7 +338,7 @@ impl pallet_timestamp::Config for Runtime {
 	type Moment = u64;
 	type OnTimestampSet = Babe;
 	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = weights::pallet_timestamp::WeightInfo<Runtime>;
+	type WeightInfo = pallet_timestamp::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -380,7 +377,7 @@ impl pallet_session::Config for Runtime {
 	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, Staking>;
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
-	type WeightInfo = weights::pallet_session::WeightInfo<Runtime>;
+	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_session::historical::Config for Runtime {
@@ -448,11 +445,10 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
 	>;
 	type BenchmarkingConfig = runtime_common::elections::BenchmarkConfig;
 	type ForceOrigin = EnsureOneOf<
-		AccountId,
 		EnsureRoot<AccountId>,
 		pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, CouncilCollective>,
 	>;
-	type WeightInfo = weights::pallet_election_provider_multi_phase::WeightInfo<Self>;
+	type WeightInfo = pallet_election_provider_multi_phase::weights::SubstrateWeight<Self>;
 	type VoterSnapshotPerBlock = VoterSnapshotPerBlock;
 }
 
@@ -463,14 +459,14 @@ parameter_types! {
 impl pallet_bags_list::Config for Runtime {
 	type Event = Event;
 	type VoteWeightProvider = Staking;
-	type WeightInfo = weights::pallet_bags_list::WeightInfo<Runtime>;
+	type WeightInfo = pallet_bags_list::weights::SubstrateWeight<Runtime>;
 	type BagThresholds = BagThresholds;
 }
 
 pallet_staking_reward_curve::build! {
 	const REWARD_CURVE: PiecewiseLinear<'static> = curve!(
-		min_inflation: 0_025_000,
-		max_inflation: 0_100_000,
+		min_inflation: 0_034_500,
+		max_inflation: 0_044_500,
 		ideal_stake: 0_500_000,
 		falloff: 0_050_000,
 		max_piece_count: 40,
@@ -491,7 +487,6 @@ parameter_types! {
 }
 
 type SlashCancelOrigin = EnsureOneOf<
-	AccountId,
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>,
 >;
@@ -526,8 +521,8 @@ impl pallet_staking::Config for Runtime {
 	// Use the nominators map to iter voters, but also perform the bags-list migration and keep
 	// it up-to-date.
 	type SortedListProvider = BagsList;
-	// type BenchmarkingConfig = runtime_common::StakingBenchmarkingConfig;
-	type WeightInfo = weights::pallet_staking::WeightInfo<Runtime>;
+	type BenchmarkingConfig = runtime_common::StakingBenchmarkingConfig;
+	type WeightInfo = pallet_staking::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -573,7 +568,6 @@ impl pallet_democracy::Config for Runtime {
 	type FastTrackVotingPeriod = FastTrackVotingPeriod;
 	// To cancel a proposal which has been passed, 2/3 of the council must agree to it.
 	type CancellationOrigin = EnsureOneOf<
-		AccountId,
 		EnsureRoot<AccountId>,
 		pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, CouncilCollective>,
 	>;
@@ -581,7 +575,6 @@ impl pallet_democracy::Config for Runtime {
 	// To cancel a proposal before it has been passed, the technical committee must be unanimous or
 	// Root must agree.
 	type CancelProposalOrigin = EnsureOneOf<
-		AccountId,
 		EnsureRoot<AccountId>,
 		pallet_collective::EnsureProportionAtLeast<_1, _1, AccountId, TechnicalCollective>,
 	>;
@@ -595,7 +588,7 @@ impl pallet_democracy::Config for Runtime {
 	type Scheduler = Scheduler;
 	type PalletsOrigin = OriginCaller;
 	type MaxVotes = MaxVotes;
-	type WeightInfo = weights::pallet_democracy::WeightInfo<Runtime>;
+	type WeightInfo = pallet_democracy::weights::SubstrateWeight<Runtime>;
 	type MaxProposals = MaxProposals;
 }
 
@@ -614,7 +607,7 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = weights::pallet_collective_council::WeightInfo<Runtime>;
+	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -648,7 +641,7 @@ impl pallet_elections_phragmen::Config for Runtime {
 	type DesiredRunnersUp = DesiredRunnersUp;
 	type TermDuration = TermDuration;
 	type PalletId = PhragmenElectionPalletId;
-	type WeightInfo = weights::pallet_elections_phragmen::WeightInfo<Runtime>;
+	type WeightInfo = pallet_elections_phragmen::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -666,7 +659,7 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 	type MaxProposals = TechnicalMaxProposals;
 	type MaxMembers = TechnicalMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = weights::pallet_collective_technical_committee::WeightInfo<Runtime>;
+	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
@@ -679,7 +672,7 @@ impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
 	type MembershipInitialized = TechnicalCommittee;
 	type MembershipChanged = TechnicalCommittee;
 	type MaxMembers = TechnicalMaxMembers;
-	type WeightInfo = weights::pallet_membership::WeightInfo<Runtime>;
+	type WeightInfo = pallet_membership::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -707,7 +700,6 @@ parameter_types! {
 }
 
 type ApproveOrigin = EnsureOneOf<
-	AccountId,
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>,
 >;
@@ -725,7 +717,7 @@ impl pallet_treasury::Config for Runtime {
 	type Burn = Burn;
 	type BurnDestination = ();
 	type MaxApprovals = MaxApprovals;
-	type WeightInfo = weights::pallet_treasury::WeightInfo<Runtime>;
+	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
 	type SpendFunds = Bounties;
 }
 
@@ -735,10 +727,11 @@ impl pallet_bounties::Config for Runtime {
 	type BountyUpdatePeriod = BountyUpdatePeriod;
 	type BountyCuratorDeposit = BountyCuratorDeposit;
 	type BountyValueMinimum = BountyValueMinimum;
+	type ChildBountyManager = ();
 	type DataDepositPerByte = DataDepositPerByte;
 	type Event = Event;
 	type MaximumReasonLength = MaximumReasonLength;
-	type WeightInfo = weights::pallet_bounties::WeightInfo<Runtime>;
+	type WeightInfo = pallet_bounties::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_tips::Config for Runtime {
@@ -749,7 +742,7 @@ impl pallet_tips::Config for Runtime {
 	type TipFindersFee = TipFindersFee;
 	type TipReportDepositBase = TipReportDepositBase;
 	type Event = Event;
-	type WeightInfo = weights::pallet_tips::WeightInfo<Runtime>;
+	type WeightInfo = pallet_tips::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_offences::Config for Runtime {
@@ -775,7 +768,7 @@ impl pallet_im_online::Config for Runtime {
 	type NextSessionRotation = Babe;
 	type ReportUnresponsiveness = Offences;
 	type UnsignedPriority = ImOnlineUnsignedPriority;
-	type WeightInfo = weights::pallet_im_online::WeightInfo<Runtime>;
+	type WeightInfo = pallet_im_online::weights::SubstrateWeight<Runtime>;
 	type MaxKeys = MaxKeys;
 	type MaxPeerInHeartbeats = MaxPeerInHeartbeats;
 	type MaxPeerDataEncodingSize = MaxPeerDataEncodingSize;
@@ -887,14 +880,14 @@ impl pallet_identity::Config for Runtime {
 	type Slashed = Treasury;
 	type ForceOrigin = MoreThanHalfCouncil;
 	type RegistrarOrigin = MoreThanHalfCouncil;
-	type WeightInfo = weights::pallet_identity::WeightInfo<Runtime>;
+	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type PalletsOrigin = OriginCaller;
-	type WeightInfo = weights::pallet_utility::WeightInfo<Runtime>;
+	type WeightInfo = pallet_utility::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -912,7 +905,7 @@ impl pallet_multisig::Config for Runtime {
 	type DepositBase = DepositBase;
 	type DepositFactor = DepositFactor;
 	type MaxSignatories = MaxSignatories;
-	type WeightInfo = weights::pallet_multisig::WeightInfo<Runtime>;
+	type WeightInfo = pallet_multisig::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -941,7 +934,7 @@ impl pallet_vesting::Config for Runtime {
 	type Currency = Balances;
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
-	type WeightInfo = weights::pallet_vesting::WeightInfo<Runtime>;
+	type WeightInfo = pallet_vesting::weights::SubstrateWeight<Runtime>;
 	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
 
@@ -1073,7 +1066,7 @@ impl pallet_proxy::Config for Runtime {
 	type ProxyDepositBase = ProxyDepositBase;
 	type ProxyDepositFactor = ProxyDepositFactor;
 	type MaxProxies = MaxProxies;
-	type WeightInfo = weights::pallet_proxy::WeightInfo<Runtime>;
+	type WeightInfo = pallet_proxy::weights::SubstrateWeight<Runtime>;
 	type MaxPending = MaxPending;
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = AnnouncementDepositBase;
@@ -1339,31 +1332,6 @@ impl pallet_sudo::Config for Runtime {
 
 impl paras_sudo_wrapper::Config for Runtime {}
 
-parameter_types! {
-	pub const BridgeChainId: u8 = 1;
-	pub const ProposalLifetime: BlockNumber = 50;
-}
-
-impl pallet_bridge::Config for Runtime {
-	type Event = Event;
-	type BridgeCommitteeOrigin = MoreThanHalfCouncil;
-	type Proposal = Call;
-	type BridgeChainId = BridgeChainId;
-	type ProposalLifetime = ProposalLifetime;
-}
-
-parameter_types! {
-	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("000000000000000000000056442766Dc1aEf4bd1FA0Be9D1675eecA05d727a61");
-}
-
-impl pallet_bridge_transfer::Config for Runtime {
-	type Event = Event;
-	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
-	type Currency = Balances;
-	type NativeTokenResourceId = NativeTokenResourceId;
-	type OnFeePay = ();
-}
-
 impl pallet_evm_accounts::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
@@ -1492,10 +1460,6 @@ construct_runtime! {
 
 		// Sudo.
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Event<T>, Config<T>} = 19,
-
-		// Bridge
-		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 20,
-		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 21,
 
 		// Evm
 		EvmAccounts: pallet_evm_accounts::{Pallet, Call, Storage, Event<T>} = 22,

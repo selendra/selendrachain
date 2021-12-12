@@ -19,6 +19,7 @@
 
 use super::*;
 use crate::IntermediateStateRoot;
+use codec::{WrapperTypeDecode, WrapperTypeEncode};
 use ethereum::{TransactionAction, TransactionSignature};
 use frame_support::{parameter_types, traits::FindAuthor, ConsensusEngineId, PalletId};
 use pallet_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
@@ -27,7 +28,7 @@ use sha3::Digest;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, IdentityLookup, SignedExtension},
 	AccountId32,
 };
 
@@ -80,6 +81,7 @@ impl frame_system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {

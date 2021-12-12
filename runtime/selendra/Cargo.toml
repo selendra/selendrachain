@@ -89,10 +89,6 @@ xcm = { path = "../../modules/xcm", default-features = false }
 xcm-executor = { path = "../../modules/xcm/xcm-executor", default-features = false }
 xcm-builder = { path = "../../modules/xcm/xcm-builder", default-features = false }
 
-# Bridge
-pallet-bridge = { default-features = false, path = "../../modules/bridge" }
-pallet-bridge-transfer = { default-features = false, path = "../../modules/bridge_transfer" }
-
 # Evm
 evm = { version = "0.33.0", default-features = false, features = ["with-codec"] }
 pallet-ethereum  = { path = "../../vendors/frontier/frame/ethereum", default-features = false }
@@ -191,8 +187,6 @@ std = [
 	"frame-election-provider-support/std",
 	"pallet-bags-list/std",
 	"pallet-sudo/std",
-	"pallet-bridge/std",
-	"pallet-bridge-transfer/std",
 	"evm/std",
 	"pallet-ethereum/std",
 	"pallet-evm/std",

@@ -13,6 +13,7 @@
 
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
+#![allow(unused_must_use)]
 
 use std::collections::HashSet;
 
@@ -203,7 +204,9 @@ impl FetchTask {
 	/// Remove leaves and cancel the task, if it was the last one and the task has still been
 	/// fetching.
 	pub fn remove_leaves(&mut self, leaves: &HashSet<Hash>) {
-		self.live_in.difference(leaves);
+		for leaf in leaves {
+			self.live_in.remove(leaf);
+		}
 		if self.live_in.is_empty() && !self.is_finished() {
 			self.state = FetchedState::Canceled
 		}

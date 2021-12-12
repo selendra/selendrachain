@@ -2929,9 +2929,9 @@ checksum = "68f2d64f2edebec4ce84ad108148e67e1064789bee435edc5b60ad398714a3a9"
 
 [[package]]
 name = "itertools"
-version = "0.10.1"
+version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69ddb889f9d0d08a67338271fa9b62996bc788c7796a5c18cf057420aaed5eaf"
+checksum = "a9a9d19fa1e79b6215ff29b9d6880b706147f16e9b1dbb1e4e5947b5b02bc5e3"
 dependencies = [
  "either",
 ]
@@ -4724,44 +4724,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-bridge"
-version = "0.0.1"
-dependencies = [
- "blake2-rfc",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-bridge-transfer"
-version = "0.0.1"
-dependencies = [
- "frame-support",
- "frame-system",
- "hex",
- "hex-literal",
- "pallet-balances",
- "pallet-bridge",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-arithmetic",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-collective"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13#fcc54a72973d03afe7bf9e3ef2736050b3f33465"
@@ -6016,9 +5978,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.32"
+version = "1.0.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba508cc11742c0dc5c1659771673afbab7a0efab23aa17e854cbab0837ed0b43"
+checksum = "fb37d2df5df740e582f28f8560cf425f52bb267d872fe58358eadb554909f07a"
 dependencies = [
  "unicode-xid",
 ]
@@ -8507,8 +8469,6 @@ dependencies = [
  "pallet-bags-list",
  "pallet-balances",
  "pallet-bounties",
- "pallet-bridge",
- "pallet-bridge-transfer",
  "pallet-collective",
  "pallet-democracy",
  "pallet-election-provider-multi-phase",
@@ -10515,9 +10475,9 @@ dependencies = [
 
 [[package]]
 name = "trybuild"
-version = "1.0.52"
+version = "1.0.53"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "150e726dc059e6fbd4fce3288f5bb3cf70128cf63b0dde23b938a3cad810fb23"
+checksum = "9d664de8ea7e531ad4c0f5a834f20b8cb2b8e6dfe88d05796ee7887518ed67b9"
 dependencies = [
  "glob",
  "lazy_static",
