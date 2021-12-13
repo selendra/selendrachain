@@ -1,5 +1,7 @@
 FROM rust:buster as builder
-WORKDIR /app
+
+WORKDIR /selendra
+COPY . /selendra
 
 RUN rustup default nightly-2021-11-07 && \
 	rustup target add wasm32-unknown-unknown --toolchain nightly-2021-11-07
@@ -12,37 +14,32 @@ ARG GIT_COMMIT=
 ENV GIT_COMMIT=$GIT_COMMIT
 ARG BUILD_ARGS
 
-COPY . .
-
 RUN cargo build --release $BUILD_ARGS
 
-# =============
-
 FROM phusion/baseimage:bionic-1.0.0
-LABEL maintainer="info@selendra.org"
 
-# RUN mv /usr/share/ca* /tmp && \
-# 	rm -rf /usr/share/*  && \
-# 	mv /tmp/ca-certificates /usr/share/ && \
-# 	useradd -m -u 1000 -U -s /bin/sh -d /selendra selendra
+LABEL description="Docker image for Selendra Chain" \
+	io.parity.image.type="builder" \
+	io.parity.image.authors="nath.selendra@gmail.com" \
+	io.parity.image.vendor="Selendra" \
+	io.parity.image.description="Selendra: selendra chain" \
+	io.parity.image.source="https://github.com/selendra/selendra-chain/blob/${VCS_REF}/scripts/docker/Dockerfile" \
+	io.parity.image.documentation="https://github.com/selendra/selendra-chain"
 
-RUN useradd -m -u 1000 -U -s /bin/sh -d /selendra selendra
+COPY --from=builder /selendra/target/release/selendra /usr/local/bin
 
-COPY --from=builder /app/target/release/selendra /usr/local/bin
-
-# checks
-RUN ldd /usr/local/bin/selendra && \
+RUN useradd -m -u 1000 -U -s /bin/sh -d /selendra selendra && \
+	mkdir -p /data /selendra/.local/share && \
+	chown -R selendra:selendra /data && \
+	ln -s /data /selendra/.local/share/selendra && \
+# unclutter and minimize the attack surface
+	rm -rf /usr/bin /usr/sbin && \
+# check if executable works in this container
 	/usr/local/bin/selendra --version
 
-# Shrinking
-RUN rm -rf /usr/lib/python* && \
-	rm -rf /usr/bin /usr/sbin /usr/share/man
-
 USER selendra
-EXPOSE 30333 9933 9944
 
-RUN mkdir /selendra/data
-
-VOLUME ["/selendra/data"]
+EXPOSE 30333 9933 9944 9615
+VOLUME ["/data"]
 
 ENTRYPOINT ["/usr/local/bin/selendra"]
