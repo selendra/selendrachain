@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-subsystem-util"
-version = "0.1.7"
+version = "0.1.6"
 authors = ["Selendra info@selendra.org"]
 edition = "2018"
 description = "Subsystem traits and message definitions"
@@ -16,9 +16,9 @@ thiserror = "1.0.30"
 tracing = "0.1.29"
 derive_more = "0.99.17"
 lru = "0.7.0"
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
 
 selendra-node-subsystem = { package = "selendra-node-subsystem", path = "../subsystem" }
 selendra-node-jaeger = { path = "../jaeger" }

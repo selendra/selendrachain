@@ -25,18 +25,18 @@ rand = "0.7"
 lru = "0.7.0"
 parking_lot = "0.11.1"
 
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
 
 fc-consensus = { version = "2.0.0-dev", path = "../consensus" }
 fc-db = { version = "2.0.0-dev", path = "../db" }

@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-metrics"
-version = "0.1.7"
+version = "0.1.6"
 authors = ["Selendra info@selendra.org"]
 edition = "2018"
 description = "Subsystem traits and message definitions"
@@ -8,7 +8,7 @@ description = "Subsystem traits and message definitions"
 [dependencies]
 futures = "0.3.17"
 futures-timer = "3.0.2"
-substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
 
 metered-channel = { path = "../metered-channel" }
 

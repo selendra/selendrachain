@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-core-pvf"
-version = "0.1.7"
+version = "0.1.6"
 authors = ["Selendra info@selendra.org"]
 edition = "2018"
 
@@ -22,15 +22,15 @@ rand = "0.8.4"
 async-std = { version = "1.10.0", features = ["attributes"] }
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive"] }
 
-sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sc-executor-wasmtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sc-executor-wasmtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
 
 selendra-parachain = { path = "../../../modules/parachain" }
 selendra-core-primitives = { path = "../../../primitives/core-primitives" }

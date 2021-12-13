@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-network-protocol"
-version = "0.1.7"
+version = "0.1.6"
 authors = ["Selendra info@selendra.org"]
 edition = "2018"
 description = "Primitives types for the Node-side"
@@ -12,8 +12,8 @@ derive_more = "0.99.17"
 futures = "0.3.17"
 thiserror = "1.0.30"
 async-trait = "0.1.51"
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
 
 
 selendra-primitives = { path = "../../../primitives" }

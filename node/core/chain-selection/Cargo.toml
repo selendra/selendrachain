@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-core-chain-selection"
-version = "0.1.7"
+version = "0.1.6"
 authors = ["Selendra info@selendra.org"]
 description = "Chain Selection Subsystem"
 edition = "2018"
@@ -19,7 +19,7 @@ selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
 parking_lot = "0.11"
 assert_matches = "1"
 kvdb-memorydb = "0.10.0"

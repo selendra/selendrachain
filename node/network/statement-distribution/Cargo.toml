@@ -1,6 +1,6 @@
 [package]
 name = "selendra-statement-distribution"
-version = "0.1.7"
+version = "0.1.6"
 authors = ["Selendra info@selendra.org"]
 description = "Statement Distribution Subsystem"
 edition = "2018"
@@ -13,8 +13,8 @@ indexmap = "1.7.0"
 derive_more = "0.99.17"
 thiserror = "1.0.30"
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive"] }
-sp-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sp-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
 
 selendra-primitives = { path = "../../../primitives" }
 selendra-subsystem = { package = "selendra-node-subsystem", path = "../../subsystem" }
@@ -25,12 +25,12 @@ selendra-node-network-protocol = { path = "../../network/protocol" }
 [dev-dependencies]
 assert_matches = "1.4.0"
 futures-timer = "3.0.2"
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
 
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }

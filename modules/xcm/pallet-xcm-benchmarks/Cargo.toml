@@ -1,6 +1,6 @@
 [package]
 name = "pallet-xcm-benchmarks"
-version = "0.1.7"
+version = "0.1.6"
 authors = ["Selendra info@selendra.org"]
 edition = "2018"
 
@@ -12,21 +12,21 @@ log = "0.4.0"
 codec = { package = "parity-scale-codec", version = "2.3.1", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
 
 xcm-executor = { path = "../xcm-executor", default-features = false, features = ["runtime-benchmarks"] }
 xcm = { path = "..", default-features = false, features = ["runtime-benchmarks"] }
 
 [dev-dependencies]
-pallet-balances = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-pallet-assets = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+pallet-balances = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+pallet-assets = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
 
 xcm-builder = { path = "../xcm-builder" }
 xcm = { path = ".." }

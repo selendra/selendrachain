@@ -1,6 +1,6 @@
 [package]
 name = "selendra-node-core-provisioner"
-version = "0.1.7"
+version = "0.1.6"
 authors = ["Selendra info@selendra.org"]
 edition = "2018"
 
@@ -15,6 +15,6 @@ selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 
 [dev-dependencies]
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
