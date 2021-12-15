@@ -7,11 +7,15 @@ A specialized solution for identity management, ownership of assets distribution
 Read the [Selendra whitepaper](https://docs.selendra.org/whitepaper/whitepaper/)
 
 ### build and run from source
- To Install and build Selendra-Chain see [here](https://github.com/selendra/selendra-chain/blob/main/docs/from_source.md).
+ To Install and build Selendra see [here](https://github.com/selendra/selendra-chain/blob/main/docs/from_source.md).
  
 ### Run with docker
 
-To run Selendra-Chain with docker see [here](https://github.com/selendra/selendra-chain/blob/main/docs/from_docker.md).
+To run Selendra with docker see [here](https://github.com/selendra/selendra-chain/blob/main/docs/from_docker.md).
+
+### Run Validator
+
+To run Selendra Validator [here](https://github.com/selendra/selendra-chain/blob/main/docs/validator.md).
 
 ### License
 
