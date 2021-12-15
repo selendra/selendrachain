@@ -4,7 +4,7 @@ Codebase of Selendra is a multi-blockchain nominated proof-of-stake cryptographi
 
 A specialized solution for identity management, ownership of assets distribution & management, decentralized e-commerce, finance, decentralize computing and storage, and IoT applications and more.
 
-Read the [Selendra whitepaper](https://docs.selendra.org/whitepaper/whitepaper/)
+Read the [Selendra whitepaper](https://docs.selendra.org/Whitepaper/whitepaper)
 
 ### build and run from source
  To Install and build Selendra see [here](https://github.com/selendra/selendra-chain/blob/main/docs/from_source.md).
@@ -16,6 +16,10 @@ To run Selendra with docker see [here](https://github.com/selendra/selendra-chai
 ### Run Validator
 
 To run Selendra Validator [here](https://github.com/selendra/selendra-chain/blob/main/docs/validator.md).
+
+### Check node telemetry
+
+You see all node have run [here](https://telemetry.polkadot.io/#list/0xfed22682a24ebba2d122daa5f612dca0867a476f936a226c92929e1379fdda30)
 
 ### License
 
