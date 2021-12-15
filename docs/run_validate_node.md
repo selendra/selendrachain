@@ -1,14 +1,4 @@
- ### Install & Configure Network Time Protocol (NTP) Client
- NTP is a networking protocol designed to synchronize the clocks of computers over a network. NTP allows you to synchronize the clocks of all the systems within the network. Currently it is required that validators' local clocks stay reasonably in sync, so you should be running NTP or a similar service.
 
- ```sh
-# Check if NTP is installed and running, you should see System clock synchronized: yes 
-timedatectl
-# If you do not see it, you can install it by executing
-sudo apt-get install ntp
-```
-
-***WARNING***: Skipping this can result in the validator node missing block authorship opportunities. If the clock is out of sync (even by a small amount), the blocks the validator produces may not get accepted by the network. This will result in ImOnline heartbeats making it on chain, but zero allocated blocks making it on chain.
 
 ### Synchronize Chain Data and Run validator
 
@@ -22,8 +12,7 @@ You can begin syncing your node by running the following command:
 ./target/release/selendra \
   --base-path <save path> \
   --chain selendra \
-  --pruning=archive \
-  --bootnodes /ip4/<IP Address>/tcp/<p2p Port>/p2p/<Peer ID>
+  --pruning=archive
 ```
 Depending on the size of the chain when you do this, this step may take anywhere from a few minutes to a few hours.
 After sync finish chain data stop it and running the following command:
@@ -37,6 +26,5 @@ After sync finish chain data stop it and running the following command:
 --rpc-port 9933 \
 --telemetry-url "wss://telemetry.polkadot.io/submit/ 0" \
 --validator \
---name <Name> \
---bootnodes /ip4/<IP Address>/tcp/<p2p Port>/p2p/<Peer ID>
+--name <Name>
 ```
