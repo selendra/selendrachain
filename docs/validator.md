@@ -66,14 +66,6 @@ Your bonded account will available under Stashes. You should now see a new card 
 ## Set Session Keys
 Once your node is fully synced, stop the process by pressing Ctrl-C. At your terminal prompt, you will now start running the node.
 
-```sh
-./target/release/selendra \
-  --chain selendra \
-  --validator \
-  --name "name on telemetry" \
-  --bootnodes /ip4/<IP Address>/tcp/<p2p Port>/p2p/<Peer ID>
-```
-
 **Note**: You can give your validator any name that you like, but note that others will be able to see it, and it will be included in the list of all servers using the same telemetry server. Since numerous people are using telemetry, it is recommended that you choose something likely to be unique.
 
 ## Generating the Session Keys
