@@ -8,7 +8,7 @@ This guide will instruct you how to set up a validator node on the **Selendra** 
  
  ## Run Selendra-Chain from source
  To Install and build Selendra-Chain see [here](https://github.com/selendra/selendra-chain/blob/main/docs/from_source.md).
- How run validator node see see [here](https://github.com/selendra/selendra-chain/blob/main/docs/run_validate_node.md).
+ How run validator node see [here](https://github.com/selendra/selendra-chain/blob/main/docs/run_validate_node.md).
 
  ## Run Selendra-Chain from docker
 
