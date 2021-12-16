@@ -60,13 +60,13 @@ The session keys are consensus critical, so if you are not sure if your node has
 #### Option 1
 Once ensuring that you have connected to your node, the easiest way to set session keys for your node is by calling the author_rotateKeys RPC request to create new keys in your validator's keystore. Navigate to Toolbox tab and select **RPC Calls** then select the **author > rotateKeys()** option and remember to save the output that you get back for a later step.
 
+![image](assets/validator-4.png)
+
 #### Option 2
 
 ```sh
 curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "author_rotateKeys", "params":[]}' http://localhost:9933
 ```
-
-![image](assets/validator-4.png)
 
 ## Submitting the setKeys Transaction
 
