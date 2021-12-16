@@ -5,12 +5,9 @@ This guide will instruct you how to set up a validator node on the **Selendra** 
  To became **Selendra** validator you need to stake at least **31416 SEL**. This stake amount can come from yourself or from nominators. This means that as a minimum, you will need enough **SEL** to set up Stash and Controller accounts with the existential deposit, plus a little extra for transaction fees. The rest can come from nominators.
  
  ***Warning***: Any **SEL** that you stake for your validator is liable to be slashed, meaning that an insecure or improper setup may result in loss of **SEL** tokens! If you are not confident in your ability to run a validator node, it is recommended to nominate your SEL to a trusted validator node instead.
- 
- ##  Build Selendra-Chain
- To Install and build Selendra-Chain see [here](https://github.com/selendra/selendra-chain/blob/main/README.md).
- 
- ## Install & Configure Network Time Protocol (NTP) Client
- NTP is a networking protocol designed to synchronize the clocks of computers over a network. NTP allows you to synchronize the clocks of all the systems within the network. Currently it is required that validators' local clocks stay reasonably in sync, so you should be running NTP or a similar service.
+
+### Install & Configure Network Time Protocol (NTP) Client
+NTP is a networking protocol designed to synchronize the clocks of computers over a network. NTP allows you to synchronize the clocks of all the systems within the network. Currently it is required that validators' local clocks stay reasonably in sync, so you should be running NTP or a similar service.
 
  ```sh
 # Check if NTP is installed and running, you should see System clock synchronized: yes 
@@ -20,22 +17,14 @@ sudo apt-get install ntp
 ```
 
 ***WARNING***: Skipping this can result in the validator node missing block authorship opportunities. If the clock is out of sync (even by a small amount), the blocks the validator produces may not get accepted by the network. This will result in ImOnline heartbeats making it on chain, but zero allocated blocks making it on chain.
+ 
+ ## Run Selendra-Chain from source
+ To Install and build Selendra-Chain see [here](https://github.com/selendra/selendra-chain/blob/main/docs/from_source.md).
+ How run validator node see [here](https://github.com/selendra/selendra-chain/blob/main/docs/run_validate_node.md).
 
-## Synchronize Chain Data
+ ## Run Selendra-Chain from docker
 
-**Note**: By default, Validator nodes are in archive mode. If you've already synced the chain not in archive mode, you must first remove the database with **selendra purge-chain** and then ensure that you run **Selendra** with the *--pruning=archive* option.
-Note that an archive node and non-archive node's databases are not compatible with each other, and to switch you will need to purge the chain data.
-The *--pruning=archive* flag is implied by the *--validator* flag, so it is only required explicitly if you start your node without one of these two options. If you do not set your pruning to archive node, even when not running in validator mode, you will need to re-sync your database when you switch.
-
-You can begin syncing your node by running the following command:
-
-```sh
-./target/release/selendra \
-  --chain selendra \
-  --pruning=archive \
-  --bootnodes /ip4/<IP Address>/tcp/<p2p Port>/p2p/<Peer ID>
-```
-Depending on the size of the chain when you do this, this step may take anywhere from a few minutes to a few hours.
+To run Selendra-Chain with docker see [here](https://github.com/selendra/selendra-chain/blob/main/docs/from_docker.md).
 
 ## Bond SEL
 
@@ -64,23 +53,20 @@ Your bonded account will available under Stashes. You should now see a new card 
 ![image](assets/validator-3.png)
 
 ## Set Session Keys
-Once your node is fully synced, stop the process by pressing Ctrl-C. At your terminal prompt, you will now start running the node.
 
-```sh
-./target/release/selendra \
-  --chain selendra \
-  --validator \
-  --name "name on telemetry" \
-  --bootnodes /ip4/<IP Address>/tcp/<p2p Port>/p2p/<Peer ID>
-```
-
-**Note**: You can give your validator any name that you like, but note that others will be able to see it, and it will be included in the list of all servers using the same telemetry server. Since numerous people are using telemetry, it is recommended that you choose something likely to be unique.
+The session keys are consensus critical, so if you are not sure if your node has the current session keys that you made the setKeys transaction then you can use one of the two available RPC methods to query your node: [hasKey](https://polkadot.js.org/docs/substrate/rpc/#haskeypublickey-bytes-keytype-text-bool) to check for a specific key or [hasSessionKeys](https://polkadot.js.org/docs/substrate/rpc/#hassessionkeyssessionkeys-bytes-bool) to check the full session key public key string.
 
 ## Generating the Session Keys
-
+#### Option 1
 Once ensuring that you have connected to your node, the easiest way to set session keys for your node is by calling the author_rotateKeys RPC request to create new keys in your validator's keystore. Navigate to Toolbox tab and select **RPC Calls** then select the **author > rotateKeys()** option and remember to save the output that you get back for a later step.
 
 ![image](assets/validator-4.png)
+
+#### Option 2
+
+```sh
+curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "author_rotateKeys", "params":[]}' http://localhost:9933
+```
 
 ## Submitting the setKeys Transaction
 
