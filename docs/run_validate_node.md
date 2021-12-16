@@ -15,7 +15,9 @@ You can begin syncing your node by running the following command:
   --pruning=archive
 ```
 Depending on the size of the chain when you do this, this step may take anywhere from a few minutes to a few hours.
-After sync finish chain data stop it and running the following command:
+Once your node is fully synced, stop the process by pressing Ctrl-C. At your terminal prompt, you will now start running the node.
+
+**Note**: You can give your validator any name that you like, but note that others will be able to see it, and it will be included in the list of all servers using the same telemetry server. Since numerous people are using telemetry, it is recommended that you choose something likely to be unique.
 
 ```sh
 ./target/release/selendra \
