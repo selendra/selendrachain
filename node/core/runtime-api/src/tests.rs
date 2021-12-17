@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-#[allow(unused_imports)]
+#![allow(unused_imports)]
+#![allow(must_not_suspend)]
 use super::*;
 
 use futures::channel::oneshot;
