@@ -59,6 +59,10 @@ pub fn selendra_config() -> Result<SelendraChainSpec, String> {
 	SelendraChainSpec::from_json_bytes(&include_bytes!("../res/selendra.json")[..])
 }
 
+pub fn selendra_testnet_config() -> Result<SelendraChainSpec, String> {
+	SelendraChainSpec::from_json_bytes(&include_bytes!("../res/selendra-testnet.json")[..])
+}
+
 fn default_parachains_host_configuration(
 ) -> selendra_runtime_parachains::configuration::HostConfiguration<
 	selendra_primitives::v1::BlockNumber,
