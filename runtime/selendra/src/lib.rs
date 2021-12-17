@@ -57,13 +57,13 @@ use beefy_primitives::crypto::AuthorityId as BeefyId;
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
 	traits::{
-		Contains, Everything, FindAuthor, InstanceFilter, KeyOwnerProofSystem,
-		LockIdentifier, Nothing, PrivilegeCmp,
+		Contains, Everything, FindAuthor, InstanceFilter, KeyOwnerProofSystem, LockIdentifier,
+		Nothing, PrivilegeCmp,
 	},
 	weights::Weight,
 	ConsensusEngineId, PalletId, RuntimeDebug,
 };
-use frame_system::{EnsureRoot, EnsureOneOf};
+use frame_system::{EnsureOneOf, EnsureRoot};
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId};
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_mmr_primitives as mmr;
