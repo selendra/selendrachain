@@ -17,10 +17,6 @@ To run Selendra with docker see [here](https://github.com/selendra/selendra-chai
 
 To run Selendra Validator [here](https://github.com/selendra/selendra-chain/blob/main/docs/validator.md).
 
-### Check node telemetry
-
-You see all node have run [here](https://telemetry.polkadot.io/#list/0xfed22682a24ebba2d122daa5f612dca0867a476f936a226c92929e1379fdda30)
-
 ### License
 
 Selendra is implement from [Polkadot](https://github.com/paritytech/polkadot.git) under license [GPL 3.0 licensed](LICENSE-GPL3).
