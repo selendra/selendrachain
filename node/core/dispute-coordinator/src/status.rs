@@ -17,9 +17,8 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use parity_scale_codec::{Decode, Encode};
-use selendra_primitives::v1::{CandidateHash, SessionIndex};
 
-use crate::real::LOG_TARGET;
+use crate::LOG_TARGET;
 
 /// The choice here is fairly arbitrary. But any dispute that concluded more than a few minutes ago
 /// is not worth considering anymore. Changing this value has little to no bearing on consensus,
@@ -49,10 +48,6 @@ pub enum DisputeStatus {
 	/// validators are participating on both sides.
 	#[codec(index = 2)]
 	ConcludedAgainst(Timestamp),
-	/// Dispute has been confirmed (more than `byzantine_threshold` have already participated/ or
-	/// we have seen the candidate included already/participated successfully ourselves).
-	#[codec(index = 3)]
-	Confirmed,
 }
 
 impl DisputeStatus {
@@ -61,30 +56,11 @@ impl DisputeStatus {
 		DisputeStatus::Active
 	}
 
-	/// Move status to confirmed status, if not yet concluded/confirmed already.
-	pub fn confirm(self) -> DisputeStatus {
-		match self {
-			DisputeStatus::Active => DisputeStatus::Confirmed,
-			DisputeStatus::Confirmed => DisputeStatus::Confirmed,
-			DisputeStatus::ConcludedFor(_) | DisputeStatus::ConcludedAgainst(_) => self,
-		}
-	}
-
-	/// Check whether the dispute is not a spam dispute.
-	pub fn is_confirmed_concluded(&self) -> bool {
-		match self {
-			&DisputeStatus::Confirmed |
-			&DisputeStatus::ConcludedFor(_) |
-			DisputeStatus::ConcludedAgainst(_) => true,
-			&DisputeStatus::Active => false,
-		}
-	}
-
 	/// Transition the status to a new status after observing the dispute has concluded for the candidate.
 	/// This may be a no-op if the status was already concluded.
 	pub fn concluded_for(self, now: Timestamp) -> DisputeStatus {
 		match self {
-			DisputeStatus::Active | DisputeStatus::Confirmed => DisputeStatus::ConcludedFor(now),
+			DisputeStatus::Active => DisputeStatus::ConcludedFor(now),
 			DisputeStatus::ConcludedFor(at) => DisputeStatus::ConcludedFor(std::cmp::min(at, now)),
 			against => against,
 		}
@@ -94,8 +70,7 @@ impl DisputeStatus {
 	/// This may be a no-op if the status was already concluded.
 	pub fn concluded_against(self, now: Timestamp) -> DisputeStatus {
 		match self {
-			DisputeStatus::Active | DisputeStatus::Confirmed =>
-				DisputeStatus::ConcludedAgainst(now),
+			DisputeStatus::Active => DisputeStatus::ConcludedAgainst(now),
 			DisputeStatus::ConcludedFor(at) =>
 				DisputeStatus::ConcludedAgainst(std::cmp::min(at, now)),
 			DisputeStatus::ConcludedAgainst(at) =>
@@ -106,9 +81,7 @@ impl DisputeStatus {
 	/// Whether the disputed candidate is possibly invalid.
 	pub fn is_possibly_invalid(&self) -> bool {
 		match self {
-			DisputeStatus::Active |
-			DisputeStatus::Confirmed |
-			DisputeStatus::ConcludedAgainst(_) => true,
+			DisputeStatus::Active | DisputeStatus::ConcludedAgainst(_) => true,
 			DisputeStatus::ConcludedFor(_) => false,
 		}
 	}
@@ -116,30 +89,17 @@ impl DisputeStatus {
 	/// Yields the timestamp this dispute concluded at, if any.
 	pub fn concluded_at(&self) -> Option<Timestamp> {
 		match self {
-			DisputeStatus::Active | DisputeStatus::Confirmed => None,
+			DisputeStatus::Active => None,
 			DisputeStatus::ConcludedFor(at) | DisputeStatus::ConcludedAgainst(at) => Some(*at),
 		}
 	}
 }
 
-/// Get active disputes as iterator, preserving its `DisputeStatus`.
-pub fn get_active_with_status(
-	recent_disputes: impl Iterator<Item = ((SessionIndex, CandidateHash), DisputeStatus)>,
-	now: Timestamp,
-) -> impl Iterator<Item = ((SessionIndex, CandidateHash), DisputeStatus)> {
-	recent_disputes.filter_map(move |(disputed, status)| {
-		status
-			.concluded_at()
-			.filter(|at| *at + ACTIVE_DURATION_SECS < now)
-			.map_or(Some((disputed, status)), |_| None)
-	})
-}
-
-pub trait Clock: Send + Sync {
+pub(crate) trait Clock: Send + Sync {
 	fn now(&self) -> Timestamp;
 }
 
-pub struct SystemClock;
+pub(crate) struct SystemClock;
 
 impl Clock for SystemClock {
 	fn now(&self) -> Timestamp {

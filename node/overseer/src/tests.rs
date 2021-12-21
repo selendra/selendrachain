@@ -888,6 +888,17 @@ fn test_dispute_coordinator_msg() -> DisputeCoordinatorMessage {
 	DisputeCoordinatorMessage::RecentDisputes(sender)
 }
 
+fn test_dispute_participation_msg() -> DisputeParticipationMessage {
+	let (sender, _) = oneshot::channel();
+	DisputeParticipationMessage::Participate {
+		candidate_hash: Default::default(),
+		candidate_receipt: Default::default(),
+		session: 0,
+		n_validators: 0,
+		report_availability: sender,
+	}
+}
+
 fn test_dispute_distribution_msg() -> DisputeDistributionMessage {
 	let dummy_dispute_message = UncheckedDisputeMessage {
 		candidate_receipt: Default::default(),
@@ -919,7 +930,7 @@ fn test_chain_selection_msg() -> ChainSelectionMessage {
 // Checks that `stop`, `broadcast_signal` and `broadcast_message` are implemented correctly.
 #[test]
 fn overseer_all_subsystems_receive_signals_and_messages() {
-	const NUM_SUBSYSTEMS: usize = 20;
+	const NUM_SUBSYSTEMS: usize = 21;
 	// -3 for BitfieldSigning, GossipSupport and AvailabilityDistribution
 	const NUM_SUBSYSTEMS_MESSAGED: usize = NUM_SUBSYSTEMS - 3;
 
@@ -999,6 +1010,9 @@ fn overseer_all_subsystems_receive_signals_and_messages() {
 			.send_msg_anon(AllMessages::DisputeCoordinator(test_dispute_coordinator_msg()))
 			.await;
 		handle
+			.send_msg_anon(AllMessages::DisputeParticipation(test_dispute_participation_msg()))
+			.await;
+		handle
 			.send_msg_anon(AllMessages::DisputeDistribution(test_dispute_distribution_msg()))
 			.await;
 		handle
@@ -1055,6 +1069,7 @@ fn context_holds_onto_message_until_enough_signals_received() {
 	let (approval_voting_bounded_tx, _) = metered::channel(CHANNEL_CAPACITY);
 	let (gossip_support_bounded_tx, _) = metered::channel(CHANNEL_CAPACITY);
 	let (dispute_coordinator_bounded_tx, _) = metered::channel(CHANNEL_CAPACITY);
+	let (dispute_participation_bounded_tx, _) = metered::channel(CHANNEL_CAPACITY);
 	let (dispute_distribution_bounded_tx, _) = metered::channel(CHANNEL_CAPACITY);
 	let (chain_selection_bounded_tx, _) = metered::channel(CHANNEL_CAPACITY);
 
@@ -1076,6 +1091,7 @@ fn context_holds_onto_message_until_enough_signals_received() {
 	let (approval_voting_unbounded_tx, _) = metered::unbounded();
 	let (gossip_support_unbounded_tx, _) = metered::unbounded();
 	let (dispute_coordinator_unbounded_tx, _) = metered::unbounded();
+	let (dispute_participation_unbounded_tx, _) = metered::unbounded();
 	let (dispute_distribution_unbounded_tx, _) = metered::unbounded();
 	let (chain_selection_unbounded_tx, _) = metered::unbounded();
 
@@ -1098,6 +1114,7 @@ fn context_holds_onto_message_until_enough_signals_received() {
 		approval_voting: approval_voting_bounded_tx.clone(),
 		gossip_support: gossip_support_bounded_tx.clone(),
 		dispute_coordinator: dispute_coordinator_bounded_tx.clone(),
+		dispute_participation: dispute_participation_bounded_tx.clone(),
 		dispute_distribution: dispute_distribution_bounded_tx.clone(),
 		chain_selection: chain_selection_bounded_tx.clone(),
 
@@ -1119,6 +1136,7 @@ fn context_holds_onto_message_until_enough_signals_received() {
 		approval_voting_unbounded: approval_voting_unbounded_tx.clone(),
 		gossip_support_unbounded: gossip_support_unbounded_tx.clone(),
 		dispute_coordinator_unbounded: dispute_coordinator_unbounded_tx.clone(),
+		dispute_participation_unbounded: dispute_participation_unbounded_tx.clone(),
 		dispute_distribution_unbounded: dispute_distribution_unbounded_tx.clone(),
 		chain_selection_unbounded: chain_selection_unbounded_tx.clone(),
 	};

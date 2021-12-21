@@ -706,6 +706,7 @@ where
 	let local_keystore = basics.keystore_container.local_keystore();
 	let auth_or_collator = role.is_authority() || is_collator.is_collator();
 	let requires_overseer_for_chain_sel = local_keystore.is_some() && auth_or_collator;
+	let disputes_enabled = false;
 
 	let select_chain = if requires_overseer_for_chain_sel {
 		let metrics =
@@ -715,6 +716,7 @@ where
 			basics.backend.clone(),
 			overseer_handle.clone(),
 			metrics,
+			disputes_enabled,
 		)
 	} else {
 		SelectRelayChain::new_longest_chain(basics.backend.clone())
@@ -873,7 +875,7 @@ where
 	let active_leaves =
 		futures::executor::block_on(active_leaves(select_chain.as_longest_chain(), &*client))?;
 
-	let authority_discovery_service = if role.is_authority() || is_collator.is_collator() {
+	let authority_discovery_service = if auth_or_collator {
 		use sc_network::Event;
 
 		let authority_discovery_role = if role.is_authority() {
@@ -943,6 +945,7 @@ where
 					candidate_validation_config,
 					chain_selection_config,
 					dispute_coordinator_config,
+					disputes_enabled,
 				},
 			)
 			.map_err(|e| {

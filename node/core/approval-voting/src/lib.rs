@@ -45,10 +45,7 @@ use selendra_node_subsystem::{
 };
 use selendra_node_subsystem_util::{
 	metrics::{self, prometheus},
-	rolling_session_window::{
-		new_session_window_size, RollingSessionWindow, SessionWindowSize, SessionWindowUpdate,
-		SessionsUnavailable,
-	},
+	rolling_session_window::RollingSessionWindow,
 	TimeoutExt,
 };
 use selendra_primitives::v1::{
@@ -95,8 +92,7 @@ use crate::{
 #[cfg(test)]
 mod tests;
 
-pub const APPROVAL_SESSIONS: SessionWindowSize = new_session_window_size!(6);
-
+const APPROVAL_SESSIONS: SessionIndex = 6;
 const APPROVAL_CHECKING_TIMEOUT: Duration = Duration::from_secs(120);
 const APPROVAL_CACHE_SIZE: usize = 1024;
 const TICK_TOO_FAR_IN_FUTURE: Tick = 20; // 10 seconds.
@@ -572,7 +568,7 @@ impl CurrentlyCheckingSet {
 }
 
 struct State {
-	session_window: Option<RollingSessionWindow>,
+	session_window: RollingSessionWindow,
 	keystore: Arc<LocalKeystore>,
 	slot_duration_millis: u64,
 	clock: Box<dyn Clock + Send + Sync>,
@@ -581,30 +577,9 @@ struct State {
 
 impl State {
 	fn session_info(&self, i: SessionIndex) -> Option<&SessionInfo> {
-		self.session_window.as_ref().and_then(|w| w.session_info(i))
+		self.session_window.session_info(i)
 	}
 
-	/// Bring `session_window` up to date.
-	pub async fn cache_session_info_for_head(
-		&mut self,
-		ctx: &mut (impl SubsystemContext + overseer::SubsystemContext),
-		head: Hash,
-	) -> Result<Option<SessionWindowUpdate>, SessionsUnavailable> {
-		let session_window = self.session_window.take();
-		match session_window {
-			None => {
-				self.session_window =
-					Some(RollingSessionWindow::new(ctx, APPROVAL_SESSIONS, head).await?);
-				Ok(None)
-			},
-			Some(mut session_window) => {
-				let r =
-					session_window.cache_session_info_for_head(ctx, head).await.map(Option::Some);
-				self.session_window = Some(session_window);
-				r
-			},
-		}
-	}
 	// Compute the required tranches for approval for this block and candidate combo.
 	// Fails if there is no approval entry for the block under the candidate or no candidate entry
 	// under the block, or if the session is out of bounds.
@@ -696,7 +671,7 @@ where
 	B: Backend,
 {
 	let mut state = State {
-		session_window: None,
+		session_window: RollingSessionWindow::new(APPROVAL_SESSIONS),
 		keystore: subsystem.keystore,
 		slot_duration_millis: subsystem.slot_duration_millis,
 		clock,
