@@ -1,6 +1,6 @@
 [package]
 name = "selendra-service"
-version = "0.1.7"
+version = "0.1.8"
 authors = ["Selendra info@selendra.org"]
 edition = "2018"
 
@@ -106,6 +106,7 @@ selendra-node-core-candidate-validation = { path = "../core/candidate-validation
 selendra-node-core-chain-api = { path = "../core/chain-api", optional = true }
 selendra-node-core-chain-selection = { path = "../core/chain-selection", optional = true }
 selendra-node-core-dispute-coordinator = { path = "../core/dispute-coordinator", optional = true }
+selendra-node-core-dispute-participation = { path = "../core/dispute-participation", optional = true }
 selendra-node-core-provisioner = { path = "../core/provisioner", optional = true }
 selendra-node-core-runtime-api = { path = "../core/runtime-api", optional = true }
 selendra-statement-distribution = { path = "../network/statement-distribution", optional = true }
@@ -150,6 +151,7 @@ full-node = [
 	"selendra-node-core-chain-api",
 	"selendra-node-core-chain-selection",
 	"selendra-node-core-dispute-coordinator",
+	"selendra-node-core-dispute-participation",
 	"selendra-node-core-provisioner",
 	"selendra-node-core-runtime-api",
 	"selendra-statement-distribution",
@@ -160,4 +162,3 @@ full-node = [
 light-node = []
 runtime-benchmarks = ["selendra-runtime/runtime-benchmarks"]
 try-runtime = ["selendra-runtime/try-runtime"]
-disputes = ["selendra-node-core-dispute-coordinator/disputes"]

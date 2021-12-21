@@ -26,10 +26,7 @@ use selendra_primitives::v1::{CandidateHash, SessionIndex};
 
 use std::collections::HashMap;
 
-use super::{
-	db::v1::{CandidateVotes, RecentDisputes},
-	error::FatalResult,
-};
+use super::db::v1::{CandidateVotes, RecentDisputes};
 
 #[derive(Debug)]
 pub enum BackendWriteOp {
@@ -56,7 +53,7 @@ pub trait Backend {
 
 	/// Atomically writes the list of operations, with later operations taking precedence over
 	/// prior.
-	fn write<I>(&mut self, ops: I) -> FatalResult<()>
+	fn write<I>(&mut self, ops: I) -> SubsystemResult<()>
 	where
 		I: IntoIterator<Item = BackendWriteOp>;
 }

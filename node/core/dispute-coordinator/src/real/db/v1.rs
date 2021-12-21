@@ -27,11 +27,12 @@ use std::sync::Arc;
 use kvdb::{DBTransaction, KeyValueDB};
 use parity_scale_codec::{Decode, Encode};
 
-use crate::real::{
-	backend::{Backend, BackendWriteOp, OverlayedBackend},
-	error::{Fatal, FatalResult},
+use crate::{
+	real::{
+		backend::{Backend, BackendWriteOp, OverlayedBackend},
+		DISPUTE_WINDOW,
+	},
 	status::DisputeStatus,
-	DISPUTE_WINDOW,
 };
 
 const RECENT_DISPUTES_KEY: &[u8; 15] = b"recent-disputes";
@@ -71,7 +72,7 @@ impl Backend for DbBackend {
 
 	/// Atomically writes the list of operations, with later operations taking precedence over
 	/// prior.
-	fn write<I>(&mut self, ops: I) -> FatalResult<()>
+	fn write<I>(&mut self, ops: I) -> SubsystemResult<()>
 	where
 		I: IntoIterator<Item = BackendWriteOp>,
 	{
@@ -97,7 +98,7 @@ impl Backend for DbBackend {
 			}
 		}
 
-		self.inner.write(tx).map_err(Fatal::DbWriteFailed)
+		self.inner.write(tx).map_err(Into::into)
 	}
 }
 
@@ -213,7 +214,7 @@ pub(crate) fn note_current_session(
 	overlay_db: &mut OverlayedBackend<'_, impl Backend>,
 	current_session: SessionIndex,
 ) -> SubsystemResult<()> {
-	let new_earliest = current_session.saturating_sub(DISPUTE_WINDOW.get());
+	let new_earliest = current_session.saturating_sub(DISPUTE_WINDOW);
 	match overlay_db.load_earliest_session()? {
 		None => {
 			// First launch - write new-earliest.
@@ -420,7 +421,7 @@ mod tests {
 
 		let prev_earliest_session = 0;
 		let new_earliest_session = 5;
-		let current_session = 5 + DISPUTE_WINDOW.get();
+		let current_session = 5 + DISPUTE_WINDOW;
 
 		let very_old = 3;
 		let slightly_old = 4;

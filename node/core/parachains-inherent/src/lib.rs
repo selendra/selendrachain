@@ -109,9 +109,9 @@ impl ParachainsInherentDataProvider {
 impl sp_inherents::InherentDataProvider for ParachainsInherentDataProvider {
 	fn provide_inherent_data(
 		&self,
-		dst_inherent_data: &mut sp_inherents::InherentData,
+		inherent_data: &mut sp_inherents::InherentData,
 	) -> Result<(), sp_inherents::Error> {
-		dst_inherent_data
+		inherent_data
 			.put_data(selendra_primitives::v1::PARACHAINS_INHERENT_IDENTIFIER, &self.inherent_data)
 	}
 

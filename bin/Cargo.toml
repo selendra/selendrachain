@@ -1,6 +1,6 @@
 [package]
 name = "selendra"
-version = "0.1.7"
+version = "0.1.8"
 authors = ["Selendra info@selendra.org"]
 edition = "2018"
 description = "Implementation of node in Rust based on the Substrate framework."
@@ -22,4 +22,3 @@ tempfile = "3.2.0"
 [features]
 runtime-benchmarks= [ "selendra-cli/runtime-benchmarks" ]
 try-runtime = [ "selendra-cli/try-runtime" ]
-disputes = [ "selendra-cli/disputes" ]

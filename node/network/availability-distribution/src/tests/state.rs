@@ -309,7 +309,7 @@ fn to_incoming_req(
 			let (tx, rx): (oneshot::Sender<netconfig::OutgoingResponse>, oneshot::Receiver<_>) =
 				oneshot::channel();
 			executor.spawn(
-				"Message forwarding",
+				"message-forwarding",
 				None,
 				async {
 					let response = rx.await;

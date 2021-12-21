@@ -1,0 +1,20 @@
+[package]
+name = "selendra-node-core-dispute-participation"
+version = "0.9.15"
+authors = ["Parity Technologies <admin@parity.io>"]
+edition = "2018"
+
+[dependencies]
+futures = "0.3.17"
+thiserror = "1.0.30"
+tracing = "0.1.29"
+
+selendra-node-primitives = { path = "../../primitives" }
+selendra-node-subsystem = { path = "../../subsystem" }
+selendra-primitives = { path = "../../../primitives" }
+
+[dev-dependencies]
+assert_matches = "1.5.0"
+parity-scale-codec = "2.3.1"
+selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers"}
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
