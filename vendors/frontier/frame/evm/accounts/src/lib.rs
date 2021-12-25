@@ -1,6 +1,5 @@
 //! # Evm Accounts Module
 
-// This modules mainly comes from: https://github.com/AcalaNetwork/Acala/blob/polkadot-v0.9.13/modules/evm-accounts/src/lib.rs
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify

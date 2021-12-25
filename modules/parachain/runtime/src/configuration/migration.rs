@@ -212,7 +212,7 @@ mod tests {
 
 	#[test]
 	fn v1_deserialized_from_actual_data() {
-		// Fetched at Kusama 10,320,500 (0x3b2c305d01bd4adf1973d32a2d55ca1260a55eea8dfb3168e317c57f2841fdf1)
+		// Fetched at Selendra 10,320,500 (0x3b2c305d01bd4adf1973d32a2d55ca1260a55eea8dfb3168e317c57f2841fdf1)
 		//
 		// This exceeds the maximal line width length, but that's fine, since this is not code and
 		// doesn't need to be read and also leaving it as one line allows to easily copy it.
