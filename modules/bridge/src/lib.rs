@@ -9,7 +9,6 @@ mod tests;
 pub mod hashing;
 
 pub use pallet::*;
-
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Decode, Encode, EncodeLike};
@@ -17,6 +16,7 @@ pub mod pallet {
 		pallet_prelude::*, traits::StorageVersion, weights::GetDispatchInfo, PalletId, Parameter,
 	};
 	use frame_system::{self as system, pallet_prelude::*};
+	use scale_info::TypeInfo;
 	pub use sp_core::U256;
 	use sp_runtime::{
 		traits::{AccountIdConversion, Dispatchable},
@@ -43,14 +43,14 @@ pub mod pallet {
 		r_id
 	}
 
-	#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, scale_info::TypeInfo)]
+	#[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, RuntimeDebug)]
 	pub enum ProposalStatus {
 		Initiated,
 		Approved,
 		Rejected,
 	}
 
-	#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, scale_info::TypeInfo)]
+	#[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, RuntimeDebug)]
 	pub struct ProposalVotes<AccountId, BlockNumber> {
 		pub votes_for: Vec<AccountId>,
 		pub votes_against: Vec<AccountId>,
@@ -58,7 +58,7 @@ pub mod pallet {
 		pub expiry: BlockNumber,
 	}
 
-	#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, scale_info::TypeInfo)]
+	#[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, RuntimeDebug)]
 	pub enum BridgeEvent {
 		FungibleTransfer(BridgeChainId, DepositNonce, ResourceId, U256, Vec<u8>),
 		NonFungibleTransfer(BridgeChainId, DepositNonce, ResourceId, Vec<u8>, Vec<u8>, Vec<u8>),
@@ -66,7 +66,7 @@ pub mod pallet {
 	}
 
 	impl<A: PartialEq, B: PartialOrd + Default> ProposalVotes<A, B> {
-		/// Attempts to mark the proposal as approved or rejected.
+		/// Attempts to mark the proposal as approve or rejected.
 		/// Returns true if the status changes from active.
 		pub fn try_to_complete(&mut self, threshold: u32, total: u32) -> ProposalStatus {
 			if self.votes_for.len() >= threshold as usize {
@@ -375,7 +375,7 @@ pub mod pallet {
 
 		/// Evaluate the state of a proposal given the current vote threshold.
 		///
-		/// A proposal with enough votes will be either executed or canceled, and the status
+		/// A proposal with enough votes will be either executed or cancelled, and the status
 		/// will be updated accordingly.
 		///
 		/// # <weight>
@@ -662,6 +662,12 @@ pub mod pallet {
 				system::RawOrigin::Signed(who) if who == bridge_id => Ok(bridge_id),
 				r => Err(T::Origin::from(r)),
 			})
+		}
+
+		#[cfg(feature = "runtime-benchmarks")]
+		fn successful_origin() -> T::Origin {
+			let bridge_id = MODULE_ID.into_account();
+			T::Origin::from(system::RawOrigin::Signed(bridge_id))
 		}
 	}
 }

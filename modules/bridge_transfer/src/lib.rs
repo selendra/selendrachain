@@ -306,7 +306,7 @@ pub mod pallet {
 			}
 
 			if rid == T::NativeTokenResourceId::get() {
-				// ERC20 PHA transfer
+				// ERC20 SEL transfer
 				<T as Config>::Currency::transfer(
 					&source,
 					&to,

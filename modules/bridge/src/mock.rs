@@ -62,7 +62,6 @@ impl frame_system::Config for Test {
 	type BlockLength = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
-	
 }
 
 parameter_types! {
