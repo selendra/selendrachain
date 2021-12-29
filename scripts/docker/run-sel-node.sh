@@ -7,7 +7,7 @@ osInfo[/etc/debian_version]="apt-get install -y"
 osInfo[/etc/alpine-release]="apk --update add"
 osInfo[/etc/centos-release]="yum install -y"
 osInfo[/etc/fedora-release]="dnf install -y"
-osInfo[/etc/os-release]="brew install -y"
+#osInfo[/etc/os-release]="brew install -y"
 
 for f in ${!osInfo[@]}
 do
@@ -19,7 +19,7 @@ done
 # list packages to install
 package="git"
 package="docker"
-package="docker.id"
+package="docker.io"
 
 # install packages 
 ${package_manager} ${package}
