@@ -28,22 +28,23 @@ ${package_manager} ${package}
 sudo docker pull laynath/selendra-chain:test
 
 # create directory for selendra-chaindb
-mkdir -p /home/$USER/selendra-chaindb
+read -p "Name a directory where the Selendra Chain will store: " selendradb
+mkdir -p /home/$USER/${selendradb}
 
 # allow selendra-chaindb (blockchain data) access to local directory
-sudo chown 1000.1000 /home/$USER/selendra-chaindb -R
+sudo chown 1000.1000 /home/$USER/${selendradb} -R
 
 # name container and node
-read -p "What should the container call?: " $container
+read -p "What should the container call?: " container
 
-read -p "What do you want to call your node?: $node"
+read -p "What do you want to call your node?:" node
 
 # remove any duplicate containers
-sudo docker container rm $container
+sudo docker container rm ${container}
 # run docker container
 sudo docker container run \
 --network="host" \
---name $container \
+--name ${container} \
 -v /home/rithy/selendrachaindb:/selendra/data/testnet \
 laynath/selendra-chain:test \
 --base-path selendra/data/testnet \
@@ -53,10 +54,10 @@ laynath/selendra-chain:test \
 --ws-port 9944 \
 --telemetry-url "wss://telemetry.polkadot.io/submit/ 0" \
 --validator \
---name $node
+--name ${node}
 
 #restart docker
-sudo docker restart $container
+sudo docker restart ${container}
 
 # use this command to get your Session key.
 # curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "author_rotateKeys", "params":[]}' http://localhost:9933>
