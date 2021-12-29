@@ -19,7 +19,6 @@ done
 # list packages to install
 package="git"
 package="docker"
-package="docker.io"
 
 # install packages 
 ${package_manager} ${package}
@@ -59,7 +58,12 @@ laynath/selendra-chain:test \
 #restart docker
 sudo docker restart ${container}
 
-# use this command to get your Session key.
+# to check your node go >>> https://telemetry.polkadot.io/#list/0x889494a97f9573ead42f297ac4b91935cf9727b1bdae29fd4ba56bc8468767c7
+
+# to become a validator use this command to get your Session key.
 # curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "author_rotateKeys", "params":[]}' http://localhost:9933>
 
+# output will look like >>> {"jsonrpc":"2.0","result":"0x45e81ef5c...0615265", "id":1} 
+# copy only  >>> 0x45e81ef5c...0615265
+# then go to testnet.selendra.org and follow this instruction >>> https://github.com/selendra/selendra-chain/blob/main/docs/validator.md
 
