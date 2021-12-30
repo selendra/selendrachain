@@ -1,6 +1,20 @@
 ## Using Docker
 The easiest/faster option to run Selendra in Docker is to use the latest release images. These are small images that use the latest official release of the Selendra binary, pulled from our package repository.
+## Option 1
 
+Clone this [script](https://github.com/selendra/selendrachain/blob/main/scripts/docker-run-test-node.sh) into your local machine. Then run it as below; 
+
+`sudo sh docker-run-test-node.sh`
+
+Once the node is up. You can Ctr + C to stop it, then run;
+
+`sudo docker restart` {write you container name}. 
+
+Don't forget to delete the `{}`.
+
+
+## Option 2
+A more manual process which you will learn how it is run step by step.
 ### Install docker
 To install docker see [here](https://docs.docker.com/engine/install/).
 
