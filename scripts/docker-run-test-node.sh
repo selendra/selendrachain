@@ -6,8 +6,7 @@ osInfo[/etc/debian_version]="apt-get install -y"
 osInfo[/etc/alpine-release]="apk --update add"
 osInfo[/etc/centos-release]="yum install -y"
 osInfo[/etc/fedora-release]="dnf install -y"
-# can't figure out these two yet
-# osInfo[/etc/os-release]="pacman -Syy -y"
+osInfo[/etc/os-release]="pacman -S --noconfirm"
 # osInfo[/etc/os-release]="brew install -y"
 
 for f in ${!osInfo[@]}
@@ -19,21 +18,23 @@ done
 
 # list packages to install
 package="git"
-package="docker"
-package="docker.io"
+if [[ ${package_manager} == "pacman -Syyu --noconfirm" ]]; then 
+    package+=" docker noto-fonts-emoji"
+else
+    package+=" docker.io"
+fi
 
-# install packages 
-${package_manager} ${package}
+sudo $package_manager $package
 
 # pull testnet from docker
 sudo docker pull laynath/selendra-chain:test
 
 # create directory for selendra-chaindb
-read -p "Name a directory where the Selendra Chain will store: " selendradb
-mkdir -p /home/$USER/${selendradb}
+read -p "Name a directory where the Selendra Chain will store: " i
+mkdir -p ${HOME}/${i}
 
 # allow selendra-chaindb (blockchain data) access to local directory
-sudo chown 1000.1000 /home/$USER/${selendradb} -R
+sudo chown 1000.1000 ${HOME}/${USER}/${i} -R
 
 # name container and node
 read -p "What should the container call?: " x
@@ -41,18 +42,18 @@ read -p "What do you want to call your node?:" y
 
 # run docker container
 sudo docker container run \
---network="host" \
---name ${x} \
--v /home/$USER/${selendradb}:/selendra/data/testnet \
-laynath/selendra-chain:test \
---base-path selendra/data/testnet \
---chain testnet \
---port 30333 \
---rpc-port 9933 \
---ws-port 9944 \
---telemetry-url "wss://telemetry.polkadot.io/submit/ 0" \
---validator \
---name ${y}
+    --network="host" \
+    --name ${x} \
+    -v /home/$USER/${selendradb}:/selendra/data/testnet \
+    laynath/selendra-chain:test \
+    --base-path selendra/data/testnet \
+    --chain testnet \
+    --port 30333 \
+    --rpc-port 9933 \
+    --ws-port 9944 \
+    --telemetry-url "wss://telemetry.polkadot.io/submit/ 0" \
+    --validator \
+    --name ${y}
 
 # restart docker
 # sudo docker restart ${container}
