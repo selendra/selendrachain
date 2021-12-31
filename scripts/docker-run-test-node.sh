@@ -26,12 +26,16 @@ fi
 
 sudo $package_manager $package
 
+# enable and start docker service
+sudo systemctl enable docker.service
+sudo systemctl start docker.service
+
 # pull testnet from docker
 sudo docker pull selendrachain/selendra-chain:latest
 
 # create directory for selendra-chaindb
 read -p "Name a directory where the Selendra Chain will store: " i
-mkdir -p ${HOME}/${i}
+mkdir -p ${HOME}/${USER}/${i}
 
 # allow selendra-chaindb (blockchain data) access to local directory
 sudo chown 1000.1000 ${HOME}/${USER}/${i} -R
@@ -44,7 +48,7 @@ read -p "What do you want to call your node?:" y
 sudo docker container run \
     --network="host" \
     --name ${x} \
-    -v /home/$USER/${selendradb}:/selendra/data/testnet \
+    -v ${HOME}/${USER}/${i}:/selendra/data/testnet \
     selendrachain/selendra-chain:latest \
     --base-path selendra/data/testnet \
     --chain testnet \
@@ -56,7 +60,7 @@ sudo docker container run \
     --name ${y}
 
 # restart docker
-# sudo docker restart ${container}
+sudo docker restart ${x}
 
 # to check your node go >>> https://telemetry.polkadot.io/#list/0x889494a97f9573ead42f297ac4b91935cf9727b1bdae29fd4ba56bc8468767c7
 
