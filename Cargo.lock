@@ -5192,20 +5192,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-nicks"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.14#de6033a2aa4f0191877200516fbc2655399faa4b"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-offences"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.14#de6033a2aa4f0191877200516fbc2655399faa4b"
@@ -8548,7 +8534,6 @@ dependencies = [
  "pallet-membership",
  "pallet-mmr-primitives",
  "pallet-multisig",
- "pallet-nicks",
  "pallet-offences",
  "pallet-offences-benchmarking",
  "pallet-proxy",

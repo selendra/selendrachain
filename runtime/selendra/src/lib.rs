@@ -136,13 +136,13 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("selendra"),
 	impl_name: create_runtime_str!("selendra-chain"),
 	authoring_version: 1,
-	spec_version: 118,
+	spec_version: 119,
 	impl_version: 0,
 	#[cfg(not(feature = "disable-runtime-api"))]
 	apis: RUNTIME_API_VERSIONS,
 	#[cfg(feature = "disable-runtime-api")]
 	apis: version::create_apis_vec![[]],
-	transaction_version: 1,
+	transaction_version: 2,
 };
 
 /// The BABE epoch configuration at genesis.
@@ -174,7 +174,7 @@ type MoreThanHalfCouncil = EnsureOneOf<
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u16 = 972;
+	pub const SS58Prefix: u16 = 42;
 }
 
 impl frame_system::Config for Runtime {
@@ -470,19 +470,19 @@ pallet_staking_reward_curve::build! {
 		min_inflation: 0_025_000,
 		max_inflation: 0_044_500,
 		ideal_stake: 0_750_000,
-		falloff: 0_030_000,
+		falloff: 0_050_000,
 		max_piece_count: 40,
 		test_precision: 0_005_000,
 	);
 }
 
 parameter_types! {
-	// Six sessions in an era (6 hours).
+	// Six sessions in an era (12 hours).
 	pub const SessionsPerEra: SessionIndex = 6;
-	// 28 eras for unbonding (7 days).
-	pub const BondingDuration: pallet_staking::EraIndex = 28;
-	// 27 eras in which slashes can be canceled (slightly less than 7 days).
-	pub const SlashDeferDuration: pallet_staking::EraIndex = 27;
+	// 14 eras for unbonding (7 days).
+	pub const BondingDuration: pallet_staking::EraIndex = 14;
+	// 12 eras in which slashes can be canceled (slightly less than 7 days).
+	pub const SlashDeferDuration: pallet_staking::EraIndex = 12;
 	pub const RewardCurve: &'static PiecewiseLinear<'static> = &REWARD_CURVE;
 	pub const MaxNominatorRewardedPerValidator: u32 = 256;
 	pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(17);
@@ -528,12 +528,12 @@ impl pallet_staking::Config for Runtime {
 }
 
 parameter_types! {
-	pub const LaunchPeriod: BlockNumber = 7 * DAYS;
-	pub const VotingPeriod: BlockNumber = 7 * DAYS;
-	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
+	pub const LaunchPeriod: BlockNumber = 3 * DAYS;
+	pub const VotingPeriod: BlockNumber = 3 * DAYS;
+	pub const FastTrackVotingPeriod: BlockNumber = 2 * HOURS;
 	pub const MinimumDeposit: Balance = 1 * UNITS;
-	pub const EnactmentPeriod: BlockNumber = 8 * DAYS;
-	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
+	pub const EnactmentPeriod: BlockNumber = 4 * DAYS;
+	pub const CooloffPeriod: BlockNumber = 3 * DAYS;
 	// One cent: $10,000 / MB
 	pub const PreimageByteDeposit: Balance = 1 * CENTS;
 	pub const InstantAllowed: bool = true;
@@ -597,7 +597,7 @@ impl pallet_democracy::Config for Runtime {
 }
 
 parameter_types! {
-	pub const CouncilMotionDuration: BlockNumber = 3 * DAYS;
+	pub const CouncilMotionDuration: BlockNumber = 2 * DAYS;
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
 }
@@ -622,8 +622,8 @@ parameter_types! {
 	pub const VotingBondFactor: Balance = deposit(0, 32);
 	/// Daily council elections
 	pub const TermDuration: BlockNumber = 24 * HOURS;
-	pub const DesiredMembers: u32 = 19;
-	pub const DesiredRunnersUp: u32 = 19;
+	pub const DesiredMembers: u32 = 10;
+	pub const DesiredRunnersUp: u32 = 10;
 	pub const PhragmenElectionPalletId: LockIdentifier = *b"phrelect";
 }
 
@@ -649,7 +649,7 @@ impl pallet_elections_phragmen::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TechnicalMotionDuration: BlockNumber = 3 * DAYS;
+	pub const TechnicalMotionDuration: BlockNumber = 2 * DAYS;
 	pub const TechnicalMaxProposals: u32 = 100;
 	pub const TechnicalMaxMembers: u32 = 100;
 }
@@ -682,7 +682,7 @@ impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = 1 * UNITS;
-	pub const SpendPeriod: BlockNumber = 6 * DAYS;
+	pub const SpendPeriod: BlockNumber = 3 * DAYS;
 	pub const Burn: Permill = Permill::from_perthousand(2);
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 
@@ -692,7 +692,7 @@ parameter_types! {
 	pub const DataDepositPerByte: Balance = 100 * CENTS;
 	pub const BountyDepositBase: Balance = 5000 * CENTS;
 	pub const BountyDepositPayoutDelay: BlockNumber = 4 * DAYS;
-	pub const BountyUpdatePeriod: BlockNumber = 90 * DAYS;
+	pub const BountyUpdatePeriod: BlockNumber = 30 * DAYS;
 	pub const MaximumReasonLength: u32 = 16384;
 	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
 	pub const BountyValueMinimum: Balance = 5000 * CENTS;
@@ -1083,16 +1083,6 @@ parameter_types! {
 	pub const MaxLength: u32 = 16;
 }
 
-impl pallet_nicks::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type ReservationFee = ReservationFee;
-	type Slashed = Treasury;
-	type ForceOrigin = MoreThanHalfCouncil;
-	type MinLength = MinLength;
-	type MaxLength = MaxLength;
-}
-
 impl parachains_origin::Config for Runtime {}
 
 impl parachains_configuration::Config for Runtime {
@@ -1167,8 +1157,8 @@ impl paras_registrar::Config for Runtime {
 }
 
 parameter_types! {
-	// 6 weeks
-	pub const LeasePeriod: BlockNumber = 4 * WEEKS;
+	// 2 weeks
+	pub const LeasePeriod: BlockNumber = 2 * WEEKS;
 }
 
 impl slots::Config for Runtime {
@@ -1350,7 +1340,7 @@ impl pallet_bridge::Config for Runtime {
 }
 
 parameter_types! {
-	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("000000000000000000000030bab6b88db781129c6a4e9b7926738e3314cf1cde");
+	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("0000000000000000000000372a410b50DA68144b8666Fa351FD38DFb0E1C3703");
 }
 
 impl pallet_bridge_transfer::Config for Runtime {
@@ -1504,9 +1494,6 @@ construct_runtime! {
 
 		// Less simple identity module.
 		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 26,
-
-		// Account names on-chain
-		Nicks: pallet_nicks::{Pallet, Call, Storage, Event<T>} = 27,
 
 		// Social recovery module.
 		Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>} = 28,

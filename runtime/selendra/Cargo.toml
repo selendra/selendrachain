@@ -63,7 +63,6 @@ pallet-indices = { git = "https://github.com/paritytech/substrate", branch = "po
 pallet-membership = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
 pallet-mmr-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
 pallet-multisig = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
-pallet-nicks = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
 pallet-offences = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
 pallet-proxy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
 pallet-recovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
@@ -154,7 +153,6 @@ std = [
 	"pallet-indices/std",
 	"pallet-membership/std",
 	"pallet-multisig/std",
-	"pallet-nicks/std",
 	"pallet-offences/std",
 	"pallet-proxy/std",
 	"pallet-recovery/std",
@@ -260,7 +258,6 @@ try-runtime = [
 	"pallet-indices/try-runtime",
 	"pallet-membership/try-runtime",
 	"pallet-multisig/try-runtime",
-	"pallet-nicks/try-runtime",
 	"pallet-offences/try-runtime",
 	"pallet-proxy/try-runtime",
 	"pallet-recovery/try-runtime",
