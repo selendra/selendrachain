@@ -27,7 +27,7 @@ fi
 sudo $package_manager $package
 
 # pull testnet from docker
-sudo docker pull laynath/selendra-chain:test
+sudo docker pull selendrachain/selendra-chain:latest
 
 # create directory for selendra-chaindb
 read -p "Name a directory where the Selendra Chain will store: " i
@@ -45,7 +45,7 @@ sudo docker container run \
     --network="host" \
     --name ${x} \
     -v /home/$USER/${selendradb}:/selendra/data/testnet \
-    laynath/selendra-chain:test \
+    selendrachain/selendra-chain:latest \
     --base-path selendra/data/testnet \
     --chain testnet \
     --port 30333 \
