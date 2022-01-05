@@ -1,0 +1,26 @@
+[package]
+name = "cumulus-client-consensus-common"
+description = "Cumulus specific common consensus implementations"
+version = "0.1.0"
+authors = ["Selendra info@selendra.org"]
+edition = "2021"
+
+[dependencies]
+# Substrate deps
+sc-consensus = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sc-client-api = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-consensus = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-runtime = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-api = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-trie = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+
+# Selendra deps
+selendra-primitives = { path = "../../../../../primitives" }
+
+# Other deps
+futures = { version = "0.3.8", features = ["compat"] }
+codec = { package = "parity-scale-codec", version = "2.3.0", features = [ "derive" ] }
+tracing = "0.1.25"
+async-trait = "0.1.42"
+dyn-clone = "1.0.4"

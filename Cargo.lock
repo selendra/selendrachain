@@ -449,7 +449,7 @@ dependencies = [
  "futures 0.3.18",
  "log",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "sc-client-api",
  "sc-keystore",
  "sc-network",
@@ -909,6 +909,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "cloudabi"
+version = "0.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ddfc5b9aa5d4507acaf872de71051dfd0e309860e88966e1051e462a077aac4f"
+dependencies = [
+ "bitflags",
+]
+
+[[package]]
 name = "color-eyre"
 version = "0.5.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1191,6 +1200,380 @@ dependencies = [
  "byteorder",
  "fnv",
  "rand 0.7.3",
+]
+
+[[package]]
+name = "cumulus-client-cli"
+version = "0.1.0"
+dependencies = [
+ "sc-cli",
+ "sc-service",
+ "structopt",
+]
+
+[[package]]
+name = "cumulus-client-collator"
+version = "0.1.0"
+dependencies = [
+ "cumulus-client-consensus-common",
+ "cumulus-client-network",
+ "cumulus-primitives-core",
+ "futures 0.3.18",
+ "parity-scale-codec",
+ "parking_lot 0.10.2",
+ "sc-client-api",
+ "selendra-node-primitives",
+ "selendra-node-subsystem",
+ "selendra-overseer",
+ "selendra-primitives",
+ "sp-api",
+ "sp-consensus",
+ "sp-core",
+ "sp-runtime",
+ "tracing",
+]
+
+[[package]]
+name = "cumulus-client-consensus-aura"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "cumulus-client-consensus-common",
+ "cumulus-primitives-core",
+ "futures 0.3.18",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-aura",
+ "sc-consensus-slots",
+ "sc-telemetry",
+ "selendra-client",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-inherents",
+ "sp-keystore",
+ "sp-runtime",
+ "substrate-prometheus-endpoint",
+ "tracing",
+]
+
+[[package]]
+name = "cumulus-client-consensus-common"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "dyn-clone",
+ "futures 0.3.18",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-consensus",
+ "selendra-primitives",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-runtime",
+ "sp-trie",
+ "tracing",
+]
+
+[[package]]
+name = "cumulus-client-consensus-relay-chain"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "cumulus-client-consensus-common",
+ "cumulus-primitives-core",
+ "futures 0.3.18",
+ "parking_lot 0.10.2",
+ "sc-client-api",
+ "sc-consensus",
+ "selendra-client",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "substrate-prometheus-endpoint",
+ "tracing",
+]
+
+[[package]]
+name = "cumulus-client-network"
+version = "0.1.0"
+dependencies = [
+ "derive_more",
+ "futures 0.3.18",
+ "futures-timer 3.0.2",
+ "parity-scale-codec",
+ "parking_lot 0.10.2",
+ "sc-client-api",
+ "selendra-client",
+ "selendra-node-primitives",
+ "selendra-parachain",
+ "selendra-primitives",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-runtime",
+ "tracing",
+]
+
+[[package]]
+name = "cumulus-client-pov-recovery"
+version = "0.1.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "futures 0.3.18",
+ "futures-timer 3.0.2",
+ "parity-scale-codec",
+ "rand 0.8.4",
+ "sc-client-api",
+ "sc-consensus",
+ "selendra-node-primitives",
+ "selendra-node-subsystem",
+ "selendra-overseer",
+ "selendra-primitives",
+ "sp-api",
+ "sp-consensus",
+ "sp-maybe-compressed-blob",
+ "sp-runtime",
+ "tracing",
+]
+
+[[package]]
+name = "cumulus-client-service"
+version = "0.1.0"
+dependencies = [
+ "cumulus-client-collator",
+ "cumulus-client-consensus-common",
+ "cumulus-client-pov-recovery",
+ "cumulus-primitives-core",
+ "parity-scale-codec",
+ "parking_lot 0.10.2",
+ "sc-chain-spec",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-babe",
+ "sc-service",
+ "sc-telemetry",
+ "sc-tracing",
+ "selendra-overseer",
+ "selendra-primitives",
+ "selendra-service",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-runtime",
+ "tracing",
+]
+
+[[package]]
+name = "cumulus-pallet-aura-ext"
+version = "0.1.0"
+dependencies = [
+ "cumulus-pallet-parachain-system",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "pallet-aura",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-application-crypto",
+ "sp-consensus-aura",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "cumulus-pallet-dmp-queue"
+version = "0.1.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-version",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
+name = "cumulus-pallet-parachain-system"
+version = "0.1.0"
+dependencies = [
+ "cumulus-pallet-parachain-system-proc-macro",
+ "cumulus-primitives-core",
+ "cumulus-primitives-parachain-inherent",
+ "environmental",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "selendra-parachain",
+ "serde",
+ "sp-core",
+ "sp-externalities",
+ "sp-inherents",
+ "sp-io",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-trie",
+ "sp-version",
+ "xcm",
+]
+
+[[package]]
+name = "cumulus-pallet-parachain-system-proc-macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro-crate 1.1.0",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "cumulus-pallet-session-benchmarking"
+version = "3.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-session",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "cumulus-pallet-xcm"
+version = "0.1.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+]
+
+[[package]]
+name = "cumulus-pallet-xcmp-queue"
+version = "0.1.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "rand_chacha 0.3.1",
+ "scale-info",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
+name = "cumulus-primitives-core"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "impl-trait-for-tuples 0.2.1",
+ "parity-scale-codec",
+ "selendra-core-primitives",
+ "selendra-parachain",
+ "selendra-primitives",
+ "sp-api",
+ "sp-runtime",
+ "sp-std",
+ "sp-trie",
+]
+
+[[package]]
+name = "cumulus-primitives-parachain-inherent"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "cumulus-primitives-core",
+ "cumulus-relay-sproof-builder",
+ "parity-scale-codec",
+ "sc-client-api",
+ "scale-info",
+ "selendra-client",
+ "sp-api",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-trie",
+ "tracing",
+]
+
+[[package]]
+name = "cumulus-primitives-timestamp"
+version = "0.1.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "futures 0.3.18",
+ "parity-scale-codec",
+ "sp-consensus",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-std",
+ "sp-timestamp",
+ "sp-tracing",
+]
+
+[[package]]
+name = "cumulus-primitives-utility"
+version = "0.1.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "frame-support",
+ "parity-scale-codec",
+ "selendra-core-primitives",
+ "selendra-parachain",
+ "selendra-primitives",
+ "sp-runtime",
+ "sp-std",
+ "sp-trie",
+ "xcm",
+]
+
+[[package]]
+name = "cumulus-relay-sproof-builder"
+version = "0.1.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "parity-scale-codec",
+ "selendra-primitives",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
 ]
 
 [[package]]
@@ -1720,7 +2103,7 @@ dependencies = [
  "kvdb-rocksdb",
  "pallet-ethereum",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "sp-core",
  "sp-database",
  "sp-runtime",
@@ -1768,7 +2151,7 @@ dependencies = [
  "pallet-ethereum",
  "pallet-evm",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "rand 0.7.3",
  "rlp",
  "rustc-hex",
@@ -1852,7 +2235,7 @@ dependencies = [
  "log",
  "num-traits",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "scale-info",
 ]
 
@@ -3026,7 +3409,7 @@ dependencies = [
  "jsonrpc-server-utils",
  "log",
  "net2",
- "parking_lot",
+ "parking_lot 0.11.2",
  "unicase",
 ]
 
@@ -3041,7 +3424,7 @@ dependencies = [
  "jsonrpc-server-utils",
  "log",
  "parity-tokio-ipc",
- "parking_lot",
+ "parking_lot 0.11.2",
  "tower-service",
 ]
 
@@ -3055,7 +3438,7 @@ dependencies = [
  "jsonrpc-core",
  "lazy_static",
  "log",
- "parking_lot",
+ "parking_lot 0.11.2",
  "rand 0.7.3",
  "serde",
 ]
@@ -3089,7 +3472,7 @@ dependencies = [
  "jsonrpc-server-utils",
  "log",
  "parity-ws",
- "parking_lot",
+ "parking_lot 0.11.2",
  "slab",
 ]
 
@@ -3215,7 +3598,7 @@ checksum = "c3b6b85fc643f5acd0bffb2cc8a6d150209379267af0d41db72170021841f9f5"
 dependencies = [
  "kvdb",
  "parity-util-mem",
- "parking_lot",
+ "parking_lot 0.11.2",
 ]
 
 [[package]]
@@ -3230,7 +3613,7 @@ dependencies = [
  "num_cpus",
  "owning_ref",
  "parity-util-mem",
- "parking_lot",
+ "parking_lot 0.11.2",
  "regex",
  "rocksdb",
  "smallvec",
@@ -3318,7 +3701,7 @@ dependencies = [
  "libp2p-websocket",
  "libp2p-yamux",
  "multiaddr",
- "parking_lot",
+ "parking_lot 0.11.2",
  "pin-project 1.0.8",
  "smallvec",
  "wasm-timer",
@@ -3343,7 +3726,7 @@ dependencies = [
  "multiaddr",
  "multihash 0.14.0",
  "multistream-select",
- "parking_lot",
+ "parking_lot 0.11.2",
  "pin-project 1.0.8",
  "prost",
  "prost-build",
@@ -3517,7 +3900,7 @@ dependencies = [
  "libp2p-core",
  "log",
  "nohash-hasher",
- "parking_lot",
+ "parking_lot 0.11.2",
  "rand 0.7.3",
  "smallvec",
  "unsigned-varint 0.7.1",
@@ -3750,7 +4133,7 @@ checksum = "4e7362abb8867d7187e7e93df17f460d554c997fc5c8ac57dc1259057f6889af"
 dependencies = [
  "futures 0.3.18",
  "libp2p-core",
- "parking_lot",
+ "parking_lot 0.11.2",
  "thiserror",
  "yamux",
 ]
@@ -3856,6 +4239,15 @@ name = "linux-raw-sys"
 version = "0.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "687387ff42ec7ea4f2149035a5675fedb675d26f98db90a1846ac63d3addb5f5"
+
+[[package]]
+name = "lock_api"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4da24a77a3d8a6d4862d95f72e6fdb9c09a643ecdb402d754004a557f2bec75"
+dependencies = [
+ "scopeguard",
+]
 
 [[package]]
 name = "lock_api"
@@ -4041,7 +4433,7 @@ dependencies = [
 
 [[package]]
 name = "metered-channel"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "derive_more",
@@ -4562,6 +4954,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2386b4ebe91c2f7f51082d4cefa145d030e33a1842a96b12e4885cc3c01f7a55"
 
 [[package]]
+name = "pallet-asset-tx-payment"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-assets",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "serde_json",
+ "smallvec",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-storage",
+]
+
+[[package]]
 name = "pallet-assets"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.14#de6033a2aa4f0191877200516fbc2655399faa4b"
@@ -4571,6 +4985,22 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-aura"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.14#de6033a2aa4f0191877200516fbc2655399faa4b"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-application-crypto",
+ "sp-consensus-aura",
  "sp-runtime",
  "sp-std",
 ]
@@ -4760,6 +5190,32 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-collator-selection"
+version = "3.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-aura",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-session",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "rand 0.7.3",
+ "scale-info",
+ "serde",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+ "sp-tracing",
 ]
 
 [[package]]
@@ -5493,7 +5949,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-xcm"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5515,7 +5971,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-xcm-benchmarks"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5539,6 +5995,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "parachain-info"
+version = "0.1.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+]
+
+[[package]]
 name = "parity-db"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5552,7 +6020,7 @@ dependencies = [
  "log",
  "lz4",
  "memmap2 0.2.3",
- "parking_lot",
+ "parking_lot 0.11.2",
  "rand 0.8.4",
  "snap",
 ]
@@ -5615,7 +6083,7 @@ dependencies = [
  "impl-trait-for-tuples 0.2.1",
  "lru 0.6.6",
  "parity-util-mem-derive",
- "parking_lot",
+ "parking_lot 0.11.2",
  "primitive-types",
  "smallvec",
  "tikv-jemalloc-ctl",
@@ -5675,13 +6143,37 @@ checksum = "427c3892f9e783d91cc128285287e70a59e206ca452770ece88a76f7a3eddd72"
 
 [[package]]
 name = "parking_lot"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3a704eb390aafdc107b0e392f56a82b668e3a71366993b5340f5833fd62505e"
+dependencies = [
+ "lock_api 0.3.4",
+ "parking_lot_core 0.7.2",
+]
+
+[[package]]
+name = "parking_lot"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d17b78036a60663b797adeaee46f5c9dfebb86948d1255007a1d6be0271ff99"
 dependencies = [
  "instant",
- "lock_api",
- "parking_lot_core",
+ "lock_api 0.4.5",
+ "parking_lot_core 0.8.5",
+]
+
+[[package]]
+name = "parking_lot_core"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d58c7c768d4ba344e3e8d72518ac13e259d7c7ade24167003b8488e10b6740a3"
+dependencies = [
+ "cfg-if 0.1.10",
+ "cloudabi",
+ "libc",
+ "redox_syscall 0.1.57",
+ "smallvec",
+ "winapi 0.3.9",
 ]
 
 [[package]]
@@ -5693,7 +6185,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "instant",
  "libc",
- "redox_syscall",
+ "redox_syscall 0.2.10",
  "smallvec",
  "winapi 0.3.9",
 ]
@@ -6020,7 +6512,7 @@ dependencies = [
  "fnv",
  "lazy_static",
  "memchr",
- "parking_lot",
+ "parking_lot 0.11.2",
  "thiserror",
 ]
 
@@ -6269,6 +6761,12 @@ dependencies = [
 
 [[package]]
 name = "redox_syscall"
+version = "0.1.57"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41cc0f7e4d5d4544e8861606a285bb08d3e70712ccc7d2b84d7c0ccfaf4b05ce"
+
+[[package]]
+name = "redox_syscall"
 version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8383f39639269cde97d255a32bdb68c047337295414940c68bdd30c2e13203ff"
@@ -6283,7 +6781,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "528532f3d801c87aec9def2add9ca802fe569e44a544afe633765267840abe64"
 dependencies = [
  "getrandom 0.2.3",
- "redox_syscall",
+ "redox_syscall 0.2.10",
 ]
 
 [[package]]
@@ -6749,7 +7247,7 @@ dependencies = [
  "hash-db",
  "log",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "sc-executor",
  "sc-transaction-pool-api",
  "sc-utils",
@@ -6780,7 +7278,7 @@ dependencies = [
  "log",
  "parity-db",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "sc-client-api",
  "sc-state-db",
  "sp-arithmetic",
@@ -6802,7 +7300,7 @@ dependencies = [
  "futures-timer 3.0.2",
  "libp2p",
  "log",
- "parking_lot",
+ "parking_lot 0.11.2",
  "sc-client-api",
  "sc-utils",
  "serde",
@@ -6814,6 +7312,35 @@ dependencies = [
  "sp-state-machine",
  "substrate-prometheus-endpoint",
  "thiserror",
+]
+
+[[package]]
+name = "sc-consensus-aura"
+version = "0.10.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.14#de6033a2aa4f0191877200516fbc2655399faa4b"
+dependencies = [
+ "async-trait",
+ "derive_more",
+ "futures 0.3.18",
+ "log",
+ "parity-scale-codec",
+ "sc-block-builder",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-slots",
+ "sc-telemetry",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-aura",
+ "sp-consensus-slots",
+ "sp-core",
+ "sp-inherents",
+ "sp-keystore",
+ "sp-runtime",
+ "substrate-prometheus-endpoint",
 ]
 
 [[package]]
@@ -6831,7 +7358,7 @@ dependencies = [
  "num-rational 0.2.4",
  "num-traits",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "rand 0.7.3",
  "retain_mut",
  "sc-client-api",
@@ -6942,7 +7469,7 @@ dependencies = [
  "libsecp256k1",
  "log",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "sc-executor-common",
  "sc-executor-wasmi",
  "sc-executor-wasmtime",
@@ -7026,7 +7553,7 @@ dependencies = [
  "futures-timer 3.0.2",
  "log",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "rand 0.8.4",
  "sc-block-builder",
  "sc-client-api",
@@ -7098,7 +7625,7 @@ dependencies = [
  "async-trait",
  "derive_more",
  "hex",
- "parking_lot",
+ "parking_lot 0.11.2",
  "serde_json",
  "sp-application-crypto",
  "sp-core",
@@ -7130,7 +7657,7 @@ dependencies = [
  "log",
  "lru 0.7.0",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "pin-project 1.0.8",
  "prost",
  "prost-build",
@@ -7187,7 +7714,7 @@ dependencies = [
  "num_cpus",
  "once_cell",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "rand 0.7.3",
  "sc-client-api",
  "sc-network",
@@ -7233,7 +7760,7 @@ dependencies = [
  "jsonrpc-pubsub",
  "log",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "sc-block-builder",
  "sc-chain-spec",
  "sc-client-api",
@@ -7265,7 +7792,7 @@ dependencies = [
  "jsonrpc-pubsub",
  "log",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "sc-chain-spec",
  "sc-transaction-pool-api",
  "serde",
@@ -7311,7 +7838,7 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "parity-util-mem",
- "parking_lot",
+ "parking_lot 0.11.2",
  "pin-project 1.0.8",
  "rand 0.7.3",
  "sc-block-builder",
@@ -7368,7 +7895,7 @@ dependencies = [
  "parity-scale-codec",
  "parity-util-mem",
  "parity-util-mem-derive",
- "parking_lot",
+ "parking_lot 0.11.2",
  "sc-client-api",
  "sp-core",
 ]
@@ -7404,7 +7931,7 @@ dependencies = [
  "futures 0.3.18",
  "libp2p",
  "log",
- "parking_lot",
+ "parking_lot 0.11.2",
  "pin-project 1.0.8",
  "rand 0.7.3",
  "serde",
@@ -7425,7 +7952,7 @@ dependencies = [
  "libc",
  "log",
  "once_cell",
- "parking_lot",
+ "parking_lot 0.11.2",
  "regex",
  "rustc-hash",
  "sc-client-api",
@@ -7466,7 +7993,7 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "parity-util-mem",
- "parking_lot",
+ "parking_lot 0.11.2",
  "retain_mut",
  "sc-client-api",
  "sc-transaction-pool-api",
@@ -7617,7 +8144,7 @@ dependencies = [
 
 [[package]]
 name = "selendra"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_cmd",
  "color-eyre",
@@ -7629,7 +8156,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-approval-distribution"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "env_logger 0.9.0",
@@ -7649,7 +8176,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-availability-bitfield-distribution"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "bitvec",
@@ -7670,7 +8197,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-availability-distribution"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "derive_more",
@@ -7697,7 +8224,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-availability-recovery"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "env_logger 0.9.0",
@@ -7724,7 +8251,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-cli"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "frame-benchmarking-cli",
  "futures 0.3.18",
@@ -7743,7 +8270,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-client"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "beefy-primitives",
  "fp-rpc",
@@ -7773,7 +8300,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-collator-protocol"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "always-assert",
  "assert_matches",
@@ -7800,7 +8327,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-core-primitives"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "parity-scale-codec",
  "parity-util-mem",
@@ -7812,7 +8339,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-dispute-distribution"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "async-trait",
@@ -7841,7 +8368,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-erasure-coding"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "parity-scale-codec",
  "reed-solomon-novelpoly",
@@ -7854,7 +8381,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-gossip-support"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "async-trait",
@@ -7880,14 +8407,14 @@ dependencies = [
 
 [[package]]
 name = "selendra-network-bridge"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "async-trait",
  "futures 0.3.18",
  "futures-timer 3.0.2",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "sc-network",
  "selendra-node-network-protocol",
  "selendra-node-subsystem",
@@ -7903,7 +8430,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-collation-generation"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "futures 0.3.18",
  "parity-scale-codec",
@@ -7921,7 +8448,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-approval-voting"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "bitvec",
@@ -7933,7 +8460,7 @@ dependencies = [
  "lru 0.7.0",
  "merlin",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "rand_core 0.5.1",
  "sc-keystore",
  "schnorrkel",
@@ -7957,7 +8484,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-av-store"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "bitvec",
@@ -7968,7 +8495,7 @@ dependencies = [
  "kvdb-memorydb",
  "log",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "selendra-erasure-coding",
  "selendra-node-primitives",
  "selendra-node-subsystem",
@@ -7984,7 +8511,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-backing"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "bitvec",
@@ -8008,7 +8535,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-bitfield-signing"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "futures 0.3.18",
  "selendra-node-subsystem",
@@ -8023,7 +8550,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-candidate-validation"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "async-trait",
@@ -8044,7 +8571,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-chain-api"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "futures 0.3.18",
  "maplit",
@@ -8063,7 +8590,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-chain-selection"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "futures 0.3.18",
@@ -8071,7 +8598,7 @@ dependencies = [
  "kvdb",
  "kvdb-memorydb",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "selendra-node-primitives",
  "selendra-node-subsystem",
  "selendra-node-subsystem-test-helpers",
@@ -8084,7 +8611,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-dispute-coordinator"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "bitvec",
@@ -8108,7 +8635,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-dispute-participation"
-version = "0.9.15"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "futures 0.3.18",
@@ -8124,7 +8651,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-parachains-inherent"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "async-trait",
  "futures 0.3.18",
@@ -8140,7 +8667,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-provisioner"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "bitvec",
  "futures 0.3.18",
@@ -8159,7 +8686,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-pvf"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "always-assert",
  "assert_matches",
@@ -8191,7 +8718,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-core-runtime-api"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "futures 0.3.18",
  "memory-lru",
@@ -8210,14 +8737,14 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-jaeger"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "async-std",
  "lazy_static",
  "log",
  "mick-jaeger",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "sc-network",
  "selendra-node-primitives",
  "selendra-primitives",
@@ -8227,7 +8754,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-metrics"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "futures 0.3.18",
  "futures-timer 3.0.2",
@@ -8237,7 +8764,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-network-protocol"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -8254,7 +8781,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-primitives"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "bounded-vec",
  "futures 0.3.18",
@@ -8276,7 +8803,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-subsystem"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "selendra-node-jaeger",
  "selendra-node-subsystem-types",
@@ -8285,11 +8812,11 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-subsystem-test-helpers"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "async-trait",
  "futures 0.3.18",
- "parking_lot",
+ "parking_lot 0.11.2",
  "sc-keystore",
  "selendra-node-subsystem",
  "selendra-node-subsystem-util",
@@ -8303,7 +8830,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-subsystem-types"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "derive_more",
  "futures 0.3.18",
@@ -8321,7 +8848,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-node-subsystem-util"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "async-trait",
@@ -8353,7 +8880,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-overseer"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "femme",
@@ -8362,7 +8889,7 @@ dependencies = [
  "lru 0.7.0",
  "metered-channel",
  "parity-util-mem",
- "parking_lot",
+ "parking_lot 0.11.2",
  "sc-client-api",
  "selendra-node-metrics",
  "selendra-node-network-protocol",
@@ -8377,7 +8904,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-overseer-gen"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "async-trait",
  "futures 0.3.18",
@@ -8394,7 +8921,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-overseer-gen-proc-macro"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "proc-macro-crate 1.1.0",
@@ -8405,7 +8932,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-parachain"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "derive_more",
  "frame-support",
@@ -8421,7 +8948,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-primitives"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "bitvec",
  "frame-system",
@@ -8450,7 +8977,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-rpc"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "beefy-gadget",
  "beefy-gadget-rpc",
@@ -8489,7 +9016,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "beefy-primitives",
  "bitvec",
@@ -8591,7 +9118,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime-common"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "beefy-primitives",
  "bitvec",
@@ -8641,7 +9168,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-runtime-parachains"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "bitflags",
  "bitvec",
@@ -8685,7 +9212,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-service"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_matches",
  "async-trait",
@@ -8792,7 +9319,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-statement-distribution"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "arrayvec 0.5.2",
  "assert_matches",
@@ -8821,7 +9348,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-statement-table"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "parity-scale-codec",
  "selendra-primitives",
@@ -9042,7 +9569,7 @@ checksum = "9def91fd1e018fe007022791f865d0ccc9b3a0d5001e01aabb8b40e46000afb5"
 
 [[package]]
 name = "slot-range-helper"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "enumn",
  "parity-scale-codec",
@@ -9230,7 +9757,7 @@ dependencies = [
  "log",
  "lru 0.7.0",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "sp-api",
  "sp-consensus",
  "sp-database",
@@ -9256,6 +9783,24 @@ dependencies = [
  "sp-std",
  "sp-version",
  "thiserror",
+]
+
+[[package]]
+name = "sp-consensus-aura"
+version = "0.10.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.14#de6033a2aa4f0191877200516fbc2655399faa4b"
+dependencies = [
+ "async-trait",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-consensus",
+ "sp-consensus-slots",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-std",
+ "sp-timestamp",
 ]
 
 [[package]]
@@ -9328,7 +9873,7 @@ dependencies = [
  "num-traits",
  "parity-scale-codec",
  "parity-util-mem",
- "parking_lot",
+ "parking_lot 0.11.2",
  "primitive-types",
  "rand 0.7.3",
  "regex",
@@ -9383,7 +9928,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.14#de6033a2aa4f0191877200516fbc2655399faa4b"
 dependencies = [
  "kvdb",
- "parking_lot",
+ "parking_lot 0.11.2",
 ]
 
 [[package]]
@@ -9449,7 +9994,7 @@ dependencies = [
  "libsecp256k1",
  "log",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "sp-core",
  "sp-externalities",
  "sp-keystore",
@@ -9484,7 +10029,7 @@ dependencies = [
  "futures 0.3.18",
  "merlin",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "schnorrkel",
  "serde",
  "sp-core",
@@ -9649,7 +10194,7 @@ dependencies = [
  "log",
  "num-traits",
  "parity-scale-codec",
- "parking_lot",
+ "parking_lot 0.11.2",
  "rand 0.7.3",
  "smallvec",
  "sp-core",
@@ -9840,7 +10385,7 @@ checksum = "11b73400442027c4adedda20a9f9b7945234a5bd8d5f7e86da22bd5d0622369c"
 dependencies = [
  "cfg_aliases",
  "libc",
- "parking_lot",
+ "parking_lot 0.11.2",
  "static_init_macro",
 ]
 
@@ -10078,7 +10623,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "libc",
  "rand 0.8.4",
- "redox_syscall",
+ "redox_syscall 0.2.10",
  "remove_dir_all",
  "winapi 0.3.9",
 ]
@@ -10400,7 +10945,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot",
+ "parking_lot 0.11.2",
  "regex",
  "serde",
  "serde_json",
@@ -10481,7 +11026,7 @@ dependencies = [
  "lazy_static",
  "log",
  "lru-cache",
- "parking_lot",
+ "parking_lot 0.11.2",
  "resolv-conf",
  "smallvec",
  "thiserror",
@@ -10853,7 +11398,7 @@ checksum = "be0ecb0db480561e9a7642b5d3e4187c128914e58aa84330b9493e3eb68c5e7f"
 dependencies = [
  "futures 0.3.18",
  "js-sys",
- "parking_lot",
+ "parking_lot 0.11.2",
  "pin-utils",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -11183,7 +11728,7 @@ dependencies = [
 
 [[package]]
 name = "xcm"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "derivative",
  "impl-trait-for-tuples 0.2.1",
@@ -11195,7 +11740,7 @@ dependencies = [
 
 [[package]]
 name = "xcm-builder"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -11218,7 +11763,7 @@ dependencies = [
 
 [[package]]
 name = "xcm-executor"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -11251,7 +11796,7 @@ dependencies = [
  "futures 0.3.18",
  "log",
  "nohash-hasher",
- "parking_lot",
+ "parking_lot 0.11.2",
  "rand 0.8.4",
  "static_assertions",
 ]

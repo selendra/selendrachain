@@ -1,0 +1,49 @@
+[package]
+name = "cumulus-primitives-parachain-inherent"
+version = "0.1.0"
+authors = ["Selendra info@selendra.org"]
+edition = "2021"
+
+[dependencies]
+# Substrate dependencies
+sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
+sc-client-api = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.14" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.14" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.14" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
+sp-api = { git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.14" }
+
+# Selendra dependencies
+selendra-client = { path = "../../../../node/client", optional = true }
+
+# Cumulus dependencies
+cumulus-primitives-core = { path = "../core", default-features = false }
+cumulus-relay-sproof-builder = { path = "../relay-sproof-builder", optional = true }
+
+# Other dependencies
+async-trait = { version = "0.1.42", optional = true }
+codec = { package = "parity-scale-codec", version = "2.3.0", default-features = false, features = [ "derive" ] }
+scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
+tracing = { version = "0.1.22", optional = true }
+
+[features]
+default = [ "std" ]
+std = [
+	"async-trait",
+	"codec/std",
+	"scale-info/std",
+	"cumulus-primitives-core/std",
+	"sp-inherents/std",
+	"sp-core/std",
+	"sp-trie/std",
+	"sp-std/std",
+	"sp-state-machine",
+	"tracing",
+	"sp-runtime",
+	"sc-client-api",
+	"sp-api",
+	"selendra-client",
+	"cumulus-relay-sproof-builder"
+]
