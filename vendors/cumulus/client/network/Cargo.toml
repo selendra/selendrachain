@@ -1,0 +1,29 @@
+[package]
+name = "cumulus-client-network"
+version = "0.1.0"
+authors = ["Selendra info@selendra.org"]
+description = "Cumulus-specific networking protocol"
+edition = "2021"
+
+[dependencies]
+# Substrate deps
+sp-blockchain = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-consensus = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-runtime = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-api = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-core = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sc-client-api = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+
+# Selendra deps
+selendra-primitives = { path = "../../../../primitives" }
+selendra-node-primitives = { path = "../../../../node/primitives" }
+selendra-client = { path = "../../../../node/client" }
+selendra-parachain = { path = "../../../../modules/parachain" }
+
+# other deps
+codec = { package = "parity-scale-codec", version = "2.3.0", features = [ "derive" ] }
+futures = { version = "0.3.1", features = ["compat"] }
+futures-timer = "3.0.2"
+tracing = "0.1.22"
+parking_lot = "0.10.2"
+derive_more = "0.99.2"
