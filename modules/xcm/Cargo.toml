@@ -1,6 +1,6 @@
 [package]
 name = "xcm"
-version = "0.1.8"
+version = "0.1.9"
 authors = ["Selendra info@selendra.org"]
 description = "The basic XCM datastructures."
 edition = "2018"

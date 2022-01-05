@@ -1,6 +1,6 @@
 [package]
 name = "selendra-runtime-parachains"
-version = "0.1.8"
+version = "0.1.9"
 authors = ["Selendra info@selendra.org"]
 edition = "2018"
 
