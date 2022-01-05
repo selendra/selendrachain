@@ -1,6 +1,6 @@
 [package]
 name = "xcm-executor"
-version = "0.1.8"
+version = "0.1.9"
 authors = ["Selendra info@selendra.org"]
 edition = "2018"
 description = "An abstract and configurable XCM message executor."
