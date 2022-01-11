@@ -22,13 +22,13 @@ To install docker see [here](https://docs.docker.com/engine/install/).
 Let's first check the version we have and pull image from docker image. This takes a bit of time, be patient: 
 
 ```bash
-docker pull laynath/selendra-chain:latest
+docker pull selendrachain/selendra-chain:latest
 ```
 
 You can also pass any argument/flag that Selendra supports:
 
 ```bash
-docker run laynath/selendra-chain:latest --dev --name "DockerNode"
+docker run selendrachain/selendra-chain:latest --dev --name "DockerNode"
 ```
 
 ## Run selendra node
@@ -47,7 +47,7 @@ docker run \
 -p 9944:9944 \
 -v /my/local/folder:/selendra/data/testnet \
 --name testnet \
-laynath/selendra-chain:latest \
+selendrachain/selendra-chain:latest \
 --base-path selendra/data/testnet \
 --chain selendra \
 --rpc-external \
