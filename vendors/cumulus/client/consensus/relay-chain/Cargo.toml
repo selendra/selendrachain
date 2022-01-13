@@ -1,0 +1,32 @@
+[package]
+name = "cumulus-client-consensus-relay-chain"
+description = "The relay-chain provided consensus algorithm"
+version = "0.1.0"
+authors = ["Selendra info@selendra.org"]
+edition = "2021"
+
+[dependencies]
+# Substrate deps
+sp-consensus = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-inherents = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-runtime = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-core = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-block-builder = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-api = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sc-client-api = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sc-consensus = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+
+# Selendra dependencies
+selendra-client = { path = "../../../../../node/client" }
+
+# Cumulus dependencies
+cumulus-client-consensus-common = { path = "../common" }
+cumulus-primitives-core = { path = "../../../primitives/core" }
+
+# Other deps
+futures = { version = "0.3.8", features = ["compat"] }
+tracing = "0.1.22"
+async-trait = "0.1.42"
+parking_lot = "0.10.2"

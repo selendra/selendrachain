@@ -1,0 +1,34 @@
+[package]
+name = "cumulus-primitives-timestamp"
+version = "0.1.0"
+authors = ["Selendra info@selendra.org"]
+edition = "2021"
+description = "Provides timestamp related functionality for parachains."
+
+[dependencies]
+# Substrate dependencies
+sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
+sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
+
+# Cumulus dependencies
+cumulus-primitives-core = { path = "../core", default-features = false }
+
+[dev-dependencies]
+# Substrate dependencies
+sp-tracing = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-runtime = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-consensus = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+
+# Other deps
+codec = { package = "parity-scale-codec", version = "2.3.0", default-features = false, features = [ "derive" ] }
+futures = "0.3.5"
+
+[features]
+default = [ "std" ]
+std = [
+	"sp-timestamp/std",
+	"sp-inherents/std",
+	"sp-std/std",
+	"cumulus-primitives-core/std",
+]

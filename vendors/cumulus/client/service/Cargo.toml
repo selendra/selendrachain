@@ -1,0 +1,36 @@
+[package]
+name = "cumulus-client-service"
+version = "0.1.0"
+authors = ["Selendra info@selendra.org"]
+edition = "2021"
+
+[dependencies]
+# Cumulus dependencies
+cumulus-client-consensus-common = { path = "../consensus/common" }
+cumulus-client-collator = { path = "../collator" }
+cumulus-client-pov-recovery = { path = "../pov-recovery" }
+cumulus-primitives-core = { path = "../../primitives/core" }
+
+# Substrate dependencies
+sc-chain-spec = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sc-client-api = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sc-service = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sc-telemetry = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sc-tracing = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sc-consensus-babe = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sc-consensus = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-consensus = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-runtime = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-api = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-core = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.14" }
+
+# Selendra dependencies
+selendra-primitives = { path = "../../../../primitives" }
+selendra-service = { path = "../../../../node/service" }
+selendra-overseer = { path = "../../../../node/overseer" }
+
+# Other deps
+tracing = "0.1.22"
+codec = { package = "parity-scale-codec", version = "2.3.0" }
+parking_lot = "0.10.2"
