@@ -34,7 +34,7 @@ use selendra_node_subsystem::{
 		AvailabilityStoreMessage, BitfieldDistributionMessage, BitfieldSigningMessage,
 		RuntimeApiMessage, RuntimeApiRequest,
 	},
-	ActivatedLeaf, PerLeafSpan, SubsystemSender,
+	PerLeafSpan, SubsystemSender,
 };
 use selendra_node_subsystem_util::{
 	self as util,
@@ -43,7 +43,7 @@ use selendra_node_subsystem_util::{
 };
 use selendra_primitives::v1::{AvailabilityBitfield, CoreState, Hash, ValidatorIndex};
 use sp_keystore::{Error as KeystoreError, SyncCryptoStorePtr};
-use std::{iter::FromIterator, pin::Pin, time::Duration};
+use std::{iter::FromIterator, pin::Pin, sync::Arc, time::Duration};
 use wasm_timer::{Delay, Instant};
 
 #[cfg(test)]
@@ -237,16 +237,16 @@ impl JobTrait for BitfieldSigningJob {
 
 	/// Run a job for the parent block indicated
 	fn run<S: SubsystemSender>(
-		leaf: ActivatedLeaf,
+		relay_parent: Hash,
+		span: Arc<jaeger::Span>,
 		keystore: Self::RunArgs,
 		metrics: Self::Metrics,
 		_receiver: mpsc::Receiver<BitfieldSigningMessage>,
 		mut sender: JobSender<S>,
 	) -> Pin<Box<dyn Future<Output = Result<(), Self::Error>> + Send>> {
 		let metrics = metrics.clone();
-		let relay_parent = leaf.hash;
 		async move {
-			let span = PerLeafSpan::new(leaf.span.clone(), "bitfield-signing");
+			let span = PerLeafSpan::new(span, "bitfield-signing");
 			let _span = span.child("delay");
 			let wait_until = Instant::now() + JOB_DELAY;
 

@@ -20,7 +20,6 @@
 
 pub mod chain_spec;
 mod grandpa_support;
-mod open_fb;
 mod parachains_db;
 mod relay_chain_selection;
 
@@ -62,12 +61,7 @@ pub use {
 #[cfg(feature = "full-node")]
 use selendra_subsystem::jaeger;
 
-use futures::StreamExt;
-use std::{
-	collections::BTreeMap,
-	sync::{Arc, Mutex},
-	time::Duration,
-};
+use std::{sync::Arc, time::Duration};
 
 use prometheus_endpoint::Registry;
 #[cfg(feature = "full-node")]
@@ -79,15 +73,9 @@ use telemetry::{Telemetry, TelemetryWorkerHandle};
 
 pub use selendra_client::SelendraExecutorDispatch;
 
-use fc_consensus::FrontierBlockImport;
-use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
-use fc_rpc::EthTask;
-use fc_rpc_core::types::FilterPool;
-use open_fb::open_frontier_backend;
-
 pub use chain_spec::SelendraChainSpec;
 pub use consensus_common::{block_validation::Chain, Proposal, SelectChain};
-pub use sc_client_api::{Backend, BlockchainEvents, CallExecutor, ExecutionStrategy};
+pub use sc_client_api::{Backend, CallExecutor, ExecutionStrategy};
 pub use sc_consensus::{BlockImport, LongestChain};
 use sc_executor::NativeElseWasmExecutor;
 pub use sc_executor::NativeExecutionDispatch;
@@ -97,7 +85,6 @@ pub use selendra_client::{
 	RuntimeApiCollection,
 };
 pub use selendra_primitives::v1::{Block, BlockId, CollatorPair, Hash, Id as ParaId};
-pub use selendra_runtime;
 pub use service::{
 	config::{DatabaseSource, PrometheusConfig},
 	ChainSpec, Configuration, Error as SubstrateServiceError, PruningMode, Role, RuntimeGenesis,
@@ -110,6 +97,8 @@ pub use sp_runtime::{
 		self as runtime_traits, BlakeTwo256, Block as BlockT, HashFor, Header as HeaderT, NumberFor,
 	},
 };
+
+pub use selendra_runtime;
 
 /// The maximum number of active leaves we forward to the [`Overseer`] on startup.
 #[cfg(any(test, feature = "full-node"))]
@@ -221,6 +210,10 @@ pub enum Error {
 	#[cfg(feature = "full-node")]
 	#[error("Creating a custom database is required for validators")]
 	DatabasePathRequired,
+
+	#[cfg(feature = "full-node")]
+	#[error("Expected selendra runtime feature")]
+	NoRuntime,
 }
 
 /// Can be called for a `Configuration` to identify which network the configuration targets.
@@ -372,20 +365,12 @@ fn new_partial<RuntimeApi, ExecutorDispatch, ChainSelection>(
 		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
 		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
 		(
-			impl Fn(
-				selendra_rpc::DenyUnsafe,
-				selendra_rpc::SubscriptionTaskExecutor,
-				Arc<sc_network::NetworkService<Block, Hash>>,
-			) -> Result<selendra_rpc::RpcExtension, service::Error>,
+			impl service::RpcExtensionBuilder,
 			(
 				babe::BabeBlockImport<
 					Block,
 					FullClient<RuntimeApi, ExecutorDispatch>,
-					FrontierBlockImport<
-						Block,
-						FullGrandpaBlockImport<RuntimeApi, ExecutorDispatch, ChainSelection>,
-						FullClient<RuntimeApi, ExecutorDispatch>,
-					>,
+					FullGrandpaBlockImport<RuntimeApi, ExecutorDispatch, ChainSelection>,
 				>,
 				grandpa::LinkHalf<Block, FullClient<RuntimeApi, ExecutorDispatch>, ChainSelection>,
 				babe::BabeLink<Block>,
@@ -393,8 +378,6 @@ fn new_partial<RuntimeApi, ExecutorDispatch, ChainSelection>(
 			),
 			grandpa::SharedVoterState,
 			std::time::Duration, // slot-duration
-			Arc<fc_db::Backend<Block>>,
-			Option<FilterPool>,
 			Option<Telemetry>,
 		),
 	>,
@@ -430,18 +413,9 @@ where
 
 	let justification_import = grandpa_block_import.clone();
 
-	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
-
-	let frontier_backend = open_frontier_backend(config).unwrap();
-	let frontier_block_import = FrontierBlockImport::new(
-		grandpa_block_import.clone(),
-		client.clone(),
-		frontier_backend.clone(),
-	);
-
 	let babe_config = babe::Config::get_or_compute(&*client)?;
 	let (block_import, babe_link) =
-		babe::block_import(babe_config.clone(), frontier_block_import, client.clone())?;
+		babe::block_import(babe_config.clone(), grandpa_block_import, client.clone())?;
 
 	let slot_duration = babe_link.config().slot_duration();
 	let import_queue = babe::import_queue(
@@ -480,10 +454,9 @@ where
 
 	let import_setup = (block_import.clone(), grandpa_link, babe_link.clone(), beefy_link);
 	let rpc_setup = shared_voter_state.clone();
+
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
 	let slot_duration = babe_config.slot_duration();
-	let filter_pool_clone = filter_pool.clone();
-	let frontier_backend_clone = frontier_backend.clone();
 
 	let rpc_extensions_builder = {
 		let client = client.clone();
@@ -491,16 +464,13 @@ where
 		let transaction_pool = transaction_pool.clone();
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
-		let is_authority = config.role.is_authority();
-		let pool = transaction_pool.clone();
 
 		move |deny_unsafe,
-		      subscription_executor: selendra_rpc::SubscriptionTaskExecutor,
-		      network: Arc<sc_network::NetworkService<Block, <Block as BlockT>::Hash>>|
+		      subscription_executor: selendra_rpc::SubscriptionTaskExecutor|
 		      -> Result<selendra_rpc::RpcExtension, service::Error> {
 			let deps = selendra_rpc::FullDeps {
 				client: client.clone(),
-				pool: pool.clone(),
+				pool: transaction_pool.clone(),
 				select_chain: select_chain.clone(),
 				chain_spec: chain_spec.cloned_box(),
 				deny_unsafe,
@@ -518,16 +488,11 @@ where
 				},
 				beefy: selendra_rpc::BeefyDeps {
 					beefy_commitment_stream: beefy_commitment_stream.clone(),
-					subscription_executor: subscription_executor.clone(),
+					subscription_executor,
 				},
-				graph: pool.pool().clone(),
-				is_authority,
-				network,
-				filter_pool: filter_pool_clone.clone(),
-				frontier_backend: frontier_backend.clone(),
 			};
 
-			selendra_rpc::create_full(deps, subscription_executor).map_err(Into::into)
+			selendra_rpc::create_full(deps).map_err(Into::into)
 		}
 	};
 
@@ -539,15 +504,7 @@ where
 		select_chain,
 		import_queue,
 		transaction_pool,
-		other: (
-			rpc_extensions_builder,
-			import_setup,
-			rpc_setup,
-			slot_duration,
-			frontier_backend_clone,
-			filter_pool,
-			telemetry,
-		),
+		other: (rpc_extensions_builder, import_setup, rpc_setup, slot_duration, telemetry),
 	})
 }
 
@@ -704,23 +661,15 @@ where
 	let overseer_handle = Handle::new(overseer_connector.handle());
 
 	let local_keystore = basics.keystore_container.local_keystore();
-	let auth_or_collator = role.is_authority() || is_collator.is_collator();
-	let requires_overseer_for_chain_sel = local_keystore.is_some() && auth_or_collator;
-	let disputes_enabled = false;
+	let requires_overseer_for_chain_sel =
+		local_keystore.is_some() && (role.is_authority() || is_collator.is_collator());
 
-	let select_chain = if requires_overseer_for_chain_sel {
-		let metrics =
-			selendra_node_subsystem_util::metrics::Metrics::register(prometheus_registry.as_ref())?;
-
-		SelectRelayChain::new_disputes_aware(
-			basics.backend.clone(),
-			overseer_handle.clone(),
-			metrics,
-			disputes_enabled,
-		)
-	} else {
-		SelectRelayChain::new_longest_chain(basics.backend.clone())
-	};
+	let select_chain = SelectRelayChain::new(
+		basics.backend.clone(),
+		overseer_handle.clone(),
+		requires_overseer_for_chain_sel,
+		selendra_node_subsystem_util::metrics::Metrics::register(prometheus_registry.as_ref())?,
+	);
 
 	let service::PartialComponents::<_, _, SelectRelayChain<_>, _, _, _> {
 		client,
@@ -730,16 +679,7 @@ where
 		select_chain,
 		import_queue,
 		transaction_pool,
-		other:
-			(
-				_rpc_extensions_builder,
-				import_setup,
-				rpc_setup,
-				slot_duration,
-				frontier_backend,
-				filter_pool,
-				mut telemetry,
-			),
+		other: (rpc_extensions_builder, import_setup, rpc_setup, slot_duration, mut telemetry),
 	} = new_partial::<RuntimeApi, ExecutorDispatch, SelectRelayChain<_>>(
 		&mut config,
 		basics,
@@ -848,11 +788,6 @@ where
 		col_data: crate::parachains_db::REAL_COLUMNS.col_dispute_coordinator_data,
 	};
 
-	let network_clone = network.clone();
-	let rpc_extensions_builder = move |deny_unsafe, subscription_executor| {
-		_rpc_extensions_builder(deny_unsafe, subscription_executor, network_clone.clone())
-	};
-
 	let rpc_handlers = service::spawn_tasks(service::SpawnTasksParams {
 		config,
 		backend: backend.clone(),
@@ -875,7 +810,8 @@ where
 	let active_leaves =
 		futures::executor::block_on(active_leaves(select_chain.as_longest_chain(), &*client))?;
 
-	let authority_discovery_service = if auth_or_collator {
+	let authority_discovery_service = if role.is_authority() || is_collator.is_collator() {
+		use futures::StreamExt;
 		use sc_network::Event;
 
 		let authority_discovery_role = if role.is_authority() {
@@ -945,13 +881,8 @@ where
 					candidate_validation_config,
 					chain_selection_config,
 					dispute_coordinator_config,
-					disputes_enabled,
 				},
-			)
-			.map_err(|e| {
-				tracing::error!("Failed to init overseer: {}", e);
-				e
-			})?;
+			)?;
 		let handle = Handle::new(overseer_handle.clone());
 
 		{
@@ -986,37 +917,6 @@ where
 		);
 		None
 	};
-
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-mapping-sync-worker",
-		None,
-		MappingSyncWorker::new(
-			client.import_notification_stream(),
-			Duration::new(6, 0),
-			client.clone(),
-			backend.clone(),
-			frontier_backend.clone(),
-			SyncStrategy::Normal,
-		)
-		.for_each(|()| futures::future::ready(())),
-	);
-
-	// Spawn Frontier EthFilterApi maintenance task.
-	if let Some(filter_pool) = filter_pool {
-		// Each filter is allowed to stay in the pool for 100 blocks.
-		const FILTER_RETAIN_THRESHOLD: u64 = 100;
-		task_manager.spawn_essential_handle().spawn(
-			"frontier-filter-pool",
-			None,
-			EthTask::filter_pool_task(Arc::clone(&client), filter_pool, FILTER_RETAIN_THRESHOLD),
-		);
-	}
-
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-schema-cache-task",
-		None,
-		EthTask::ethereum_schema_cache_task(Arc::clone(&client), Arc::clone(&frontier_backend)),
-	);
 
 	if role.is_authority() {
 		let can_author_with =
@@ -1189,7 +1089,9 @@ pub fn new_chain_ops(
 	Error,
 > {
 	config.keystore = service::config::KeystoreConfig::InMemory;
+
 	let telemetry_worker_handle = None;
+
 	return chain_ops!(config, jaeger_agent, telemetry_worker_handle; selendra_runtime, SelendraExecutorDispatch, Selendra)
 }
 

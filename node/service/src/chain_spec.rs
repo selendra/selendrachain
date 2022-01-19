@@ -24,7 +24,6 @@ use selendra_runtime as selendra;
 use selendra_runtime::constants::currency::UNITS as SEL;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
-use std::collections::BTreeMap;
 
 use sc_chain_spec::{ChainSpecExtension, ChainType};
 use serde::{Deserialize, Serialize};
@@ -52,7 +51,6 @@ pub struct Extensions {
 	pub light_sync_state: sc_sync_state_rpc::LightSyncStateExtension,
 }
 
-/// The `ChainSpec` parameterized for the selendra runtime.
 pub type SelendraChainSpec = service::GenericChainSpec<selendra::GenesisConfig, Extensions>;
 
 pub fn selendra_config() -> Result<SelendraChainSpec, String> {
@@ -303,26 +301,22 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 		authority_discovery: selendra::AuthorityDiscoveryConfig { keys: vec![] },
 		vesting: selendra::VestingConfig { vesting: vec![] },
 		treasury: Default::default(),
-		hrmp: Default::default(),
 		configuration: selendra::ConfigurationConfig {
 			config: default_parachains_host_configuration(),
 		},
 		paras: Default::default(),
-		xcm_pallet: Default::default(),
+		xcm_pallet: selendra::XcmPalletConfig { safe_xcm_version: Some(2) },
 		sudo: selendra::SudoConfig { key: endowed_accounts[0].clone() },
-		evm: selendra::EvmConfig { accounts: BTreeMap::new() },
-		ethereum: selendra::EthereumConfig {},
 	}
 }
 
-/// Staging testnet config.
 pub fn selendra_staging_testnet_config() -> Result<SelendraChainSpec, String> {
 	let wasm_binary = selendra::WASM_BINARY.ok_or("Selendra development wasm not available")?;
 	let boot_nodes = vec![];
 
 	Ok(SelendraChainSpec::from_genesis(
-		"SelendraTestnet",
-		"selendra_testnet",
+		"Selendra Staging Testnet",
+		"selendra_staging_testnet",
 		ChainType::Live,
 		move || selendra_staging_testnet_config_genesis(wasm_binary),
 		boot_nodes,
@@ -419,7 +413,6 @@ fn testnet_accounts() -> Vec<AccountId> {
 	]
 }
 
-/// Helper function to create selendra `GenesisConfig` for testing
 pub fn selendra_testnet_genesis(
 	wasm_binary: &[u8],
 	initial_authorities: Vec<(
@@ -495,15 +488,12 @@ pub fn selendra_testnet_genesis(
 		authority_discovery: selendra::AuthorityDiscoveryConfig { keys: vec![] },
 		vesting: selendra::VestingConfig { vesting: vec![] },
 		treasury: Default::default(),
-		hrmp: Default::default(),
 		configuration: selendra::ConfigurationConfig {
 			config: default_parachains_host_configuration(),
 		},
 		paras: Default::default(),
-		xcm_pallet: Default::default(),
+		xcm_pallet: selendra::XcmPalletConfig { safe_xcm_version: Some(2) },
 		sudo: selendra::SudoConfig { key: endowed_accounts[0].clone() },
-		evm: selendra::EvmConfig { accounts: BTreeMap::new() },
-		ethereum: selendra::EthereumConfig {},
 	}
 }
 
@@ -516,7 +506,6 @@ fn selendra_development_config_genesis(wasm_binary: &[u8]) -> selendra::GenesisC
 	)
 }
 
-/// Selendra development config (single validator Alice)
 pub fn selendra_development_config() -> Result<SelendraChainSpec, String> {
 	let wasm_binary = selendra::WASM_BINARY.ok_or("Selendra development wasm not available")?;
 
@@ -553,7 +542,6 @@ fn selendra_local_testnet_genesis(wasm_binary: &[u8]) -> selendra::GenesisConfig
 	)
 }
 
-/// Selendra local testnet config (multivalidator Alice + Bob)
 pub fn selendra_local_testnet_config() -> Result<SelendraChainSpec, String> {
 	let wasm_binary = selendra::WASM_BINARY.ok_or("Selendra development wasm not available")?;
 

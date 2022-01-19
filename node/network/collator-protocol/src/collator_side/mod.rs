@@ -13,7 +13,6 @@
 
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
-#![allow(dead_code)]
 
 use std::{
 	collections::{HashMap, HashSet, VecDeque},
@@ -160,6 +159,7 @@ struct ValidatorGroup {
 	#[allow(dead_code)]
 	discovery_ids: HashSet<AuthorityDiscoveryId>,
 	/// All [`ValidatorId`]'s of the current group to that we advertised our collation.
+	#[allow(dead_code)]
 	advertised_to: HashSet<AuthorityDiscoveryId>,
 }
 

@@ -15,7 +15,6 @@
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Metered variant of oneshot channels to be able to extract delays caused by delayed responses.
-#![allow(dead_code)]
 
 use std::{
 	ops::Deref,

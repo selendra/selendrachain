@@ -45,7 +45,6 @@ members = [
 	"node/jaeger",
 	"node/metrics",
 	"node/metered-channel",
-		
 	"modules/erasure-coding",
 	"modules/statement-table",
 	"modules/xcm",
@@ -54,27 +53,6 @@ members = [
 	"modules/xcm/pallet-xcm",
 	"modules/xcm/pallet-xcm-benchmarks",
 	"modules/xcm/procedural",
-	
-	"vendors/frontier/frame/dynamic-fee",
-	"vendors/frontier/frame/ethereum",
-	"vendors/frontier/frame/evm",
-	"vendors/frontier/frame/evm/precompile/sha3fips",
-	"vendors/frontier/frame/evm/precompile/simple",
-	"vendors/frontier/frame/evm/precompile/modexp",
-	"vendors/frontier/frame/evm/precompile/ed25519",
-	"vendors/frontier/frame/evm/precompile/bn128",
-	"vendors/frontier/frame/evm/precompile/blake2",
-	"vendors/frontier/frame/evm/precompile/dispatch",
-	"vendors/frontier/frame/evm/precompile/curve25519",
-	"vendors/frontier/client/consensus",
-	"vendors/frontier/client/rpc-core",
-	"vendors/frontier/client/rpc",
-	"vendors/frontier/client/db",
-	"vendors/frontier/client/mapping-sync",
-	"vendors/frontier/primitives/consensus",
-	"vendors/frontier/primitives/evm",
-	"vendors/frontier/primitives/rpc",
-	"vendors/frontier/primitives/self-contained",
 ]
 
 # make sure dev builds with backtrace do

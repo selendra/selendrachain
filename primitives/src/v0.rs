@@ -111,7 +111,6 @@ impl MallocSizeOf for ValidatorId {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize, Hash, MallocSizeOf))]
 pub struct ValidatorIndex(pub u32);
 
-// We should really get going ..
 impl From<u32> for ValidatorIndex {
 	fn from(n: u32) -> Self {
 		ValidatorIndex(n)

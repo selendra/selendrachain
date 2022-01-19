@@ -18,6 +18,7 @@ use crate::cli::{Cli, Subcommand};
 use futures::future::TryFutureExt;
 use sc_cli::{Role, RuntimeVersion, SubstrateCli};
 use service::{self, IdentifyVariant};
+use sp_core::crypto::Ss58AddressFormatRegistry;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -44,7 +45,7 @@ type Result<T> = std::result::Result<T, Error>;
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Selendra Selendra-Chain".into()
+		"Selendra SelendraChain".into()
 	}
 
 	fn impl_version() -> String {
@@ -60,7 +61,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn support_url() -> String {
-		"https://github.com/selendra/selendra-chain/issues/new".into()
+		"https://github.com/selendra/selendrachain/issues/new".into()
 	}
 
 	fn copyright_start_year() -> i32 {
@@ -73,16 +74,16 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
-			"" | "selendra" => Box::new(service::chain_spec::selendra_config()?),
-			"testnet" => Box::new(service::chain_spec::selendra_testnet_config()?),
-			"dev" => Box::new(service::chain_spec::selendra_development_config()?),
-			"local" => Box::new(service::chain_spec::selendra_local_testnet_config()?),
-			"staging" => Box::new(service::chain_spec::selendra_staging_testnet_config()?),
+			"selendra" => Box::new(service::chain_spec::selendra_config()?),
+			"selendra-testnet" => Box::new(service::chain_spec::selendra_testnet_config()?),
+			"selendra-dev" => Box::new(service::chain_spec::selendra_development_config()?),
+			"selendra-local" => Box::new(service::chain_spec::selendra_local_testnet_config()?),
+			"selendra-staging" => Box::new(service::chain_spec::selendra_staging_testnet_config()?),
 			path => {
 				let path = std::path::PathBuf::from(path);
-
 				let chain_spec = Box::new(service::SelendraChainSpec::from_json_file(path.clone())?)
 					as Box<dyn service::ChainSpec>;
+
 				chain_spec
 			},
 		})
@@ -93,13 +94,13 @@ impl SubstrateCli for Cli {
 	}
 }
 
-fn set_default_ss58_version(_spec: &Box<dyn service::ChainSpec>) {
-	use sp_core::crypto::Ss58AddressFormat;
-	let ss58_version = Ss58AddressFormat::custom(972);
+fn set_default_ss58_version() {
+	let ss58_version = Ss58AddressFormatRegistry::SubstrateAccount.into();
 	sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 
-const DEV_ONLY_ERROR_PATTERN: &'static str = "can only use subcommand with --chain selendra-dev ";
+const DEV_ONLY_ERROR_PATTERN: &'static str =
+	"can only use subcommand with --chain selendra-dev got ";
 
 fn ensure_dev(spec: &Box<dyn service::ChainSpec>) -> std::result::Result<(), String> {
 	if spec.is_dev() {
@@ -111,9 +112,8 @@ fn ensure_dev(spec: &Box<dyn service::ChainSpec>) -> std::result::Result<(), Str
 
 fn run_node_inner(cli: Cli, overseer_gen: impl service::OverseerGen) -> Result<()> {
 	let runner = cli.create_runner(&cli.run.base).map_err(Error::from)?;
-	let chain_spec = &runner.config().chain_spec;
 
-	set_default_ss58_version(chain_spec);
+	set_default_ss58_version();
 
 	let grandpa_pause = if cli.run.grandpa_pause.is_empty() {
 		None
@@ -155,9 +155,8 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::CheckBlock(cmd)) => {
 			let runner = cli.create_runner(cmd).map_err(Error::SubstrateCli)?;
-			let chain_spec = &runner.config().chain_spec;
 
-			set_default_ss58_version(chain_spec);
+			set_default_ss58_version();
 
 			runner.async_run(|mut config| {
 				let (client, _, import_queue, task_manager) =
@@ -167,9 +166,8 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			let chain_spec = &runner.config().chain_spec;
 
-			set_default_ss58_version(chain_spec);
+			set_default_ss58_version();
 
 			Ok(runner.async_run(|mut config| {
 				let (client, _, _, task_manager) =
@@ -179,9 +177,8 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::ExportState(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			let chain_spec = &runner.config().chain_spec;
 
-			set_default_ss58_version(chain_spec);
+			set_default_ss58_version();
 
 			Ok(runner.async_run(|mut config| {
 				let (client, _, _, task_manager) = service::new_chain_ops(&mut config, None)?;
@@ -190,9 +187,8 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			let chain_spec = &runner.config().chain_spec;
 
-			set_default_ss58_version(chain_spec);
+			set_default_ss58_version();
 
 			Ok(runner.async_run(|mut config| {
 				let (client, _, import_queue, task_manager) =
@@ -206,9 +202,8 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::Revert(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			let chain_spec = &runner.config().chain_spec;
 
-			set_default_ss58_version(chain_spec);
+			set_default_ss58_version();
 
 			Ok(runner.async_run(|mut config| {
 				let (client, backend, _, task_manager) = service::new_chain_ops(&mut config, None)?;
@@ -256,7 +251,7 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			let chain_spec = &runner.config().chain_spec;
-			set_default_ss58_version(chain_spec);
+			set_default_ss58_version();
 
 			ensure_dev(chain_spec).map_err(Error::Other)?;
 
@@ -272,7 +267,7 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::TryRuntime(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			let chain_spec = &runner.config().chain_spec;
-			set_default_ss58_version(chain_spec);
+			set_default_ss58_version();
 
 			use sc_service::TaskManager;
 			let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
@@ -291,7 +286,6 @@ pub fn run() -> Result<()> {
 				))
 			})
 		},
-
 		#[cfg(not(feature = "try-runtime"))]
 		Some(Subcommand::TryRuntime) => Err(Error::Other(
 			"TryRuntime wasn't enabled when building the node. \

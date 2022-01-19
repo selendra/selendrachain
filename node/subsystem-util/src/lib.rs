@@ -29,8 +29,8 @@ use selendra_node_subsystem::{
 	messages::{
 		AllMessages, BoundToRelayParent, RuntimeApiMessage, RuntimeApiRequest, RuntimeApiSender,
 	},
-	overseer, ActivatedLeaf, ActiveLeavesUpdate, FromOverseer, OverseerSignal, SpawnedSubsystem,
-	SubsystemContext, SubsystemSender,
+	overseer, ActiveLeavesUpdate, FromOverseer, OverseerSignal, SpawnedSubsystem, SubsystemContext,
+	SubsystemSender,
 };
 
 pub use overseer::{
@@ -48,6 +48,7 @@ use futures::{
 };
 use parity_scale_codec::Encode;
 use pin_project::pin_project;
+use selendra_node_jaeger as jaeger;
 use selendra_primitives::v1::{
 	AuthorityDiscoveryId, CandidateEvent, CommittedCandidateReceipt, CoreState, EncodeAs,
 	GroupIndex, GroupRotationInfo, Hash, Id as ParaId, OccupiedCoreAssumption,
@@ -63,6 +64,7 @@ use std::{
 	fmt,
 	marker::Unpin,
 	pin::Pin,
+	sync::Arc,
 	task::{Context, Poll},
 	time::Duration,
 };
@@ -490,7 +492,8 @@ pub trait JobTrait: Unpin + Sized {
 	///
 	/// The job should be ended when `receiver` returns `None`.
 	fn run<S: SubsystemSender>(
-		leaf: ActivatedLeaf,
+		parent: Hash,
+		span: Arc<jaeger::Span>,
 		run_args: Self::RunArgs,
 		metrics: Self::Metrics,
 		receiver: mpsc::Receiver<Self::ToJob>,
@@ -538,7 +541,8 @@ where
 	/// Spawn a new job for this `parent_hash`, with whatever args are appropriate.
 	fn spawn_job<Job, Sender>(
 		&mut self,
-		activated: ActivatedLeaf,
+		parent_hash: Hash,
+		span: Arc<jaeger::Span>,
 		run_args: Job::RunArgs,
 		metrics: Job::Metrics,
 		sender: Sender,
@@ -546,13 +550,13 @@ where
 		Job: JobTrait<ToJob = ToJob>,
 		Sender: SubsystemSender,
 	{
-		let parent_hash = activated.hash;
 		let (to_job_tx, to_job_rx) = mpsc::channel(JOB_CHANNEL_CAPACITY);
 		let (from_job_tx, from_job_rx) = mpsc::channel(JOB_CHANNEL_CAPACITY);
 
 		let (future, abort_handle) = future::abortable(async move {
 			if let Err(e) = Job::run(
-				activated,
+				parent_hash,
+				span,
 				run_args,
 				metrics,
 				to_job_rx,
@@ -683,7 +687,8 @@ impl<Job: JobTrait, Spawner> JobSubsystem<Job, Spawner> {
 							for activated in activated {
 								let sender = ctx.sender().clone();
 								jobs.spawn_job::<Job, _>(
-									activated,
+									activated.hash,
+									activated.span,
 									run_args.clone(),
 									metrics.clone(),
 									sender,

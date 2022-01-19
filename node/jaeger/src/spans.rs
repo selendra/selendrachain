@@ -41,7 +41,7 @@
 //! 		.with_string_fmt_debug_tag("foo", foo)
 //! 		// anything that implements `trait std::str::ToString`
 //! 		.with_string_tag("again", 1337_u32)
-//! 		// add a `Stage` for [`sel-jaeger`]
+//! 		// add a `Stage` for [`sel-jaeger`](https://github.com/paritytech/sel-jaeger)
 //! 		.with_stage(jaeger::Stage::CandidateBacking);
 //! 		// complete by design, no completion required
 //! # }
@@ -153,7 +153,6 @@ pub enum Stage {
 	ApprovalChecking = 8,
 	// Expand as needed, numbers should be ascending according to the stage
 	// through the inclusion pipeline, or according to the descriptions
-	// in [the path of a para chain block]
 }
 
 /// A wrapper type for a span.

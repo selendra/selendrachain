@@ -1,7 +1,7 @@
 [package]
 name = "selendra-node-core-approval-voting"
 version = "0.1.8"
-authors = ["Selendra info@selendra.org"]
+authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
@@ -10,17 +10,11 @@ futures-timer = "3.0.2"
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["bit-vec", "derive"] }
 tracing = "0.1.29"
 bitvec = { version = "0.20.1", default-features = false, features = ["alloc"] }
-lru = "0.7.0"
+lru = "0.7"
 merlin = "2.0"
 schnorrkel = "0.9.1"
 kvdb = "0.10.0"
-derive_more = "0.99.17"
-
-sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
-sp-consensus-slots = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false, features = ["full_crypto"] }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", default-features = false }
+derive_more = "0.99.14"
 
 selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
@@ -29,14 +23,19 @@ selendra-primitives = { path = "../../../primitives" }
 selendra-node-primitives = { path = "../../primitives" }
 selendra-node-jaeger = { path = "../../jaeger" }
 
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
+sp-consensus-slots = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false, features = ["full_crypto"] }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
+
 [dev-dependencies]
 parking_lot = "0.11.1"
-rand_core = "0.5.1"
+rand_core = "0.5.1" #                                                                       should match schnorrkel
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
+sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
+selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
 assert_matches = "1.4.0"
 kvdb-memorydb = "0.10.0"
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
-sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
-selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
-

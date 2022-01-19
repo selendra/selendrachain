@@ -1,20 +1,20 @@
 [package]
 name = "selendra-collator-protocol"
 version = "0.1.8"
-authors = ["Selendra info@selendra.org"]
+authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
 always-assert = "0.1.2"
-derive_more = "0.99.17"
+derive_more = "0.99.14"
 futures = "0.3.17"
 futures-timer = "3"
 thiserror = "1.0.30"
 tracing = "0.1.29"
 
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
 
 selendra-primitives = { path = "../../../primitives" }
 selendra-node-network-protocol = { path = "../../network/protocol" }
@@ -26,9 +26,10 @@ selendra-subsystem = { package = "selendra-node-subsystem", path = "../../subsys
 log = "0.4.13"
 env_logger = "0.9.0"
 assert_matches = "1.4.0"
-selendra-subsystem-testhelpers = { package = "selendra-node-subsystem-test-helpers", path = "../../subsystem-test-helpers" }
 
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14", features = ["std"] }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.14" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", features = ["std"] }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
 parity-scale-codec = { version = "2.3.1", features = ["std"]  }
+
+selendra-subsystem-testhelpers = { package = "selendra-node-subsystem-test-helpers", path = "../../subsystem-test-helpers" }

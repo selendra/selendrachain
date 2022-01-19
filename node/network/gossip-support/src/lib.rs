@@ -390,6 +390,8 @@ async fn ensure_i_am_an_authority(
 /// groups (because not all validators are parachain validators and the group size is small),
 /// but formed randomly via BABE randomness from two epochs ago.
 /// This limits the amount of gossip peers to 2 * `sqrt(len)` and ensures the diameter of 2.
+///
+/// [web3]: https://research.web3.foundation/en/latest/polkadot/networking/3-avail-valid.html#topology
 async fn update_gossip_topology<Context>(
 	ctx: &mut Context,
 	our_index: usize,

@@ -1,7 +1,8 @@
 [package]
 name = "selendra"
+license = "GPL-3.0-only"
 version = "0.1.8"
-authors = ["Selendra info@selendra.org"]
+authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 description = "Implementation of node in Rust based on the Substrate framework."
 
@@ -10,7 +11,7 @@ name = "selendra"
 path = "src/main.rs"
 
 [dependencies]
-selendra-cli = { path = "cli" }
+selendra-cli = { path = "./cli" }
 color-eyre = { version = "0.5.11", default-features = false }
 parity-util-mem = { version = "*", default-features = false, features = ["jemalloc-global"] }
 
@@ -22,3 +23,5 @@ tempfile = "3.2.0"
 [features]
 runtime-benchmarks= [ "selendra-cli/runtime-benchmarks" ]
 try-runtime = [ "selendra-cli/try-runtime" ]
+disputes = [ "selendra-cli/disputes" ]
+

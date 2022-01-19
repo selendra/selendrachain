@@ -87,9 +87,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type LeaseOffset: Get<Self::BlockNumber>;
 
-		/// The origin which may forcibly create or clear leases. Root can always do this.
-		type ForceOrigin: EnsureOrigin<<Self as frame_system::Config>::Origin>;
-
 		/// Weight Information for the Extrinsics in the Pallet
 		type WeightInfo: WeightInfo;
 	}
@@ -162,7 +159,7 @@ pub mod pallet {
 		/// Just a connect into the `lease_out` call, in case Root wants to force some lease to happen
 		/// independently of any other on-chain mechanism to use it.
 		///
-		/// The dispatch origin for this call must match `T::ForceOrigin`.
+		/// Can only be called by the Root origin.
 		#[pallet::weight(T::WeightInfo::force_lease())]
 		pub fn force_lease(
 			origin: OriginFor<T>,
@@ -172,7 +169,7 @@ pub mod pallet {
 			period_begin: LeasePeriodOf<T>,
 			period_count: LeasePeriodOf<T>,
 		) -> DispatchResult {
-			T::ForceOrigin::ensure_origin(origin)?;
+			ensure_root(origin)?;
 			Self::lease_out(para, &leaser, amount, period_begin, period_count)
 				.map_err(|_| Error::<T>::LeaseError)?;
 			Ok(())
@@ -180,10 +177,10 @@ pub mod pallet {
 
 		/// Clear all leases for a Para Id, refunding any deposits back to the original owners.
 		///
-		/// The dispatch origin for this call must match `T::ForceOrigin`.
+		/// Can only be called by the Root origin.
 		#[pallet::weight(T::WeightInfo::clear_all_leases())]
 		pub fn clear_all_leases(origin: OriginFor<T>, para: ParaId) -> DispatchResult {
-			T::ForceOrigin::ensure_origin(origin)?;
+			ensure_root(origin)?;
 			let deposits = Self::all_deposits_held(para);
 
 			// Refund any deposits for these leases
@@ -498,7 +495,6 @@ mod tests {
 
 	use crate::{mock::TestRegistrar, slots};
 	use frame_support::{assert_noop, assert_ok, parameter_types};
-	use frame_system::EnsureRoot;
 	use pallet_balances;
 	use primitives::v1::{BlockNumber, Header};
 	use sp_core::H256;
@@ -576,7 +572,6 @@ mod tests {
 		type Registrar = TestRegistrar<Test>;
 		type LeasePeriod = LeasePeriod;
 		type LeaseOffset = LeaseOffset;
-		type ForceOrigin = EnsureRoot<Self::AccountId>;
 		type WeightInfo = crate::slots::TestWeightInfo;
 	}
 

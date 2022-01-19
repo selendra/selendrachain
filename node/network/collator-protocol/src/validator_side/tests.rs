@@ -44,7 +44,6 @@ struct TestState {
 	chain_ids: Vec<ParaId>,
 	relay_parent: Hash,
 	collators: Vec<CollatorPair>,
-	#[allow(dead_code)]
 	validators: Vec<Sr25519Keyring>,
 	validator_public: Vec<ValidatorId>,
 	validator_groups: Vec<Vec<ValidatorIndex>>,

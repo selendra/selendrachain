@@ -40,7 +40,6 @@ pub type FullBackend = sc_service::TFullBackend<Block>;
 pub type FullClient<RuntimeApi, ExecutorDispatch> =
 	sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ExecutorDispatch>>;
 
-/// The native executor instance for Selendra.
 pub struct SelendraExecutorDispatch;
 
 impl sc_executor::NativeExecutionDispatch for SelendraExecutorDispatch {
@@ -66,7 +65,6 @@ pub trait RuntimeApiCollection:
 	+ frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
 	+ pallet_mmr_primitives::MmrApi<Block, <Block as BlockT>::Hash>
 	+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
-	+ fp_rpc::EthereumRuntimeRPCApi<Block>
 	+ sp_api::Metadata<Block>
 	+ sp_offchain::OffchainWorkerApi<Block>
 	+ sp_session::SessionKeys<Block>
@@ -88,7 +86,6 @@ where
 		+ frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
 		+ pallet_mmr_primitives::MmrApi<Block, <Block as BlockT>::Hash>
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
-		+ fp_rpc::EthereumRuntimeRPCApi<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
 		+ sp_session::SessionKeys<Block>
@@ -139,7 +136,8 @@ where
 
 /// Execute something with the client instance.
 ///
-/// As these client types differ in the generics
+/// As there exist multiple chains inside Selendra, like Selendra itself, Selendra, Westend etc,
+/// there can exist different kinds of client types. As these client types differ in the generics
 /// that are being used, we can not easily return them from a function. For returning them from a
 /// function there exists [`Client`]. However, the problem on how to use this client instance still
 /// exists. This trait "solves" it in a dirty way. It requires a type to implement this trait and

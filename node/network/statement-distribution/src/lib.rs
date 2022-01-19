@@ -213,6 +213,13 @@ struct PeerRelayParentKnowledge {
 
 	/// How many large statements this peer already sent us.
 	///
+	/// Flood protection for large statements is rather hard and as soon as we get
+	/// Reason: We keep messages around until we fetched the payload, but if a node makes up
+	/// statements and never provides the data, we will keep it around for the slot duration. Not
+	/// even signature checking would help, as the sender, if a validator, can just sign arbitrary
+	/// invalid statements and will not face any consequences as long as it won't provide the
+	/// payload.
+	///
 	/// Quick and temporary fix, only accept `MAX_LARGE_STATEMENTS_PER_SENDER` per connected node.
 	///
 	/// Large statements should be rare, if they were not, we would run into problems anyways, as

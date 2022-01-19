@@ -533,6 +533,8 @@ impl CandidateCommitments {
 }
 
 /// A bitfield concerning availability of backed candidates.
+///
+/// Every bit refers to an availability core index.
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct AvailabilityBitfield(pub BitVec<bitvec::order::Lsb0, u8>);
 
@@ -902,7 +904,6 @@ pub struct SessionInfo {
 	///
 	/// NOTE: There might be more authorities in the current session, than `validators` participating
 	/// in parachain consensus. See
-	/// [`max_validators`]
 	///
 	/// `SessionInfo::validators` will be limited to to `max_validators` when set.
 	pub validators: Vec<ValidatorId>,
@@ -911,14 +912,12 @@ pub struct SessionInfo {
 	/// NOTE: The first `validators.len()` entries will match the corresponding validators in
 	/// `validators`, afterwards any remaining authorities can be found. This is any authorities not
 	/// participating in parachain consensus - see
-	/// [`max_validators`]
 	#[cfg_attr(feature = "std", ignore_malloc_size_of = "outside type")]
 	pub discovery_keys: Vec<AuthorityDiscoveryId>,
 	/// The assignment keys for validators.
 	///
 	/// NOTE: There might be more authorities in the current session, than validators participating
 	/// in parachain consensus. See
-	/// [`max_validators`]
 	///
 	/// Therefore:
 	/// ```ignore
@@ -1274,17 +1273,6 @@ impl DisputeStatement {
 			DisputeStatement::Invalid(_) => true,
 		}
 	}
-
-	/// Statement is backing statement.
-	pub fn is_backing(&self) -> bool {
-		match *self {
-			Self::Valid(ValidDisputeStatementKind::BackingSeconded(_)) |
-			Self::Valid(ValidDisputeStatementKind::BackingValid(_)) => true,
-			Self::Valid(ValidDisputeStatementKind::Explicit) |
-			Self::Valid(ValidDisputeStatementKind::ApprovalChecking) |
-			Self::Invalid(_) => false,
-		}
-	}
 }
 
 /// Different kinds of statements of validity on  a candidate.
@@ -1373,31 +1361,6 @@ pub struct InherentData<HDR: HeaderT = Header> {
 	pub disputes: MultiDisputeStatementSet,
 	/// The parent block header. Used for checking state proofs.
 	pub parent_header: HDR,
-}
-
-/// A statement from the specified validator whether the given validation code passes PVF
-/// pre-checking or not anchored to the given session index.
-#[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug, TypeInfo)]
-pub struct PvfCheckStatement {
-	/// `true` if the subject passed pre-checking and `false` otherwise.
-	pub accept: bool,
-	/// The validation code hash that was checked.
-	pub subject: ValidationCodeHash,
-	/// The index of a session during which this statement is considered valid.
-	pub session_index: SessionIndex,
-	/// The index of the validator from which this statement originates.
-	pub validator_index: ValidatorIndex,
-}
-
-impl PvfCheckStatement {
-	/// Produce the payload used for signing this type of statement.
-	///
-	/// It is expected that it will be signed by the validator at `validator_index` in the
-	/// `session_index`.
-	pub fn signing_payload(&self) -> Vec<u8> {
-		const MAGIC: [u8; 4] = *b"VCPC"; // for "validation code pre-checking"
-		(MAGIC, self.accept, self.subject, self.session_index, self.validator_index).encode()
-	}
 }
 
 /// The maximum number of validators `f` which may safely be faulty.

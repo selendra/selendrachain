@@ -15,6 +15,8 @@
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 //! # XCM Version 1
+//! Version 1 of the Cross-Consensus Message format data structures. The comprehensive list of
+//!
 //! ## Changes to be aware of
 //! Most changes should automatically be resolved via the conversion traits (i.e. `TryFrom` and
 //! `From`). The list here is mostly for incompatible changes that result in an `Err(())` when

@@ -15,7 +15,6 @@
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Prometheus metrics related to the validation host.
-#![allow(dead_code)]
 
 use selendra_node_subsystem_util::metrics::{self, prometheus};
 

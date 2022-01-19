@@ -20,7 +20,7 @@
 use sp_std::vec::Vec;
 
 use frame_support::weights::Weight;
-use parity_scale_codec::{CompactAs, Decode, Encode, MaxEncodedLen};
+use parity_scale_codec::{CompactAs, Decode, Encode};
 use scale_info::TypeInfo;
 use sp_core::{RuntimeDebug, TypeId};
 use sp_runtime::traits::Hash as _;
@@ -139,7 +139,6 @@ pub struct BlockData(#[cfg_attr(feature = "std", serde(with = "bytes"))] pub Vec
 	Encode,
 	Eq,
 	Hash,
-	MaxEncodedLen,
 	Ord,
 	PartialEq,
 	PartialOrd,
@@ -420,7 +419,7 @@ impl XcmpMessageHandler for () {
 }
 
 /// Validation parameters for evaluating the parachain validity function.
-// TODO: balance downloads.
+// TODO: balance downloads
 #[derive(PartialEq, Eq, Decode, Clone)]
 #[cfg_attr(feature = "std", derive(Debug, Encode))]
 pub struct ValidationParams {
@@ -435,7 +434,7 @@ pub struct ValidationParams {
 }
 
 /// The result of parachain validation.
-// TODO: balance uploads.
+// TODO: balance uploads
 #[derive(PartialEq, Eq, Clone, Encode)]
 #[cfg_attr(feature = "std", derive(Debug, Decode))]
 pub struct ValidationResult {

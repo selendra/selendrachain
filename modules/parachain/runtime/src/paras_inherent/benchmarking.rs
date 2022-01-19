@@ -29,8 +29,7 @@ benchmarks! {
 		let v in 10..BenchBuilder::<T>::fallback_max_validators();
 
 		let scenario = BenchBuilder::<T>::new()
-			.set_dispute_sessions(&[2])
-			.build();
+			.build(Default::default(), &[2], None);
 
 		let mut benchmark = scenario.data.clone();
 		let dispute = benchmark.disputes.pop().unwrap();
@@ -61,8 +60,7 @@ benchmarks! {
 				.collect();
 
 		let scenario = BenchBuilder::<T>::new()
-			.set_backed_and_concluding_cores(cores_with_backed)
-			.build();
+			.build(cores_with_backed, &[1], None);
 
 		let mut benchmark = scenario.data.clone();
 		let bitfield = benchmark.bitfields.pop().unwrap();
@@ -91,13 +89,13 @@ benchmarks! {
 		// candidate is not rejected. Also, we cannot have more validity votes than validators in
 		// the group.
 
-		// Do not use this range for Selendra because it only has 1 validator per backing group,
+		// Do not use this range for Rococo because it only has 1 validator per backing group,
 		// which causes issues when trying to create slopes with the benchmarking analysis. Instead
-		// use v = 1 for running Selendra benchmarks
+		// use v = 1 for running Rococo benchmarks
 		let v in (BenchBuilder::<T>::fallback_min_validity_votes())
 			..(BenchBuilder::<T>::fallback_max_validators());
 
-		// Comment in for running selendra benchmarks
+		// Comment in for running rococo benchmarks
 		// let v = 1;
 
 		let cores_with_backed: BTreeMap<_, _>
@@ -106,8 +104,7 @@ benchmarks! {
 				.collect();
 
 		let scenario = BenchBuilder::<T>::new()
-			.set_backed_and_concluding_cores(cores_with_backed.clone())
-			.build();
+			.build(cores_with_backed.clone(), &[1], None);
 
 		let mut benchmark = scenario.data.clone();
 
@@ -159,9 +156,7 @@ benchmarks! {
 				.collect();
 
 		let scenario = BenchBuilder::<T>::new()
-			.set_backed_and_concluding_cores(cores_with_backed.clone())
-			.set_code_upgrade(v)
-			.build();
+			.build(cores_with_backed.clone(), &[1], Some(v));
 
 		let mut benchmark = scenario.data.clone();
 

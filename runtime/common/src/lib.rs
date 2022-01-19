@@ -14,19 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Common runtime code for Selendra
+//! Common runtime code for Selendra.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod auctions;
+pub mod crowdloan;
 pub mod elections;
 pub mod impls;
 pub mod paras_registrar;
 pub mod paras_sudo_wrapper;
+pub mod purchase;
 pub mod slot_range;
 pub mod slots;
 pub mod traits;
 pub mod xcm_sender;
 
+#[cfg(test)]
+mod integration_tests;
 #[cfg(test)]
 mod mock;
 
@@ -35,7 +40,7 @@ pub use frame_support::weights::constants::{
 };
 use frame_support::{
 	parameter_types,
-	traits::{Currency, OneSessionHandler},
+	traits::{ConstU32, Currency, OneSessionHandler},
 	weights::{constants::WEIGHT_PER_SECOND, DispatchClass, Weight},
 };
 use frame_system::limits;
@@ -67,16 +72,6 @@ pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(1);
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 2 seconds of compute with a 6 second average block time.
 pub const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
-
-/// Current approximation of the gas/s consumption considering
-/// EVM execution over compiled WASM (on 4.4Ghz CPU).
-/// Given the 500ms Weight, from which 75% only are used for transactions,
-/// the total EVM execution gas limit is: GAS_PER_SECOND * 0.500 * 0.75 ~= 15_000_000.
-pub const GAS_PER_SECOND: u64 = 40_000_000;
-
-/// Approximate ratio of the amount of Weight per Gas.
-/// u64 works for approximations because Weight is a very small unit compared to gas.
-pub const WEIGHT_PER_GAS: u64 = WEIGHT_PER_SECOND / GAS_PER_SECOND;
 
 const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct());
 
@@ -118,6 +113,7 @@ parameter_types! {
 }
 
 /// Parameterized slow adjusting fee updated based on
+/// https://w3f-research.readthedocs.io/en/latest/polkadot/Token%20Economics.html#-2.-slow-adjusting-mechanism
 pub type SlowAdjustingFeeUpdate<R> =
 	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 
@@ -183,6 +179,13 @@ impl<T: pallet_session::Config> OneSessionHandler<T::AccountId>
 	}
 
 	fn on_disabled(_: u32) {}
+}
+
+/// A reasonable benchmarking config for staking pallet.
+pub struct StakingBenchmarkingConfig;
+impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
+	type MaxValidators = ConstU32<1000>;
+	type MaxNominators = ConstU32<1000>;
 }
 
 #[cfg(test)]

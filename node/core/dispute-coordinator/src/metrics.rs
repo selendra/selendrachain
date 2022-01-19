@@ -13,17 +13,19 @@
 
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
-#![allow(dead_code)]
 
 use selendra_node_subsystem_util::metrics::{self, prometheus};
 
 #[derive(Clone)]
 struct MetricsInner {
 	/// Number of opened disputes.
+	#[allow(dead_code)]
 	open: prometheus::Counter<prometheus::U64>,
 	/// Votes of all disputes.
+	#[allow(dead_code)]
 	votes: prometheus::CounterVec<prometheus::U64>,
 	/// Conclusion across all disputes.
+	#[allow(dead_code)]
 	concluded: prometheus::CounterVec<prometheus::U64>,
 }
 
@@ -31,6 +33,7 @@ struct MetricsInner {
 #[derive(Default, Clone)]
 pub struct Metrics(Option<MetricsInner>);
 
+#[cfg(feature = "disputes")]
 impl Metrics {
 	pub(crate) fn on_open(&self) {
 		if let Some(metrics) = &self.0 {

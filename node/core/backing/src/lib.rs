@@ -53,7 +53,7 @@ use selendra_subsystem::{
 		DisputeCoordinatorMessage, ImportStatementsResult, ProvisionableData, ProvisionerMessage,
 		RuntimeApiRequest, StatementDistributionMessage, ValidationFailed,
 	},
-	overseer, ActivatedLeaf, PerLeafSpan, Stage, SubsystemSender,
+	overseer, PerLeafSpan, Stage, SubsystemSender,
 };
 use sp_keystore::SyncCryptoStorePtr;
 use statement_table::{
@@ -1173,7 +1173,8 @@ impl util::JobTrait for CandidateBackingJob {
 	const NAME: &'static str = "candidate-backing-job";
 
 	fn run<S: SubsystemSender>(
-		leaf: ActivatedLeaf,
+		parent: Hash,
+		span: Arc<jaeger::Span>,
 		keystore: SyncCryptoStorePtr,
 		metrics: Metrics,
 		rx_to: mpsc::Receiver<Self::ToJob>,
@@ -1200,8 +1201,7 @@ impl util::JobTrait for CandidateBackingJob {
 				}
 			}
 
-			let parent = leaf.hash;
-			let span = PerLeafSpan::new(leaf.span.clone(), "backing");
+			let span = PerLeafSpan::new(span, "backing");
 			let _span = span.child("runtime-apis");
 
 			let (validators, groups, session_index, cores) = futures::try_join!(

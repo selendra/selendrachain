@@ -87,7 +87,7 @@ pub fn availability_cores<T: initializer::Config>() -> Vec<CoreState<T::Hash, T:
 			Some(g) => g,
 			None => {
 				log::warn!(
-					target: "runtime::polkadot-api::v1",
+					target: "runtime::selendra-api::v1",
 					"Could not determine the group responsible for core extracted \
 					from list of cores for some prior block in same session",
 				);

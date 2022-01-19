@@ -16,8 +16,6 @@
 
 //! Mocking utilities for testing.
 
-#![allow(dead_code)]
-
 use crate::traits::Registrar;
 use frame_support::dispatch::{DispatchError, DispatchResult};
 use parity_scale_codec::{Decode, Encode};
@@ -194,14 +192,17 @@ impl<T: frame_system::Config> TestRegistrar<T> {
 			.with(|x| x.borrow().iter().map(|(p, b, c)| (*p, (*b).into(), *c)).collect::<Vec<_>>())
 	}
 
+	#[allow(dead_code)]
 	pub fn parachains() -> Vec<ParaId> {
 		PARACHAINS.with(|x| x.borrow().clone())
 	}
 
+	#[allow(dead_code)]
 	pub fn parathreads() -> Vec<ParaId> {
 		PARATHREADS.with(|x| x.borrow().clone())
 	}
 
+	#[allow(dead_code)]
 	pub fn clear_storage() {
 		OPERATIONS.with(|x| x.borrow_mut().clear());
 		PARACHAINS.with(|x| x.borrow_mut().clear());

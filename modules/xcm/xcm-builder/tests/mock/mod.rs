@@ -113,7 +113,7 @@ impl configuration::Config for Runtime {
 
 // aims to closely emulate the Selendra XcmConfig
 parameter_types! {
-	pub const SelLocation: MultiLocation = MultiLocation::here();
+	pub const SELLocation: MultiLocation = MultiLocation::here();
 	pub const SelendraNetwork: NetworkId = NetworkId::Selendra;
 	pub Ancestry: MultiLocation = Here.into();
 	pub CheckAccount: AccountId = XcmPallet::check_account();
@@ -124,7 +124,7 @@ pub type SovereignAccountOf =
 
 pub type LocalAssetTransactor = XcmCurrencyAdapter<
 	Balances,
-	IsConcrete<SelLocation>,
+	IsConcrete<SELLocation>,
 	SovereignAccountOf,
 	AccountId,
 	CheckAccount,
@@ -139,7 +139,7 @@ type LocalOriginConverter = (
 
 parameter_types! {
 	pub const BaseXcmWeight: Weight = 1_000_000_000;
-	pub SelPerSecond: (AssetId, u128) = (SelLocation::get().into(), 1);
+	pub SELPerSecond: (AssetId, u128) = (SELLocation::get().into(), 1);
 }
 
 pub type Barrier = (
@@ -150,11 +150,11 @@ pub type Barrier = (
 );
 
 parameter_types! {
-	pub const SelendraForParachanin: (MultiAssetFilter, MultiLocation) =
+	pub const SelendraForIndra: (MultiAssetFilter, MultiLocation) =
 		(MultiAssetFilter::Wild(WildMultiAsset::AllOf { id: Concrete(MultiLocation::here()), fun: WildFungible }), X1(Parachain(1000)).into());
 	pub const MaxInstructions: u32 = 100;
 }
-pub type TrustedTeleporters = (xcm_builder::Case<SelendraForParachanin>,);
+pub type TrustedTeleporters = (xcm_builder::Case<SelendraForIndra>,);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -167,7 +167,7 @@ impl xcm_executor::Config for XcmConfig {
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<BaseXcmWeight, Call, MaxInstructions>;
-	type Trader = FixedRateOfFungible<SelPerSecond, ()>;
+	type Trader = FixedRateOfFungible<SELPerSecond, ()>;
 	type ResponseHandler = XcmPallet;
 	type AssetTrap = XcmPallet;
 	type AssetClaims = XcmPallet;
