@@ -1,0 +1,7 @@
+./target/release/polkadot \
+--alice \
+--validator \
+--base-path /tmp/relay/alice \
+--chain <path to spec json> \
+--port 30333 \
+--ws-port 9944
