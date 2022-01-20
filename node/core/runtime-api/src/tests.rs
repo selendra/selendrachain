@@ -818,6 +818,7 @@ fn multiple_requests_in_parallel_are_working() {
 			.into_iter()
 			.for_each(|r| assert_eq!(r.unwrap().unwrap(), runtime_api.availability_cores));
 
+		#[allow(must_not_suspend)]
 		ctx_handle.send(FromOverseer::Signal(OverseerSignal::Conclude)).await;
 	};
 

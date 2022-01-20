@@ -68,6 +68,7 @@ impl TestCandidateBuilder {
 #[derive(Clone)]
 struct TestState {
 	para_id: ParaId,
+	#[allow(dead_code)]
 	validators: Vec<Sr25519Keyring>,
 	session_info: SessionInfo,
 	group_rotation_info: GroupRotationInfo,
