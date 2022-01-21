@@ -29,9 +29,9 @@ use primitives::v1::{
 	SessionInfo, Signature, ValidationCode, ValidationCodeHash, ValidatorId, ValidatorIndex,
 };
 use runtime_common::{
-	impls::DealWithFees, paras_registrar, paras_sudo_wrapper, slots, BlockHashCount,
-	BlockLength, BlockWeights, CurrencyToVote, OffchainSolutionLengthLimit,
-	OffchainSolutionWeightLimit, RocksDbWeight, SlowAdjustingFeeUpdate,
+	impls::DealWithFees, paras_registrar, paras_sudo_wrapper, slots, BlockHashCount, BlockLength,
+	BlockWeights, CurrencyToVote, OffchainSolutionLengthLimit, OffchainSolutionWeightLimit,
+	RocksDbWeight, SlowAdjustingFeeUpdate,
 };
 use sp_core::u32_trait::{_1, _2, _3, _5};
 use sp_std::{cmp::Ordering, collections::btree_map::BTreeMap, prelude::*};
@@ -49,10 +49,7 @@ use authority_discovery_primitives::AuthorityId as AuthorityDiscoveryId;
 use beefy_primitives::crypto::AuthorityId as BeefyId;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{
-		Contains, InstanceFilter, KeyOwnerProofSystem, LockIdentifier,
-		PrivilegeCmp,
-	},
+	traits::{Contains, InstanceFilter, KeyOwnerProofSystem, LockIdentifier, PrivilegeCmp},
 	weights::Weight,
 	PalletId, RuntimeDebug,
 };
@@ -1150,7 +1147,6 @@ parameter_types! {
 	pub const IntakePeriod: BlockNumber = 5 * MINUTES;
 	pub const MaxIntakeBids: u32 = 100;
 }
-
 
 impl pallet_sudo::Config for Runtime {
 	type Event = Event;
