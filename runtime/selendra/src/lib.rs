@@ -110,7 +110,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("selendra"),
 	impl_name: create_runtime_str!("selendra-chain"),
-	authoring_version: 2,
+	authoring_version: 1,
 	spec_version: 200,
 	impl_version: 0,
 	#[cfg(not(feature = "disable-runtime-api"))]
