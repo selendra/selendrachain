@@ -3,7 +3,7 @@
   "id": "selendra_testnet",
   "chainType": "Live",
   "bootNodes": [
-        "/ip4/128.199.99.6/tcp/30333/p2p/12D3KooWMeYonpcPQZNNQHaTGoYcYhmMPAmaQELsU1QjLnKuYF6D",
+        "/ip4/157.230.37.72/tcp/30333/p2p/12D3KooWMeYonpcPQZNNQHaTGoYcYhmMPAmaQELsU1QjLnKuYF6D",
         "/ip4/128.199.56.89/tcp/30333/p2p/12D3KooW9yqrYfwaUDu8wr8TRdrHY2Jntn4qMZQEkoa2bhNDiVk7",
         "/ip4/206.189.229.1/tcp/30333/p2p/12D3KooWK4AXZnc6F1z4zC6DFQdzpw56gXLEusbVL29KufhsbKfe",
         "/ip4/137.184.108.167/tcp/30333/p2p/12D3KooWGKfxJuNcU21AHaEPe1r593bPA2rEbncyThSdiEmyzFh6"
