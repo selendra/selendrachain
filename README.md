@@ -20,7 +20,7 @@ To run Selendra Validator [here](https://github.com/selendra/selendra-chain/blob
 
 ### Check node telemetry
 
-You see testnet all node have run [here](https://telemetry.polkadot.io/#/0x28e1ad536556094505a18650e26cc9663504fc118a1fc13701ab76074c7d7db7)
+You see testnet all node have run [here](https://telemetry.polkadot.io/#/0xfeee09b40acfe5b8da28706ce2adf87f36919d881cff560c2ebb6b140c824b8a)
 
 ### License
 

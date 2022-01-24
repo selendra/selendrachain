@@ -127,8 +127,8 @@ fn selendra_staging_testnet_config_genesis(wasm_binary: &[u8]) -> selendra::Gene
 
 	// subkey inspect "$SECRET"
 	let endowed_accounts = vec![
-		// 5CDkUQaKd39SJq9LaUyK8QXbqCTDVgCiDCSu6izYe2pkumBx
-		hex!["06e603f736d04565b4fbb38074c0f52a7687c68ffaf58d1438f47cd6de0d397b"].into(),
+		// 5FL2rGw6SRFNCLADcdmerz2wSwUDCghsLztprnkrXq1AARw5
+		hex!["9065517c47c4710a44769adac5638b2f77db30b71ac10cb5b30e467b1af98f19"].into(),
 	];
 
 	let initial_authorities: Vec<(
