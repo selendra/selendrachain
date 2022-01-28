@@ -6,7 +6,7 @@ edition = "2018"
 build = "build.rs"
 
 [dependencies]
-hex-literal = { version = "0.3.4", optional = true }
+hex-literal = { version = "0.3.4" }
 bitvec = { version = "0.20.1", default-features = false, features = ["alloc"] }
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive", "max-encoded-len"] }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
@@ -92,8 +92,11 @@ xcm = { package = "xcm", path = "../../modules/xcm", default-features = false }
 xcm-executor = { package = "xcm-executor", path = "../../modules/xcm/xcm-executor", default-features = false }
 xcm-builder = { package = "xcm-builder", path = "../../modules/xcm/xcm-builder", default-features = false }
 
+# Bridge
+pallet-bridge = { path = "../../modules/bridge", default-features = false }
+pallet-bridge-transfer = { path = "../../modules/bridge_transfer", default-features = false }
+
 [dev-dependencies]
-hex-literal = "0.3.4"
 tiny-keccak = "2.0.2"
 keyring = { package = "sp-keyring", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
@@ -172,6 +175,8 @@ std = [
 	"pallet-vesting/std",
 	"pallet-babe/std",
 	"pallet-xcm/std",
+	"pallet-bridge/std",
+	"pallet-bridge-transfer/std",
 	"pallet-mmr-primitives/std",
 	"runtime-common/std",
 	"runtime-parachains/std",
@@ -212,7 +217,6 @@ runtime-benchmarks = [
 	"pallet-session-benchmarking",
 	"pallet-xcm/runtime-benchmarks",
 	"frame-system-benchmarking",
-	"hex-literal",
 	"xcm-builder/runtime-benchmarks",
 	"frame-election-provider-support/runtime-benchmarks",
 	"pallet-bags-list/runtime-benchmarks",

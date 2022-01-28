@@ -107,7 +107,7 @@ parameter_types! {
 	pub const Selendra: MultiAssetFilter = Wild(AllOf { fun: WildFungible, id: Concrete(SelLocation::get()) });
 	pub const SelendraForIndra: (MultiAssetFilter, MultiLocation) = (Selendra::get(), Parachain(1000).into());
 }
-pub type TrustedTeleporters = (xcm_builder::Case<SelendraForIndra>,);
+pub type TrustedTeleporters = xcm_builder::Case<SelendraForIndra>;
 
 match_type! {
 	pub type OnlyParachains: impl Contains<MultiLocation> = {

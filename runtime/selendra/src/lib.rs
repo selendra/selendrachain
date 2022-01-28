@@ -1155,6 +1155,31 @@ impl pallet_sudo::Config for Runtime {
 
 impl paras_sudo_wrapper::Config for Runtime {}
 
+parameter_types! {
+	pub const BridgeChainId: u8 = 1;
+	pub const ProposalLifetime: BlockNumber = 50;
+}
+
+impl pallet_bridge::Config for Runtime {
+	type Event = Event;
+	type BridgeCommitteeOrigin = MoreThanHalfCouncil;
+	type Proposal = Call;
+	type BridgeChainId = BridgeChainId;
+	type ProposalLifetime = ProposalLifetime;
+}
+
+parameter_types! {
+	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("000000000000000000000084A4e816F6D7fcBD0D8b4F907A6967B5f3C8c4dA03");
+}
+
+impl pallet_bridge_transfer::Config for Runtime {
+	type Event = Event;
+	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
+	type Currency = Balances;
+	type NativeTokenResourceId = NativeTokenResourceId;
+	type OnFeePay = Treasury;
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -1248,6 +1273,10 @@ construct_runtime! {
 
 		// Sudo.
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
+
+		// ChainBridge
+		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 90,
+		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 91,
 	}
 }
 
