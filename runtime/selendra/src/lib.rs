@@ -29,7 +29,7 @@ use primitives::v1::{
 	SessionInfo, Signature, ValidationCode, ValidationCodeHash, ValidatorId, ValidatorIndex,
 };
 use runtime_common::{
-	impls::DealWithFees, paras_registrar, paras_sudo_wrapper, slots, BlockHashCount, BlockLength,
+	impls::DealWithFees, paras_registrar, slots, BlockHashCount, BlockLength,
 	BlockWeights, CurrencyToVote, OffchainSolutionLengthLimit, OffchainSolutionWeightLimit,
 	RocksDbWeight, SlowAdjustingFeeUpdate,
 };
@@ -111,7 +111,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("selendra"),
 	impl_name: create_runtime_str!("selendra-chain"),
 	authoring_version: 1,
-	spec_version: 200,
+	spec_version: 001,
 	impl_version: 0,
 	#[cfg(not(feature = "disable-runtime-api"))]
 	apis: RUNTIME_API_VERSIONS,
@@ -149,7 +149,7 @@ type MoreThanHalfCouncil = EnsureOneOf<
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u16 = 42;
+	pub const SS58Prefix: u16 = 972;
 }
 
 impl frame_system::Config for Runtime {
@@ -1148,13 +1148,6 @@ parameter_types! {
 	pub const MaxIntakeBids: u32 = 100;
 }
 
-impl pallet_sudo::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
-}
-
-impl paras_sudo_wrapper::Config for Runtime {}
-
 parameter_types! {
 	pub const BridgeChainId: u8 = 1;
 	pub const ProposalLifetime: BlockNumber = 50;
@@ -1262,7 +1255,6 @@ construct_runtime! {
 		Hrmp: parachains_hrmp::{Pallet, Call, Storage, Event<T>} = 60,
 		ParaSessionInfo: parachains_session_info::{Pallet, Storage} = 61,
 		ParasDisputes: parachains_disputes::{Pallet, Call, Storage, Event<T>} = 62,
-		ParasSudoWrapper: paras_sudo_wrapper::{Pallet, Call} = 63,
 
 		// Parachain Onboarding Pallets. Start indices at 70 to leave room.
 		Registrar: paras_registrar::{Pallet, Call, Storage, Event<T>} = 70,
@@ -1270,9 +1262,6 @@ construct_runtime! {
 
 		// Pallet for sending XCM.
 		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin, Config} = 99,
-
-		// Sudo.
-		Sudo: pallet_sudo::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
 
 		// ChainBridge
 		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 90,

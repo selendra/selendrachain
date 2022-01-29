@@ -18,7 +18,7 @@ use crate::cli::{Cli, Subcommand};
 use futures::future::TryFutureExt;
 use sc_cli::{Role, RuntimeVersion, SubstrateCli};
 use service::{self, IdentifyVariant};
-use sp_core::crypto::Ss58AddressFormatRegistry;
+use sp_core::crypto::Ss58AddressFormat;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -95,7 +95,7 @@ impl SubstrateCli for Cli {
 }
 
 fn set_default_ss58_version() {
-	let ss58_version = Ss58AddressFormatRegistry::SubstrateAccount.into();
+	let ss58_version = Ss58AddressFormat::custom(972);
 	sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 
