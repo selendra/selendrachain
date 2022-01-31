@@ -23,11 +23,8 @@ rls*.log
 .cargo/
 hfuzz_target/
 hfuzz_workspace/
-runs.txt
-genesis-state
-genesis-wasm
 selendra-local.json
 node_modules
-run.txt
+run
 data
 db
