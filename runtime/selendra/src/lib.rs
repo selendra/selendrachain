@@ -1137,41 +1137,30 @@ impl slots::Config for Runtime {
 	type WeightInfo = weights::runtime_common_slots::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	pub IgnoredIssuance: Balance = Treasury::pot();
-	pub const QueueCount: u32 = 300;
-	pub const MaxQueueLen: u32 = 1000;
-	pub const FifoQueueLen: u32 = 250;
-	pub const GiltPeriod: BlockNumber = 30 * DAYS;
-	pub const MinFreeze: Balance = 10_000 * CENTS;
-	pub const IntakePeriod: BlockNumber = 5 * MINUTES;
-	pub const MaxIntakeBids: u32 = 100;
-}
+// parameter_types! {
+// 	pub const BridgeChainId: u8 = 1;
+// 	pub const ProposalLifetime: BlockNumber = 50;
+// }
 
-parameter_types! {
-	pub const BridgeChainId: u8 = 1;
-	pub const ProposalLifetime: BlockNumber = 50;
-}
+// impl pallet_bridge::Config for Runtime {
+// 	type Event = Event;
+// 	type BridgeCommitteeOrigin = MoreThanHalfCouncil;
+// 	type Proposal = Call;
+// 	type BridgeChainId = BridgeChainId;
+// 	type ProposalLifetime = ProposalLifetime;
+// }
 
-impl pallet_bridge::Config for Runtime {
-	type Event = Event;
-	type BridgeCommitteeOrigin = MoreThanHalfCouncil;
-	type Proposal = Call;
-	type BridgeChainId = BridgeChainId;
-	type ProposalLifetime = ProposalLifetime;
-}
+// parameter_types! {
+// 	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("000000000000000000000084A4e816F6D7fcBD0D8b4F907A6967B5f3C8c4dA03");
+// }
 
-parameter_types! {
-	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("000000000000000000000084A4e816F6D7fcBD0D8b4F907A6967B5f3C8c4dA03");
-}
-
-impl pallet_bridge_transfer::Config for Runtime {
-	type Event = Event;
-	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
-	type Currency = Balances;
-	type NativeTokenResourceId = NativeTokenResourceId;
-	type OnFeePay = Treasury;
-}
+// impl pallet_bridge_transfer::Config for Runtime {
+// 	type Event = Event;
+// 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
+// 	type Currency = Balances;
+// 	type NativeTokenResourceId = NativeTokenResourceId;
+// 	type OnFeePay = Treasury;
+// }
 
 construct_runtime! {
 	pub enum Runtime where
@@ -1263,9 +1252,9 @@ construct_runtime! {
 		// Pallet for sending XCM.
 		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin, Config} = 99,
 
-		// ChainBridge
-		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 90,
-		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 91,
+		// // ChainBridge
+		// ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 90,
+		// BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 91,
 	}
 }
 
