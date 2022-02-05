@@ -1,0 +1,182 @@
+[package]
+name = "selendra-service"
+version = "0.2.1"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+
+[dependencies]
+# Substrate Client
+sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+babe = { package = "sc-consensus-babe", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+beefy-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+beefy-gadget = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+grandpa = { package = "sc-finality-grandpa", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-consensus-uncles = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-consensus-slots = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-sync-state-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-offchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+service = { package = "sc-service", git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
+telemetry = { package = "sc-telemetry", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+
+# Substrate Primitives
+sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+consensus_common = { package = "sp-consensus", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+grandpa_primitives = { package = "sp-finality-grandpa", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+inherents = { package = "sp-inherents", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-offchain = { package = "sp-offchain", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+
+# Substrate Pallets
+pallet-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+pallet-im-online = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+pallet-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+pallet-mmr-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+
+# Substrate Other
+frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+
+# External Crates
+futures = "0.3.19"
+hex-literal = "0.3.4"
+tracing = "0.1.29"
+serde = { version = "1.0.132", features = ["derive"] }
+thiserror = "1.0.30"
+kvdb = "0.10.0"
+kvdb-rocksdb = { version = "0.14.0", optional = true }
+async-trait = "0.1.52"
+lru = "0.7"
+
+# Selendra
+selendra-node-core-parachains-inherent = { path = "../../../system-node/core/parachains-inherent" }
+selendra-overseer = { path = "../../../system-node/overseer" }
+selendra-client = { path = "../client", default-features = false, optional = true }
+selendra-parachain = { path = "../../../modules/parachain" }
+selendra-primitives = { path = "../../../primitives" }
+selendra-node-primitives = { path = "../../../system-node/primitives" }
+selendra-rpc = { path = "../rpc" }
+selendra-subsystem = { package = "selendra-node-subsystem", path = "../../../system-node/subsystem" }
+selendra-node-subsystem-util = { path = "../../../system-node/subsystem-util" }
+selendra-runtime-parachains = { path = "../../../modules/parachain/runtime" }
+selendra-node-network-protocol = { path = "../../../system-node/network/protocol" }
+
+# Selendra Runtime Constants
+selendra-runtime-constants = { path = "../../runtime/selendra/constants", optional = true }
+cardamom-runtime-constants = { path = "../../runtime/cardamom/constants", optional = true }
+
+# Selendra Runtimes
+selendra-runtime = { path = "../../runtime/selendra", optional = true }
+cardamom-runtime = { path = "../../runtime/cardamom", optional = true }
+
+# Selendra Subsystems
+selendra-approval-distribution = { path = "../../../system-node/network/approval-distribution", optional = true }
+selendra-availability-bitfield-distribution = { path = "../../../system-node/network/bitfield-distribution", optional = true }
+selendra-availability-distribution = { path = "../../../system-node/network/availability-distribution", optional = true }
+selendra-availability-recovery = { path = "../../../system-node/network/availability-recovery", optional = true }
+selendra-collator-protocol = { path = "../../../system-node/network/collator-protocol", optional = true }
+selendra-dispute-distribution = { path = "../../../system-node/network/dispute-distribution", optional = true }
+selendra-gossip-support = { path = "../../../system-node/network/gossip-support", optional = true }
+selendra-network-bridge = { path = "../../../system-node/network/bridge", optional = true }
+selendra-node-collation-generation = { path = "../../../system-node/collation-generation", optional = true }
+selendra-node-core-approval-voting = { path = "../../../system-node/core/approval-voting", optional = true }
+selendra-node-core-av-store = { path = "../../../system-node/core/av-store", optional = true }
+selendra-node-core-backing = { path = "../../../system-node/core/backing", optional = true }
+selendra-node-core-bitfield-signing = { path = "../../../system-node/core/bitfield-signing", optional = true }
+selendra-node-core-candidate-validation = { path = "../../../system-node/core/candidate-validation", optional = true }
+selendra-node-core-chain-api = { path = "../../../system-node/core/chain-api", optional = true }
+selendra-node-core-chain-selection = { path = "../../../system-node/core/chain-selection", optional = true }
+selendra-node-core-dispute-coordinator = { path = "../../../system-node/core/dispute-coordinator", optional = true }
+selendra-node-core-provisioner = { path = "../../../system-node/core/provisioner", optional = true }
+selendra-node-core-pvf-checker = { path = "../../../system-node/core/pvf-checker", optional = true }
+selendra-node-core-runtime-api = { path = "../../../system-node/core/runtime-api", optional = true }
+selendra-statement-distribution = { path = "../../../system-node/network/statement-distribution", optional = true }
+
+[dev-dependencies]
+selendra-test-client = { path = "../test/client" }
+selendra-node-subsystem-test-helpers = { path = "../../../system-node/subsystem-test-helpers" }
+env_logger = "0.9.0"
+log = "0.4.14"
+assert_matches = "1.5.0"
+
+[features]
+default = ["db", "full-node", "selendra-native"]
+
+db = [
+	"service/db"
+]
+
+full-node = [
+	"selendra-node-core-av-store",
+	"selendra-node-core-approval-voting",
+	"selendra-availability-bitfield-distribution",
+	"selendra-availability-distribution",
+	"selendra-availability-recovery",
+	"selendra-client",
+	"selendra-collator-protocol",
+	"selendra-dispute-distribution",
+	"selendra-gossip-support",
+	"selendra-network-bridge",
+	"selendra-node-collation-generation",
+	"selendra-node-core-backing",
+	"selendra-node-core-bitfield-signing",
+	"selendra-node-core-candidate-validation",
+	"selendra-node-core-chain-api",
+	"selendra-node-core-chain-selection",
+	"selendra-node-core-dispute-coordinator",
+	"selendra-node-core-provisioner",
+	"selendra-node-core-runtime-api",
+	"selendra-statement-distribution",
+	"selendra-approval-distribution",
+	"selendra-node-core-pvf-checker",
+	"kvdb-rocksdb"
+]
+
+# Configure the native runtimes to use. Selendra is enabled by default.
+#
+# Validators require the native runtime currently
+selendra-native = [ "selendra-runtime", "selendra-runtime-constants", "selendra-client/selendra" ]
+cardamom-native = [ "cardamom-runtime", "cardamom-runtime-constants", "selendra-client/cardamom" ]
+
+runtime-benchmarks = [
+	"selendra-runtime/runtime-benchmarks",
+	"cardamom-runtime/runtime-benchmarks",
+]
+try-runtime = [
+	"selendra-runtime/try-runtime",
+	"cardamom-runtime/try-runtime",
+]
+fast-runtime = [
+	"selendra-runtime/fast-runtime",
+	"cardamom-runtime/fast-runtime",
+]
+
+runtime-metrics = [
+	"selendra-client/runtime-metrics",
+	"cardamom-runtime/runtime-metrics",
+	"selendra-runtime/runtime-metrics",
+	"selendra-runtime-parachains/runtime-metrics"
+]

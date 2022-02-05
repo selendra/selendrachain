@@ -1,0 +1,30 @@
+[package]
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+name = "xcm-executor-integration-tests"
+description = "Integration tests for the XCM Executor"
+version = "0.2.1"
+
+[dependencies]
+frame-support = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+futures = "0.3.19"
+pallet-xcm = { path = "../../pallet-xcm" }
+selendra-test-client = { path = "../../../../selendra-chains/node/test/client" }
+selendra-test-runtime = { path = "../../../../selendra-chains/runtime/test-runtime" }
+selendra-test-service = { path = "../../../../selendra-chains/node/test/service" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-runtime = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+xcm = { path = "../..", default-features = false }
+xcm-executor = { path = ".." }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+
+[features]
+default = ["std"]
+std = [
+	"xcm/std",
+	"sp-runtime/std",
+	"frame-support/std",
+]

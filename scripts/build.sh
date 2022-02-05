@@ -6,4 +6,4 @@ echo '[+] Build Selendra'
 cargo build --release
 
 echo '[+] Build Selendra chainspec'
-./target/release/selendra build-spec --chain=selendra-staging --disable-default-bootnode --raw > node/service/res/selendra.json
+./target/release/selendra build-spec --chain=staging --disable-default-bootnode --raw > node/service/res/selendra.json

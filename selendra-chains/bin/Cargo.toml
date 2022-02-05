@@ -1,0 +1,31 @@
+[package]
+name = "selendra"
+description = "Implementation of a `https://selendra.network` node in Rust based on the Substrate framework."
+license = "GPL-3.0-only"
+version = "0.2.1"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2018"
+rust-version = "1.57.0" # custom profiles
+
+[[bin]]
+name = "selendra"
+path = "src/main.rs"
+
+[dependencies]
+selendra-cli = { path = "cli", features = [ "selendra-native", "cardamom-native" ]  }
+color-eyre = { version = "0.5.11", default-features = false }
+parity-util-mem = { version = "*", default-features = false, features = ["jemalloc-global"] }
+
+[dev-dependencies]
+assert_cmd = "2.0.2"
+nix = "0.23.1"
+tempfile = "3.2.0"
+tokio = "1.15.0"
+remote-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+node-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+
+[features]
+runtime-benchmarks= [ "selendra-cli/runtime-benchmarks" ]
+try-runtime = [ "selendra-cli/try-runtime" ]
+fast-runtime = [ "selendra-cli/fast-runtime" ]
+runtime-metrics = [ "selendra-cli/runtime-metrics" ]

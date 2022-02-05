@@ -156,7 +156,7 @@ fn query_holding_works() {
 }
 
 /// Scenario:
-/// A parachain wants to move SEL from Selendra to Statemine.
+/// A parachain wants to move SEL from Selendra to Indracore.
 /// The parachain sends an XCM to withdraw funds combined with a teleport to the destination.
 ///
 /// This way of moving funds from a relay to a parachain will only work for trusted chains.
@@ -164,12 +164,12 @@ fn query_holding_works() {
 ///
 /// Asserts that the balances are updated accordingly and the correct XCM is sent.
 #[test]
-fn teleport_to_statemine_works() {
+fn teleport_to_indracore_works() {
 	use xcm::opaque::latest::prelude::*;
 	let para_acc: AccountId = ParaId::from(PARA_ID).into_account();
 	let balances = vec![(ALICE, INITIAL_BALANCE), (para_acc.clone(), INITIAL_BALANCE)];
 	selendra_like_with_balances(balances).execute_with(|| {
-		let statemine_id = 1000;
+		let indracore_id = 1000;
 		let other_para_id = 3000;
 		let amount = REGISTER_AMOUNT;
 		let teleport_effects = vec![
@@ -208,7 +208,7 @@ fn teleport_to_statemine_works() {
 			)]
 		);
 
-		// teleports are allowed from statemine to selendra.
+		// teleports are allowed from indracore to selendra.
 		let r = XcmExecutor::<XcmConfig>::execute_xcm(
 			Parachain(PARA_ID).into(),
 			Xcm(vec![
@@ -216,7 +216,7 @@ fn teleport_to_statemine_works() {
 				buy_execution(),
 				InitiateTeleport {
 					assets: All.into(),
-					dest: Parachain(statemine_id).into(),
+					dest: Parachain(indracore_id).into(),
 					xcm: Xcm(teleport_effects.clone()),
 				},
 			]),
@@ -236,7 +236,7 @@ fn teleport_to_statemine_works() {
 						.collect()),
 				),
 				(
-					Parachain(statemine_id).into(),
+					Parachain(indracore_id).into(),
 					Xcm(vec![ReceiveTeleportedAsset((Parent, amount).into()), ClearOrigin,]
 						.into_iter()
 						.chain(teleport_effects.clone().into_iter())

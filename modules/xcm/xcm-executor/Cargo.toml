@@ -1,6 +1,6 @@
 [package]
 name = "xcm-executor"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 description = "An abstract and configurable XCM message executor."
@@ -9,14 +9,14 @@ description = "An abstract and configurable XCM message executor."
 impl-trait-for-tuples = "0.2.0"
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive"] }
 xcm = { path = "..", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
-sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
+sp-io = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
+sp-arithmetic = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
+sp-core = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
+sp-runtime = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
+frame-support = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
 log = { version = "0.4.14", default-features = false }
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, optional = true , branch = "polkadot-v0.9.15" }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, optional = true }
 
 [features]
 default = ["std"]
