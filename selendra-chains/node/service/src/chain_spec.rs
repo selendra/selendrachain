@@ -627,10 +627,10 @@ fn cardamom_staging_testnet_config_genesis(wasm_binary: &[u8]) -> cardamom::Gene
 
 	// subkey inspect "$SECRET"
 	let endowed_accounts = vec![
-		// 5CVFESwfkk7NmhQ6FwHCM9roBvr9BGa4vJHFYU8DnGQxrXvz
-		hex!["12b782529c22032ed4694e0f6e7d486be7daa6d12088f6bc74d593b3900b8438"].into(),
+		// 5FL2rGw6SRFNCLADcdmerz2wSwUDCghsLztprnkrXq1AARw5
+		hex!["9065517c47c4710a44769adac5638b2f77db30b71ac10cb5b30e467b1af98f19"].into(),
 	];
-	// SECRET='...' ./scripts/prepare-test-net.sh 4
+
 	let initial_authorities: Vec<(
 		AccountId,
 		AccountId,
@@ -857,11 +857,7 @@ pub fn cardamom_testnet_genesis(
 	cardamom::GenesisConfig {
 		system: cardamom::SystemConfig { code: wasm_binary.to_vec() },
 		balances: cardamom::BalancesConfig {
-			balances: endowed_accounts
-				.iter()
-				.map(|k: &AccountId| (k.clone(), ENDOWMENT))
-				.chain(initial_authorities.iter().map(|x| (x.0.clone(), STASH)))
-				.collect(),
+			balances: endowed_accounts.iter().map(|k| (k.clone(), ENDOWMENT)).collect(),
 		},
 		indices: cardamom::IndicesConfig { indices: vec![] },
 		session: cardamom::SessionConfig {
