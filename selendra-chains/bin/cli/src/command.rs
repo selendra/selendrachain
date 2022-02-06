@@ -40,7 +40,7 @@ fn get_exec_name() -> Option<String> {
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Parity Selendra".into()
+		"Selendra SelendraChain".into()
 	}
 
 	fn impl_version() -> String {
@@ -60,7 +60,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn copyright_start_year() -> i32 {
-		2017
+		2020
 	}
 
 	fn executable_name() -> String {

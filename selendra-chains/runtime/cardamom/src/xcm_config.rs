@@ -12,17 +12,18 @@
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
+// along with Polkadot. If not, see <http://www.gnu.org/licenses/>.
 
 //! XCM configurations for Cardamom.
 
 use super::{
-	parachains_origin, weights, AccountId, Balances, Call, CouncilCollective, Event, Origin, ParaId,
+	parachains_origin, AccountId, Balances, Call, CouncilCollective, Event, Origin, ParaId,
 	Runtime, WeightToFee, XcmPallet,
 };
 use frame_support::{
 	match_type, parameter_types,
 	traits::{Everything, Nothing},
+	weights::Weight,
 };
 use runtime_common::{xcm_sender, ToAuthor};
 use xcm::latest::prelude::*;
@@ -30,9 +31,9 @@ use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
 	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, BackingToPlurality,
 	ChildParachainAsNative, ChildParachainConvertsVia, ChildSystemParachainAsSuperuser,
-	CurrencyAdapter as XcmCurrencyAdapter, IsChildSystemParachain, IsConcrete,
+	CurrencyAdapter as XcmCurrencyAdapter, FixedWeightBounds, IsChildSystemParachain, IsConcrete,
 	LocationInverter, SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation,
-	TakeWeightCredit, UsingComponents, WeightInfoBounds
+	TakeWeightCredit, UsingComponents,
 };
 
 parameter_types! {
@@ -72,6 +73,14 @@ type LocalOriginConverter = (
 	ChildSystemParachainAsSuperuser<ParaId, Origin>,
 );
 
+parameter_types! {
+	/// The amount of weight an XCM operation takes. This is a safe overestimate.
+	pub const BaseXcmWeight: Weight = 1_000_000_000;
+	/// Maximum number of instructions in a single XCM fragment. A sanity check against weight
+	/// calculations getting too crazy.
+	pub const MaxInstructions: u32 = 100;
+}
+
 /// The XCM router. When we want to send an XCM message, we use this type. It amalgamates all of our
 /// individual routers.
 pub type XcmRouter = (
@@ -80,12 +89,10 @@ pub type XcmRouter = (
 );
 
 parameter_types! {
-	pub const Indranet: MultiLocation = Parachain(1000).into();
-	pub const CardamomForIndranet: (MultiAssetFilter, MultiLocation) =
-		(Wild(AllOf { fun: WildFungible, id: Concrete(CdmLocation::get()) }), Indranet::get());
-	pub const MaxInstructions: u32 = 100;
+	pub const Cardamom: MultiAssetFilter = Wild(AllOf { fun: WildFungible, id: Concrete(CdmLocation::get()) });
+	pub const CardamomForIndranet: (MultiAssetFilter, MultiLocation) = (Cardamom::get(), Parachain(1000).into());
 }
-pub type TrustedTeleporters = (xcm_builder::Case<CardamomForIndranet>,);
+pub type TrustedTeleporters = xcm_builder::Case<CardamomForIndranet>;
 
 match_type! {
 	pub type OnlyParachains: impl Contains<MultiLocation> = {
@@ -104,7 +111,7 @@ pub type Barrier = (
 	// Expected responses are OK.
 	AllowKnownQueryResponses<XcmPallet>,
 	// Subscriptions for version tracking are OK.
-	AllowSubscriptionsFrom<Everything>,
+	AllowSubscriptionsFrom<OnlyParachains>,
 );
 
 pub struct XcmConfig;
@@ -117,7 +124,8 @@ impl xcm_executor::Config for XcmConfig {
 	type IsTeleporter = TrustedTeleporters;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
-	type Weigher = WeightInfoBounds<weights::xcm::CardamomXcmWeight<Call>, Call, MaxInstructions>;
+	type Weigher = FixedWeightBounds<BaseXcmWeight, Call, MaxInstructions>;
+	// The weight trader piggybacks on the existing transaction-fee conversion logic.
 	type Trader = UsingComponents<WeightToFee, CdmLocation, AccountId, Balances, ToAuthor<Runtime>>;
 	type ResponseHandler = XcmPallet;
 	type AssetTrap = XcmPallet;
@@ -154,7 +162,7 @@ impl pallet_xcm::Config for Runtime {
 	type XcmExecutor = xcm_executor::XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Everything;
 	type XcmReserveTransferFilter = Everything;
-	type Weigher = WeightInfoBounds<weights::xcm::CardamomXcmWeight<Call>, Call, MaxInstructions>;
+	type Weigher = FixedWeightBounds<BaseXcmWeight, Call, MaxInstructions>;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Origin = Origin;
 	type Call = Call;
