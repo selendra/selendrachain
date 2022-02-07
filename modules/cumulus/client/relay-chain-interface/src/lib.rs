@@ -23,8 +23,8 @@ use cumulus_primitives_core::{
 	},
 	InboundDownwardMessage, ParaId, PersistedValidationData,
 };
-use selendra_overseer::Handle as OverseerHandle;
 use sc_client_api::{blockchain::BlockStatus, StorageProof};
+use selendra_overseer::Handle as OverseerHandle;
 
 use futures::Stream;
 

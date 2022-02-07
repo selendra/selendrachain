@@ -19,8 +19,8 @@ use cumulus_primitives_core::{ParachainBlockData, PersistedValidationData};
 use cumulus_primitives_parachain_inherent::{ParachainInherentData, INHERENT_IDENTIFIER};
 use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
 use cumulus_test_runtime::{Block, GetLastTimestamp, Hash, Header};
-use selendra_primitives::v1::{BlockNumber as PBlockNumber, Hash as PHash};
 use sc_block_builder::{BlockBuilder, BlockBuilderProvider};
+use selendra_primitives::v1::{BlockNumber as PBlockNumber, Hash as PHash};
 use sp_api::ProvideRuntimeApi;
 use sp_runtime::{
 	generic::BlockId,

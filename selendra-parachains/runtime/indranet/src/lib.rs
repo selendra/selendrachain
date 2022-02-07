@@ -228,8 +228,10 @@ parameter_types! {
 }
 
 /// We allow root and the Relay Chain council to execute privileged asset operations.
-pub type AssetsForceOrigin =
-	EnsureOneOf<EnsureRoot<AccountId>, EnsureXcm<IsMajorityOfBody<CardamomLocation, ExecutiveBody>>>;
+pub type AssetsForceOrigin = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	EnsureXcm<IsMajorityOfBody<CardamomLocation, ExecutiveBody>>,
+>;
 
 impl pallet_assets::Config for Runtime {
 	type Event = Event;
@@ -648,8 +650,10 @@ parameter_types! {
 }
 
 /// We allow root and the Relay Chain council to execute privileged collator selection operations.
-pub type CollatorSelectionUpdateOrigin =
-	EnsureOneOf<EnsureRoot<AccountId>, EnsureXcm<IsMajorityOfBody<CardamomLocation, ExecutiveBody>>>;
+pub type CollatorSelectionUpdateOrigin = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	EnsureXcm<IsMajorityOfBody<CardamomLocation, ExecutiveBody>>,
+>;
 
 impl pallet_collator_selection::Config for Runtime {
 	type Event = Event;
@@ -779,7 +783,6 @@ pub type Executive = frame_executive::Executive<
 	Runtime,
 	AllPalletsWithSystem,
 >;
-
 
 #[cfg(feature = "runtime-benchmarks")]
 #[macro_use]

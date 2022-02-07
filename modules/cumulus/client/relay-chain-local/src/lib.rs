@@ -28,15 +28,15 @@ use cumulus_primitives_core::{
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
 use futures::{FutureExt, Stream, StreamExt};
 use parking_lot::Mutex;
-use selendra_client::{ClientHandle, ExecuteWithClient, FullBackend};
-use selendra_service::{
-	AuxStore, BabeApi, CollatorPair, Configuration, Handle, NewFull, Role, TaskManager,
-};
 use sc_client_api::{
 	blockchain::BlockStatus, Backend, BlockchainEvents, HeaderBackend, ImportNotifications,
 	StorageProof, UsageProvider,
 };
 use sc_telemetry::TelemetryWorkerHandle;
+use selendra_client::{ClientHandle, ExecuteWithClient, FullBackend};
+use selendra_service::{
+	AuxStore, BabeApi, CollatorPair, Configuration, Handle, NewFull, Role, TaskManager,
+};
 use sp_api::ProvideRuntimeApi;
 use sp_consensus::SyncOracle;
 use sp_core::{sp_std::collections::btree_map::BTreeMap, Pair};
@@ -377,13 +377,13 @@ mod tests {
 
 	use super::*;
 
+	use sc_service::Arc;
 	use selendra_primitives::v1::Block as PBlock;
 	use selendra_test_client::{
 		construct_transfer_extrinsic, BlockBuilderExt, Client, ClientBlockImportExt,
 		DefaultTestClientBuilderExt, ExecutionStrategy, InitSelendraBlockBuilder,
 		TestClientBuilder, TestClientBuilderExt,
 	};
-	use sc_service::Arc;
 	use sp_consensus::{BlockOrigin, SyncOracle};
 	use sp_runtime::traits::Block as BlockT;
 

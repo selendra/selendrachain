@@ -21,7 +21,6 @@
 use cumulus_client_consensus_common::ParachainConsensus;
 use cumulus_primitives_core::{CollectCollationInfo, ParaId};
 use cumulus_relay_chain_interface::RelayChainInterface;
-use selendra_primitives::v1::CollatorPair;
 use sc_client_api::{
 	Backend as BackendT, BlockBackend, BlockchainEvents, Finalizer, UsageProvider,
 };
@@ -30,6 +29,7 @@ use sc_consensus::{
 	BlockImport,
 };
 use sc_service::{Configuration, TaskManager};
+use selendra_primitives::v1::CollatorPair;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_consensus::BlockOrigin;

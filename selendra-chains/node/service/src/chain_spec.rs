@@ -737,30 +737,6 @@ fn cardamom_staging_testnet_config_genesis(wasm_binary: &[u8]) -> cardamom::Gene
 			hex!["6238859b4e6d3f5f753664d05c8712fcf28f9cebf028a2cabd4d8c21b97d650b"]
 				.unchecked_into(),
 		),
-		(
-			// 5Gb8Ji9JBTwgQ254iYQmYtKkPBLtREVQFZSJXjJnxu9itHcg
-			hex!["c824993c8b7bbd6956b2fb4e7a884faa82b58699008aa9dc5708e7086798410b"].into(),
-			// 5GCCQuy5vFBqMBRjSMzLQebZUJMTSJGjdL3vxNw6PmQHg2P4
-			hex!["b6a7c79097599d9e870709c82407bc18727ad210f3be0be875c439ae88194e05"].into(),
-			//  5F6mhYSaBMsHbAYAEJT9JzdH1Zv8t4DPerB2nCAr5cYYtu7Q
-			hex!["8648206fda27ea7f28701be9fe2e02e6bd8357ee31152665a9f3e9a0e7d8cc70"]
-				.unchecked_into(),
-			// 5G5JmNMtCVBo4G2TnssH6evABFv5VZSzKxAgPeVUgrmzHzLY
-			hex!["b166725c8460d13b5d1d72a702c2b974c1b943fb582bc4576455c56fc324585f"]
-				.unchecked_into(),
-			//  5F6mhYSaBMsHbAYAEJT9JzdH1Zv8t4DPerB2nCAr5cYYtu7Q
-			hex!["8648206fda27ea7f28701be9fe2e02e6bd8357ee31152665a9f3e9a0e7d8cc70"]
-				.unchecked_into(),
-			//  5F6mhYSaBMsHbAYAEJT9JzdH1Zv8t4DPerB2nCAr5cYYtu7Q
-			hex!["8648206fda27ea7f28701be9fe2e02e6bd8357ee31152665a9f3e9a0e7d8cc70"]
-				.unchecked_into(),
-			//  5F6mhYSaBMsHbAYAEJT9JzdH1Zv8t4DPerB2nCAr5cYYtu7Q
-			hex!["8648206fda27ea7f28701be9fe2e02e6bd8357ee31152665a9f3e9a0e7d8cc70"]
-				.unchecked_into(),
-			//  5F6mhYSaBMsHbAYAEJT9JzdH1Zv8t4DPerB2nCAr5cYYtu7Q
-			hex!["8648206fda27ea7f28701be9fe2e02e6bd8357ee31152665a9f3e9a0e7d8cc70"]
-				.unchecked_into(),
-		),
 	];
 
 	const ENDOWMENT: u128 = 1_000_000 * CDM;
@@ -796,8 +772,8 @@ fn cardamom_staging_testnet_config_genesis(wasm_binary: &[u8]) -> cardamom::Gene
 				.collect::<Vec<_>>(),
 		},
 		staking: cardamom::StakingConfig {
-			validator_count: 4,
-			minimum_validator_count: 4,
+			validator_count: 3,
+			minimum_validator_count: 2,
 			stakers: initial_authorities
 				.iter()
 				.map(|x| (x.0.clone(), x.1.clone(), STASH, cardamom::StakerStatus::Validator))

@@ -44,8 +44,8 @@ use frame_support::{
 	weights::{Pays, PostDispatchInfo, Weight},
 };
 use frame_system::{ensure_none, ensure_root};
-use selendra_parachain::primitives::RelayChainBlockNumber;
 use relay_state_snapshot::MessagingStateSnapshot;
+use selendra_parachain::primitives::RelayChainBlockNumber;
 use sp_runtime::{
 	traits::{Block as BlockT, BlockNumberProvider, Hash},
 	transaction_validity::{
