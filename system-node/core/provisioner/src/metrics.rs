@@ -24,7 +24,7 @@ struct MetricsInner {
 	provisionable_data: prometheus::Histogram,
 
 	/// The following metrics track how many disputes/votes the runtime will have to process. These will count
-	/// all recent statements meaning every dispute from last sessions: 10 min on Rococo, 60 min on Selendra and
+	/// all recent statements meaning every dispute from last sessions: 10 min on cardamon, 60 min on Selendra and
 	/// 4 hours on Selendra. The metrics are updated only when the node authors a block, so values vary across nodes.
 	inherent_data_dispute_statement_sets: prometheus::Counter<prometheus::U64>,
 	inherent_data_dispute_statements: prometheus::CounterVec<prometheus::U64>,

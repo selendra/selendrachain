@@ -103,9 +103,9 @@ pub fn indranet_session_keys(keys: AuraId) -> indranet_runtime::SessionKeys {
 
 pub fn indracore_development_config() -> IndracoreChainSpec {
 	let mut properties = sc_chain_spec::Properties::new();
-	properties.insert("ss58Format".into(), 2.into());
+	properties.insert("ss58Format".into(), 972.into());
 	properties.insert("tokenSymbol".into(), "SEL".into());
-	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("tokenDecimals".into(), 18.into());
 
 	IndracoreChainSpec::from_genesis(
 		// Name
@@ -140,9 +140,9 @@ pub fn indracore_development_config() -> IndracoreChainSpec {
 
 pub fn indracore_local_config() -> IndracoreChainSpec {
 	let mut properties = sc_chain_spec::Properties::new();
-	properties.insert("ss58Format".into(), 2.into());
+	properties.insert("ss58Format".into(), 972.into());
 	properties.insert("tokenSymbol".into(), "SEL".into());
-	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("tokenDecimals".into(), 18.into());
 
 	IndracoreChainSpec::from_genesis(
 		// Name
@@ -191,9 +191,9 @@ pub fn indracore_local_config() -> IndracoreChainSpec {
 
 pub fn indracore_config() -> IndracoreChainSpec {
 	let mut properties = sc_chain_spec::Properties::new();
-	properties.insert("ss58Format".into(), 2.into());
+	properties.insert("ss58Format".into(), 972.into());
 	properties.insert("tokenSymbol".into(), "SEL".into());
-	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("tokenDecimals".into(), 18.into());
 
 	IndracoreChainSpec::from_genesis(
 		// Name
@@ -291,7 +291,7 @@ fn indracore_genesis(
 pub fn indranet_development_config() -> IndranetChainSpec {
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "CDM".into());
-	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("tokenDecimals".into(), 18.into());
 
 	IndranetChainSpec::from_genesis(
 		// Name
@@ -327,7 +327,7 @@ pub fn indranet_development_config() -> IndranetChainSpec {
 pub fn indranet_local_config() -> IndranetChainSpec {
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "CDM".into());
-	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("tokenDecimals".into(), 18.into());
 
 	IndranetChainSpec::from_genesis(
 		// Name
@@ -377,7 +377,7 @@ pub fn indranet_local_config() -> IndranetChainSpec {
 pub fn indranet_config() -> IndranetChainSpec {
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "CDM".into());
-	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("tokenDecimals".into(), 18.into());
 
 	IndranetChainSpec::from_genesis(
 		// Name

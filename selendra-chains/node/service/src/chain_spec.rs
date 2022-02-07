@@ -425,7 +425,15 @@ pub fn selendra_staging_testnet_config() -> Result<SelendraChainSpec, String> {
 				.expect("Selendra Staging telemetry url is valid; qed"),
 		),
 		Some(DEFAULT_PROTOCOL_ID),
-		None,
+		Some(
+			serde_json::from_str(
+				"{
+            \"tokenDecimals\": 18,
+            \"tokenSymbol\": \"SEL\"
+        	}",
+			)
+			.expect("Provided valid json map"),
+		),
 		None,
 		Default::default(),
 	))
@@ -540,7 +548,15 @@ pub fn selendra_development_config() -> Result<SelendraChainSpec, String> {
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
-		None,
+		Some(
+			serde_json::from_str(
+				"{
+            \"tokenDecimals\": 18,
+            \"tokenSymbol\": \"SEL\"
+        	}",
+			)
+			.expect("Provided valid json map"),
+		),
 		None,
 		Default::default(),
 	))
@@ -572,7 +588,15 @@ pub fn selendra_local_testnet_config() -> Result<SelendraChainSpec, String> {
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
-		None,
+		Some(
+			serde_json::from_str(
+				"{
+            \"tokenDecimals\": 18,
+            \"tokenSymbol\": \"SEL\"
+        	}",
+			)
+			.expect("Provided valid json map"),
+		),
 		None,
 		Default::default(),
 	))
@@ -826,7 +850,15 @@ pub fn cardamom_staging_testnet_config() -> Result<CardamomChainSpec, String> {
 				.expect("Cardamom Staging telemetry url is valid; qed"),
 		),
 		Some(DEFAULT_PROTOCOL_ID),
-		None,
+		Some(
+			serde_json::from_str(
+				"{
+            \"tokenDecimals\": 18,
+            \"tokenSymbol\": \"CDM\"
+        	}",
+			)
+			.expect("Provided valid json map"),
+		),
 		None,
 		Default::default(),
 	))
@@ -940,7 +972,15 @@ pub fn cardamom_development_config() -> Result<CardamomChainSpec, String> {
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
-		None,
+		Some(
+			serde_json::from_str(
+				"{
+            \"tokenDecimals\": 18,
+            \"tokenSymbol\": \"CDM\"
+        	}",
+			)
+			.expect("Provided valid json map"),
+		),
 		None,
 		Default::default(),
 	))
@@ -972,7 +1012,15 @@ pub fn cardamom_local_testnet_config() -> Result<CardamomChainSpec, String> {
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
-		None,
+		Some(
+			serde_json::from_str(
+				"{
+            \"tokenDecimals\": 18,
+            \"tokenSymbol\": \"CDM\"
+        	}",
+			)
+			.expect("Provided valid json map"),
+		),
 		None,
 		Default::default(),
 	))

@@ -97,7 +97,7 @@ pub struct RunCmd {
 	#[structopt(long = "grandpa-pause", number_of_values(2))]
 	pub grandpa_pause: Vec<u32>,
 
-	/// Enable the BEEFY gadget (only on Rococo or Wococo for now).
+	/// Enable the BEEFY gadget
 	#[structopt(long)]
 	pub beefy: bool,
 
