@@ -3,7 +3,7 @@ name = "indracore-runtime"
 version = "2.0.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
-description = "Selendra variant of Indracore parachain runtime"
+description = "Selendra parachain runtime"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "2.3.0", default-features = false, features = ["derive", "max-encoded-len"] }

@@ -3,7 +3,7 @@ name = "indranet-runtime"
 version = "1.0.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
-description = "Cardamom variant of Indracore parachain runtime"
+description = "Cardamom parachain runtime"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "2.3.0", default-features = false, features = ["derive", "max-encoded-len"] }
