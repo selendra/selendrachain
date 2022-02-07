@@ -36,6 +36,7 @@ use sc_service::{
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
+use sp_core::crypto::Ss58AddressFormat;
 
 trait IdentifyChain {
 	fn is_indracore(&self) -> bool;
@@ -212,6 +213,11 @@ macro_rules! construct_async_run {
 	}}
 }
 
+fn set_default_ss58_version() {
+	let ss58_version = Ss58AddressFormat::custom(972);
+	sp_core::crypto::set_default_ss58_version(ss58_version);
+}
+
 /// Parse command line arguments into service configuration.
 pub fn run() -> Result<()> {
 	let cli = Cli::from_args();
@@ -222,21 +228,25 @@ pub fn run() -> Result<()> {
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
 		},
 		Some(Subcommand::CheckBlock(cmd)) => {
+			set_default_ss58_version();
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.client, components.import_queue))
 			})
 		},
 		Some(Subcommand::ExportBlocks(cmd)) => {
+			set_default_ss58_version();
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.client, config.database))
 			})
 		},
 		Some(Subcommand::ExportState(cmd)) => {
+			set_default_ss58_version();
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.client, config.chain_spec))
 			})
 		},
 		Some(Subcommand::ImportBlocks(cmd)) => {
+			set_default_ss58_version();
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.client, components.import_queue))
 			})
@@ -263,6 +273,7 @@ pub fn run() -> Result<()> {
 			})
 		},
 		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, config| {
+			set_default_ss58_version();
 			Ok(cmd.run(components.client, components.backend))
 		}),
 		Some(Subcommand::ExportGenesisState(params)) => {
@@ -313,6 +324,7 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Benchmark(cmd)) =>
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
+				set_default_ss58_version();
 				if runner.config().chain_spec.is_indracore() {
 					runner.sync_run(|config| cmd.run::<Block, IndracoreRuntimeExecutor>(config))
 				} else if runner.config().chain_spec.is_indranet() {
@@ -329,6 +341,7 @@ pub fn run() -> Result<()> {
 			if cfg!(feature = "try-runtime") {
 				// grab the task manager.
 				let runner = cli.create_runner(cmd)?;
+				set_default_ss58_version();
 				let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
 				let task_manager =
 					TaskManager::new(runner.config().tokio_handle.clone(), *registry)
@@ -352,7 +365,7 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Key(cmd)) => Ok(cmd.run(&cli)?),
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
-
+			set_default_ss58_version();
 			runner.run_node_until_exit(|config| async move {
 				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)
