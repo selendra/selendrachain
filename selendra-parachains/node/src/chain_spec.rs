@@ -206,27 +206,27 @@ pub fn indracore_config() -> IndracoreChainSpec {
 				// initial collators.
 				vec![
 					(
-						hex!("50673d59020488a4ffc9d8c6de3062a65977046e6990915617f85fef6d349730")
+						hex!("34b9c5ac9c081aa4a4f2325e9fcf903176ed44e418d378e68675ada9819a9507")
 							.into(),
-						hex!("50673d59020488a4ffc9d8c6de3062a65977046e6990915617f85fef6d349730")
+						hex!("34b9c5ac9c081aa4a4f2325e9fcf903176ed44e418d378e68675ada9819a9507")
 							.unchecked_into(),
 					),
 					(
-						hex!("fe8102dbc244e7ea2babd9f53236d67403b046154370da5c3ea99def0bd0747a")
+						hex!("9a04bb9cd411a5b0187adb4a3d048783c192fba85695841c68c4cd3627e5a103")
 							.into(),
-						hex!("fe8102dbc244e7ea2babd9f53236d67403b046154370da5c3ea99def0bd0747a")
+						hex!("9a04bb9cd411a5b0187adb4a3d048783c192fba85695841c68c4cd3627e5a103")
 							.unchecked_into(),
 					),
 					(
-						hex!("38144b5398e5d0da5ec936a3af23f5a96e782f676ab19d45f29075ee92eca76a")
+						hex!("7e8dac940fcd738e7e83f25465ae09ff73abc1682740edd159cd9c1777887a77")
 							.into(),
-						hex!("38144b5398e5d0da5ec936a3af23f5a96e782f676ab19d45f29075ee92eca76a")
+						hex!("7e8dac940fcd738e7e83f25465ae09ff73abc1682740edd159cd9c1777887a77")
 							.unchecked_into(),
 					),
 					(
-						hex!("3253947640e309120ae70fa458dcacb915e2ddd78f930f52bd3679ec63fc4415")
+						hex!("66af9950bff0dd612f5905022c4cd45501d23b2a6422924501e5592fbd839510")
 							.into(),
-						hex!("3253947640e309120ae70fa458dcacb915e2ddd78f930f52bd3679ec63fc4415")
+						hex!("66af9950bff0dd612f5905022c4cd45501d23b2a6422924501e5592fbd839510")
 							.unchecked_into(),
 					),
 				],
@@ -258,7 +258,7 @@ fn indracore_genesis(
 			balances: endowed_accounts
 				.iter()
 				.cloned()
-				.map(|k| (k, INDRACORE_ED * 524_288))
+				.map(|k| (k, INDRACORE_ED))
 				.collect(),
 		},
 		parachain_info: indracore_runtime::ParachainInfoConfig { parachain_id: id },
@@ -320,7 +320,7 @@ pub fn indranet_development_config() -> IndranetChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions { relay_chain: "cardamom".into(), para_id: 1000 },
+		Extensions { relay_chain: "cardamom-dev".into(), para_id: 1000 },
 	)
 }
 
@@ -390,27 +390,27 @@ pub fn indranet_config() -> IndranetChainSpec {
 				// initial collators.
 				vec![
 					(
-						hex!("9cfd429fa002114f33c1d3e211501d62830c9868228eb3b4b8ae15a83de04325")
+						hex!("cc4f1627136cc9ab173ca1079fcebcb4b1b374cee0d62ebe2ccbca355e3eaf74")
 							.into(),
-						hex!("9cfd429fa002114f33c1d3e211501d62830c9868228eb3b4b8ae15a83de04325")
+						hex!("cc4f1627136cc9ab173ca1079fcebcb4b1b374cee0d62ebe2ccbca355e3eaf74")
 							.unchecked_into(),
 					),
 					(
-						hex!("12a03fb4e7bda6c9a07ec0a11d03c24746943e054ff0bb04938970104c783876")
+						hex!("fe99233e10d00fb26b37f2c85e3690c8b9998b51f07f3c0bf519b8320a38803a")
 							.into(),
-						hex!("12a03fb4e7bda6c9a07ec0a11d03c24746943e054ff0bb04938970104c783876")
+						hex!("fe99233e10d00fb26b37f2c85e3690c8b9998b51f07f3c0bf519b8320a38803a")
 							.unchecked_into(),
 					),
 					(
-						hex!("1256436307dfde969324e95b8c62cb9101f520a39435e6af0f7ac07b34e1931f")
+						hex!("bc061a86ddb82e9079feb48da3abc67da083b84455713887e83f1426de043b6e")
 							.into(),
-						hex!("1256436307dfde969324e95b8c62cb9101f520a39435e6af0f7ac07b34e1931f")
+						hex!("bc061a86ddb82e9079feb48da3abc67da083b84455713887e83f1426de043b6e")
 							.unchecked_into(),
 					),
 					(
-						hex!("98102b7bca3f070f9aa19f58feed2c0a4e107d203396028ec17a47e1ed80e322")
+						hex!("77b08b89c98682e9478f2638247b35896cb6cdf107852c429ef57e6da0a5b4ae")
 							.into(),
-						hex!("98102b7bca3f070f9aa19f58feed2c0a4e107d203396028ec17a47e1ed80e322")
+						hex!("77b08b89c98682e9478f2638247b35896cb6cdf107852c429ef57e6da0a5b4ae")
 							.unchecked_into(),
 					),
 				],
@@ -432,6 +432,7 @@ fn indranet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
 ) -> indranet_runtime::GenesisConfig {
+	let root_key = hex!("77b08b89c98682e9478f2638247b35896cb6cdf107852c429ef57e6da0a5b4ae").into();
 	indranet_runtime::GenesisConfig {
 		system: indranet_runtime::SystemConfig {
 			code: indranet_runtime::WASM_BINARY
@@ -439,7 +440,7 @@ fn indranet_genesis(
 				.to_vec(),
 		},
 		balances: indranet_runtime::BalancesConfig {
-			balances: endowed_accounts.iter().cloned().map(|k| (k, INDRANET_ED * 4096)).collect(),
+			balances: endowed_accounts.iter().cloned().map(|k| (k, INDRANET_ED)).collect(),
 		},
 		parachain_info: indranet_runtime::ParachainInfoConfig { parachain_id: id },
 		collator_selection: indranet_runtime::CollatorSelectionConfig {
@@ -467,5 +468,6 @@ fn indranet_genesis(
 		selendra_xcm: indranet_runtime::SelendraXcmConfig {
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
+		sudo: indranet_runtime::SudoConfig { key: Some(root_key) },
 	}
 }
