@@ -1,6 +1,6 @@
 [package]
 name = "selendra-collator"
-version = "5.1.0"
+version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 build = "build.rs"
 edition = "2021"

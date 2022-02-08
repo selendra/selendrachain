@@ -1,6 +1,6 @@
 [package]
 name = "parachains-common"
-version = "1.0.0"
+version = "0.1.0"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2021"
 description = "Logic which is common to all parachain runtimes"

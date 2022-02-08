@@ -3425,7 +3425,7 @@ dependencies = [
 
 [[package]]
 name = "indracore-runtime"
-version = "2.0.0"
+version = "0.1.0"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -3491,7 +3491,7 @@ dependencies = [
 
 [[package]]
 name = "indranet-runtime"
-version = "1.0.0"
+version = "0.1.0"
 dependencies = [
  "cardamom-runtime-constants",
  "cumulus-pallet-aura-ext",
@@ -6085,7 +6085,7 @@ dependencies = [
 
 [[package]]
 name = "parachains-common"
-version = "1.0.0"
+version = "0.1.0"
 dependencies = [
  "frame-executive",
  "frame-support",
@@ -8432,7 +8432,7 @@ dependencies = [
 
 [[package]]
 name = "selendra-collator"
-version = "5.1.0"
+version = "0.1.0"
 dependencies = [
  "assert_cmd 0.12.2",
  "async-trait",

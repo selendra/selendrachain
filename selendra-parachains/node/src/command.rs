@@ -67,7 +67,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		"indracore-dev" => Box::new(chain_spec::indracore_development_config()),
 		"indracore-local" => Box::new(chain_spec::indracore_local_config()),
 		// the chain spec as used for generating the upgrade genesis values
-		"indracore-genesis" => Box::new(chain_spec::indracore_config()),
+		"indracore-staging" => Box::new(chain_spec::indracore_config()),
 		// the shell-based chain spec as used for syncing
 		"indracore" => Box::new(chain_spec::ChainSpec::from_json_bytes(
 			&include_bytes!("../res/indracore.json")[..],
@@ -76,7 +76,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		"indranet-dev" => Box::new(chain_spec::indranet_development_config()),
 		"indranet-local" => Box::new(chain_spec::indranet_local_config()),
 		// the chain spec as used for generating the upgrade genesis values
-		"indranet-genesis" => Box::new(chain_spec::indranet_config()),
+		"indranet-staging" => Box::new(chain_spec::indranet_config()),
 		// the shell-based chain spec as used for syncing
 		"indranet" => Box::new(chain_spec::ChainSpec::from_json_bytes(
 			&include_bytes!("../res/indranet.json")[..],

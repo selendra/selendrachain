@@ -1,0 +1,45 @@
+FROM rust:buster as builder
+
+WORKDIR /indra
+COPY . /indra
+
+RUN rustup default nightly-2021-11-07 && \
+	rustup target add wasm32-unknown-unknown --toolchain nightly-2021-11-07
+
+RUN apt-get update && \
+	apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
+	apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev
+
+ARG GIT_COMMIT=
+ENV GIT_COMMIT=$GIT_COMMIT
+ARG BUILD_ARGS
+
+RUN cargo build --release $BUILD_ARGS
+
+FROM phusion/baseimage:bionic-1.0.0
+
+LABEL description="Docker image for Indra Parachain" \
+	io.parity.image.type="builder" \
+	io.parity.image.authors="nath.selendra@gmail.com" \
+	io.parity.image.vendor="Selendra" \
+	io.parity.image.description="Selendra: indra parachain" \
+	io.parity.image.source="https://github.com/selendra/indra/blob/${VCS_REF}/docker/Dockerfile" \
+	io.parity.image.documentation="https://github.com/selendra/indra"
+
+COPY --from=builder /indra/target/release/indra /usr/local/bin
+
+RUN useradd -m -u 1000 -U -s /bin/sh -d /indra indra && \
+	mkdir -p /data /indra/.local/share && \
+	chown -R indra:indra /data && \
+	ln -s /data /indra/.local/share/indra && \
+# unclutter and minimize the attack surface
+	rm -rf /usr/bin /usr/sbin && \
+# check if executable works in this container
+	/usr/local/bin/indra --version
+
+USER indra
+
+EXPOSE 30333 9933 9944 9615
+VOLUME ["/data"]
+
+ENTRYPOINT ["/usr/local/bin/indra"]
