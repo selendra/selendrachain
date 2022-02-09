@@ -20,7 +20,7 @@ FROM phusion/baseimage:bionic-1.0.0
 
 LABEL description="Docker image for Selendra Chain" \
 	io.parity.image.type="builder" \
-	io.parity.image.authors="nath.selendra@gmail.com" \
+	io.parity.image.authors="nath@selendra.org" \
 	io.parity.image.vendor="Selendra" \
 	io.parity.image.description="Selendra: selendra chain" \
 	io.parity.image.source="https://github.com/selendra/selendra-chain/blob/${VCS_REF}/scripts/docker/Dockerfile" \

@@ -2,7 +2,10 @@
   "name": "Indranet",
   "id": "indranet",
   "chainType": "Live",
-  "bootNodes": [],
+  "bootNodes": [
+      "/ip4/178.128.111.62/tcp/30333/p2p/12D3KooWJU9uXX6m3NwR7tc8sDvqE3sboamd6FzjBWj3tEwJk2AX",
+      "/ip4/178.128.100.190/tcp/30333/p2p/12D3KooWLC1w6EWQ22CkuzDt6VbKRy48oQVrFbHPkxrx1hNmMVUB"
+  ],
   "telemetryEndpoints": null,
   "protocolId": null,
   "forkId": null,
