@@ -16,8 +16,8 @@
 
 //! `V1` database for the dispute coordinator.
 
-use polkadot_node_subsystem::{SubsystemError, SubsystemResult};
-use polkadot_primitives::v1::{
+use selendra_node_subsystem::{SubsystemError, SubsystemResult};
+use selendra_primitives::v1::{
 	CandidateHash, CandidateReceipt, Hash, InvalidDisputeStatementKind, SessionIndex,
 	ValidDisputeStatementKind, ValidatorIndex, ValidatorSignature,
 };
@@ -133,9 +133,9 @@ pub struct CandidateVotes {
 	pub invalid: Vec<(InvalidDisputeStatementKind, ValidatorIndex, ValidatorSignature)>,
 }
 
-impl From<CandidateVotes> for polkadot_node_primitives::CandidateVotes {
-	fn from(db_votes: CandidateVotes) -> polkadot_node_primitives::CandidateVotes {
-		polkadot_node_primitives::CandidateVotes {
+impl From<CandidateVotes> for selendra_node_primitives::CandidateVotes {
+	fn from(db_votes: CandidateVotes) -> selendra_node_primitives::CandidateVotes {
+		selendra_node_primitives::CandidateVotes {
 			candidate_receipt: db_votes.candidate_receipt,
 			valid: db_votes.valid,
 			invalid: db_votes.invalid,
@@ -143,8 +143,8 @@ impl From<CandidateVotes> for polkadot_node_primitives::CandidateVotes {
 	}
 }
 
-impl From<polkadot_node_primitives::CandidateVotes> for CandidateVotes {
-	fn from(primitive_votes: polkadot_node_primitives::CandidateVotes) -> CandidateVotes {
+impl From<selendra_node_primitives::CandidateVotes> for CandidateVotes {
+	fn from(primitive_votes: selendra_node_primitives::CandidateVotes) -> CandidateVotes {
 		CandidateVotes {
 			candidate_receipt: primitive_votes.candidate_receipt,
 			valid: primitive_votes.valid,
@@ -265,7 +265,7 @@ pub(crate) fn note_current_session(
 mod tests {
 	use super::*;
 	use ::test_helpers::{dummy_candidate_receipt, dummy_hash};
-	use polkadot_primitives::v1::{Hash, Id as ParaId};
+	use selendra_primitives::v1::{Hash, Id as ParaId};
 
 	fn make_db() -> DbBackend {
 		let store = Arc::new(kvdb_memorydb::create(1));
