@@ -14,7 +14,7 @@ GITREPO=indra
 
 # Build the image
 echo "Building ${GITUSER}/${GITREPO}:latest docker image, hang on!"
-time docker build -f ./scripts/docker/indraDockerfile -t ${GITUSER}/${GITREPO}:latest .
+time docker build -f ./scripts/docker/indra.Dockerfile -t ${GITUSER}/${GITREPO}:latest .
 docker tag ${GITUSER}/${GITREPO}:latest ${GITUSER}/${GITREPO}:v${VERSION}
 
 # Show the list of available images for this repo

@@ -23,7 +23,7 @@ LABEL description="Docker image for Selendra Chain" \
 	io.parity.image.authors="nath@selendra.org" \
 	io.parity.image.vendor="Selendra" \
 	io.parity.image.description="Selendra: selendra chain" \
-	io.parity.image.source="https://github.com/selendra/selendra-chain/blob/${VCS_REF}/scripts/docker/Dockerfile" \
+	io.parity.image.source="https://github.com/selendra/selendra-chain/blob/${VCS_REF}/scripts/docker/selendra.Dockerfile" \
 	io.parity.image.documentation="https://github.com/selendra/selendra-chain"
 
 COPY --from=builder /selendra/target/release/selendra /usr/local/bin
