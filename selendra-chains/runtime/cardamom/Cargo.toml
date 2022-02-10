@@ -1,12 +1,13 @@
 [package]
 name = "cardamom-runtime"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 build = "build.rs"
 
 [dependencies]
 bitvec = { version = "0.20.1", default-features = false, features = ["alloc"] }
+hex-literal = { version = "0.3.4" }
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive", "max-encoded-len"] }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 log = { version = "0.4.14", default-features = false }
@@ -80,7 +81,6 @@ frame-try-runtime = { git = "https://github.com/paritytech/substrate", branch = 
 pallet-offences-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, optional = true }
 pallet-session-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, optional = true }
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, optional = true }
-hex-literal = { version = "0.3.4", optional = true }
 
 runtime-common = { package = "selendra-runtime-common", path = "../common", default-features = false }
 runtime-parachains = { package = "selendra-runtime-parachains", path = "../../../modules/parachain/runtime", default-features = false }
@@ -92,8 +92,11 @@ xcm-builder = { package = "xcm-builder", path = "../../../modules/xcm/xcm-builde
 
 pallet-sudo = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
 
+# Bridge
+pallet-bridge = { path = "../../../pallets/bridge", default-features = false }
+pallet-bridge-transfer = { path = "../../../pallets/bridge_transfer", default-features = false }
+
 [dev-dependencies]
-hex-literal = "0.3.4"
 tiny-keccak = "2.0.2"
 keyring = { package = "sp-keyring", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
@@ -178,6 +181,8 @@ std = [
 	"xcm-executor/std",
 	"xcm-builder/std",
 	"frame-election-provider-support/std",
+	"pallet-bridge/std",
+	"pallet-bridge-transfer/std",
 ]
 runtime-benchmarks = [
 	"runtime-common/runtime-benchmarks",
@@ -211,7 +216,6 @@ runtime-benchmarks = [
 	"pallet-session-benchmarking",
 	"pallet-xcm/runtime-benchmarks",
 	"frame-system-benchmarking",
-	"hex-literal",
 	"xcm-builder/runtime-benchmarks",
 	"frame-election-provider-support/runtime-benchmarks",
 	"pallet-bags-list/runtime-benchmarks",

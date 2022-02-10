@@ -87,6 +87,7 @@ impl NetworkMsg {
 	}
 }
 
+#[allow(deprecated)]
 #[overlord(signal=SigSigSig, event=EvX, error=Yikes, network=NetworkMsg, gen=AllMessages)]
 struct Xxx {
 	#[subsystem(MsgStrukt)]

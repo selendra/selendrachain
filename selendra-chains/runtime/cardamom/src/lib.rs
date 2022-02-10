@@ -116,7 +116,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("cardamom"),
 	impl_name: create_runtime_str!("selendra-cardamom"),
 	authoring_version: 1,
-	spec_version: 201,
+	spec_version: 202,
 	impl_version: 0,
 	#[cfg(not(feature = "disable-runtime-api"))]
 	apis: RUNTIME_API_VERSIONS,
@@ -1184,6 +1184,31 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
+parameter_types! {
+	pub const BridgeChainId: u8 = 1;
+	pub const ProposalLifetime: BlockNumber = 50;
+}
+
+impl pallet_bridge::Config for Runtime {
+	type Event = Event;
+	type BridgeCommitteeOrigin = MoreThanHalfCouncil;
+	type Proposal = Call;
+	type BridgeChainId = BridgeChainId;
+	type ProposalLifetime = ProposalLifetime;
+}
+
+parameter_types! {
+	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("000000000000000000000025959A1E14c71728C32274C376d832fae408AFc303");
+}
+
+impl pallet_bridge_transfer::Config for Runtime {
+	type Event = Event;
+	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
+	type Currency = Balances;
+	type NativeTokenResourceId = NativeTokenResourceId;
+	type OnFeePay = Treasury;
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -1274,6 +1299,10 @@ construct_runtime! {
 		// Parachain Onboarding Pallets. Start indices at 70 to leave room.
 		Registrar: paras_registrar::{Pallet, Call, Storage, Event<T>} = 70,
 		Slots: slots::{Pallet, Call, Storage, Event<T>} = 71,
+
+		// ChainBridge
+		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 90,
+		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 91,
 
 		// Pallet for sending XCM.
 		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin, Config} = 99,
