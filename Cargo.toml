@@ -3,9 +3,6 @@ members = [
 	"selendra-chains/bin",
 	"selendra-chains/runtime/selendra",
 	"selendra-chains/runtime/cardamom",
-	"selendra-parachains/node",
-	"selendra-parachains/runtime/indracore",
-	"selendra-parachains/runtime/indranet",
 
 	# "selendra-chains/bin/cli",
 	# "selendra-chains/node/rpc",
