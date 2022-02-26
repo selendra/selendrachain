@@ -48,10 +48,10 @@ read -p "What do you want to call your node?:" y
 sudo docker container run \
     --network="host" \
     --name ${x} \
-    -v ${HOME}/${USER}/${i}:/selendra/data/testnet \
+    -v ${HOME}/${USER}/${i}:/selendra/data/selendrachain \
     selendrachain/selendra-chain:latest \
-    --base-path selendra/data/testnet \
-    --chain testnet \
+    --base-path selendra/data/selendrachain \
+    --chain selendrachain \
     --port 30333 \
     --rpc-port 9933 \
     --ws-port 9944 \
