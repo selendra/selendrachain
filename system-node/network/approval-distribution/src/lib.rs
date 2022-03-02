@@ -613,7 +613,6 @@ impl State {
 				AssignmentCheckResult::AcceptedDuplicate => {
 					// "duplicate" assignments aren't necessarily equal.
 					// There is more than one way each validator can be assigned to each core.
-					// cf. https://github.com/paritytech/selendra/pull/2160#discussion_r557628699
 					if let Some(peer_knowledge) = entry.known_by.get_mut(&peer_id) {
 						peer_knowledge.received.insert(fingerprint);
 					}

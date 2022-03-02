@@ -281,7 +281,6 @@ where
 
 				// First `maxValidators` entries are the parachain validators. We'll check
 				// if our index is in this set to avoid searching for the keys.
-				// https://github.com/paritytech/selendra/blob/a52dca2be7840b23c19c153cf7e110b1e3e475f8/runtime/parachains/src/configuration.rs#L148
 				if validator_index < parachain_validators_this_session.len() {
 					self.metrics.on_is_parachain_validator();
 				} else {
@@ -452,8 +451,6 @@ async fn ensure_i_am_an_authority(
 /// groups (because not all validators are parachain validators and the group size is small),
 /// but formed randomly via BABE randomness from two epochs ago.
 /// This limits the amount of gossip peers to 2 * `sqrt(len)` and ensures the diameter of 2.
-///
-/// [web3]: https://research.web3.foundation/en/latest/selendra/networking/3-avail-valid.html#topology
 async fn update_gossip_topology<Context>(
 	ctx: &mut Context,
 	our_index: usize,

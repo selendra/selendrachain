@@ -9,13 +9,13 @@ selendra-overseer = { path = "../../../../system-node/overseer" }
 
 cumulus-primitives-core = { path = "../../primitives/core" }
 
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 futures = "0.3.1"
 parking_lot = "0.11.1"

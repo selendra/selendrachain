@@ -627,6 +627,10 @@ where
 ///
 /// This is an advanced feature and not recommended for general use. Generally, `build_full` is
 /// a better choice.
+///
+/// `overseer_enable_anyways` always enables the overseer, based on the provided `OverseerGenerator`,
+/// regardless of the role the node has. The relay chain selection (longest or disputes-aware) is
+/// still determined based on the role of the node. Likewise for authority discovery.
 #[cfg(feature = "full-node")]
 pub fn new_full<RuntimeApi, ExecutorDispatch, OverseerGenerator>(
 	mut config: Configuration,
@@ -636,6 +640,7 @@ pub fn new_full<RuntimeApi, ExecutorDispatch, OverseerGenerator>(
 	jaeger_agent: Option<std::net::SocketAddr>,
 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 	program_path: Option<std::path::PathBuf>,
+	overseer_enable_anyways: bool,
 	overseer_gen: OverseerGenerator,
 ) -> Result<NewFull<Arc<FullClient<RuntimeApi, ExecutorDispatch>>>, Error>
 where
@@ -672,11 +677,13 @@ where
 	let overseer_connector = OverseerConnector::default();
 	let overseer_handle = Handle::new(overseer_connector.handle());
 
+	let chain_spec = config.chain_spec.cloned_box();
+
 	let local_keystore = basics.keystore_container.local_keystore();
 	let auth_or_collator = role.is_authority() || is_collator.is_collator();
 	let requires_overseer_for_chain_sel = local_keystore.is_some() && auth_or_collator;
 
-	let disputes_enabled = true;
+	let disputes_enabled = chain_spec.is_cardamom();
 
 	let pvf_checker_enabled = false;
 
@@ -723,6 +730,12 @@ where
 		.network
 		.extra_sets
 		.push(grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
+
+	let _beefy_protocol_name = beefy_gadget::protocol_standard_name(
+		&client.block_hash(0).ok().flatten().expect("Genesis block exists; qed"),
+		&config.chain_spec,
+	);
+
 	{
 		use selendra_network_bridge::{peer_sets_info, IsAuthority};
 		let is_authority = if role.is_authority() { IsAuthority::Yes } else { IsAuthority::No };
@@ -839,14 +852,14 @@ where
 	let active_leaves =
 		futures::executor::block_on(active_leaves(select_chain.as_longest_chain(), &*client))?;
 
-	let authority_discovery_service = if auth_or_collator {
+	let authority_discovery_service = if auth_or_collator || overseer_enable_anyways {
 		use futures::StreamExt;
 		use sc_network::Event;
 
 		let authority_discovery_role = if role.is_authority() {
 			sc_authority_discovery::Role::PublishAndDiscover(keystore_container.keystore())
 		} else {
-			// don't publish our addresses when we're only a collator
+			// don't publish our addresses when we're not an authority (collator, cumulus, ..)
 			sc_authority_discovery::Role::Discover
 		};
 		let dht_event_stream =
@@ -1142,6 +1155,14 @@ pub fn new_chain_ops(
 	Err(Error::NoRuntime)
 }
 
+/// Build a full node.
+///
+/// The actual "flavor", aka if it will use `Cardamom` or `Selendra` is determined based on
+/// [`IdentifyVariant`] using the chain spec.
+///
+/// `overseer_enable_anyways` always enables the overseer, based on the provided `OverseerGenerator`,
+/// regardless of the role the node has. The relay chain selection (longest or disputes-aware) is
+/// still determined based on the role of the node. Likewise for authority discovery.
 #[cfg(feature = "full-node")]
 pub fn build_full(
 	config: Configuration,
@@ -1150,6 +1171,7 @@ pub fn build_full(
 	enable_beefy: bool,
 	jaeger_agent: Option<std::net::SocketAddr>,
 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
+	overseer_enable_anyways: bool,
 	overseer_gen: impl OverseerGen,
 ) -> Result<NewFull<Client>, Error> {
 	#[cfg(feature = "cardamom-native")]
@@ -1162,6 +1184,7 @@ pub fn build_full(
 			jaeger_agent,
 			telemetry_worker_handle,
 			None,
+			overseer_enable_anyways,
 			overseer_gen,
 		)
 		.map(|full| full.with_client(Client::Cardamom))
@@ -1177,6 +1200,7 @@ pub fn build_full(
 			jaeger_agent,
 			telemetry_worker_handle,
 			None,
+			overseer_enable_anyways,
 			overseer_gen,
 		)
 		.map(|full| full.with_client(Client::Selendra))

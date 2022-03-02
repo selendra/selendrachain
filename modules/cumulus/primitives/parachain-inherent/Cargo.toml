@@ -6,15 +6,15 @@ edition = "2021"
 
 [dependencies]
 # Substrate dependencies
-sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", optional = true }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", optional = true }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
-sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", optional = true }
-sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", optional = true }
-sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", optional = true }
+sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", optional = true }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", optional = true }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", optional = true }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", optional = true }
+sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", optional = true }
 
 # Cumulus dependencies
 cumulus-primitives-core = { path = "../core", default-features = false }

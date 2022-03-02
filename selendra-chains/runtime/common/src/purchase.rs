@@ -168,12 +168,12 @@ pub mod pallet {
 		VestingScheduleExists,
 	}
 
-	// A map of all participants in the DOT purchase process.
+	// A map of all participants in the SEL purchase process.
 	#[pallet::storage]
 	pub(super) type Accounts<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, AccountStatus<BalanceOf<T>>, ValueQuery>;
 
-	// The account that will be used to payout participants of the DOT purchase process.
+	// The account that will be used to payout participants of the SEL purchase process.
 	#[pallet::storage]
 	pub(super) type PaymentAccount<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
 
@@ -359,7 +359,7 @@ pub mod pallet {
 
 		/* Configuration Operations */
 
-		/// Set the account that will be used to payout users in the DOT purchase process.
+		/// Set the account that will be used to payout users in the SEL purchase process.
 		///
 		/// Origin must match the `ConfigurationOrigin`
 		#[pallet::weight(T::DbWeight::get().writes(1))]
@@ -371,7 +371,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Set the statement that must be signed for a user to participate on the DOT sale.
+		/// Set the statement that must be signed for a user to participate on the SEL sale.
 		///
 		/// Origin must match the `ConfigurationOrigin`
 		#[pallet::weight(T::DbWeight::get().writes(1))]

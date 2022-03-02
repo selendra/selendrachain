@@ -58,7 +58,6 @@
 // unused dependencies can not work for test and examples at the same time
 // yielding false positives
 #![warn(missing_docs)]
-#![allow(deprecated)]
 
 use std::{
 	collections::{hash_map, HashMap},

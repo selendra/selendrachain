@@ -1,12 +1,12 @@
 [package]
 name = "selendra-runtime-metrics"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
-sp-std = { package = "sp-std", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
-sp-tracing = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false}
 parity-scale-codec = { version = "2.3.1", default-features = false }
 primitives = { package = "selendra-primitives", path = "../../primitives", default-features = false }
 

@@ -6,11 +6,11 @@ edition = "2021"
 
 [dependencies]
 # Substrate dependencies
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 # Selendra dependencies
 selendra-primitives = { path = "../../../../primitives" }
@@ -39,8 +39,8 @@ cumulus-test-runtime = { path = "../../test/runtime" }
 cumulus-test-client = { path = "../../test/client" }
 # Substrate dependencies
 
-sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 # Other dependencies
 async-trait = "0.1.42"

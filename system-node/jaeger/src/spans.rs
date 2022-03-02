@@ -41,7 +41,7 @@
 //! 		.with_string_fmt_debug_tag("foo", foo)
 //! 		// anything that implements `trait std::str::ToString`
 //! 		.with_string_tag("again", 1337_u32)
-//! 		// add a `Stage` for [`sel-jaeger`](https://github.com/paritytech/sel-jaeger)
+//! 		// add a `Stage` for [`sel-jaeger`]
 //! 		.with_stage(jaeger::Stage::CandidateBacking);
 //! 		// complete by design, no completion required
 //! # }

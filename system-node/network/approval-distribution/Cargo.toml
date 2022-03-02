@@ -1,6 +1,6 @@
 [package]
 name = "selendra-approval-distribution"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
@@ -11,11 +11,11 @@ selendra-node-subsystem = { path = "../../subsystem" }
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 selendra-primitives = { path = "../../../primitives" }
 
-futures = "0.3.19"
+futures = "0.3.21"
 tracing = "0.1.29"
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/paritytech/substrate", features = ["std"] , branch = "polkadot-v0.9.16" }
+sp-core = { git = "https://github.com/paritytech/substrate", features = ["std"] , branch = "polkadot-v0.9.17" }
 
 selendra-node-subsystem-util = { path = "../../subsystem-util" }
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }

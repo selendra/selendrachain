@@ -1815,7 +1815,7 @@ fn peer_cant_flood_with_large_statements() {
 					if p == peer_a && r == COST_APPARENT_FLOOD =>
 				{
 					punished = true;
-				}
+				},
 
 				m => panic!("Unexpected message: {:?}", m),
 			}

@@ -418,15 +418,6 @@ parameter_types! {
 	pub const VoterSnapshotPerBlock: u32 = 22_500;
 }
 
-sp_npos_elections::generate_solution_type!(
-	#[compact]
-	pub struct NposCompactSolution24::<
-		VoterIndex = u32,
-		TargetIndex = u16,
-		Accuracy = sp_runtime::PerU16,
-	>(24)
-);
-
 impl pallet_election_provider_multi_phase::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
@@ -447,8 +438,10 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
 	type OffchainRepeat = OffchainRepeat;
 	type MinerTxPriority = NposSolutionPriority;
 	type DataProvider = Staking;
-	type Solution = NposCompactSolution24;
+	type Solution = NposCompactSolution16;
 	type Fallback = pallet_election_provider_multi_phase::NoFallback<Self>;
+	type GovernanceFallback =
+		frame_election_provider_support::onchain::OnChainSequentialPhragmen<Self>;
 	type Solver = frame_election_provider_support::SequentialPhragmen<
 		AccountId,
 		pallet_election_provider_multi_phase::SolutionAccuracyOf<Self>,
@@ -485,6 +478,15 @@ pallet_staking_reward_curve::build! {
 	);
 }
 
+sp_npos_elections::generate_solution_type!(
+	#[compact]
+	pub struct NposCompactSolution16::<
+		VoterIndex = u32,
+		TargetIndex = u16,
+		Accuracy = sp_runtime::PerU16,
+	>(16)
+);
+
 parameter_types! {
 	// Six sessions in an era (12 hours).
 	pub const SessionsPerEra: SessionIndex = 6;
@@ -495,6 +497,7 @@ parameter_types! {
 	pub const MaxNominatorRewardedPerValidator: u32 = 256;
 	pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(17);
 	pub const RewardCurve: &'static PiecewiseLinear<'static> = &REWARD_CURVE;
+	pub const MaxNominations: u32 = <NposCompactSolution16 as sp_npos_elections::NposSolution>::LIMIT as u32;
 }
 
 type SlashCancelOrigin = EnsureOneOf<
@@ -508,8 +511,7 @@ impl frame_election_provider_support::onchain::Config for Runtime {
 }
 
 impl pallet_staking::Config for Runtime {
-	const MAX_NOMINATIONS: u32 =
-		<NposCompactSolution24 as sp_npos_elections::NposSolution>::LIMIT as u32;
+	type MaxNominations = MaxNominations;
 	type Currency = Balances;
 	type UnixTime = Timestamp;
 	type CurrencyToVote = CurrencyToVote;
@@ -1127,6 +1129,7 @@ impl parachains_hrmp::Config for Runtime {
 	type Event = Event;
 	type Origin = Origin;
 	type Currency = Balances;
+	type WeightInfo = weights::runtime_parachains_hrmp::WeightInfo<Self>;
 }
 
 impl parachains_paras_inherent::Config for Runtime {
@@ -1346,6 +1349,51 @@ impl OnRuntimeUpgrade for SessionHistoricalPalletPrefixMigration {
 		pallet_session::migrations::v1::post_migrate::<Runtime, Historical>();
 		Ok(())
 	}
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+#[macro_use]
+extern crate frame_benchmarking;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benches {
+	define_benchmarks!(
+		// Polkadot
+		// NOTE: Make sure to prefix these with `runtime_common::` so
+		// the that path resolves correctly in the generated file.
+		[runtime_common::paras_registrar, Registrar]
+		[runtime_parachains::configuration, Configuration]
+		[runtime_parachains::initializer, Initializer]
+		[runtime_parachains::paras, Paras]
+		[runtime_parachains::paras_inherent, ParaInherent]
+		// Substrate
+		[pallet_bags_list, BagsList]
+		[pallet_balances, Balances]
+		[frame_benchmarking::baseline, Baseline::<Runtime>]
+		[pallet_bounties, Bounties]
+		[pallet_collective, Council]
+		[pallet_collective, TechnicalCommittee]
+		[pallet_democracy, Democracy]
+		[pallet_elections_phragmen, PhragmenElection]
+		[pallet_election_provider_multi_phase, ElectionProviderMultiPhase]
+		[pallet_identity, Identity]
+		[pallet_im_online, ImOnline]
+		[pallet_indices, Indices]
+		[pallet_membership, TechnicalMembership]
+		[pallet_multisig, Multisig]
+		[pallet_offences, OffencesBench::<Runtime>]
+		[pallet_preimage, Preimage]
+		[pallet_proxy, Proxy]
+		[pallet_scheduler, Scheduler]
+		[pallet_session, SessionBench::<Runtime>]
+		[pallet_staking, Staking]
+		[frame_system, SystemBench::<Runtime>]
+		[pallet_timestamp, Timestamp]
+		[pallet_tips, Tips]
+		[pallet_treasury, Treasury]
+		[pallet_utility, Utility]
+		[pallet_vesting, Vesting]
+	);
 }
 
 #[cfg(not(feature = "disable-runtime-api"))]
@@ -1628,7 +1676,7 @@ sp_api::impl_runtime_apis! {
 
 	impl authority_discovery_primitives::AuthorityDiscoveryApi<Block> for Runtime {
 		fn authorities() -> Vec<AuthorityDiscoveryId> {
-			parachains_runtime_api_impl::relevant_authority_ids::<Runtime>()
+			AuthorityDiscovery::authorities()
 		}
 	}
 
@@ -1669,6 +1717,7 @@ sp_api::impl_runtime_apis! {
 			let weight = Executive::try_runtime_upgrade().unwrap();
 			(weight, BlockWeights::get().max_block)
 		}
+
 		fn execute_block_no_check(block: Block) -> Weight {
 			Executive::execute_block_no_check(block)
 		}
@@ -1680,52 +1729,18 @@ sp_api::impl_runtime_apis! {
 			Vec<frame_benchmarking::BenchmarkList>,
 			Vec<frame_support::traits::StorageInfo>,
 		) {
-			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_benchmarking::{Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 
 			use pallet_session_benchmarking::Pallet as SessionBench;
 			use pallet_offences_benchmarking::Pallet as OffencesBench;
 			use frame_system_benchmarking::Pallet as SystemBench;
+			use frame_benchmarking::baseline::Pallet as Baseline;
 
 			let mut list = Vec::<BenchmarkList>::new();
-
-			// Selendra
-			list_benchmark!(list, extra, runtime_common::slots, Slots);
-			list_benchmark!(list, extra, runtime_common::paras_registrar, Registrar);
-			list_benchmark!(list, extra, runtime_parachains::configuration, Configuration);
-			list_benchmark!(list, extra, runtime_parachains::disputes, ParasDisputes);
-			list_benchmark!(list, extra, runtime_parachains::initializer, Initializer);
-			list_benchmark!(list, extra, runtime_parachains::paras_inherent, ParaInherent);
-			list_benchmark!(list, extra, runtime_parachains::paras, Paras);
-			// Substrate
-			list_benchmark!(list, extra, pallet_bags_list, BagsList);
-			list_benchmark!(list, extra, pallet_balances, Balances);
-			list_benchmark!(list, extra, pallet_bounties, Bounties);
-			list_benchmark!(list, extra, pallet_collective, Council);
-			list_benchmark!(list, extra, pallet_collective, TechnicalCommittee);
-			list_benchmark!(list, extra, pallet_democracy, Democracy);
-			list_benchmark!(list, extra, pallet_elections_phragmen, PhragmenElection);
-			list_benchmark!(list, extra, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
-			list_benchmark!(list, extra, pallet_identity, Identity);
-			list_benchmark!(list, extra, pallet_im_online, ImOnline);
-			list_benchmark!(list, extra, pallet_indices, Indices);
-			list_benchmark!(list, extra, pallet_membership, TechnicalMembership);
-			list_benchmark!(list, extra, pallet_multisig, Multisig);
-			list_benchmark!(list, extra, pallet_offences, OffencesBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_preimage, Preimage);
-			list_benchmark!(list, extra, pallet_proxy, Proxy);
-			list_benchmark!(list, extra, pallet_scheduler, Scheduler);
-			list_benchmark!(list, extra, pallet_session, SessionBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_staking, Staking);
-			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
-			list_benchmark!(list, extra, pallet_tips, Tips);
-			list_benchmark!(list, extra, pallet_treasury, Treasury);
-			list_benchmark!(list, extra, pallet_utility, Utility);
-			list_benchmark!(list, extra, pallet_vesting, Vesting);
+			list_benchmarks!(list, extra);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
-
 			return (list, storage_info)
 		}
 
@@ -1735,16 +1750,18 @@ sp_api::impl_runtime_apis! {
 			Vec<frame_benchmarking::BenchmarkBatch>,
 			sp_runtime::RuntimeString,
 		> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
+			use frame_benchmarking::{Benchmarking, BenchmarkBatch, TrackedStorageKey};
 			// Trying to add benchmarks directly to some pallets caused cyclic dependency issues.
 			// To get around that, we separated the benchmarks into its own crate.
 			use pallet_session_benchmarking::Pallet as SessionBench;
 			use pallet_offences_benchmarking::Pallet as OffencesBench;
 			use frame_system_benchmarking::Pallet as SystemBench;
+			use frame_benchmarking::baseline::Pallet as Baseline;
 
 			impl pallet_session_benchmarking::Config for Runtime {}
 			impl pallet_offences_benchmarking::Config for Runtime {}
 			impl frame_system_benchmarking::Config for Runtime {}
+			impl frame_benchmarking::baseline::Config for Runtime {}
 
 			let whitelist: Vec<TrackedStorageKey> = vec![
 				// Block Number
@@ -1763,58 +1780,166 @@ sp_api::impl_runtime_apis! {
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
-			// Selendra
-			add_benchmark!(params, batches, runtime_common::slots, Slots);
-			add_benchmark!(params, batches, runtime_common::paras_registrar, Registrar);
-			add_benchmark!(params, batches, runtime_parachains::configuration, Configuration);
-			add_benchmark!(params, batches, runtime_parachains::disputes, ParasDisputes);
-			add_benchmark!(params, batches, runtime_parachains::initializer, Initializer);
-			add_benchmark!(params, batches, runtime_parachains::paras_inherent, ParaInherent);
-			add_benchmark!(params, batches, runtime_parachains::paras, Paras);
-			// Substrate
-			add_benchmark!(params, batches, pallet_balances, Balances);
-			add_benchmark!(params, batches, pallet_bags_list, BagsList);
-			add_benchmark!(params, batches, pallet_bounties, Bounties);
-			add_benchmark!(params, batches, pallet_collective, Council);
-			add_benchmark!(params, batches, pallet_collective, TechnicalCommittee);
-			add_benchmark!(params, batches, pallet_democracy, Democracy);
-			add_benchmark!(params, batches, pallet_elections_phragmen, PhragmenElection);
-			add_benchmark!(params, batches, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
-			add_benchmark!(params, batches, pallet_gilt, Gilt);
-			add_benchmark!(params, batches, pallet_identity, Identity);
-			add_benchmark!(params, batches, pallet_im_online, ImOnline);
-			add_benchmark!(params, batches, pallet_indices, Indices);
-			add_benchmark!(params, batches, pallet_membership, TechnicalMembership);
-			add_benchmark!(params, batches, pallet_multisig, Multisig);
-			add_benchmark!(params, batches, pallet_offences, OffencesBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_preimage, Preimage);
-			add_benchmark!(params, batches, pallet_proxy, Proxy);
-			add_benchmark!(params, batches, pallet_scheduler, Scheduler);
-			add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_staking, Staking);
-			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			add_benchmark!(params, batches, pallet_tips, Tips);
-			add_benchmark!(params, batches, pallet_treasury, Treasury);
-			add_benchmark!(params, batches, pallet_utility, Utility);
-			add_benchmark!(params, batches, pallet_vesting, Vesting);
+			add_benchmarks!(params, batches);
 
-			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
 		}
 	}
 }
 
 #[cfg(test)]
-mod tests_fess {
+mod test_fees {
 	use super::*;
-	use sp_runtime::assert_eq_error_rate;
+	use frame_support::weights::{GetDispatchInfo, WeightToFeePolynomial};
+	use keyring::Sr25519Keyring::Charlie;
+	use pallet_transaction_payment::Multiplier;
+	use separator::Separatable;
+	use sp_runtime::{assert_eq_error_rate, FixedPointNumber};
+
+	#[test]
+	fn payout_weight_portion() {
+		use pallet_staking::WeightInfo;
+		let payout_weight =
+			<Runtime as pallet_staking::Config>::WeightInfo::payout_stakers_alive_staked(
+				MaxNominatorRewardedPerValidator::get(),
+			) as f64;
+		let block_weight = BlockWeights::get().max_block as f64;
+
+		println!(
+			"a full payout takes {:.2} of the block weight [{} / {}]",
+			payout_weight / block_weight,
+			payout_weight,
+			block_weight
+		);
+		assert!(payout_weight * 2f64 < block_weight);
+	}
+
+	#[test]
+	#[ignore]
+	fn block_cost() {
+		let max_block_weight = BlockWeights::get().max_block;
+		let raw_fee = WeightToFee::calc(&max_block_weight);
+
+		println!(
+			"Full Block weight == {} // WeightToFee(full_block) == {} plank",
+			max_block_weight,
+			raw_fee.separated_string(),
+		);
+	}
+
+	#[test]
+	#[ignore]
+	fn transfer_cost_min_multiplier() {
+		let min_multiplier = runtime_common::MinimumMultiplier::get();
+		let call = pallet_balances::Call::<Runtime>::transfer_keep_alive {
+			dest: Charlie.to_account_id().into(),
+			value: Default::default(),
+		};
+		let info = call.get_dispatch_info();
+		// convert to outer call.
+		let call = Call::Balances(call);
+		let len = call.using_encoded(|e| e.len()) as u32;
+
+		let mut ext = sp_io::TestExternalities::new_empty();
+		let mut test_with_multiplier = |m| {
+			ext.execute_with(|| {
+				pallet_transaction_payment::NextFeeMultiplier::<Runtime>::put(m);
+				let fee = TransactionPayment::compute_fee(len, &info, 0);
+				println!(
+					"weight = {:?} // multiplier = {:?} // full transfer fee = {:?}",
+					info.weight.separated_string(),
+					pallet_transaction_payment::NextFeeMultiplier::<Runtime>::get(),
+					fee.separated_string(),
+				);
+			});
+		};
+
+		test_with_multiplier(min_multiplier);
+		test_with_multiplier(Multiplier::saturating_from_rational(1, 1u128));
+		test_with_multiplier(Multiplier::saturating_from_rational(1, 1_000u128));
+		test_with_multiplier(Multiplier::saturating_from_rational(1, 1_000_000u128));
+		test_with_multiplier(Multiplier::saturating_from_rational(1, 1_000_000_000u128));
+	}
+
+	#[test]
+	fn full_block_council_election_cost() {
+		// the number of voters needed to consume almost a full block in council election, and how
+		// much it is going to cost.
+		use pallet_elections_phragmen::WeightInfo;
+
+		// Loser candidate lose a lot of money; sybil attack by candidates is even more expensive,
+		// and we don't care about it here. For now, we assume no extra candidates, and only
+		// superfluous voters.
+		let candidates = DesiredMembers::get() + DesiredRunnersUp::get();
+		let mut voters = 1u32;
+		let weight_with = |v| {
+			<Runtime as pallet_elections_phragmen::Config>::WeightInfo::election_phragmen(
+				candidates,
+				v,
+				v * 16,
+			)
+		};
+
+		while weight_with(voters) <= BlockWeights::get().max_block {
+			voters += 1;
+		}
+
+		let cost = voters as Balance * (VotingBondBase::get() + 16 * VotingBondFactor::get());
+		let cost_dollars = cost / DOLLARS;
+		println!(
+			"can support {} voters in a single block for council elections; total bond {}",
+			voters, cost_dollars,
+		);
+		assert!(cost_dollars > 150_000); // DOLLAR ~ new DOT ~ 10e10
+	}
+
+	#[test]
+	fn nominator_limit() {
+		use pallet_election_provider_multi_phase::WeightInfo;
+		// starting point of the nominators.
+		let target_voters: u32 = 50_000;
+
+		// assuming we want around 5k candidates and 1k active validators. (March 31, 2021)
+		let all_targets: u32 = 5_000;
+		let desired: u32 = 1_000;
+		let weight_with = |active| {
+			<Runtime as pallet_election_provider_multi_phase::Config>::WeightInfo::submit_unsigned(
+				active,
+				all_targets,
+				active,
+				desired,
+			)
+		};
+
+		let mut active = target_voters;
+		while weight_with(active) <= OffchainSolutionWeightLimit::get() || active == target_voters {
+			active += 1;
+		}
+
+		println!("can support {} nominators to yield a weight of {}", active, weight_with(active));
+		assert!(active > target_voters, "we need to reevaluate the weight of the election system");
+	}
 
 	#[test]
 	fn signed_deposit_is_sensible() {
 		// ensure this number does not change, or that it is checked after each change.
-		// a 1 MB solution should need around 0.16 SEL deposit
+		// a 1 MB solution should take (40 + 10) DOTs of deposit.
 		let deposit = SignedDepositBase::get() + (SignedDepositByte::get() * 1024 * 1024);
-		assert_eq_error_rate!(deposit, UNITS * 16 / 100, UNITS / 100);
+		assert_eq_error_rate!(deposit, 50 * UNITS, UNITS);
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use super::*;
+
+	#[test]
+	fn call_size() {
+		assert!(
+			core::mem::size_of::<Call>() <= 230,
+			"size of Call is more than 230 bytes: some calls have too big arguments, use Box to \
+			reduce the size of Call.
+			If the limit is too strong, maybe consider increase the limit",
+		);
 	}
 }

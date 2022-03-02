@@ -1,6 +1,6 @@
 [package]
 name = "selendra-cli"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Selendra <info@selendra.org>"]
 description = "Selendra Relay-chain Client Node"
 edition = "2018"
@@ -14,36 +14,36 @@ wasm-opt = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+clap = { version = "3.0", features = ["derive"], optional = true }
 log = "0.4.13"
 thiserror = "1.0.30"
-structopt = { version = "0.3.25", optional = true }
-futures = "0.3.19"
+futures = "0.3.21"
 
 service = { package = "selendra-service", path = "../../node/service", default-features = false, optional = true }
 selendra-node-core-pvf = { path = "../../../system-node/core/pvf", optional = true }
 selendra-performance-test = { path = "../../node/test/performance-test", optional = true }
 selendra-node-metrics = { path = "../../../system-node/metrics" }
 
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", optional = true }
-try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", optional = true }
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", optional = true }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", optional = true }
-sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", optional = true }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.17" }
+try-runtime-cli = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.17" }
+sc-cli = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.17" }
+sc-service = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.17" }
+sc-tracing = { git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.17" }
 
 # this crate is used only to enable `trie-memory-tracker` feature
 # see https://github.com/paritytech/substrate/pull/6745
-sp-trie = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
+sp-trie = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.17", default-features = false}
 
 [build-dependencies]
-substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 [features]
 default = [ "wasmtime", "db", "cli", "full-node", "trie-memory-tracker", "selendra-native" ]
 wasmtime = [ "sc-cli/wasmtime" ]
 db = [ "service/db" ]
 cli = [
-	"structopt",
+	"clap",
 	"sc-cli",
 	"sc-service",
 	"sc-tracing",

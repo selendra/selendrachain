@@ -93,13 +93,13 @@ benchmarks! {
 		// candidate is not rejected. Also, we cannot have more validity votes than validators in
 		// the group.
 
-		// Do not use this range for cardamon because it only has 1 validator per backing group,
+		// Do not use this range for Cardamon because it only has 1 validator per backing group,
 		// which causes issues when trying to create slopes with the benchmarking analysis. Instead
-		// use v = 1 for running cardamon benchmarks
+		// use v = 1 for running Cardamon benchmarks
 		let v in (BenchBuilder::<T>::fallback_min_validity_votes())
 			..(BenchBuilder::<T>::fallback_max_validators());
 
-		// Comment in for running cardamon benchmarks
+		// Comment in for running Cardamon benchmarks
 		// let v = 1;
 
 		let cores_with_backed: BTreeMap<_, _>

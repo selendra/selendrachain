@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Common runtime code for Selendra and Selendra.
+//! Common runtime code for Selendra and Cardamom.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -110,7 +110,6 @@ parameter_types! {
 }
 
 /// Parameterized slow adjusting fee updated based on
-/// https://research.web3.foundation/en/latest/selendra/overview/2-token-economics.html#-2.-slow-adjusting-mechanism
 pub type SlowAdjustingFeeUpdate<R> =
 	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 

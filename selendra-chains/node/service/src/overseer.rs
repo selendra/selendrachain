@@ -25,8 +25,8 @@ use selendra_node_core_dispute_coordinator::Config as DisputeCoordinatorConfig;
 use selendra_node_core_provisioner::ProvisionerConfig;
 use selendra_node_network_protocol::request_response::{v1 as request_v1, IncomingRequestReceiver};
 use selendra_overseer::{
-	metrics::Metrics as OverseerMetrics, BlockInfo, MetricsTrait, Overseer, OverseerBuilder,
-	OverseerConnector, OverseerHandle,
+	metrics::Metrics as OverseerMetrics, BlockInfo, InitializedOverseerBuilder, MetricsTrait,
+	Overseer, OverseerConnector, OverseerHandle,
 };
 
 use sc_authority_discovery::Service as AuthorityDiscoveryService;
@@ -137,7 +137,7 @@ pub fn prepared_overseer_builder<'a, Spawner, RuntimeClient>(
 		pvf_checker_enabled,
 	}: OverseerGenArgs<'a, Spawner, RuntimeClient>,
 ) -> Result<
-	OverseerBuilder<
+	InitializedOverseerBuilder<
 		Spawner,
 		Arc<RuntimeClient>,
 		CandidateValidationSubsystem,

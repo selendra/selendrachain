@@ -1,22 +1,22 @@
 [package]
 name = "selendra-node-subsystem-test-helpers"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 description = "Subsystem traits and message definitions"
 
 [dependencies]
 async-trait = "0.1.52"
-futures = "0.3.19"
+futures = "0.3.21"
 parking_lot = "0.11.1"
 selendra-node-subsystem = { path = "../subsystem" }
 selendra-node-subsystem-util = { path = "../subsystem-util" }
 selendra-primitives = { path = "../../primitives" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 [dev-dependencies]
 selendra-overseer = { path = "../overseer" }

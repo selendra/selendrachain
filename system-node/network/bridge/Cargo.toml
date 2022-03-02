@@ -1,27 +1,29 @@
 [package]
 name = "selendra-network-bridge"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
+parking_lot = "0.11.1"
 async-trait = "0.1.52"
-futures = "0.3.19"
+futures = "0.3.21"
 tracing = "0.1.29"
-selendra-primitives = { path = "../../../primitives" }
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive"] }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+
+selendra-primitives = { path = "../../../primitives" }
 selendra-subsystem = { package = "selendra-node-subsystem", path = "../../subsystem" }
 selendra-overseer = { path = "../../overseer" }
 selendra-node-network-protocol = { path = "../protocol" }
 selendra-node-subsystem-util = { path = "../../subsystem-util"}
-parking_lot = "0.11.1"
+
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 [dev-dependencies]
 assert_matches = "1.4.0"
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 futures-timer = "3"
 selendra-primitives-test-helpers = { path = "../../../primitives/test-helpers" }

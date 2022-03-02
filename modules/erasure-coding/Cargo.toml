@@ -1,14 +1,15 @@
 [package]
 name = "selendra-erasure-coding"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
-selendra-primitives = { path = "../../primitives" }
-selendra-node-primitives = { package = "selendra-node-primitives", path = "../../system-node/primitives" }
+thiserror = "1.0.30"
 novelpoly = { package = "reed-solomon-novelpoly", version = "1.0.0" }
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["std", "derive"] }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-trie = { package = "sp-trie", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-thiserror = "1.0.30"
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+trie = { package = "sp-trie", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+
+selendra-primitives = { path = "../../primitives" }
+selendra-node-primitives = { path = "../../system-node/primitives" }

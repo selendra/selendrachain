@@ -156,15 +156,15 @@ pub mod pallet {
 		crate::paras_inherent::OnChainVotes::<T>::mutate(move |value| {
 			let disputes =
 				checked_disputes.into_iter().map(DisputeStatementSet::from).collect::<Vec<_>>();
-			if let Some(ref mut value) = value {
-				value.disputes = disputes;
-			} else {
-				*value = Some(ScrapedOnChainVotes::<T::Hash> {
-					backing_validators_per_candidate: Vec::new(),
-					disputes,
-					session,
-				});
-			}
+			let backing_validators_per_candidate = match value.take() {
+				Some(v) => v.backing_validators_per_candidate,
+				None => Vec::new(),
+			};
+			*value = Some(ScrapedOnChainVotes::<T::Hash> {
+				backing_validators_per_candidate,
+				disputes,
+				session,
+			});
 		})
 	}
 
@@ -177,16 +177,15 @@ pub mod pallet {
 		)>,
 	) {
 		crate::paras_inherent::OnChainVotes::<T>::mutate(move |value| {
-			if let Some(ref mut value) = value {
-				value.backing_validators_per_candidate.clear();
-				value.backing_validators_per_candidate.extend(backing_validators_per_candidate);
-			} else {
-				*value = Some(ScrapedOnChainVotes::<T::Hash> {
-					backing_validators_per_candidate,
-					disputes: MultiDisputeStatementSet::default(),
-					session,
-				});
-			}
+			let disputes = match value.take() {
+				Some(v) => v.disputes,
+				None => MultiDisputeStatementSet::default(),
+			};
+			*value = Some(ScrapedOnChainVotes::<T::Hash> {
+				backing_validators_per_candidate,
+				disputes,
+				session,
+			});
 		})
 	}
 
@@ -719,21 +718,13 @@ impl<T: Config> Pallet<T> {
 				      -> bool {
 					// never include a concluded-invalid candidate
 					concluded_invalid_disputes.contains(&backed_candidate.hash()) ||
-						// Instead of checking the candidates with code upgrades twice
-						// move the checking up here and skip it in the training wheels fallback.
-						// That way we avoid possible duplicate checks while assuring all
-						// backed candidates fine to pass on.
-						{
-							match check_ctx.verify_backed_candidate(
-								parent_hash,
-								parent_storage_root,
-								candidate_idx,
-								backed_candidate,
-							) {
-								Err(_) | Ok(Err(_)) => true,
-								Ok(Ok(_)) => false,
-							}
-						}
+							// Instead of checking the candidates with code upgrades twice
+							// move the checking up here and skip it in the training wheels fallback.
+							// That way we avoid possible duplicate checks while assuring all
+							// backed candidates fine to pass on.
+							check_ctx
+								.verify_backed_candidate(parent_hash, parent_storage_root, candidate_idx, backed_candidate)
+								.is_err()
 				},
 				&scheduled[..],
 			);

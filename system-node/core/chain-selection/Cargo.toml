@@ -1,12 +1,12 @@
 [package]
 name = "selendra-node-core-chain-selection"
 description = "Chain Selection Subsystem"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 
 [dependencies]
-futures = "0.3.19"
+futures = "0.3.21"
 futures-timer = "3"
 tracing = "0.1.29"
 selendra-primitives = { path = "../../../primitives" }
@@ -19,7 +19,7 @@ parity-scale-codec = "2"
 
 [dev-dependencies]
 selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 parking_lot = "0.11"
 assert_matches = "1"
 kvdb-memorydb = "0.10.0"

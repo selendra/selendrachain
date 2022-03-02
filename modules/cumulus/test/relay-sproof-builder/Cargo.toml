@@ -9,9 +9,9 @@ edition = "2021"
 codec = { package = "parity-scale-codec", version = "2.3.0", default-features = false, features = [ "derive" ] }
 
 # Substrate dependencies
-sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
 
 # Selendra dependencies
 selendra-primitives = { path = "../../../../primitives", default-features = false }

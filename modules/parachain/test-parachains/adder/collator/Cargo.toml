@@ -1,6 +1,6 @@
 [package]
 name = "test-parachain-adder-collator"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Selendra <info@selendra.org>"]
 description = "Collator for the adder test parachain"
 edition = "2018"
@@ -15,10 +15,10 @@ path = "bin/puppet_worker.rs"
 
 [dependencies]
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive"] }
-futures = "0.3.19"
+clap = { version = "3.0", features = ["derive"] }
+futures = "0.3.21"
 futures-timer = "3.0.2"
 log = "0.4.13"
-structopt = "0.3.25"
 
 test-parachain-adder = { path = ".." }
 selendra-primitives = { path = "../../../../../primitives" }
@@ -27,9 +27,9 @@ selendra-service = { path = "../../../../../selendra-chains/node/service", featu
 selendra-node-primitives = { path = "../../../../../system-node/primitives" }
 selendra-node-subsystem = { path = "../../../../../system-node/subsystem" }
 
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 # This one is tricky. Even though it is not used directly by the collator, we still need it for the
 # `puppet_worker` binary, which is required for the integration test. However, this shouldn't be
@@ -40,8 +40,8 @@ selendra-node-core-pvf = { path = "../../../../../system-node/core/pvf" }
 selendra-parachain = { path = "../../.." }
 selendra-test-service = { path = "../../../../../selendra-chains/node/test/service" }
 
-substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 tokio = { version = "1.15", features = ["macros"] }

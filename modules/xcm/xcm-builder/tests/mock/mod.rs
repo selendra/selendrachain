@@ -53,7 +53,7 @@ impl SendXcm for TestSendXcm {
 	}
 }
 
-// copied from selendra constants
+// copied from Selendra constants
 pub const UNITS: Balance = 1_000_000_000_000;
 pub const CENTS: Balance = UNITS / 30_000;
 

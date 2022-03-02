@@ -197,6 +197,7 @@ where
 				cli.run.beefy,
 				jaeger_agent,
 				None,
+				false,
 				overseer_gen,
 			)
 			.map(|full| full.task_manager)

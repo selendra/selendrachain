@@ -192,7 +192,7 @@ struct AttestingData {
 
 /// How many votes we need to consider a candidate backed.
 fn minimum_votes(n_validators: usize) -> usize {
-	// Runtime change going live, see: https://github.com/paritytech/selendra/pull/4437
+	// Runtime change going live, see
 	let old_runtime_value = n_validators / 2 + 1;
 	let new_runtime_value = std::cmp::min(2, n_validators);
 

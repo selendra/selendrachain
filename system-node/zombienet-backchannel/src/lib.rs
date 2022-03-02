@@ -87,7 +87,6 @@ impl Broadcaster {
 
 impl ZombienetBackchannel {
 	pub async fn init() -> Result<(), BackchannelError> {
-		#[allow(must_not_suspend)]
 		let mut zombienet_bkc = ZOMBIENET_BACKCHANNEL.lock().unwrap();
 		if zombienet_bkc.is_none() {
 			let backchannel_host =
