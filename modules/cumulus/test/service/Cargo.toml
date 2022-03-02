@@ -6,10 +6,10 @@ edition = "2021"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "2.3.0" }
-rand = "0.7.3"
+rand = "0.8.5"
 serde = { version = "1.0.132", features = ["derive"] }
 async-trait = "0.1.42"
-tokio = { version = "1.10", features = ["macros"] }
+tokio = { version = "1.17.0", features = ["macros"] }
 
 # Substrate
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
@@ -31,7 +31,7 @@ sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "pol
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.17" }
 sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
@@ -56,7 +56,7 @@ cumulus-relay-chain-local = { path = "../../client/relay-chain-local" }
 
 criterion = { version = "0.3.5", features = [ "async_tokio" ] }
 
-parking_lot = "0.11.1"
+parking_lot = "0.12.0"
 
 # RPC related dependencies
 jsonrpc-core = "18.0.0"
@@ -64,6 +64,8 @@ jsonrpc-core = "18.0.0"
 [dev-dependencies]
 futures = "0.3.5"
 
+# Selendra dependencies
+selendra-test-service = { path = "../../../../selendra-chains/node/test/service" }
 # Substrate dependencies
 sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }

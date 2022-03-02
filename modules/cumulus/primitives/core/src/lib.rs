@@ -25,7 +25,7 @@ use sp_std::prelude::*;
 
 pub use selendra_core_primitives::InboundDownwardMessage;
 pub use selendra_parachain::primitives::{
-	DmpMessageHandler, Id as ParaId, UpwardMessage, ValidationParams, XcmpMessageFormat,
+	DmpMessageHandler, Id as ParaId, IsSystem, UpwardMessage, ValidationParams, XcmpMessageFormat,
 	XcmpMessageHandler,
 };
 pub use selendra_primitives::v1::{

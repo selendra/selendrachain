@@ -44,7 +44,6 @@ use frame_support::{
 	weights::{Pays, PostDispatchInfo, Weight},
 };
 use frame_system::{ensure_none, ensure_root};
-use relay_state_snapshot::MessagingStateSnapshot;
 use selendra_parachain::primitives::RelayChainBlockNumber;
 use sp_runtime::{
 	traits::{Block as BlockT, BlockNumberProvider, Hash},
@@ -85,7 +84,7 @@ mod tests;
 /// # fn main() {}
 /// ```
 pub use cumulus_pallet_parachain_system_proc_macro::register_validate_block;
-pub use relay_state_snapshot::RelayChainStateProof;
+pub use relay_state_snapshot::{MessagingStateSnapshot, RelayChainStateProof};
 
 pub use pallet::*;
 
@@ -428,9 +427,9 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Attempt to upgrade validation function while existing upgrade pending
 		OverlappingUpgrades,
-		/// Selendra currently prohibits this parachain from upgrading its validation function
-		ProhibitedBySelendra,
-		/// The supplied validation function has compiled into a blob larger than Selendra is
+		/// Polkadot currently prohibits this parachain from upgrading its validation function
+		ProhibitedByPolkadot,
+		/// The supplied validation function has compiled into a blob larger than Polkadot is
 		/// willing to run
 		TooBig,
 		/// The inherent which supplies the validation data did not run this block
@@ -863,8 +862,8 @@ impl<T: Config> Pallet<T> {
 		weight_used
 	}
 
-	/// Put a new validation function into a particular location where selendra
-	/// monitors for updates. Calling this function notifies selendra that a new
+	/// Put a new validation function into a particular location where polkadot
+	/// monitors for updates. Calling this function notifies polkadot that a new
 	/// upgrade has been scheduled.
 	fn notify_selendra_of_pending_upgrade(code: &[u8]) {
 		NewValidationCode::<T>::put(code);
@@ -889,17 +888,17 @@ impl<T: Config> Pallet<T> {
 		// Ensure that `ValidationData` exists. We do not care about the validation data per se,
 		// but we do care about the [`UpgradeRestrictionSignal`] which arrives with the same inherent.
 		ensure!(<ValidationData<T>>::exists(), Error::<T>::ValidationDataNotAvailable,);
-		ensure!(<UpgradeRestrictionSignal<T>>::get().is_none(), Error::<T>::ProhibitedBySelendra);
+		ensure!(<UpgradeRestrictionSignal<T>>::get().is_none(), Error::<T>::ProhibitedByPolkadot);
 
 		ensure!(!<PendingValidationCode<T>>::exists(), Error::<T>::OverlappingUpgrades);
 		let cfg = Self::host_configuration().ok_or(Error::<T>::HostConfigurationNotAvailable)?;
 		ensure!(validation_function.len() <= cfg.max_code_size as usize, Error::<T>::TooBig);
 
 		// When a code upgrade is scheduled, it has to be applied in two
-		// places, synchronized: both selendra and the individual parachain
+		// places, synchronized: both polkadot and the individual parachain
 		// have to upgrade on the same relay chain block.
 		//
-		// `notify_selendra_of_pending_upgrade` notifies selendra; the `PendingValidationCode`
+		// `notify_selendra_of_pending_upgrade` notifies polkadot; the `PendingValidationCode`
 		// storage keeps track locally for the parachain upgrade, which will
 		// be applied later: when the relay-chain communicates go-ahead signal to us.
 		Self::notify_selendra_of_pending_upgrade(&validation_function);

@@ -41,6 +41,7 @@ cumulus-test-client = { path = "../../test/client" }
 
 sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 # Other dependencies
 async-trait = "0.1.42"

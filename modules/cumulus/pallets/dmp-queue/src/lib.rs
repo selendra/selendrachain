@@ -308,7 +308,7 @@ pub mod pallet {
 									id, remaining, required,
 								));
 							}
-						}
+						},
 					}
 				}
 				// Cannot be an `else` here since the `maybe_enqueue_page` may have changed.

@@ -337,6 +337,7 @@ fn build_selendra_full_node(
 			true,
 			None,
 			telemetry_worker_handle,
+			false,
 			selendra_service::RealOverseerGen,
 		)?;
 

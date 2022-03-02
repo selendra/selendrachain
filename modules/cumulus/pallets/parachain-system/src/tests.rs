@@ -670,8 +670,6 @@ fn message_queue_chain() {
 	// Note that the resulting hashes are the same for HRMP and DMP. That's because even though
 	// the types are nominally different, they have the same structure and computation of the
 	// new head doesn't differ.
-	//
-	// These cases are taken from https://github.com/paritytech/selendra/pull/2351
 	assert_eq!(
 		MessageQueueChain::default()
 			.extend_downward(&InboundDownwardMessage { sent_at: 2, msg: vec![1, 2, 3] })
