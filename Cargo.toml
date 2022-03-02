@@ -3,7 +3,7 @@ members = [
 	"selendra-chains/bin",
 	"selendra-chains/runtime/selendra",
 	"selendra-chains/runtime/cardamom",
-
+	# "selendra-parachains/runtime/common",
 	# "selendra-chains/bin/cli",
 	# "selendra-chains/node/rpc",
 	# "selendra-chains/node/service",
@@ -97,14 +97,13 @@ members = [
 	# "modules/cumulus/primitives/timestamp",
 	# "modules/cumulus/primitives/utility",
 	
-	# "selendra-parachains/runtime/common",
-	# "modules/cumulus/pallets/parachain-info",
-	# "modules/cumulus/pallets/ping",
-	# "modules/cumulus/test/client",
-	# "modules/cumulus/test/relay-sproof-builder",
-	# "modules/cumulus/test/relay-validation-worker-provider",
-	# "modules/cumulus/test/runtime",
-	# "modules/cumulus/test/service",
+	"modules/cumulus/pallets/parachain-info",
+	"modules/cumulus/pallets/ping",
+	"modules/cumulus/test/client",
+	"modules/cumulus/test/relay-sproof-builder",
+	"modules/cumulus/test/relay-validation-worker-provider",
+	"modules/cumulus/test/runtime",
+	"modules/cumulus/test/service",
 ]
 
 # [badges]
