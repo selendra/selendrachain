@@ -122,7 +122,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	apis: RUNTIME_API_VERSIONS,
 	#[cfg(feature = "disable-runtime-api")]
 	apis: version::create_apis_vec![[]],
-	transaction_version: 2,
+	transaction_version: 3,
 	state_version: 0,
 };
 
@@ -536,12 +536,12 @@ impl pallet_staking::Config for Runtime {
 }
 
 parameter_types! {
-	pub LaunchPeriod: BlockNumber = prod_or_fast!(30 * MINUTES, 1, "SEL_LAUNCH_PERIOD");
-	pub VotingPeriod: BlockNumber = prod_or_fast!(30 * MINUTES, 1, "SEL_LAUNCH_PERIOD");
-	pub FastTrackVotingPeriod: BlockNumber = prod_or_fast!(210 * MINUTES, 1 * MINUTES, "SEL_FAST_TRACK_VOTING_PERIOD");
+	pub LaunchPeriod: BlockNumber = prod_or_fast!(3 * DAYS, 1, "SEL_LAUNCH_PERIOD");
+	pub VotingPeriod: BlockNumber = prod_or_fast!(3 * DAYS, 1, "SEL_LAUNCH_PERIOD");
+	pub FastTrackVotingPeriod: BlockNumber = prod_or_fast!(2 * HOURS, 1 * MINUTES, "SEL_FAST_TRACK_VOTING_PERIOD");
 	pub const MinimumDeposit: Balance = 1 * UNITS;
-	pub EnactmentPeriod: BlockNumber = prod_or_fast!(40 * MINUTES, 1, "SEL_ENACTMENT_PERIOD");
-	pub CooloffPeriod: BlockNumber = prod_or_fast!(30 * MINUTES, 1 * MINUTES, "SEL_COOLOFF_PERIOD");
+	pub EnactmentPeriod: BlockNumber = prod_or_fast!(4 * DAYS, 1, "SEL_ENACTMENT_PERIOD");
+	pub CooloffPeriod: BlockNumber = prod_or_fast!(3 * DAYS, 1 * MINUTES, "SEL_COOLOFF_PERIOD");
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -601,7 +601,7 @@ impl pallet_democracy::Config for Runtime {
 }
 
 parameter_types! {
-	pub CouncilMotionDuration: BlockNumber = prod_or_fast!(20 * MINUTES, 2 * MINUTES, "SEL_MOTION_DURATION");
+	pub CouncilMotionDuration: BlockNumber = prod_or_fast!(2 * DAYS, 2 * MINUTES, "SEL_MOTION_DURATION");
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
 }
@@ -653,7 +653,7 @@ impl pallet_elections_phragmen::Config for Runtime {
 }
 
 parameter_types! {
-	pub TechnicalMotionDuration: BlockNumber = prod_or_fast!(20 * MINUTES, 2 * MINUTES, "SEL_MOTION_DURATION");
+	pub TechnicalMotionDuration: BlockNumber = prod_or_fast!(2 * DAYS, 2 * MINUTES, "SEL_MOTION_DURATION");
 	pub const TechnicalMaxProposals: u32 = 100;
 	pub const TechnicalMaxMembers: u32 = 100;
 }
@@ -687,17 +687,17 @@ parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = 1 * UNITS;
 	pub const ProposalBondMaximum: Balance = 50 * UNITS;
-	pub const SpendPeriod: BlockNumber = 30 * MINUTES;
+	pub const SpendPeriod: BlockNumber = 3 * DAYS;
 	pub const Burn: Permill = Permill::from_perthousand(2);
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 
-	pub const TipCountdown: BlockNumber = 10 * MINUTES;
+	pub const TipCountdown: BlockNumber = 1 * DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
 	pub const TipReportDepositBase: Balance = 5000 * CENTS;
 	pub const DataDepositPerByte: Balance = 100 * CENTS;
 	pub const BountyDepositBase: Balance = 5000 * CENTS;
-	pub const BountyDepositPayoutDelay: BlockNumber = 40 * MINUTES;
-	pub const BountyUpdatePeriod: BlockNumber = 300 * MINUTES;
+	pub const BountyDepositPayoutDelay: BlockNumber = 4 * DAYS;
+	pub const BountyUpdatePeriod: BlockNumber = 30 * DAYS;
 	pub const MaximumReasonLength: u32 = 16384;
 	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
 	pub const BountyValueMinimum: Balance = 5000 * CENTS;
@@ -1184,31 +1184,6 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
-parameter_types! {
-	pub const BridgeChainId: u8 = 1;
-	pub const ProposalLifetime: BlockNumber = 50;
-}
-
-impl pallet_bridge::Config for Runtime {
-	type Event = Event;
-	type BridgeCommitteeOrigin = MoreThanHalfCouncil;
-	type Proposal = Call;
-	type BridgeChainId = BridgeChainId;
-	type ProposalLifetime = ProposalLifetime;
-}
-
-parameter_types! {
-	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("000000000000000000000025959A1E14c71728C32274C376d832fae408AFc303");
-}
-
-impl pallet_bridge_transfer::Config for Runtime {
-	type Event = Event;
-	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
-	type Currency = Balances;
-	type NativeTokenResourceId = NativeTokenResourceId;
-	type OnFeePay = Treasury;
-}
-
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -1299,10 +1274,6 @@ construct_runtime! {
 		// Parachain Onboarding Pallets. Start indices at 70 to leave room.
 		Registrar: paras_registrar::{Pallet, Call, Storage, Event<T>} = 70,
 		Slots: slots::{Pallet, Call, Storage, Event<T>} = 71,
-
-		// ChainBridge
-		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 90,
-		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 91,
 
 		// Pallet for sending XCM.
 		XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin, Config} = 99,
@@ -1843,3 +1814,4 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 }
+

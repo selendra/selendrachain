@@ -91,8 +91,10 @@ pub type XcmRouter = (
 parameter_types! {
 	pub const Cardamom: MultiAssetFilter = Wild(AllOf { fun: WildFungible, id: Concrete(CdmLocation::get()) });
 	pub const CardamomForIndranet: (MultiAssetFilter, MultiLocation) = (Cardamom::get(), Parachain(1000).into());
+	pub const CardamomForIndraIdentity: (MultiAssetFilter, MultiLocation) = (Cardamom::get(), Parachain(1001).into());
 }
-pub type TrustedTeleporters = xcm_builder::Case<CardamomForIndranet>;
+pub type TrustedTeleporters = 
+		(xcm_builder::Case<CardamomForIndranet>, xcm_builder::Case<CardamomForIndraIdentity>);
 
 match_type! {
 	pub type OnlyParachains: impl Contains<MultiLocation> = {
