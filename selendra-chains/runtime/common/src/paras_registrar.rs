@@ -21,7 +21,7 @@ use frame_support::{
 	dispatch::DispatchResult,
 	ensure,
 	pallet_prelude::Weight,
-	traits::{Currency, Get, ReservableCurrency, EnsureOrigin},
+	traits::{Currency, EnsureOrigin, Get, ReservableCurrency},
 };
 use frame_system::{self, ensure_signed};
 use primitives::v1::{HeadData, Id as ParaId, ValidationCode, LOWEST_PUBLIC_ID};
@@ -84,9 +84,7 @@ impl WeightInfo for TestWeightInfo {
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{
-		pallet_prelude::*,
-	};
+	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
 	#[pallet::pallet]

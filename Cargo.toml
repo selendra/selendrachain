@@ -96,14 +96,13 @@ members = [
 	# "modules/cumulus/primitives/parachain-inherent",
 	# "modules/cumulus/primitives/timestamp",
 	# "modules/cumulus/primitives/utility",
-	
-	"modules/cumulus/pallets/parachain-info",
-	"modules/cumulus/pallets/ping",
-	"modules/cumulus/test/client",
-	"modules/cumulus/test/relay-sproof-builder",
-	"modules/cumulus/test/relay-validation-worker-provider",
-	"modules/cumulus/test/runtime",
-	"modules/cumulus/test/service",
+	# "modules/cumulus/pallets/parachain-info",
+	# "modules/cumulus/pallets/ping",
+	# "modules/cumulus/test/client",
+	# "modules/cumulus/test/relay-sproof-builder",
+	# "modules/cumulus/test/relay-validation-worker-provider",
+	# "modules/cumulus/test/runtime",
+	# "modules/cumulus/test/service",
 ]
 
 # [badges]
