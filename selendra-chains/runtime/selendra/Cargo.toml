@@ -90,8 +90,6 @@ xcm = { package = "xcm", path = "../../../modules/xcm", default-features = false
 xcm-executor = { package = "xcm-executor", path = "../../../modules/xcm/xcm-executor", default-features = false }
 xcm-builder = { package = "xcm-builder", path = "../../../modules/xcm/xcm-builder", default-features = false }
 
-pallet-sudo = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
-
 [dev-dependencies]
 hex-literal = "0.3.4"
 tiny-keccak = "2.0.2"
@@ -124,7 +122,6 @@ std = [
 	"sp-io/std",
 	"frame-support/std",
 	"frame-executive/std",
-	"pallet-sudo/std",
 	"pallet-authority-discovery/std",
 	"pallet-authorship/std",
 	"pallet-bags-list/std",
