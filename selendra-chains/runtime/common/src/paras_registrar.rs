@@ -21,9 +21,9 @@ use frame_support::{
 	dispatch::DispatchResult,
 	ensure,
 	pallet_prelude::Weight,
-	traits::{Currency, Get, ReservableCurrency},
+	traits::{Currency, Get, ReservableCurrency, EnsureOrigin},
 };
-use frame_system::{self, ensure_root, ensure_signed};
+use frame_system::{self, ensure_signed};
 use primitives::v1::{HeadData, Id as ParaId, ValidationCode, LOWEST_PUBLIC_ID};
 use runtime_parachains::{
 	configuration, ensure_parachain,
@@ -84,7 +84,9 @@ impl WeightInfo for TestWeightInfo {
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::pallet_prelude::*;
+	use frame_support::{
+		pallet_prelude::*,
+	};
 	use frame_system::pallet_prelude::*;
 
 	#[pallet::pallet]
@@ -97,6 +99,9 @@ pub mod pallet {
 	pub trait Config: configuration::Config + paras::Config {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// Required origin to schedule or cancel calls.
+		type ParaRegisterOrigin: EnsureOrigin<<Self as frame_system::Config>::Origin>;
 
 		/// The aggregated origin type must support the `parachains` origin. We require that we can
 		/// infallibly convert between this origin and the system origin, but in reality, they're the
@@ -243,7 +248,7 @@ pub mod pallet {
 			genesis_head: HeadData,
 			validation_code: ValidationCode,
 		) -> DispatchResult {
-			ensure_root(origin)?;
+			T::ParaRegisterOrigin::ensure_origin(origin.clone())?;
 			Self::do_register(who, Some(deposit), id, genesis_head, validation_code, false)
 		}
 
@@ -252,7 +257,7 @@ pub mod pallet {
 		/// The caller must be Root, the `para` owner, or the `para` itself. The para must be a parathread.
 		#[pallet::weight(<T as Config>::WeightInfo::deregister())]
 		pub fn deregister(origin: OriginFor<T>, id: ParaId) -> DispatchResult {
-			Self::ensure_root_para_or_owner(origin, id)?;
+			Self::ensure_origin_para_or_owner(origin, id)?;
 			Self::do_deregister(id)
 		}
 
@@ -269,7 +274,7 @@ pub mod pallet {
 		/// and the auction deposit are switched.
 		#[pallet::weight(<T as Config>::WeightInfo::swap())]
 		pub fn swap(origin: OriginFor<T>, id: ParaId, other: ParaId) -> DispatchResult {
-			Self::ensure_root_para_or_owner(origin, id)?;
+			Self::ensure_origin_para_or_owner(origin, id)?;
 
 			if PendingSwap::<T>::get(other) == Some(id) {
 				if let Some(other_lifecycle) = paras::Pallet::<T>::lifecycle(other) {
@@ -309,7 +314,7 @@ pub mod pallet {
 		/// Can only be called by the Root origin.
 		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1))]
 		pub fn force_remove_lock(origin: OriginFor<T>, para: ParaId) -> DispatchResult {
-			ensure_root(origin)?;
+			T::ParaRegisterOrigin::ensure_origin(origin.clone())?;
 			Self::remove_lock(para);
 			Ok(())
 		}
@@ -443,7 +448,7 @@ impl<T: Config> Registrar for Pallet<T> {
 impl<T: Config> Pallet<T> {
 	/// Ensure the origin is one of Root, the `para` owner, or the `para` itself.
 	/// If the origin is the `para` owner, the `para` must be unlocked.
-	fn ensure_root_para_or_owner(
+	fn ensure_origin_para_or_owner(
 		origin: <T as frame_system::Config>::Origin,
 		id: ParaId,
 	) -> DispatchResult {
@@ -462,8 +467,9 @@ impl<T: Config> Pallet<T> {
 				Ok(())
 			})
 			.or_else(|_| -> DispatchResult {
-				// Check if root...
-				ensure_root(origin.clone()).map_err(|e| e.into())
+				// Check if origin...
+				T::ParaRegisterOrigin::ensure_origin(origin.clone())?;
+				Ok(())
 			})
 	}
 
@@ -695,6 +701,7 @@ mod tests {
 	impl Config for Test {
 		type Event = Event;
 		type Origin = Origin;
+		type ParaRegisterOrigin = EnsureRoot<AccountId>;
 		type Currency = Balances;
 		type OnSwap = ();
 		type ParaDeposit = ParaDeposit;

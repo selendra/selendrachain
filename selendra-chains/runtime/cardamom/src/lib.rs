@@ -1158,6 +1158,10 @@ parameter_types! {
 impl paras_registrar::Config for Runtime {
 	type Event = Event;
 	type Origin = Origin;
+	type ParaRegisterOrigin = EnsureOneOf<
+		EnsureRoot<AccountId>,
+		pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, CouncilCollective>,
+	>;
 	type Currency = Balances;
 	type OnSwap = Slots;
 	type ParaDeposit = ParaDeposit;
