@@ -1,7 +1,7 @@
 [package]
 name = "selendra"
 description = "Implementation of a selendra node in Rust based on the Substrate framework."
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Selendra <info@selendra.org>"]
 edition = "2018"
 rust-version = "1.57.0" # custom profiles
