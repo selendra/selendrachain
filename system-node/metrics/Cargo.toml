@@ -38,7 +38,7 @@ substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch
 sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-prometheus-parse = {version = "0.2.3"}
+prometheus-parse = {version = "0.2.2"}
 
 [features]
 default = []
