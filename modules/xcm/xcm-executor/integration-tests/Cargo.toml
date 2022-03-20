@@ -1,7 +1,7 @@
 [package]
 
 name = "xcm-executor-integration-tests"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2018"
 authors = ["Selendra <info@selendra.org>"]
 description = "Integration tests for the XCM Executor"

@@ -116,7 +116,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("cardamom"),
 	impl_name: create_runtime_str!("selendra-cardamom"),
 	authoring_version: 1,
-	spec_version: 202,
+	spec_version: 203,
 	impl_version: 0,
 	#[cfg(not(feature = "disable-runtime-api"))]
 	apis: RUNTIME_API_VERSIONS,
