@@ -116,7 +116,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("cardamom"),
 	impl_name: create_runtime_str!("selendra-cardamom"),
 	authoring_version: 1,
-	spec_version: 203,
+	spec_version: 204,
 	impl_version: 0,
 	#[cfg(not(feature = "disable-runtime-api"))]
 	apis: RUNTIME_API_VERSIONS,
@@ -149,12 +149,12 @@ impl Contains<Call> for BaseFilter {
 
 type MoreThanHalfCouncil = EnsureOneOf<
 	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
+	pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, TechnicalCollective>,
 >;
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u16 = 972;
+	pub const SS58Prefix: u16 = 204;
 }
 
 impl frame_system::Config for Runtime {

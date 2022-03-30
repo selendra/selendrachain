@@ -134,7 +134,7 @@ impl SubstrateCli for Cli {
 }
 
 fn set_default_ss58_version() {
-	let ss58_version = Ss58AddressFormat::custom(972);
+	let ss58_version = Ss58AddressFormat::custom(204);
 	sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 
