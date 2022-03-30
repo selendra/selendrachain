@@ -92,10 +92,6 @@ xcm-builder = { package = "xcm-builder", path = "../../../modules/xcm/xcm-builde
 
 pallet-sudo = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.17", default-features = false}
 
-# Bridge
-pallet-bridge = { path = "../../../pallets/bridge", default-features = false }
-pallet-bridge-transfer = { path = "../../../pallets/bridge_transfer", default-features = false }
-
 [dev-dependencies]
 tiny-keccak = "2.0.2"
 keyring = { package = "sp-keyring", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
@@ -181,8 +177,6 @@ std = [
 	"xcm-executor/std",
 	"xcm-builder/std",
 	"frame-election-provider-support/std",
-	"pallet-bridge/std",
-	"pallet-bridge-transfer/std",
 ]
 runtime-benchmarks = [
 	"runtime-common/runtime-benchmarks",
