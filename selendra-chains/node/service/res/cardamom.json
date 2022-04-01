@@ -4,7 +4,6 @@
   "chainType": "Live",
   "bootNodes": [
     "/ip4/139.180.189.231/tcp/30333/p2p/12D3KooWGH6S6p1qaqFmameqG3vSTKTvJ5yRQEzyJX6sbDGT2Efj",
-    "/ip4/139.180.215.203/tcp/30333/p2p/12D3KooWByEUi1kE4s5EmsdPKnUe62fSVnoYTPQo9qrEQh9DLxkQ",
     "/ip4/149.28.139.233/tcp/30333/p2p/12D3KooWQfateLtfJ73LSXbYcfMGAGgxmvZJKfYyzDDDFrzeUdHH"
   ],
   "telemetryEndpoints": [
