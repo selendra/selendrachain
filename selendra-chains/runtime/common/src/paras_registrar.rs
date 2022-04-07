@@ -580,7 +580,7 @@ mod tests {
 		parameter_types,
 		traits::{GenesisBuild, OnFinalize, OnInitialize},
 	};
-	use frame_system::limits;
+	use frame_system::{EnsureRoot, limits};
 	use pallet_balances::Error as BalancesError;
 	use primitives::v1::{Balance, BlockNumber, Header};
 	use runtime_parachains::{configuration, origin, shared};
@@ -699,7 +699,7 @@ mod tests {
 	impl Config for Test {
 		type Event = Event;
 		type Origin = Origin;
-		type ParaRegisterOrigin = EnsureRoot<AccountId>;
+		type ParaRegisterOrigin = EnsureRoot<Self::AccountId>;
 		type Currency = Balances;
 		type OnSwap = ();
 		type ParaDeposit = ParaDeposit;

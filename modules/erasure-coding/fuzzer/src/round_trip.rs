@@ -1,5 +1,6 @@
 use selendra_erasure_coding::*;
 use primitives::{AvailableData, BlockData, PoV};
+use selendra_primitives::v1::PersistedValidationData;
 use std::sync::Arc;
 use honggfuzz::fuzz;
 

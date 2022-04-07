@@ -1,5 +1,7 @@
 //! A dummy to be used with cargo expand
 
+#![allow(deprecated)]
+
 use selendra_node_network_protocol::WrongVariant;
 use selendra_overseer_gen::*;
 use std::collections::HashMap;
