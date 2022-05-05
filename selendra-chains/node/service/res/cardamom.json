@@ -2,10 +2,7 @@
   "name": "Cardamom",
   "id": "cardamom",
   "chainType": "Live",
-  "bootNodes": [
-    "/ip4/45.32.38.48/tcp/30333/p2p/12D3KooWRdbcL45V5YPcotykumLLZpyEkPsWqNgbAiNLE81w1g4x",
-    "/ip4/207.148.92.48/tcp/30333/p2p/12D3KooWHQhrnQP9ayBdSNuqY6c3q6Gw7kVDRBA1PYkWK4bXZmCX"
-  ],
+  "bootNodes": [],
   "telemetryEndpoints": [
     [
       "/dns/telemetry.polkadot.io/tcp/443/x-parity-wss/%2Fsubmit%2F",
