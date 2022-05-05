@@ -3,8 +3,8 @@
   "id": "cardamom",
   "chainType": "Live",
   "bootNodes": [
-    "/ip4/139.180.189.231/tcp/30333/p2p/12D3KooWGH6S6p1qaqFmameqG3vSTKTvJ5yRQEzyJX6sbDGT2Efj",
-    "/ip4/139.180.215.203/tcp/30333/p2p/12D3KooWDLf8brgk3UrHwHFTdxtC33rbMW6fMuNhjG65NzvgejAg"
+    "/ip4/45.32.38.48/tcp/30333/p2p/12D3KooWRdbcL45V5YPcotykumLLZpyEkPsWqNgbAiNLE81w1g4x",
+    "/ip4/207.148.92.48/tcp/30333/p2p/12D3KooWHQhrnQP9ayBdSNuqY6c3q6Gw7kVDRBA1PYkWK4bXZmCX"
   ],
   "telemetryEndpoints": [
     [
