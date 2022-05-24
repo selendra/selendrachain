@@ -1,0 +1,28 @@
+[package]
+name = "selendra-node-core-runtime-api"
+version = "0.2.3"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+futures = "0.3.21"
+tracing = "0.1.31"
+memory-lru = "0.1.0"
+parity-util-mem = { version = "0.11.0", default-features = false }
+
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+
+selendra-primitives = { path = "../../../primitives" }
+selendra-subsystem = { package = "selendra-node-subsystem", path = "../../subsystem" }
+selendra-node-subsystem-util = { path = "../../subsystem-util" }
+
+[dev-dependencies]
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+futures = { version = "0.3.21", features = ["thread-pool"] }
+selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
+selendra-node-primitives = { path = "../../primitives" }
+test-helpers = { package = "selendra-primitives-test-helpers", path = "../../../primitives/test-helpers" }

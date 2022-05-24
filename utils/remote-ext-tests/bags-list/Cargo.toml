@@ -1,0 +1,20 @@
+[package]
+name = "remote-ext-tests-bags-list"
+version = "0.2.3"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+selendra-runtime = { version = "0.2.3", path = "../../../runtime/selendra" }
+cardamom-runtime = { version = "0.2.3", path = "../../../runtime/cardamom" }
+selendra-runtime-constants = { version = "0.2.3", path = "../../../runtime/selendra/constants" }
+cardamom-runtime-constants = { version = "0.2.3", path = "../../../runtime/cardamom/constants" }
+
+pallet-bags-list-remote-tests = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+
+clap = { version = "3.1", features = ["derive"] }
+log = "0.4.14"
+tokio = { version = "1.17.0", features = ["macros"] }

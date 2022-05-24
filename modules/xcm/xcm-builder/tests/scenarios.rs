@@ -17,7 +17,7 @@
 mod mock;
 
 use mock::{
-	selendra_like_with_balances, AccountId, Balance, Balances, BaseXcmWeight, XcmConfig, CENTS,
+	cardamom_like_with_balances, AccountId, Balance, Balances, BaseXcmWeight, XcmConfig, CENTS,
 };
 use selendra_parachain::primitives::Id as ParaId;
 use sp_runtime::traits::AccountIdConversion;
@@ -42,7 +42,7 @@ fn buy_execution<C>() -> Instruction<C> {
 fn withdraw_and_deposit_works() {
 	let para_acc: AccountId = ParaId::from(PARA_ID).into_account();
 	let balances = vec![(ALICE, INITIAL_BALANCE), (para_acc.clone(), INITIAL_BALANCE)];
-	selendra_like_with_balances(balances).execute_with(|| {
+	cardamom_like_with_balances(balances).execute_with(|| {
 		let other_para_id = 3000;
 		let amount = REGISTER_AMOUNT;
 		let weight = 3 * BaseXcmWeight::get();
@@ -79,7 +79,7 @@ fn query_holding_works() {
 	use xcm::opaque::latest::prelude::*;
 	let para_acc: AccountId = ParaId::from(PARA_ID).into_account();
 	let balances = vec![(ALICE, INITIAL_BALANCE), (para_acc.clone(), INITIAL_BALANCE)];
-	selendra_like_with_balances(balances).execute_with(|| {
+	cardamom_like_with_balances(balances).execute_with(|| {
 		let other_para_id = 3000;
 		let amount = REGISTER_AMOUNT;
 		let query_id = 1234;
@@ -156,20 +156,20 @@ fn query_holding_works() {
 }
 
 /// Scenario:
-/// A parachain wants to move SEL from Selendra to Indracore.
+/// A parachain wants to move CDM from Cardamom to Statemine.
 /// The parachain sends an XCM to withdraw funds combined with a teleport to the destination.
 ///
 /// This way of moving funds from a relay to a parachain will only work for trusted chains.
-/// Reserve based transfer should be used to move SEL to a community parachain.
+/// Reserve based transfer should be used to move CDM to a community parachain.
 ///
 /// Asserts that the balances are updated accordingly and the correct XCM is sent.
 #[test]
-fn teleport_to_indracore_works() {
+fn teleport_to_statemine_works() {
 	use xcm::opaque::latest::prelude::*;
 	let para_acc: AccountId = ParaId::from(PARA_ID).into_account();
 	let balances = vec![(ALICE, INITIAL_BALANCE), (para_acc.clone(), INITIAL_BALANCE)];
-	selendra_like_with_balances(balances).execute_with(|| {
-		let indracore_id = 1000;
+	cardamom_like_with_balances(balances).execute_with(|| {
+		let statemine_id = 1000;
 		let other_para_id = 3000;
 		let amount = REGISTER_AMOUNT;
 		let teleport_effects = vec![
@@ -208,7 +208,7 @@ fn teleport_to_indracore_works() {
 			)]
 		);
 
-		// teleports are allowed from indracore to selendra.
+		// teleports are allowed from statemine to cardamom.
 		let r = XcmExecutor::<XcmConfig>::execute_xcm(
 			Parachain(PARA_ID).into(),
 			Xcm(vec![
@@ -216,7 +216,7 @@ fn teleport_to_indracore_works() {
 				buy_execution(),
 				InitiateTeleport {
 					assets: All.into(),
-					dest: Parachain(indracore_id).into(),
+					dest: Parachain(statemine_id).into(),
 					xcm: Xcm(teleport_effects.clone()),
 				},
 			]),
@@ -236,7 +236,7 @@ fn teleport_to_indracore_works() {
 						.collect()),
 				),
 				(
-					Parachain(indracore_id).into(),
+					Parachain(statemine_id).into(),
 					Xcm(vec![ReceiveTeleportedAsset((Parent, amount).into()), ClearOrigin,]
 						.into_iter()
 						.chain(teleport_effects.clone().into_iter())
@@ -248,7 +248,7 @@ fn teleport_to_indracore_works() {
 }
 
 /// Scenario:
-/// A parachain wants to move SEL from Selendra to the parachain.
+/// A parachain wants to move CDM from Cardamom to the parachain.
 /// It withdraws funds and then deposits them into the reserve account of the destination chain.
 /// to the destination.
 ///
@@ -258,7 +258,7 @@ fn reserve_based_transfer_works() {
 	use xcm::opaque::latest::prelude::*;
 	let para_acc: AccountId = ParaId::from(PARA_ID).into_account();
 	let balances = vec![(ALICE, INITIAL_BALANCE), (para_acc.clone(), INITIAL_BALANCE)];
-	selendra_like_with_balances(balances).execute_with(|| {
+	cardamom_like_with_balances(balances).execute_with(|| {
 		let other_para_id = 3000;
 		let amount = REGISTER_AMOUNT;
 		let transfer_effects = vec![

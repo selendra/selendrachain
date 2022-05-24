@@ -1,26 +1,26 @@
 [package]
 name = "selendra-parachain"
-version = "0.2.1"
+version = "0.2.3"
 authors = ["Selendra <info@selendra.org>"]
 description = "Types and utilities for creating and working with parachains"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 # note: special care is taken to avoid inclusion of `sp-io` externals when compiling
 # this crate for WASM. This is critical to avoid forcing all parachain WASM into implementing
 # various unnecessary Substrate-specific endpoints.
-parity-scale-codec = { version = "2.0.0", default-features = false, features = [ "derive" ] }
-parity-util-mem = { version = "0.10.0", optional = true }
-scale-info = { version = "1.0", default-features = false, features = ["derive"] }
-sp-std = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
-sp-runtime = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
-sp-core = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
-frame-support = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
+parity-scale-codec = { version = "3.0.0", default-features = false, features = [ "derive" ] }
+parity-util-mem = { version = "0.11.0", default-features = false, optional = true }
+scale-info = { version = "2.0.0", default-features = false, features = ["derive"] }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
+sp-core = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
 selendra-core-primitives = { path = "../../primitives/core-primitives", default-features = false }
 derive_more = "0.99.11"
 
 # all optional crates.
-serde = { version = "1.0.117", default-features = false, features = [ "derive" ], optional = true }
+serde = { version = "1.0.136", default-features = false, features = [ "derive" ], optional = true }
 
 [features]
 default = ["std"]

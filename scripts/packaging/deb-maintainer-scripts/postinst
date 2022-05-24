@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+
+action="$1"
+config_file="/etc/default/selendra"
+
+if [ "$action" = "configure" ]; then
+  # Make user and group
+  getent group selendra >/dev/null 2>&1 || addgroup --system selendra
+  getent passwd selendra >/dev/null 2>&1 ||
+    adduser --system --home /home/selendra --disabled-password \
+    --ingroup selendra selendra
+  if [ ! -e "$config_file" ]; then
+    echo 'SELENDRA_CLI_ARGS=""' > /etc/default/selendra
+  fi
+fi

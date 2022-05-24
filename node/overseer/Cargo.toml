@@ -1,0 +1,33 @@
+[package]
+name = "selendra-overseer"
+version = "0.2.3"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+client = { package = "sc-client-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+futures = "0.3.21"
+futures-timer = "3.0.2"
+parking_lot = "0.12.0"
+selendra-node-network-protocol = { path = "../network/protocol" }
+selendra-node-primitives = { path = "../primitives" }
+selendra-node-subsystem-types = { path = "../subsystem-types" }
+selendra-node-metrics = { path = "../metrics" }
+selendra-primitives = { path = "../../primitives" }
+selendra-overseer-gen = { path = "./overseer-gen" }
+tracing = "0.1.31"
+lru = "0.7"
+parity-util-mem = { version = "0.11.0", default-features = false }
+
+[dev-dependencies]
+metered-channel = { path = "../metered-channel" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+futures = { version = "0.3.21", features = ["thread-pool"] }
+femme = "2.1.1"
+assert_matches = "1.4.0"
+test-helpers = { package = "selendra-primitives-test-helpers", path = "../../primitives/test-helpers" }
+
+[features]
+default = []
+expand = ["selendra-overseer-gen/expand"]

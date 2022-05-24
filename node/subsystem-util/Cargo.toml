@@ -1,0 +1,48 @@
+[package]
+name = "selendra-node-subsystem-util"
+version = "0.2.3"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+description = "Subsystem traits and message definitions"
+
+[dependencies]
+async-trait = "0.1.52"
+futures = "0.3.21"
+itertools = "0.10"
+parity-scale-codec = { version = "3.0.0", default-features = false, features = ["derive"] }
+parking_lot = "0.11.2"
+pin-project = "1.0.9"
+rand = "0.8.5"
+thiserror = "1.0.30"
+fatality = "0.0.6"
+tracing = "0.1.31"
+derive_more = "0.99.17"
+lru = "0.7.3"
+
+selendra-node-subsystem = { package = "selendra-node-subsystem", path = "../subsystem" }
+selendra-node-jaeger = { path = "../jaeger" }
+selendra-node-metrics = { path = "../metrics" }
+selendra-node-network-protocol = { path = "../network/protocol" }
+selendra-primitives = { path = "../../primitives" }
+selendra-node-primitives = { path = "../primitives" }
+selendra-overseer = { path = "../overseer" }
+metered-channel = { path = "../metered-channel" }
+
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+
+kvdb = "0.11.0"
+parity-util-mem = { version = "0.11", default-features = false }
+parity-db = { version = "0.3.8" }
+
+[dev-dependencies]
+assert_matches = "1.4.0"
+env_logger = "0.9.0"
+futures = { version = "0.3.21", features = ["thread-pool"] }
+log = "0.4.13"
+selendra-node-subsystem-test-helpers = { path = "../subsystem-test-helpers" }
+lazy_static = "1.4.0"
+selendra-primitives-test-helpers = { path = "../../primitives/test-helpers" }
+kvdb-shared-tests = "0.9.0"
+tempfile = "3.1.0"

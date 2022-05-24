@@ -1,0 +1,14 @@
+[package]
+name = "selendra-voter-bags"
+version = "0.2.3"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+clap = { version = "3.1", features = ["derive"] }
+
+generate-bags = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+
+cardamom-runtime = { path = "../../runtime/cardamom" }
+selendra-runtime = { path = "../../runtime/selendra" }
