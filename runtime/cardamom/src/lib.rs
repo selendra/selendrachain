@@ -120,7 +120,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	apis: RUNTIME_API_VERSIONS,
 	#[cfg(feature = "disable-runtime-api")]
 	apis: version::create_apis_vec![[]],
-	transaction_version: 3,
+	transaction_version: 4,
 	state_version: 0,
 };
 
@@ -251,7 +251,7 @@ parameter_types! {
 	pub EpochDuration: u64 = prod_or_fast!(
 		EPOCH_DURATION_IN_SLOTS as u64,
 		2 * MINUTES as u64,
-		"CDM_EPOCH_DURATION"
+		"SEL_EPOCH_DURATION"
 	);
 	pub const ExpectedBlockTime: Moment = MILLISECS_PER_BLOCK;
 	pub ReportLongevity: u64 =
@@ -391,19 +391,19 @@ parameter_types! {
 	pub SignedPhase: u32 = prod_or_fast!(
 		EPOCH_DURATION_IN_SLOTS / 4,
 		(1 * MINUTES).min(EpochDuration::get().saturated_into::<u32>() / 2),
-		"CDM_SIGNED_PHASE"
+		"SEL_SIGNED_PHASE"
 	);
 	pub UnsignedPhase: u32 = prod_or_fast!(
 		EPOCH_DURATION_IN_SLOTS / 4,
 		(1 * MINUTES).min(EpochDuration::get().saturated_into::<u32>() / 2),
-		"CDM_UNSIGNED_PHASE"
+		"SEL_UNSIGNED_PHASE"
 	);
 
 	// signed config
 	pub const SignedMaxSubmissions: u32 = 16;
 	pub const SignedDepositBase: Balance = deposit(2, 0);
 	pub const SignedDepositByte: Balance = deposit(0, 10) / 1024;
-	// Each good submission will get 1/10 CDM as reward
+	// Each good submission will get 1/10 SEL as reward
 	pub SignedRewardBase: Balance =  UNITS / 10;
 	pub SolutionImprovementThreshold: Perbill = Perbill::from_rational(5u32, 10_000);
 
@@ -537,12 +537,12 @@ impl pallet_staking::Config for Runtime {
 }
 
 parameter_types! {
-	pub LaunchPeriod: BlockNumber = prod_or_fast!(3 * DAYS, 1, "CDM_LAUNCH_PERIOD");
-	pub VotingPeriod: BlockNumber = prod_or_fast!(3 * DAYS, 1, "CDM_LAUNCH_PERIOD");
-	pub FastTrackVotingPeriod: BlockNumber = prod_or_fast!(2 * HOURS, 1 * MINUTES, "CDM_FAST_TRACK_VOTING_PERIOD");
+	pub LaunchPeriod: BlockNumber = prod_or_fast!(3 * DAYS, 1, "SEL_LAUNCH_PERIOD");
+	pub VotingPeriod: BlockNumber = prod_or_fast!(3 * DAYS, 1, "SEL_LAUNCH_PERIOD");
+	pub FastTrackVotingPeriod: BlockNumber = prod_or_fast!(2 * HOURS, 1 * MINUTES, "SEL_FAST_TRACK_VOTING_PERIOD");
 	pub const MinimumDeposit: Balance = 1 * UNITS;
-	pub EnactmentPeriod: BlockNumber = prod_or_fast!(4 * DAYS, 1, "CDM_ENACTMENT_PERIOD");
-	pub CooloffPeriod: BlockNumber = prod_or_fast!(3 * DAYS, 1 * MINUTES, "CDM_COOLOFF_PERIOD");
+	pub EnactmentPeriod: BlockNumber = prod_or_fast!(4 * DAYS, 1, "SEL_ENACTMENT_PERIOD");
+	pub CooloffPeriod: BlockNumber = prod_or_fast!(3 * DAYS, 1 * MINUTES, "SEL_COOLOFF_PERIOD");
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -602,7 +602,7 @@ impl pallet_democracy::Config for Runtime {
 }
 
 parameter_types! {
-	pub CouncilMotionDuration: BlockNumber = prod_or_fast!(2 * DAYS, 2 * MINUTES, "CDM_MOTION_DURATION");
+	pub CouncilMotionDuration: BlockNumber = prod_or_fast!(2 * DAYS, 2 * MINUTES, "SEL_MOTION_DURATION");
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
 }
@@ -626,7 +626,7 @@ parameter_types! {
 	// additional data per vote is 32 bytes (account id).
 	pub const VotingBondFactor: Balance = deposit(0, 32);
 	/// Daily council elections
-	pub TermDuration: BlockNumber = prod_or_fast!(24 * HOURS, 2 * MINUTES, "CDM_TERM_DURATION");
+	pub TermDuration: BlockNumber = prod_or_fast!(24 * HOURS, 2 * MINUTES, "SEL_TERM_DURATION");
 	pub const DesiredMembers: u32 = 10;
 	pub const DesiredRunnersUp: u32 = 10;
 	pub const PhragmenElectionPalletId: LockIdentifier = *b"phrelect";
@@ -654,7 +654,7 @@ impl pallet_elections_phragmen::Config for Runtime {
 }
 
 parameter_types! {
-	pub TechnicalMotionDuration: BlockNumber = prod_or_fast!(2 * DAYS, 2 * MINUTES, "CDM_MOTION_DURATION");
+	pub TechnicalMotionDuration: BlockNumber = prod_or_fast!(2 * DAYS, 2 * MINUTES, "SEL_MOTION_DURATION");
 	pub const TechnicalMaxProposals: u32 = 100;
 	pub const TechnicalMaxMembers: u32 = 100;
 }
@@ -871,7 +871,7 @@ where
 }
 
 parameter_types! {
-	// Minimum 100 bytes/CDM deposited (1 CENT/byte)
+	// Minimum 100 bytes/SEL deposited (1 CENT/byte)
 	pub const BasicDeposit: Balance = 1 * UNITS;       // 258 bytes on-chain
 	pub const FieldDeposit: Balance = 2 * UNITS;        // 66 bytes on-chain
 	pub const SubAccountDeposit: Balance = 2 * UNITS;   // 53 bytes on-chain
@@ -1173,7 +1173,7 @@ impl paras_registrar::Config for Runtime {
 
 parameter_types! {
 	// 12 weeks
-	pub LeasePeriod: BlockNumber = prod_or_fast!(12 * WEEKS, 12 * WEEKS, "CDM_LEASE_PERIOD");
+	pub LeasePeriod: BlockNumber = prod_or_fast!(12 * WEEKS, 12 * WEEKS, "SEL_LEASE_PERIOD");
 }
 
 impl slots::Config for Runtime {
@@ -1779,7 +1779,7 @@ mod tests_fess {
 	#[test]
 	fn signed_deposit_is_sensible() {
 		// ensure this number does not change, or that it is checked after each change.
-		// a 1 MB solution should need around 0.16 CDM deposit
+		// a 1 MB solution should need around 0.16 SEL deposit
 		let deposit = SignedDepositBase::get() + (SignedDepositByte::get() * 1024 * 1024);
 		assert_eq_error_rate!(deposit, UNITS * 16 / 100, UNITS / 100);
 	}
