@@ -425,6 +425,7 @@ pub fn selendra_staging_testnet_config() -> Result<SelendraChainSpec, String> {
 				.expect("Selendra Staging telemetry url is valid; qed"),
 		),
 		Some(DEFAULT_PROTOCOL_ID),
+		None,
 		Some(
 			serde_json::from_str(
 				"{
@@ -434,7 +435,6 @@ pub fn selendra_staging_testnet_config() -> Result<SelendraChainSpec, String> {
 			)
 			.expect("Provided valid json map"),
 		),
-		None,
 		Default::default(),
 	))
 }
@@ -458,8 +458,8 @@ pub fn selendra_testnet_genesis(
 ) -> selendra::GenesisConfig {
 	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 
-	const ENDOWMENT: u128 = 500000 * SEL;
-	const STASH: u128 = 31416 * SEL;
+	const ENDOWMENT: u128 = 1000000000000 * SEL;
+	const STASH: u128 = 100 * SEL;
 
 	selendra::GenesisConfig {
 		system: selendra::SystemConfig { code: wasm_binary.to_vec() },
@@ -495,7 +495,7 @@ pub fn selendra_testnet_genesis(
 				.collect(),
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
 			slash_reward_fraction: Perbill::from_percent(10),
-			min_nominator_bond: 314 * SEL,
+			min_nominator_bond: STASH,
 			min_validator_bond: STASH,
 			..Default::default()
 		},
@@ -948,6 +948,7 @@ pub fn cardamom_development_config() -> Result<CardamomChainSpec, String> {
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
+		None,
 		Some(
 			serde_json::from_str(
 				"{
@@ -957,7 +958,6 @@ pub fn cardamom_development_config() -> Result<CardamomChainSpec, String> {
 			)
 			.expect("Provided valid json map"),
 		),
-		None,
 		Default::default(),
 	))
 }

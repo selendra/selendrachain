@@ -139,7 +139,7 @@ fn set_default_ss58_version(_spec: &Box<dyn service::ChainSpec>) {
 }
 
 const DEV_ONLY_ERROR_PATTERN: &'static str =
-	"can only use subcommand with --chain [selendra-dev, cardamom-dev, wococo-dev], got ";
+	"can only use subcommand with --chain [selendra-dev, cardamom-dev got ";
 
 fn ensure_dev(spec: &Box<dyn service::ChainSpec>) -> std::result::Result<(), String> {
 	if spec.is_dev() {
