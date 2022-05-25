@@ -30,7 +30,6 @@
 // --execution=wasm
 // --wasm-execution=compiled
 // --heap-pages=4096
-// --header=./file_header.txt
 // --output=./runtime/selendra/src/weights/runtime_parachains_paras.rs
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
