@@ -573,7 +573,6 @@ impl pallet_staking::Config for Runtime {
 }
 
 parameter_types! {
-	// Minimum 4 CENTS/byte
 	pub const BasicDeposit: Balance = deposit(1, 258);
 	pub const FieldDeposit: Balance = deposit(0, 66);
 	pub const SubAccountDeposit: Balance = deposit(1, 53);
@@ -702,6 +701,7 @@ parameter_types! {
 	pub const DesiredRunnersUp: u32 = 10;
 	pub const PhragmenElectionPalletId: LockIdentifier = *b"phrelect";
 }
+
 // Make sure that there are no more than `MaxMembers` members elected via phragmen.
 const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
 
@@ -1198,10 +1198,11 @@ parameter_types! {
 
 impl parachains_ump::Config for Runtime {
 	type Event = Event;
-	type UmpSink = ();
+	type UmpSink =
+		crate::parachains_ump::XcmSink<xcm_executor::XcmExecutor<xcm_config::XcmConfig>, Runtime>;
 	type FirstMessageFactorPercent = FirstMessageFactorPercent;
 	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
-	type WeightInfo = parachains_ump::TestWeightInfo;
+	type WeightInfo = weights::runtime_parachains_ump::WeightInfo<Runtime>;
 }
 
 impl parachains_dmp::Config for Runtime {}
@@ -1254,14 +1255,8 @@ impl paras_registrar::Config for Runtime {
 }
 
 parameter_types! {
-	// 12 weeks = 3 months per lease period -> 8 lease periods ~ 2 years
-	pub LeasePeriod: BlockNumber = prod_or_fast!(12 * WEEKS, 12 * WEEKS, "SEL_LEASE_PERIOD");
-	// Selendra Genesis was on May 26, 2020.
-	// Target Parachain Onboarding Date: Dec 15, 2021.
-	// Difference is 568 days.
-	// We want a lease period to start on the target onboarding date.
-	// 568 % (12 * 7) = 64 day offset
-	pub LeaseOffset: BlockNumber = prod_or_fast!(64 * DAYS, 0, "SEL_LEASE_OFFSET");
+	// 6 weeks
+	pub LeasePeriod: BlockNumber = prod_or_fast!(6 * WEEKS, 6 * WEEKS, "SEL_LEASE_PERIOD");
 }
 
 impl slots::Config for Runtime {
@@ -1269,7 +1264,7 @@ impl slots::Config for Runtime {
 	type Currency = Balances;
 	type Registrar = Registrar;
 	type LeasePeriod = LeasePeriod;
-	type LeaseOffset = LeaseOffset;
+	type LeaseOffset = ();
 	type ForceOrigin = MoreThanHalfCouncil;
 	type WeightInfo = weights::runtime_common_slots::WeightInfo<Runtime>;
 }

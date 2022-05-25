@@ -1172,8 +1172,8 @@ impl paras_registrar::Config for Runtime {
 }
 
 parameter_types! {
-	// 12 weeks
-	pub LeasePeriod: BlockNumber = prod_or_fast!(12 * WEEKS, 12 * WEEKS, "SEL_LEASE_PERIOD");
+	// 6 weeks
+	pub LeasePeriod: BlockNumber = prod_or_fast!(6 * WEEKS, 6 * WEEKS, "SEL_LEASE_PERIOD");
 }
 
 impl slots::Config for Runtime {
