@@ -73,7 +73,7 @@ fn default_parachains_host_configuration(
 		max_upward_queue_size: 1024 * 1024,
 		max_downward_message_size: 1024 * 1024,
 		ump_service_total_weight: 100_000_000_000,
-		max_upward_message_size: 1024 * 1024,
+		max_upward_message_size: 50 * 1024,
 		max_upward_message_num_per_candidate: 5,
 		hrmp_sender_deposit: 0,
 		hrmp_recipient_deposit: 0,
@@ -826,7 +826,6 @@ pub fn cardamom_staging_testnet_config() -> Result<CardamomChainSpec, String> {
 				.expect("Cardamom Staging telemetry url is valid; qed"),
 		),
 		Some(DEFAULT_PROTOCOL_ID),
-		None,
 		Some(
 			serde_json::from_str(
 				"{
@@ -836,6 +835,7 @@ pub fn cardamom_staging_testnet_config() -> Result<CardamomChainSpec, String> {
 			)
 			.expect("Provided valid json map"),
 		),
+		None,
 		Default::default(),
 	))
 }
@@ -988,7 +988,6 @@ pub fn cardamom_local_testnet_config() -> Result<CardamomChainSpec, String> {
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
-		None,
 		Some(
 			serde_json::from_str(
 				"{
@@ -998,6 +997,7 @@ pub fn cardamom_local_testnet_config() -> Result<CardamomChainSpec, String> {
 			)
 			.expect("Provided valid json map"),
 		),
+		None,
 		Default::default(),
 	))
 }
