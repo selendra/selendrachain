@@ -1,0 +1,27 @@
+[package]
+name = "cumulus-relay-chain-interface"
+authors = ["Selendra <info@selendra.org>"]
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+selendra-overseer = { path = "../../../../node/overseer" }
+selendra-service = { path = "../../../../node/service" }
+
+cumulus-primitives-core = { path = "../../primitives/core" }
+
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+
+futures = "0.3.21"
+parking_lot = "0.12.0"
+derive_more = "0.99.2"
+async-trait = "0.1.52"
+thiserror = "1.0.30"
+jsonrpsee-core = "0.9.0"
+parity-scale-codec = "3.1.2"

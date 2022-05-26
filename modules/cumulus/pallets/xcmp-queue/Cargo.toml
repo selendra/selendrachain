@@ -1,0 +1,61 @@
+[package]
+name = "cumulus-pallet-xcmp-queue"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", features = [ "derive" ], default-features = false }
+log = { version = "0.4.14", default-features = false }
+rand_chacha = { version = "0.3.0", default-features = false }
+scale-info = { version = "2.0.0", default-features = false, features = ["derive"] }
+
+# Substrate
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18" }
+
+# Selendra Dependencies
+xcm = { path = "../../../../modules/xcm", default-features = false }
+xcm-executor = { path = "../../../../modules/xcm/xcm-executor", default-features = false }
+
+# Cumulus
+cumulus-primitives-core = { path = "../../primitives/core", default-features = false }
+
+# Optional import for benchmarking
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+
+[dev-dependencies]
+
+# Substrate
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+
+# Selendra
+xcm-builder = { path = "../../../../modules/xcm/xcm-builder", default-features = false }
+
+# Cumulus
+cumulus-pallet-parachain-system = { path = "../parachain-system" }
+
+[features]
+default = [ "std" ]
+std = [
+	"codec/std",
+	"scale-info/std",
+	"cumulus-primitives-core/std",
+	"frame-support/std",
+	"frame-system/std",
+	"log/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"xcm-executor/std",
+	"xcm/std",
+]
+
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+]
