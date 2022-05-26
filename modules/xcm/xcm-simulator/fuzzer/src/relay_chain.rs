@@ -94,29 +94,29 @@ impl configuration::Config for Runtime {
 }
 
 parameter_types! {
-	pub const SelLocation: MultiLocation = Here.into();
-	pub const SelendraNetwork: NetworkId = NetworkId::Selendra;
+	pub const CdmLocation: MultiLocation = Here.into();
+	pub const CardamomNetwork: NetworkId = NetworkId::Cardamom;
 	pub const AnyNetwork: NetworkId = NetworkId::Any;
 	pub Ancestry: MultiLocation = Here.into();
 	pub UnitWeightCost: Weight = 1_000;
 }
 
 pub type SovereignAccountOf =
-	(ChildParachainConvertsVia<ParaId, AccountId>, AccountId32Aliases<SelendraNetwork, AccountId>);
+	(ChildParachainConvertsVia<ParaId, AccountId>, AccountId32Aliases<CardamomNetwork, AccountId>);
 
 pub type LocalAssetTransactor =
-	XcmCurrencyAdapter<Balances, IsConcrete<SelLocation>, SovereignAccountOf, AccountId, ()>;
+	XcmCurrencyAdapter<Balances, IsConcrete<CdmLocation>, SovereignAccountOf, AccountId, ()>;
 
 type LocalOriginConverter = (
 	SovereignSignedViaLocation<SovereignAccountOf, Origin>,
 	ChildParachainAsNative<origin::Origin, Origin>,
-	SignedAccountId32AsNative<SelendraNetwork, Origin>,
+	SignedAccountId32AsNative<CardamomNetwork, Origin>,
 	ChildSystemParachainAsSuperuser<ParaId, Origin>,
 );
 
 parameter_types! {
 	pub const BaseXcmWeight: Weight = 1_000;
-	pub SelPerSecond: (AssetId, u128) = (Concrete(SelLocation::get()), 1);
+	pub CdmPerSecond: (AssetId, u128) = (Concrete(CdmLocation::get()), 1);
 	pub const MaxInstructions: u32 = 100;
 }
 
@@ -134,14 +134,14 @@ impl Config for XcmConfig {
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<BaseXcmWeight, Call, MaxInstructions>;
-	type Trader = FixedRateOfFungible<SelPerSecond, ()>;
+	type Trader = FixedRateOfFungible<CdmPerSecond, ()>;
 	type ResponseHandler = ();
 	type AssetTrap = ();
 	type AssetClaims = ();
 	type SubscriptionService = ();
 }
 
-pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, SelendraNetwork>;
+pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, CardamomNetwork>;
 
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
@@ -170,6 +170,7 @@ impl ump::Config for Runtime {
 	type UmpSink = ump::XcmSink<XcmExecutor<XcmConfig>, Runtime>;
 	type FirstMessageFactorPercent = FirstMessageFactorPercent;
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
+	type WeightInfo = ump::TestWeightInfo;
 }
 
 impl origin::Config for Runtime {}

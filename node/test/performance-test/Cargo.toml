@@ -1,0 +1,21 @@
+[package]
+name = "selendra-performance-test"
+version = "0.2.3"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+thiserror = "1.0.30"
+quote = "1.0.15"
+env_logger = "0.9"
+log = "0.4"
+
+selendra-node-core-pvf = { path = "../../core/pvf" }
+selendra-erasure-coding = { path = "../../../modules/erasure-coding" }
+selendra-node-primitives = { path = "../../primitives" }
+
+cardamom-runtime = { path = "../../../runtime/cardamom" }
+
+[[bin]]
+name = "gen-ref-constants"
+path = "src/gen_ref_constants.rs"

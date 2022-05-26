@@ -1,0 +1,42 @@
+[package]
+name = "selendra-node-metrics"
+version = "0.2.3"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+description = "Subsystem metric helpers"
+
+[dependencies]
+futures = "0.3.21"
+futures-timer = "3.0.2"
+tracing = "0.1.31"
+
+metered-channel = { path = "../metered-channel" }
+
+# Both `sc-service` and `sc-cli` are required by runtime metrics `logger_hook()`.
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+codec = { package = "parity-scale-codec", version = "3.0.0" }
+primitives = { package = "selendra-primitives", path = "../../primitives/" }
+bs58 = { version = "0.4.0", features = ["alloc"] }
+log = "0.4.13"
+
+[dev-dependencies]
+assert_cmd = "2.0.4"
+nix = "0.23.1"
+tempfile = "3.2.0"
+hyper = { version = "0.14.17", default-features = false, features = ["http1", "tcp"] }
+tokio = "1.17.0"
+selendra-test-service = { path = "../test/service", features=["runtime-metrics"]}
+substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+prometheus-parse = {version = "0.2.2"}
+
+[features]
+default = []
+runtime-metrics = []
+runtime-benchmarks = []

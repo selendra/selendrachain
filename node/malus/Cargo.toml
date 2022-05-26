@@ -1,0 +1,41 @@
+[package]
+name = "selendra-test-malus"
+description = "Misbehaving nodes for local testnets, system and Simnet tests."
+license = "GPL-3.0-only"
+version = "0.2.3"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "malus"
+path = "src/malus.rs"
+
+[dependencies]
+selendra-cli = { path = "../../cli", features = [ "malus", "cardamom-native", "selendra-native" ] }
+selendra-node-subsystem = { path = "../subsystem" }
+selendra-node-subsystem-util = { path = "../subsystem-util" }
+selendra-node-subsystem-types = { path = "../subsystem-types" }
+selendra-node-core-dispute-coordinator = { path = "../core/dispute-coordinator" }
+selendra-node-core-candidate-validation = { path = "../core/candidate-validation" }
+selendra-node-core-backing = { path = "../core/backing" }
+selendra-node-primitives = { path = "../primitives" }
+selendra-primitives = { path = "../../primitives" }
+selendra-node-core-pvf = { path = "../core/pvf" }
+parity-util-mem = { version = "0.11.0", default-features = false, features = ["jemalloc-global"] }
+color-eyre = { version = "0.6.1", default-features = false }
+assert_matches = "1.5"
+async-trait = "0.1.52"
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+clap = { version = "3.1", features = ["derive"] }
+futures = "0.3.21"
+futures-timer = "3.0.2"
+tracing = "0.1.31"
+
+[features]
+default = []
+
+[dev-dependencies]
+selendra-node-subsystem-test-helpers = { path = "../subsystem-test-helpers" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+futures = { version = "0.3.21", features = ["thread-pool"] }

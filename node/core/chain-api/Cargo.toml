@@ -1,0 +1,23 @@
+[package]
+name = "selendra-node-core-chain-api"
+version = "0.2.3"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+futures = "0.3.21"
+tracing = "0.1.31"
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+selendra-primitives = { path = "../../../primitives" }
+selendra-subsystem = { package = "selendra-node-subsystem", path = "../../subsystem" }
+selendra-node-subsystem-util = { path = "../../subsystem-util" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+
+[dev-dependencies]
+futures = { version = "0.3.21", features = ["thread-pool"] }
+maplit = "1.0.2"
+parity-scale-codec = "3.0.0"
+selendra-node-primitives = { path = "../../primitives" }
+selendra-node-subsystem-test-helpers = { path = "../../subsystem-test-helpers" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }

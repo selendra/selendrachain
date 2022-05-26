@@ -53,7 +53,7 @@ impl SendXcm for TestSendXcm {
 	}
 }
 
-// copied from selendra constants
+// copied from cardamom constants
 pub const UNITS: Balance = 1_000_000_000_000;
 pub const CENTS: Balance = UNITS / 30_000;
 
@@ -112,20 +112,20 @@ impl configuration::Config for Runtime {
 	type WeightInfo = configuration::TestWeightInfo;
 }
 
-// aims to closely emulate the Selendra XcmConfig
+// aims to closely emulate the Cardamom XcmConfig
 parameter_types! {
-	pub const SelLocation: MultiLocation = MultiLocation::here();
-	pub const SelendraNetwork: NetworkId = NetworkId::Selendra;
+	pub const CdmLocation: MultiLocation = MultiLocation::here();
+	pub const CardamomNetwork: NetworkId = NetworkId::Cardamom;
 	pub Ancestry: MultiLocation = Here.into();
 	pub CheckAccount: AccountId = XcmPallet::check_account();
 }
 
 pub type SovereignAccountOf =
-	(ChildParachainConvertsVia<ParaId, AccountId>, AccountId32Aliases<SelendraNetwork, AccountId>);
+	(ChildParachainConvertsVia<ParaId, AccountId>, AccountId32Aliases<CardamomNetwork, AccountId>);
 
 pub type LocalAssetTransactor = XcmCurrencyAdapter<
 	Balances,
-	IsConcrete<SelLocation>,
+	IsConcrete<CdmLocation>,
 	SovereignAccountOf,
 	AccountId,
 	CheckAccount,
@@ -134,13 +134,13 @@ pub type LocalAssetTransactor = XcmCurrencyAdapter<
 type LocalOriginConverter = (
 	SovereignSignedViaLocation<SovereignAccountOf, Origin>,
 	ChildParachainAsNative<origin::Origin, Origin>,
-	SignedAccountId32AsNative<SelendraNetwork, Origin>,
+	SignedAccountId32AsNative<CardamomNetwork, Origin>,
 	ChildSystemParachainAsSuperuser<ParaId, Origin>,
 );
 
 parameter_types! {
 	pub const BaseXcmWeight: Weight = 1_000_000_000;
-	pub SelPerSecond: (AssetId, u128) = (SelLocation::get().into(), 1);
+	pub CdmPerSecond: (AssetId, u128) = (CdmLocation::get().into(), 1);
 }
 
 pub type Barrier = (
@@ -151,11 +151,11 @@ pub type Barrier = (
 );
 
 parameter_types! {
-	pub const SelendraForIndracore: (MultiAssetFilter, MultiLocation) =
+	pub const CardamomForStatemine: (MultiAssetFilter, MultiLocation) =
 		(MultiAssetFilter::Wild(WildMultiAsset::AllOf { id: Concrete(MultiLocation::here()), fun: WildFungible }), X1(Parachain(1000)).into());
 	pub const MaxInstructions: u32 = 100;
 }
-pub type TrustedTeleporters = (xcm_builder::Case<SelendraForIndracore>,);
+pub type TrustedTeleporters = (xcm_builder::Case<CardamomForStatemine>,);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -168,14 +168,14 @@ impl xcm_executor::Config for XcmConfig {
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<BaseXcmWeight, Call, MaxInstructions>;
-	type Trader = FixedRateOfFungible<SelPerSecond, ()>;
+	type Trader = FixedRateOfFungible<CdmPerSecond, ()>;
 	type ResponseHandler = XcmPallet;
 	type AssetTrap = XcmPallet;
 	type AssetClaims = XcmPallet;
 	type SubscriptionService = XcmPallet;
 }
 
-pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, SelendraNetwork>;
+pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, CardamomNetwork>;
 
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
@@ -213,7 +213,7 @@ construct_runtime!(
 	}
 );
 
-pub fn selendra_like_with_balances(
+pub fn cardamom_like_with_balances(
 	balances: Vec<(AccountId, Balance)>,
 ) -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();

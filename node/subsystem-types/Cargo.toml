@@ -1,0 +1,20 @@
+[package]
+name = "selendra-node-subsystem-types"
+version = "0.2.3"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+description = "Subsystem traits and message definitions"
+
+[dependencies]
+derive_more = "0.99.17"
+futures = "0.3.21"
+selendra-primitives = { path = "../../primitives" }
+selendra-node-primitives = { path = "../primitives" }
+selendra-node-network-protocol = { path = "../network/protocol" }
+selendra-statement-table = { path = "../../modules/statement-table" }
+selendra-node-jaeger = { path = "../jaeger" }
+selendra-overseer-gen = { path = "../overseer/overseer-gen" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+smallvec = "1.8.0"
+substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+thiserror = "1.0.30"

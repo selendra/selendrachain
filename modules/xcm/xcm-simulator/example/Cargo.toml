@@ -1,21 +1,21 @@
 [package]
 name = "xcm-simulator-example"
-version = "0.2.1"
+version = "0.2.3"
 authors = ["Selendra <info@selendra.org>"]
 description = "Examples of xcm-simulator usage."
-edition = "2018"
+edition = "2021"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "2.0.0" }
-scale-info = { version = "1.0", features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "3.0.0" }
+scale-info = { version = "2.0.0", features = ["derive"] }
 
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 
 xcm = { path = "../../" }
 xcm-simulator = { path = "../" }
@@ -23,5 +23,5 @@ xcm-executor = { path = "../../xcm-executor" }
 xcm-builder = { path = "../../xcm-builder" }
 pallet-xcm = { path = "../../pallet-xcm" }
 selendra-core-primitives = { path = "../../../../primitives/core-primitives" }
-selendra-runtime-parachains = { path = "../../../parachain/runtime" }
+selendra-runtime-parachains = { path = "../../../../runtime/parachains" }
 selendra-parachain = { path = "../../../parachain" }

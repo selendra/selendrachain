@@ -29,6 +29,8 @@ pub enum NetworkId {
 	Named(Vec<u8>),
 	/// The Selendra Relay chain
 	Selendra,
+	/// Cardamom.
+	Cardamom,
 }
 
 /// An identifier of a pluralistic body.

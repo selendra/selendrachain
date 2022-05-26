@@ -1,25 +1,26 @@
 [package]
-authors = ["Selendra <info@selendra.org>"]
-edition = "2018"
 name = "xcm-executor-integration-tests"
+version = "0.2.3"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
 description = "Integration tests for the XCM Executor"
-version = "0.2.1"
+
 
 [dependencies]
-frame-support = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-futures = "0.3.19"
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+futures = "0.3.21"
 pallet-xcm = { path = "../../pallet-xcm" }
-selendra-test-client = { path = "../../../../selendra-chains/node/test/client" }
-selendra-test-runtime = { path = "../../../../selendra-chains/runtime/test-runtime" }
-selendra-test-service = { path = "../../../../selendra-chains/node/test/service" }
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-runtime = { git = "https://github.com/paritytech/substrate",branch = "polkadot-v0.9.16", default-features = false}
-sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+selendra-test-client = { path = "../../../../node/test/client" }
+selendra-test-runtime = { path = "../../../../runtime/test-runtime" }
+selendra-test-service = { path = "../../../../node/test/service" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 xcm = { path = "../..", default-features = false }
 xcm-executor = { path = ".." }
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 
 [features]
 default = ["std"]
