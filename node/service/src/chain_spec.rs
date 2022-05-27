@@ -458,7 +458,7 @@ pub fn selendra_testnet_genesis(
 ) -> selendra::GenesisConfig {
 	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(testnet_accounts);
 
-	const ENDOWMENT: u128 = 1000000000000 * SEL;
+	const ENDOWMENT: u128 = 1_000_000_000_000 * SEL;
 	const STASH: u128 = 100 * SEL;
 
 	selendra::GenesisConfig {
@@ -495,8 +495,6 @@ pub fn selendra_testnet_genesis(
 				.collect(),
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
 			slash_reward_fraction: Perbill::from_percent(10),
-			min_nominator_bond: STASH,
-			min_validator_bond: STASH,
 			..Default::default()
 		},
 		phragmen_election: Default::default(),
