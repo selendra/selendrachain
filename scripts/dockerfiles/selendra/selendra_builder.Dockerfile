@@ -12,7 +12,7 @@ FROM docker.io/library/ubuntu:20.04
 LABEL description="Multistage Docker image for Selendra: a platform for web3" \
 	io.parity.image.type="builder" \
 	io.parity.image.authors="info@selendra.org" \
-	io.parity.image.vendor="Selendra Swallworld" \
+	io.parity.image.vendor="Selendra" \
 	io.parity.image.description="Selendra: a platform for web3" \
 	io.parity.image.source="https://github.com/selendra/selendrachain/blob/${VCS_REF}/scripts/dockerfiles/selendra/selendra_builder.Dockerfile" \
 	io.parity.image.documentation="https://github.com/selendra/selendrachain/"

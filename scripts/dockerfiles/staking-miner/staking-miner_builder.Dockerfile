@@ -16,8 +16,8 @@ RUN cargo build --locked --$PROFILE --package staking-miner
 
 FROM docker.io/library/ubuntu:20.04
 LABEL description="This is the 2nd stage: a very small image where we copy the binary."
-LABEL io.parity.image.authors="devops-team@parity.io" \
-	io.parity.image.vendor="Parity Technologies" \
+LABEL io.parity.image.authors="info@selendra.org" \
+	io.parity.image.vendor="Selendra" \
 	io.parity.image.title="${IMAGE_NAME}" \
 	io.parity.image.description="${IMAGE_NAME} for substrate based chains" \
 	io.parity.image.source="https://github.com/selendra/selendrachain/blob/${VCS_REF}/scripts/docker/${IMAGE_NAME}/${IMAGE_NAME}_builder.Dockerfile" \
