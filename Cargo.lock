@@ -2484,21 +2484,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "generate-bags"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.18#fc3fd073d3a0acf9933c3994b660ebd7b5833f65"
-dependencies = [
- "chrono",
- "frame-election-provider-support",
- "frame-support",
- "frame-system",
- "git2",
- "num-format",
- "pallet-staking",
- "sp-io",
-]
-
-[[package]]
 name = "generic-array"
 version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2560,19 +2545,6 @@ dependencies = [
  "fallible-iterator",
  "indexmap",
  "stable_deref_trait",
-]
-
-[[package]]
-name = "git2"
-version = "0.13.25"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f29229cc1b24c0e6062f6e742aa3e256492a5323365e5ed3413599f8a5eff7d6"
-dependencies = [
- "bitflags",
- "libc",
- "libgit2-sys",
- "log",
- "url 2.2.2",
 ]
 
 [[package]]
@@ -3486,18 +3458,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1bf2e165bb3457c8e098ea76f3e3bc9db55f87aa90d52d0e6be741470916aaa4"
 
 [[package]]
-name = "libgit2-sys"
-version = "0.12.26+1.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19e1c899248e606fbfe68dcb31d8b0176ebab833b103824af31bddf4b7457494"
-dependencies = [
- "cc",
- "libc",
- "libz-sys",
- "pkg-config",
-]
-
-[[package]]
 name = "libloading"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4065,7 +4025,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "de5435b8549c16d423ed0c03dbaafe57cf6c3344744f1242520d59c9d8ecec66"
 dependencies = [
  "cc",
- "libc",
  "pkg-config",
  "vcpkg",
 ]
@@ -4193,15 +4152,6 @@ name = "matchers"
 version = "0.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f099785f7595cc4b4553a174ce30dd7589ef93391ff414dbb67f62392b9e0ce1"
-dependencies = [
- "regex-automata",
-]
-
-[[package]]
-name = "matchers"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8263075bb86c5a1b1427b5ae862e8889656f126e9f77c484496e8b47cf5c5558"
 dependencies = [
  "regex-automata",
 ]
@@ -4646,16 +4596,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "num-format"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bafe4179722c2894288ee77a9f044f02811c86af699344c498b0840c698a2465"
-dependencies = [
- "arrayvec 0.4.12",
- "itoa 0.4.8",
-]
-
-[[package]]
 name = "num-integer"
 version = "0.1.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4919,26 +4859,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sp-tracing",
-]
-
-[[package]]
-name = "pallet-bags-list-remote-tests"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.18#fc3fd073d3a0acf9933c3994b660ebd7b5833f65"
-dependencies = [
- "frame-election-provider-support",
- "frame-support",
- "frame-system",
- "log",
- "pallet-bags-list",
- "pallet-staking",
- "remote-externalities",
- "sp-core",
- "sp-runtime",
- "sp-std",
- "sp-storage",
- "sp-tracing",
- "tokio",
 ]
 
 [[package]]
@@ -6519,23 +6439,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "remote-ext-tests-bags-list"
-version = "0.2.3"
-dependencies = [
- "cardamom-runtime",
- "cardamom-runtime-constants",
- "clap",
- "frame-system",
- "log",
- "pallet-bags-list-remote-tests",
- "selendra-runtime",
- "selendra-runtime-constants",
- "sp-core",
- "sp-tracing",
- "tokio",
-]
-
-[[package]]
 name = "remote-externalities"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.18#fc3fd073d3a0acf9933c3994b660ebd7b5833f65"
@@ -7641,7 +7544,7 @@ dependencies = [
  "thiserror",
  "tracing",
  "tracing-log",
- "tracing-subscriber 0.2.25",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -9338,17 +9241,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "selendra-voter-bags"
-version = "0.2.3"
-dependencies = [
- "cardamom-runtime",
- "clap",
- "generate-bags",
- "selendra-runtime",
- "sp-io",
-]
-
-[[package]]
 name = "semver"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10285,7 +10177,7 @@ dependencies = [
  "sp-std",
  "tracing",
  "tracing-core",
- "tracing-subscriber 0.2.25",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -10407,42 +10299,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
-name = "staking-miner"
-version = "0.2.3"
-dependencies = [
- "assert_cmd",
- "cardamom-runtime",
- "clap",
- "frame-election-provider-support",
- "frame-support",
- "frame-system",
- "jsonrpsee 0.8.0",
- "log",
- "pallet-balances",
- "pallet-election-provider-multi-phase",
- "pallet-staking",
- "pallet-transaction-payment",
- "parity-scale-codec",
- "paste",
- "remote-externalities",
- "sc-transaction-pool-api",
- "selendra-core-primitives",
- "selendra-runtime",
- "selendra-runtime-common",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-npos-elections",
- "sp-runtime",
- "sp-version",
- "sub-tokens",
- "thiserror",
- "tokio",
- "tracing-subscriber 0.3.11",
-]
-
-[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10534,14 +10390,6 @@ dependencies = [
  "quote",
  "rustversion",
  "syn",
-]
-
-[[package]]
-name = "sub-tokens"
-version = "0.1.0"
-source = "git+https://github.com/paritytech/substrate-debug-kit?branch=master#e12503ab781e913735dc389865a3b8b4a6c6399d"
-dependencies = [
- "separator",
 ]
 
 [[package]]
@@ -11203,7 +11051,7 @@ dependencies = [
  "ansi_term",
  "chrono",
  "lazy_static",
- "matchers 0.0.1",
+ "matchers",
  "parking_lot 0.11.2",
  "regex",
  "serde",
@@ -11215,24 +11063,6 @@ dependencies = [
  "tracing-core",
  "tracing-log",
  "tracing-serde",
-]
-
-[[package]]
-name = "tracing-subscriber"
-version = "0.3.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4bc28f93baff38037f64e6f43d34cfa1605f27a49c34e8a04c5e78b0babf2596"
-dependencies = [
- "ansi_term",
- "lazy_static",
- "matchers 0.1.0",
- "regex",
- "sharded-slab",
- "smallvec",
- "thread_local",
- "tracing",
- "tracing-core",
- "tracing-log",
 ]
 
 [[package]]

@@ -102,10 +102,10 @@ members = [
 	"modules/parachain/test-parachains/halt",
 	"modules/parachain/test-parachains/undying",
 	"modules/parachain/test-parachains/undying/collator",
-	"utils/staking-miner",
-	"utils/remote-ext-tests/bags-list",
-	"utils/generate-bags",
 
+	# "utils/staking-miner",
+	# "utils/remote-ext-tests/bags-list",
+	# "utils/generate-bags",
 	# "modules/cumulus/client/cli",
 	# "modules/cumulus/client/consensus/aura",
 	# "modules/cumulus/client/consensus/common",
