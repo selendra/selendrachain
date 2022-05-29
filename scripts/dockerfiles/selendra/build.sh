@@ -9,8 +9,8 @@ cd $PROJECT_ROOT
 
 # Find the current version from Cargo.toml
 VERSION=`grep "^version" ./cli/Cargo.toml | egrep -o "([0-9\.]+)"`
-GITUSER=parity
-GITREPO=selendra
+GITUSER=selendrachain
+GITREPO=selendra-chain
 
 # Build the image
 echo "Building ${GITUSER}/${GITREPO}:latest docker image, hang on!"

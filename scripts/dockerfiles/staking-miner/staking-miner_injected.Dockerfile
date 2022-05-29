@@ -6,7 +6,7 @@ ARG BUILD_DATE
 ARG IMAGE_NAME="staking-miner"
 
 LABEL io.parity.image.authors="devops-team@parity.io" \
-	io.parity.image.vendor="Parity Technologies" \
+	io.parity.image.vendor="Selendra" \
 	io.parity.image.title="${IMAGE_NAME}" \
 	io.parity.image.description="${IMAGE_NAME} for substrate based chains" \
 	io.parity.image.source="https://github.com/selendra/selendrachain/blob/${VCS_REF}/scripts/docker/${IMAGE_NAME}/${IMAGE_NAME}_injected.Dockerfile" \

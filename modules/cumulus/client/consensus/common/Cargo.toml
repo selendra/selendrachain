@@ -1,0 +1,37 @@
+[package]
+name = "cumulus-client-consensus-common"
+version = "0.1.0"
+description = "Cumulus specific common consensus implementations"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+futures = { version = "0.3.8", features = ["compat"] }
+codec = { package = "parity-scale-codec", version = "3.0.0", features = [ "derive" ] }
+tracing = "0.1.32"
+async-trait = "0.1.52"
+dyn-clone = "1.0.5"
+
+# Substrate
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+
+# Selendra deps
+selendra-primitives = { path = "../../../../../primitives" }
+
+# Cumulus
+cumulus-relay-chain-interface = { path = "../../relay-chain-interface" }
+
+[dev-dependencies]
+futures-timer = "3.0.2"
+
+# Substrate
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+
+# Cumulus
+cumulus-test-client = { path = "../../../test/client" }

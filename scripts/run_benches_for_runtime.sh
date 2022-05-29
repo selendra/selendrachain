@@ -2,7 +2,7 @@
 
 # Runs all benchmarks for all pallets, for a given runtime, provided by $1
 # Should be run on a reference machine to gain accurate benchmarks
-# current reference machine: 11th Gen Intel® Core™ i7-11800H
+# current reference machine: digital ocean droplet
 runtime="$1"
 standard_args="--release --locked --features=runtime-benchmarks"
 
@@ -24,8 +24,8 @@ while read -r line; do
 # shellcheck disable=SC2086
 cargo +nightly run $standard_args -- benchmark \
   --chain="${runtime}-dev" \
-  --steps=50 \
-  --repeat=20 \
+  --steps=5 \
+  --repeat=1 \
   --pallet="$pallet" \
   --extrinsic="*" \
   --execution=wasm \

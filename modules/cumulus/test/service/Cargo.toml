@@ -1,0 +1,77 @@
+[package]
+name = "cumulus-test-service"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+
+[dependencies]
+async-trait = "0.1.53"
+codec = { package = "parity-scale-codec", version = "3.0.0" }
+criterion = { version = "0.3.5", features = [ "async_tokio" ] }
+jsonrpc-core = "18.0.0"
+parking_lot = "0.12.0"
+rand = "0.8.5"
+serde = { version = "1.0.132", features = ["derive"] }
+tokio = { version = "1.17.0", features = ["macros"] }
+url = "2.2.2"
+
+# Substrate
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-executor = { git = "https://github.com/paritytech/substrate", features = ["wasmtime"] , branch = "polkadot-v0.9.18" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-service = { git = "https://github.com/paritytech/substrate", features = [ "wasmtime" ] , branch = "polkadot-v0.9.18" }
+sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+substrate-test-client = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+
+# Selendra
+selendra-primitives = { path = "../../../../primitives" }
+selendra-service = { path = "../../../../node/service" }
+selendra-test-service = { path = "../../../../node/test/service" }
+
+# Cumulus
+cumulus-client-cli = { path = "../../client/cli" }
+cumulus-client-consensus-common = { path = "../../client/consensus/common" }
+cumulus-client-consensus-relay-chain = { path = "../../client/consensus/relay-chain" }
+cumulus-client-network = { path = "../../client/network" }
+cumulus-client-service = { path = "../../client/service" }
+cumulus-primitives-core = { path = "../../primitives/core" }
+cumulus-primitives-parachain-inherent = { path = "../../primitives/parachain-inherent" }
+cumulus-relay-chain-inprocess-interface = { path = "../../client/relay-chain-inprocess-interface" }
+cumulus-relay-chain-interface = { path = "../../client/relay-chain-interface" }
+cumulus-relay-chain-rpc-interface = { path = "../../client/relay-chain-rpc-interface" }
+cumulus-test-relay-validation-worker-provider = { path = "../relay-validation-worker-provider" }
+cumulus-test-runtime = { path = "../runtime" }
+
+[dev-dependencies]
+futures = "0.3.5"
+portpicker = "0.1.1"
+
+# Selendra dependencies
+selendra-test-service = { path = "../../../../node/test/service" }
+
+# Substrate dependencies
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+
+[[bench]]
+name = "transaction_throughput"
+harness = false

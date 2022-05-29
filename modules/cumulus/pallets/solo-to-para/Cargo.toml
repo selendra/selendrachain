@@ -1,0 +1,39 @@
+[package]
+name = "cumulus-pallet-solo-to-para"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+edition = "2021"
+description = "Adds functionality to migrate from a Solo to a Parachain"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.1.2", default-features = false, features = ["derive"] }
+scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
+
+# Substrate
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18" }
+pallet-sudo = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18" }
+
+# Selendra dependecies
+selendra-primitives = { path = "../../../../primitives", default-features = false }
+
+# Cumulus
+cumulus-pallet-parachain-system = { default-features = false, path = "../parachain-system" }
+cumulus-primitives-core = { path = "../../primitives/core", default-features = false }
+
+[features]
+default = [ "std" ]
+std = [
+	"codec/std",
+	"scale-info/std",
+	"cumulus-pallet-parachain-system/std",
+	"cumulus-primitives-core/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-sudo/std",
+	"selendra-primitives/std",
+	"sp-runtime/std",
+	"sp-std/std",
+]

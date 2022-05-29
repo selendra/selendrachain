@@ -1,0 +1,29 @@
+[package]
+name = "cumulus-relay-chain-rpc-interface"
+authors = ["Selendra <info@selendra.org>"]
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+selendra-service = { path = "../../../../node/service" }
+cumulus-primitives-core = { path = "../../primitives/core" }
+cumulus-relay-chain-interface = { path = "../relay-chain-interface" }
+
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+
+futures = "0.3.21"
+futures-timer = "3.0.2"
+parity-scale-codec = "3.1.2"
+parking_lot = "0.12.0"
+jsonrpsee = { version = "0.9.0", features = ["client"] }
+tracing = "0.1.32"
+async-trait = "0.1.52"
+url = "2.2.2"
+backoff = { version = "0.4.0", features = ["tokio"] }

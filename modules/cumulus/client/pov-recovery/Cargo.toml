@@ -1,0 +1,43 @@
+[package]
+name = "cumulus-client-pov-recovery"
+version = "0.1.0"
+authors = ["Selendra <info@selendra.org>"]
+description = "Cumulus-specific networking protocol"
+edition = "2021"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", features = [ "derive" ] }
+futures = { version = "0.3.1", features = ["compat"] }
+futures-timer = "3.0.2"
+rand = "0.8.5"
+tracing = "0.1.32"
+
+# Substrate
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+
+# Selendra deps
+selendra-primitives = { path = "../../../../primitives" }
+selendra-node-primitives = { path = "../../../../node/primitives" }
+selendra-overseer = { path = "../../../../node/overseer" }
+selendra-node-subsystem = { path = "../../../../node/subsystem" }
+
+# Cumulus
+cumulus-primitives-core = { path = "../../primitives/core" }
+cumulus-relay-chain-interface = {path = "../relay-chain-interface"}
+
+[dev-dependencies]
+tokio = { version = "1.17.0", features = ["macros"] }
+
+# Cumulus
+cumulus-test-service = { path = "../../test/service" }
+
+# Substrate
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
