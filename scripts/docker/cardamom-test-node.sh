@@ -62,7 +62,7 @@ sudo docker container run \
 # to check your node go >>> https://telemetry.polkadot.io/#list/0x3d7efe9e36b20531f2a735feac13f3cad96798b2d9036a6950dac8076c19c545
 
 # to become a validator use this command to get your Session key.
-# curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "author_rotateKeys", "params":[]}' http://localhost:9933>
+# curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "author_rotateKeys", "params":[]}' http://localhost:9933
 
 # output will look like >>> {"jsonrpc":"2.0","result":"0x45e81ef5c...0615265", "id":1} 
 # copy only  >>> 0x45e81ef5c...0615265
