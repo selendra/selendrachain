@@ -47,7 +47,7 @@ sudo docker container run \
     -v /home/$USER/${selendradb}:/selendra/data \
     selendrachain/selendra-chain:latest \
     --base-path selendra/data \
-    --chain cardamom \
+    --chain selendra \
     --port 30333 \
     --rpc-port 9933 \
     --ws-port 9944 \
