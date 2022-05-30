@@ -27,7 +27,7 @@ fi
 sudo $package_manager $package
 
 # pull testnet from docker
-sudo docker pull laynath/selendra-chain:test
+sudo docker image pull selendrachain/selendra-chain:latest
 
 # create directory for selendra-chaindb
 read -p "Name a directory where the Selendra Chain will store: " selendradb
@@ -44,21 +44,22 @@ read -p "What do you want to call your node?:" y
 sudo docker container run \
     --network="host" \
     --name ${x} \
-    -v /home/$USER/${selendradb}:/selendra/data/testnet \
-    laynath/selendra-chain:test \
-    --base-path selendra/data/testnet \
-    --chain testnet \
+    -v /home/$USER/${selendradb}:/selendra/data \
+    selendrachain/selendra-chain:latest \
+    --base-path selendra/data \
+    --chain cardamom \
     --port 30333 \
     --rpc-port 9933 \
     --ws-port 9944 \
     --telemetry-url "wss://telemetry.polkadot.io/submit/ 0" \
     --validator \
-    --name ${y}
+    --name ${y} \
+    --bootnodes /ip4/157.245.56.213/tcp/30333/p2p/12D3KooWDLR899Spcx4xJ3U8cZttv9zjzJoey3HKaTZiNqwojZJB
 
 # restart docker
 # sudo docker restart ${container}
 
-# to check your node go >>> https://telemetry.polkadot.io/#list/0x889494a97f9573ead42f297ac4b91935cf9727b1bdae29fd4ba56bc8468767c7
+# to check your node go >>> https://telemetry.polkadot.io/#list/0x3d7efe9e36b20531f2a735feac13f3cad96798b2d9036a6950dac8076c19c545
 
 # to become a validator use this command to get your Session key.
 # curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "author_rotateKeys", "params":[]}' http://localhost:9933>
