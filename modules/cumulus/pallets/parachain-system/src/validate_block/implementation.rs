@@ -22,7 +22,7 @@ use sp_runtime::traits::{Block as BlockT, Extrinsic, HashFor, Header as HeaderT}
 use sp_io::KillStorageResult;
 use sp_std::prelude::*;
 
-use polkadot_parachain::primitives::{HeadData, ValidationParams, ValidationResult};
+use selendra_parachain::primitives::{HeadData, ValidationParams, ValidationResult};
 
 use codec::{Decode, Encode};
 

@@ -3,12 +3,12 @@
   "id": "selendra",
   "chainType": "Live",
   "bootNodes": [
-      "/ip4/188.166.31.72/tcp/30333/p2p/12D3KooWCxjZXJmeGBveNJgbSZfbVxkVuKYG1mkR1hmke4Gwztas",
+      "/ip4/188.166.42.24/tcp/30333/p2p/12D3KooWG2Tu1drjDdFTMYgrPZZB2yWDBCVa2rTn1UhMzhhGgK5J",
       "/ip4/206.189.150.241/tcp/30333/p2p/12D3KooWKGMfPS4ZSy3qppTDbz2KcgZYGwZn9e6PwrGGYg3TahrQ",
       "/ip4/167.71.227.232/tcp/30333/p2p/12D3KooWDQLWRagCC57jCWSxXAupFvz3Bqk5KwLB3AAXdCnoDpHk",
-      "/ip4/159.223.109.237/tcp/30333/p2p/12D3KooWGsm4WwxmrhAnQUwKUsmobTacUBUWELueM1jXnG9atPUn",
-      "/ip4/128.199.182.42/tcp/30333/p2p/12D3KooWBdgM7tZFjdnLgGfW5R53hSnT6ay5mwUtUANQzG4mBaqM",
-      "/ip4/139.59.77.38/tcp/30333/p2p/12D3KooWPMfCAqxxwieMhzDCMxRWBHzGCrzKSK8Zasoofsv7PWVQ",
+      "/ip4/159.223.109.237/tcp/30333/p2p/12D3KooWLwf3iKWd8jNhPPebn6dhvStXhrBnfEJKBNNSCjFWcoe6",
+      "/ip4/128.199.182.42/tcp/30333/p2p/12D3KooWT1Gqe1gojWpVJvjzQUzSdj9vJxK9pspgU4zx9iR2GbYj",
+      "/ip4/139.59.77.38/tcp/30333/p2p/12D3KooWMSzbwEs2hEnzaEprEfjtnAFHDq9SUCrrpiqeGU6BFveP",
       "/ip4/46.101.61.184/tcp/30333/p2p/12D3KooWCReaGMZyJHTcGe28yZWa5hLcv99niT2RUbLUc2kibsnN",
       "/ip4/139.59.165.36/tcp/30333/p2p/12D3KooWHagVGFC6NLStQvQQ4PvjH8MKrwEcjbwjoQdrodTsp2WA",
       "/ip4/165.227.140.185/tcp/30333/p2p/12D3KooWPGpyY4VzEH2TKHz9iMq1F8a8gTi9Tj2uPArowuGZe9dt"
