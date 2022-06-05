@@ -1,4 +1,4 @@
-// Copyright 2020 Parity Technologies (UK) Ltd.
+// Copyright 2020 SmallWorld Selendra (Kh).
 // This file is part of Selendra.
 
 // Substrate is free software: you can redistribute it and/or modify

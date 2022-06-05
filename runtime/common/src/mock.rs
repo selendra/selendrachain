@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Parity Technologies (UK) Ltd.
+// Copyright 2019-2021 SmallWorld Selendra (Kh).
 // This file is part of Selendra.
 
 // Selendra is free software: you can redistribute it and/or modify
