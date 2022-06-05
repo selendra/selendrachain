@@ -1,18 +1,18 @@
 // Copyright 2020 Parity Technologies (UK) Ltd.
-// This file is part of Polkadot.
+// This file is part of Selendra.
 
-// Polkadot is free software: you can redistribute it and/or modify
+// Selendra is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Polkadot is distributed in the hope that it will be useful,
+// Selendra is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
+// along with Selendra.  If not, see <http://www.gnu.org/licenses/>.
 
 //! The scheduler module for parachains and parathreads.
 //!
@@ -166,7 +166,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + configuration::Config + paras::Config {}
 
 	/// All the validator groups. One for each core. Indices are into `ActiveValidators` - not the
-	/// broader set of Polkadot validators, but instead just the subset used for parachains during
+	/// broader set of Selendra validators, but instead just the subset used for parachains during
 	/// this session.
 	///
 	/// Bound: The number of cores is the sum of the numbers of parachains and parathread multiplexers.
