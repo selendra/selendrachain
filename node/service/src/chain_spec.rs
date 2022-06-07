@@ -986,6 +986,7 @@ pub fn cardamom_local_testnet_config() -> Result<CardamomChainSpec, String> {
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
+		None,
 		Some(
 			serde_json::from_str(
 				"{
@@ -995,7 +996,6 @@ pub fn cardamom_local_testnet_config() -> Result<CardamomChainSpec, String> {
 			)
 			.expect("Provided valid json map"),
 		),
-		None,
 		Default::default(),
 	))
 }
